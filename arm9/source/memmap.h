@@ -30,6 +30,10 @@ GNU General Public License for more details.
 #define REGULAR_MAP(p) ((int)(p) >= MAP_LAST)  	
 #endif
 
+#define	PAGE_SIZE		65536
+#define PAGE_OFFSET		3
+
+
 #endif /*MEMMAP_H_*/
 
 #ifdef __cplusplus

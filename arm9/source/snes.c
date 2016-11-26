@@ -27,6 +27,7 @@ GNU General Public License for more details.
 #include "opcodes.h"
 
 #include "../../common/common.h"
+#include "../../common/settings.h"
 
 //GSU Memory Map (at SNES Side)
 /*
@@ -196,35 +197,23 @@ if (CFG.DSP1)
 
   memset(SNESC.RAM, 0xFF, 0x20000);
   bzero(SNESC.VRAM, 0x10000);
-    //  bzero(PPU_PORT, 0x2000*2);
-    //  bzero(DMA_PORT, 0x2000*2);  
-  memset(PPU_PORT, 0, 0x90*2);
-  memset(DMA_PORT, 0, 0x100*2);
-  memset(DMA_PORT+0x100, 0xFF, 0x80*2);
+    //  bzero(CPU.PPU_PORT, 0x2000*2);
+    //  bzero(CPU.DMA_PORT, 0x2000*2);  
+  memset(CPU.PPU_PORT, 0, 0x90*2);
+  memset(CPU.DMA_PORT, 0, 0x100*2);
+  memset(CPU.DMA_PORT+0x100, 0xFF, 0x80*2);
   SNES.JOY_PORT16 = 0;
-
-	//  if (!CFG.SuperFX)
+    
+    
+    
+    //if (!CFG.SuperFX)
     {
 		SNESC.SRAMMask = SNES.ROM_info.SRAMsize ?
         ((1 << (SNES.ROM_info.SRAMsize + 3)) * 128) - 1 : 0;
 		SNESC.SRAM = SNESC.BSRAM;
 		memset(SNESC.SRAM, 0xAA, 0x8000);
     }
-	/*  else
-		{
-			SNESC.SRAMMask = 0xFFFF;
-			SNESC.SRAM = SNESC.ROM+1024*1024*4;
-			memset(SNESC.SRAM, 0, 0x20000);
-		}*/
-
-	/*
-	if (CFG.Sound_output)
-		SPC700_emu = 1;
-	else
-		SPC700_emu = 0;
-	SPC700_reset();
-	*/
-
+    
 	//GUI_printf("test\n");
 	
 	MyIPC->counter = 0;
@@ -332,86 +321,84 @@ void	UnInterleaveROM()
 
 void	load_ROM(char *ROM, int ROM_size)
 {
-int       fileheader, filesize;
-int		cnt1, cnt2;
-char		jap;
-ROM_Info	LoROM_info;
-ROM_Info	HiROM_info;
+  int       fileheader, filesize;
+  int		cnt1, cnt2;
+  char		jap;
+  ROM_Info	LoROM_info;
+  ROM_Info	HiROM_info;
 
-filesize = ROM_size;
-fileheader = filesize & 8191;
+  filesize = ROM_size;
+  fileheader = filesize & 8191;
 
-if (fileheader != 0 && fileheader != 512)
-	fileheader = 512;
+  if (fileheader != 0 && fileheader != 512)
+    fileheader = 512;
 
-SNES.ROMHeader = fileheader;
-SNES.ROMSize = filesize-fileheader;
-SNESC.ROM = (uchar *)ROM+fileheader;
+  SNES.ROMHeader = fileheader;
+  SNES.ROMSize = filesize-fileheader;
+  SNESC.ROM = (uchar *)ROM+fileheader;
 
-if (CFG.InterleavedROM)
-	UnInterleaveROM();
+  if (CFG.InterleavedROM)
+    UnInterleaveROM();
 
-memcpy(&LoROM_info, SNESC.ROM+0x7FC0, sizeof(ROM_Info));
-memcpy(&HiROM_info, SNESC.ROM+0xFFC0, sizeof(ROM_Info));
+  memcpy(&LoROM_info, SNESC.ROM+0x7FC0, sizeof(ROM_Info));
+  memcpy(&HiROM_info, SNESC.ROM+0xFFC0, sizeof(ROM_Info));
 
-//make sure it points to ROM paging
 // conditions necessaires
-if (filesize < 0x80000 ||
-	*(unsigned short *)&SNESC.ROM[0xfffc] == 0xFFFF ||
-	*(unsigned short *)&SNESC.ROM[0xfffc] < 0x8000){
-		SNES.HiROM = 0; 
-		memcpy(&SNES.ROM_info, (void*)&LoROM_info, sizeof(ROM_Info));
+  if (filesize < 0x80000 ||
+      *(unsigned short *)&SNESC.ROM[0xfffc] == 0xFFFF ||
+      *(unsigned short *)&SNESC.ROM[0xfffc] < 0x8000) {
+    SNES.HiROM = 0; 
+    memcpy(&SNES.ROM_info, (void*)&LoROM_info, sizeof(ROM_Info));
     return;
-}
-if (*(unsigned short *)&SNESC.ROM[0x7ffc] == 0xFFFF ||
-	*(unsigned short *)&SNESC.ROM[0x7ffc] < 0x8000) {
-		SNES.HiROM = 1; 
-		memcpy(&SNES.ROM_info, (void*)&HiROM_info, sizeof(ROM_Info));
+  }
+  if (*(unsigned short *)&SNESC.ROM[0x7ffc] == 0xFFFF ||
+      *(unsigned short *)&SNESC.ROM[0x7ffc] < 0x8000) {
+    SNES.HiROM = 1; 
+    memcpy(&SNES.ROM_info, (void*)&HiROM_info, sizeof(ROM_Info));
     return;
-}
+  }
 
 // conditions suffisantes
-if ((LoROM_info.checksum ^ LoROM_info.checksum_c) == 0xFFFF) {
-	SNES.HiROM = 0;
-	memcpy(&SNES.ROM_info, (void*)&LoROM_info, sizeof(ROM_Info));
+  if ((LoROM_info.checksum ^ LoROM_info.checksum_c) == 0xFFFF) {
+    SNES.HiROM = 0;
+    memcpy(&SNES.ROM_info, (void*)&LoROM_info, sizeof(ROM_Info));
     return;
-}
-if ((HiROM_info.checksum ^ HiROM_info.checksum_c) == 0xFFFF) {
-	SNES.HiROM = 1; 
-	memcpy(&SNES.ROM_info, (void*)&HiROM_info, sizeof(ROM_Info));
-	return;
-}
+  }
+  if ((HiROM_info.checksum ^ HiROM_info.checksum_c) == 0xFFFF) {
+    SNES.HiROM = 1; 
+    memcpy(&SNES.ROM_info, (void*)&HiROM_info, sizeof(ROM_Info));
+    return;
+  }
 
 // algorithme de ZoOp
-SNES.HiROM = 0;
+  SNES.HiROM = 0;
 
-//ROM_Info	LoROM_info; //title[21]
+  cnt1 = cnt_alphachar(LoROM_info.title);
+  cnt2 = cnt_alphachar(HiROM_info.title);
 
-cnt1 = cnt_alphachar(LoROM_info.title);
-cnt2 = cnt_alphachar(HiROM_info.title);
-
-jap = 1;
-if (cnt1 > 0 || cnt2 > 0)
-	{
-		if (cnt1 == 0 && cnt2 >  0){
-			SNES.HiROM = 1; jap = 0;
-		}
-		if (cnt1 >  0 && cnt2 == 0){
-			SNES.HiROM = 0; jap = 0;
+  jap = 1;
+  if (cnt1 > 0 || cnt2 > 0)
+    {
+      if (cnt1 == 0 && cnt2 >  0)
+        {
+          SNES.HiROM = 1; jap = 0;
         }
-		if (cnt1 == cnt2)
-			jap = 0;
-		if (SNES.HiROM == 0 && cnt2 > cnt1)
-			SNES.HiROM = 1;
-		if (SNES.HiROM == 1 && jap && (HiROM_info.banksize != 1))
-			SNES.HiROM = 0;
+      if (cnt1 >  0 && cnt2 == 0)
+        {
+          SNES.HiROM = 0; jap = 0;
+        }
+      if (cnt1 == cnt2)
+        jap = 0;
+      if (SNES.HiROM == 0 && cnt2 > cnt1)
+        SNES.HiROM = 1;
+      if (SNES.HiROM == 1 && jap && (HiROM_info.banksize != 1))
+        SNES.HiROM = 0;
     }
-	
-if (SNES.HiROM == 0) {
-	memcpy(&SNES.ROM_info, &LoROM_info, sizeof(ROM_Info));
-}
-else {
-	memcpy(&SNES.ROM_info, &HiROM_info, sizeof(ROM_Info));
-}
+
+  if (SNES.HiROM == 0) {
+    memcpy(&SNES.ROM_info, &LoROM_info, sizeof(ROM_Info));
+  } else {
+    memcpy(&SNES.ROM_info, &HiROM_info, sizeof(ROM_Info));
+  }
 }
 

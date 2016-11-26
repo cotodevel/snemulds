@@ -23,8 +23,8 @@
 //#define APU_ADDR_CNT ((vu32*)(0x3000000-60))
 
 //@ IPC now
-//#define APU_RAM_ADDRESS     ((uint8*)(0x6010000))
-//#define APU_SNES_ADDRESS    APU_RAM_ADDRESS //ori: #define APU_SNES_ADDRESS ((uint8*)(0x3000000-0x12000))       //could cause lockups
+#define APU_RAM_ADDRESS     ((uint8*)(0x6010000))
+#define APU_SNES_ADDRESS    APU_RAM_ADDRESS //ori: #define APU_SNES_ADDRESS ((uint8*)(0x3000000-0x12000))       //could cause lockups
 
 //deprecated/unused: #define SNEMUL_CMD ((vu32*)(0x3000000-16))
 //deprecated/unused: #define SNEMUL_ANS ((vu32*)(0x3000000-20))

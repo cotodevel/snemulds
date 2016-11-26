@@ -65,28 +65,38 @@ struct s_snescore
   int		SRAMMask;  
 };
 
-/* DS Memory */
-#define SNES_RAM_ADDRESS	((uint8 *)memUncached((void *)0x2FC0000))
+// DS->Snes Memory
+#define DS_SRAM          ((uint8*)0x0A000000)
 
 #define MAP  ((uchar **)(0x06898000))
 #define WMAP ((uchar **)(0x0689A000))
-//#define MAP ((uchar **)(0x27E0000))
-//#define MAP ((uchar **)(0xB000014))
-//#define MAP SNES.Map
 
-//#define SNES	((struct s_snes *)(0x23E0000))
-#define EMPTYMEM		(ushort *)memUncached((void *)0x2FE0000)
-//#define PPU_PORT	((ushort *)(0x23E0000))
-//#define DMA_PORT	((ushort *)(0x23E4000))
-
-#define SNES_SRAM_ADDRESS ((uchar *)((void *)0x2FE6000))
-#define SNES_ROM_ADDRESS ((uchar *)((void *)0x20C0000))
+//Rom Page variables
 #define ROM_MAX_SIZE	(3*1024*1024)
-//#define ROM_STATIC_SIZE	(1*1024*1024)
-//#define ROM_PAGING_SIZE	(2*1024*1024)
 #define ROM_STATIC_SIZE	(64*1024)
 #define ROM_PAGING_SIZE	(ROM_MAX_SIZE-ROM_STATIC_SIZE)
-#define SNES_ROM_PAGING_ADDRESS (SNES_ROM_ADDRESS+ROM_STATIC_SIZE)
+
+//snes irqs
+#define IRQ_PENDING_FLAG    (1 << 11)
+
+#define PPU_H_BEAM_IRQ_SOURCE	(1 << 0)
+#define PPU_V_BEAM_IRQ_SOURCE	(1 << 1)
+#define GSU_IRQ_SOURCE		(1 << 2)
+#define SA1_IRQ_SOURCE		(1 << 7)
+#define SA1_DMA_IRQ_SOURCE	(1 << 5)
+
+#define SNES_IRQ_SOURCE	    (1 << 7)
+#define TIMER_IRQ_SOURCE    (1 << 6)
+#define DMA_IRQ_SOURCE	    (1 << 5)
+
+//ppu irq io
+//5-4   H/V IRQ (0=Disable, 1=At H=H + V=Any, 2=At V=V + H=0, 3=At H=H + V=V)
+#define HV_IRQ_H_V_DISABLED (0x00)
+#define HV_IRQ_HH_V_ANY     (0x10)
+#define HV_IRQ_VV_H_0       (0x20)
+#define HV_IRQ_HH_HV        (0x30)
+//7     VBlank NMI Enable  (0=Disable, 1=Enable) (Initially disabled on reset)
+#define VBLANK_NMI_IRQENABLE          (0x80)
 
 struct s_snes
 {
@@ -159,8 +169,6 @@ void	APU_nice_reset();
 void 	InitMap();
 void	GUI_printf(char *fmt, ...);
 
-extern uint16	PPU_PORT[0x90]; // 2100 -> 2183
-extern uint16	DMA_PORT[0x180]; // 4200 -> 437F
 void	pushb(uint8 value);
 void	pushw(uint16 value);
 
@@ -180,8 +188,21 @@ void	reset_SNES();
 int		get_joypad();
 void	HDMA_write();
 void	HDMA_transfert(uchar port);
+
+
 void	load_ROM(char *ROM, int ROM_size);
 
+extern volatile u8 snes_ram_bsram[0x20000+0x6000];    //128K SNES RAM + 8K (Big) SNES SRAM
+extern volatile u8 snes_vram[0x010000];
+extern volatile u8 * rom_page;        //second slot of rombuffer
+extern volatile u8 rom_buffer[ROM_MAX_SIZE];
+extern u32 snes_ram_address;
+
+extern void CHECK_FOR_IRQ();
+extern void clear_irq_source (uint32 M);
+extern void setirq(uint32 irqs_to_set);
+
+extern void resetMemory2_ARM9();
 
 #ifdef __cplusplus
 }

@@ -33,7 +33,6 @@
 #include "apu.h"
 
 #include "ram.h"
-#include "m3sd.h"
 
 #include "conf.h"
 #include "gui_draw/snemul_str.h"
@@ -44,8 +43,8 @@
 
 #include "ppu.h"
 #include "disk/libfat.h"
-#include "disk/fatmore.h"
 
+#include <string.h>
 #include <nds/dma.h>
 #include <nds/ndstypes.h>
 #include <nds/arm9/sassert.h>
@@ -54,9 +53,11 @@
 #include <nds/arm9/trig_lut.h>
 #include <nds/arm9/math.h>
 #include <nds/arm9/dynamicArray.h>
-#include "../../common/common.h"
 #include "interrupts/interrupts.h"
 #include "interrupts/fifo_handler.h"
+
+#include "../../common/common.h"
+#include "../../common/settings.h"
 
 IN_DTCM
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
@@ -371,15 +372,13 @@ int loadROM(char *name, int confirm)
 
 	GUI_printf("Loading %s...\n", romname);
 
-	void *ptr = malloc(4);
-	GUI_printf("ptr=%p...\n", ptr);
-	free(ptr);
-
 	mem_clear_paging(); // FIXME: move me...
 
-	ROM = (char *) SNES_ROM_ADDRESS;
-	
+	MyIPC->ROM = ROM = (char *)(char *)&rom_buffer[0];
+	MyIPC->rom_size = size = FS_getFileSize(romname);
+
 	size = FS_getFileSize(romname);
+	
 	ROMheader = size & 8191;
 	if (ROMheader != 0&& ROMheader != 512)
 		ROMheader = 512;
@@ -387,6 +386,7 @@ int loadROM(char *name, int confirm)
 #ifndef USE_GBFS	
 	if (size-ROMheader > ROM_MAX_SIZE)
 	{
+	/*
 		// Large ROM, memory pagging enabled
 		if (size <= CFG.ExtRAMSize)
 		{
@@ -398,6 +398,8 @@ int loadROM(char *name, int confirm)
 		}
 		else
 			FS_loadROMForPaging(ROM-ROMheader, romname, ROM_STATIC_SIZE+ROMheader);
+	*/
+		FS_loadROMForPaging(ROM-ROMheader, romname, ROM_STATIC_SIZE+ROMheader);
 		CFG.LargeROM = 1;
 		crc = crc32(0, ROM, ROM_STATIC_SIZE);
 		GUI_printf("Large ROM detected. CRC(1Mb) = %08x\n", crc);
@@ -415,8 +417,22 @@ int loadROM(char *name, int confirm)
 
 	checkConfiguration(name, crc);
 	
-	GUI_printf("hello world\n");
-
+    if(SNES.HiROM == 0){
+        printf("SNESROM is LoROM.Press A");
+    }
+    else if(SNES.HiROM == 1)
+        printf("SNESROM is SNES2.HiROM.Press A");
+    else{
+        printf("An error as ocurred SNES2.HiROM: %d.Press A",SNES.HiROM);
+    }
+    while(1==1){
+        scanKeys();
+        
+        if (keysDown()&KEY_A){
+            break;
+        }
+    }
+    
 	return 0;
 }
 
@@ -555,17 +571,16 @@ int main(int _argc, char **_argv)
 #endif	
 	
 	initSNESEmpty();
-
+	update_ram_snes();
+    
 	// Clear "HDMA"
 	int i=0;
 	for (i = 0; i < 192; i++)
 		GFX.lineInfo[i].mode = -1;
 
-	
-	
     //fifo setups
     irqInit();
-    fifoInit();
+    //fifoInit();   //kills arm9 comms
 
     //custom IRQ handlers don't allow jumping to these handlers
 	irqSet(IRQ_VBLANK, Vblank); //remove for debug

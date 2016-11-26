@@ -77,6 +77,8 @@ struct s_apu2
 #define APU_ADDR_BLKP ((volatile uint8*)memUncached((void *)0x3000000-24))
 */
 
+#define APU_RAM_ADDRESS     ((uint8*)(0x6010000))
+
 #endif
 
 
@@ -97,10 +99,6 @@ extern void	APU_loadSpc();
 extern void	APU_clear();
 extern void APU_playSong(uint8 *data, int size);
 extern void APU_command(uint32 command);
-
-//ARM7 only APU C->Assembly struct required by APU Core
-extern u32 ADDR_PORT_SNES_TO_SPC;
-extern u32 ADDR_PORT_SPC_TO_SNES;
 
 #ifdef __cplusplus
 }

@@ -19,9 +19,8 @@ GNU General Public License for more details.
 #include "common.h"
 #include "opcodes.h"
 
-#include "main.h" //For linking snapshot callback
+#include "main.h"
 #include "../../common/common.h"
-
 
 #ifdef USE_GBA_FAT_LIB
 #include "fat/gba_nds_fat.h"
@@ -113,14 +112,12 @@ int	read_snapshot(char *file, uchar nb)
     GFX.SNESPal[i] = (pal[2]>>1)|((pal[1]>>1)<<5)|((pal[0]>>1)<<10);
   }
 
-/*  fread(PPU_PORT, 2*0x100, 1, f);
-  fread(DMA_PORT, 2*0x200, 1, f);*/
+/*  fread(CPU.PPU_PORT, 2*0x100, 1, f);
+  fread(CPU.DMA_PORT, 2*0x200, 1, f);*/
 
-  fread(PPU_PORT, 2*0x90, 1, f);
-  fread(EMPTYMEM, 2*0x70, 1, f); // unused
-  fread(DMA_PORT, 2*0x180, 1, f);
-  fread(EMPTYMEM, 2*0x80, 1, f); // unused
-
+  fread(CPU.PPU_PORT, 2*0x90, 1, f);
+  fread(CPU.DMA_PORT, 2*0x180, 1, f);
+  
   TSnapShot *snapshot = (TSnapShot *)malloc(sizeof(TSnapShot));
   fread(snapshot,  sizeof(TSnapShot), 1, f);
   
@@ -192,10 +189,8 @@ int write_snapshot(char *file, unsigned char nb, const char *name)
     fwrite(pal, 3, 1, f);
   }
     
-  fwrite(PPU_PORT,  2*0x90, 1, f);
-  fwrite(EMPTYMEM, 	2*0x70, 1, f); // unused
-  fwrite(DMA_PORT,  2*0x180, 1, f);
-  fwrite(EMPTYMEM, 	2*0x80, 1, f); // unused
+  fwrite(CPU.PPU_PORT,  2*0x90, 1, f);
+  fwrite(CPU.DMA_PORT,  2*0x180, 1, f);
   
   TSnapShot *snapshot = (TSnapShot *)malloc(sizeof(TSnapShot));
 

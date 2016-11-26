@@ -4,6 +4,13 @@
 
 
 #ifdef ARM9
+#include "../arm9/source/snes.h"
+
+//small hack to update SNES_ADDRESS at opcodes2.s
+void update_ram_snes(){
+    snes_ram_address = (u32)&snes_ram_bsram[0x6000];
+}
+
 __attribute__((section(".itcm")))
 inline void SendArm7Command(u32 command1, u32 command2, u32 command3, u32 command4) {
     
@@ -24,7 +31,6 @@ inline void SendArm7Command(u32 command1, u32 command2, u32 command3, u32 comman
 #endif
 
 #ifdef ARM7
-
 //small hack to update IPC APU ports with APU assembly core (on ARM7)
 void update_spc_ports(){
     ADDR_PORT_SNES_TO_SPC       =   (u32)(u8*)PORT_SNES_TO_SPC;
@@ -48,6 +54,7 @@ inline void SendArm9Command(u32 command1, u32 command2, u32 command3, u32 comman
 }
 #endif
 
+
 //NDS hardware IPC
 void sendbyte_ipc(uint8 word){
 	//checkreg writereg (add,val) static int REG_IPC_add=0x04000180,REG_IE_add=0x04000210,REG_IF_add=0x04000214;
@@ -64,7 +71,7 @@ u8 recvbyte_ipc(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-u32 read_ext_cpu(u32 address,u8 read_mode){
+inline u32 read_ext_cpu(u32 address,u8 read_mode){
     #ifdef ARM7
         MyIPC->status |= ARM9_BUSYFLAGRD;
         SendArm9Command(0xc2720000, address, read_mode,0x00000000);
@@ -85,7 +92,7 @@ u32 read_ext_cpu(u32 address,u8 read_mode){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-void write_ext_cpu(u32 address,u32 value,u8 write_mode){
+inline void write_ext_cpu(u32 address,u32 value,u8 write_mode){
 
     #ifdef ARM7
         MyIPC->status |= ARM9_BUSYFLAGWR;

@@ -112,15 +112,15 @@ GNU General Public License for more details.
 
 struct s_cpu
 {
-  uint16	IRQ, NMI, BRK, COP; /* interruption address */
-  int		cycles_tot;
-  int		NMIActive;
-  uchar		WAI_state;
+    uint16	IRQ, NMI, BRK, COP; /* interruption address */
+    int		cycles_tot;
+    int		NMIActive;
+    uchar		WAI_state;
 
-/* debug */
-  int		Trace_flag;
-  int		Trace;
-  int		Cycles2;
+    /* debug */
+    int		Trace_flag;
+    int		Trace;
+    int		Cycles2;
 
 /* registers */
 #define P_C  0x01
@@ -132,26 +132,36 @@ struct s_cpu
 #define P_V  0x40
 #define P_N  0x80
 #define P_E  0x100
-  uint16        P; /* Flags Register */
-  uint16        PC; /* Program Counter */
-  uint16        PB, DB; /* Bank Registers */
-  uint16        A, X, Y, D, S;
+    uint16        P; /* Flags Register */
+    uint16        PC; /* Program Counter */
+    uint16        PB, DB; /* Bank Registers */
+    uint16        A, X, Y, D, S;
 
-  int           Cycles;
+    int           Cycles;
 
 #define IRQ_GSU	1
-  int		IRQState;
+    int		IRQState;
 
-/* speed hack */
-  int           LastAddress;
-  int           WaitAddress;
-  int           WaitCycles;
-  uint32		HCycles;
-  
-  int 			IsBreak;
-  
-  int			unpacked;
-  int			packed;
+    /* speed hack */
+    int           LastAddress;
+    int           WaitAddress;
+    int           WaitCycles;
+    uint32		HCycles;
+
+    int 			IsBreak;
+
+    int			unpacked;
+    int			packed;
+
+    uint16	PPU_PORT[0x90]; // 2100 -> 2183
+    uint16	DMA_PORT[0x180]; // 4200 -> 437F
+
+    //coto:new
+    uint16      cpuflags;   //new: tells wether its time to raise or serve an interrupt
+    uint16      irqactive;  //new: IRQs currently active
+    int SavedCycles;
+    u32 SavedIRQState;
+    int initialPC;          //for co processor operation
 };
 
 #endif

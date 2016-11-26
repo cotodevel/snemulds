@@ -62,7 +62,7 @@ typedef struct
 #define SPRITE_POS_Y(INDEX) (GFX.spr_info[INDEX].pos_y > 239 ? (char)GFX.spr_info[INDEX].pos_y : GFX.spr_info[INDEX].pos_y)
 
 #define DRAW_PLANE(BG, BG_MODE) \
-  switch(PPU_PORT[0x07+BG]&3) { \
+  switch(CPU.PPU_PORT[0x07+BG]&3) { \
     case 0: { draw_plane_32_30(BG, BG_MODE); } break; \
     case 1: { draw_plane_64_30(BG, BG_MODE); } break; \
     case 2: { draw_plane_32_60(BG, BG_MODE); } break; \

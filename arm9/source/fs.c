@@ -36,6 +36,8 @@ GNU General Public License for more details.
 #include <sys/dir.h>
 #include <fcntl.h>
 
+#include "../../common/common.h"
+
 uint16	*g_extRAM = NULL;
 int		g_UseExtRAM = 0;
 
@@ -325,12 +327,15 @@ int	FS_loadFile(char *filename, char *buf, int size)
 		FS_unlock();
 		return -1;
 	}
-	fseek(f, 0, SEEK_SET);	
-	fread(buf, 1, size, f);
-	fclose(f);	
+	
+    fseek(f, 0, SEEK_SET);
+    fread(buf, 1, size, f);
+	
+    fclose(f);	
 	FS_unlock();
 	return 0;
 }
+
 
 int	FS_saveFile(char *filename, char *buf, int size)
 {

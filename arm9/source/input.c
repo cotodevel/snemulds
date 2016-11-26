@@ -38,11 +38,15 @@ int myLCDSwap()
 int get_joypad()
 {
 	int res = 0;
-
+    
+    //can cause issues
+    /*
     #define KEYS_CUR (( ((~REG_KEYINPUT)&0x3ff) | (((~MyIPC->buttons_xy_folding)&3)<<10) | (((~MyIPC->buttons_xy_folding)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID)	
 	keys = KEYS_CUR;
-
-	//scanKeys();	
+    */
+    
+	keys = (( ((~REG_KEYINPUT)&0x3ff) | (((~MyIPC->buttons_xy_folding)&3)<<10) | (((~MyIPC->buttons_xy_folding)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID);
+    //scanKeys();	
 	//keys = keysCurrent();
 
 #if 0

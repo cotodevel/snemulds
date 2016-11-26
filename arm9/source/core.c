@@ -53,18 +53,18 @@ int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 
 	ptr = map_memory(offs, bank);
 
-	if (PPU_PORT[0x15]&0x80) {
+	if (CPU.PPU_PORT[0x15]&0x80) {
 		if (!GFX.FS_incr && GFX.SC_incr == 1)
 		{
 			// Very fast DMA mode 1!!!!
 //			fprintf(SNES.flog,"Very fast!");
-			memcpy(SNESC.VRAM+((PPU_PORT[0x16]<<1)&0xFFFF), ptr, len);
+			memcpy(SNESC.VRAM+((CPU.PPU_PORT[0x16]<<1)&0xFFFF), ptr, len);
 			
 			for (i = 0; i < len; i += 2)
 			{
 				if ((i & 15) == 0) 
 					check_tile();
-				PPU_PORT[0x16]++;
+				CPU.PPU_PORT[0x16]++;
 			}
 			return offs+len;
 		}
@@ -72,19 +72,19 @@ int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 		{
 //			if ((i & 15) == 0) 
 				check_tile();			
-			SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] = ptr[i];   
-			SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] = ptr[i+1];
+			SNESC.VRAM[(CPU.PPU_PORT[0x16]<<1)&0xFFFF] = ptr[i];   
+			SNESC.VRAM[((CPU.PPU_PORT[0x16]<<1)+1)&0xFFFF] = ptr[i+1];
 			if (!GFX.FS_incr) {
-				PPU_PORT[0x16] += GFX.SC_incr;
+				CPU.PPU_PORT[0x16] += GFX.SC_incr;
 			} else {
-				PPU_PORT[0x16] += 8;
+				CPU.PPU_PORT[0x16] += 8;
 				if (++GFX.FS_cnt == GFX.FS_incr) {
 					GFX.FS_cnt = 0;
 					if (++GFX.FS_cnt2 == 8) {
-						GFX.FS_cnt2 = 0; PPU_PORT[0x16] -= 8-GFX.SC_incr;
+						GFX.FS_cnt2 = 0; CPU.PPU_PORT[0x16] -= 8-GFX.SC_incr;
 					}
 					else
-						PPU_PORT[0x16] -= 8*GFX.FS_incr-GFX.SC_incr;
+						CPU.PPU_PORT[0x16] -= 8*GFX.FS_incr-GFX.SC_incr;
 				}
 			}
 		}
@@ -95,19 +95,19 @@ int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 		{
 //			if ((i & 15) == 0) 
 				check_tile();
-			SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] = ptr[i];
-			PPU_PORT[0x16] += GFX.SC_incr;
+			SNESC.VRAM[(CPU.PPU_PORT[0x16]<<1)&0xFFFF] = ptr[i];
+			CPU.PPU_PORT[0x16] += GFX.SC_incr;
 			if (GFX.FS_incr) {
-				PPU_PORT[0x16] += 8;
+				CPU.PPU_PORT[0x16] += 8;
 				if (++GFX.FS_cnt == GFX.FS_incr) {
 					GFX.FS_cnt = 0;
 					if (++GFX.FS_cnt2 == 8) {
-						GFX.FS_cnt2 = 0; PPU_PORT[0x16] -= 7;
+						GFX.FS_cnt2 = 0; CPU.PPU_PORT[0x16] -= 7;
 					} else
-						PPU_PORT[0x16] -= 8*GFX.FS_incr-1;
+						CPU.PPU_PORT[0x16] -= 8*GFX.FS_incr-1;
 				}
 			}
-			SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] = ptr[i+1];
+			SNESC.VRAM[((CPU.PPU_PORT[0x16]<<1)+1)&0xFFFF] = ptr[i+1];
 		} 
 	}
 	return offs+len;
@@ -122,16 +122,16 @@ void DMA_transfert(uchar port)
   uchar		DMA_bank, DMA_info;
 
   START_PROFILE(DMA, 4);
-  DMA_address = DMA_PORT[0x102+port*0x10]+(DMA_PORT[0x103+port*0x10]<<8);
-  DMA_bank = DMA_PORT[0x104+port*0x10];
-  DMA_len = DMA_PORT[0x105+port*0x10]+(DMA_PORT[0x106+port*0x10]<<8);
+  DMA_address = CPU.DMA_PORT[0x102+port*0x10]+(CPU.DMA_PORT[0x103+port*0x10]<<8);
+  DMA_bank = CPU.DMA_PORT[0x104+port*0x10];
+  DMA_len = CPU.DMA_PORT[0x105+port*0x10]+(CPU.DMA_PORT[0x106+port*0x10]<<8);
   if (DMA_len == 0)
     DMA_len = 0x10000;
-  PPU_port = 0x2100+DMA_PORT[0x101+port*0x10];
-  DMA_info = DMA_PORT[0x100+port*0x10];
+  PPU_port = 0x2100+CPU.DMA_PORT[0x101+port*0x10];
+  DMA_info = CPU.DMA_PORT[0x100+port*0x10];
 
 /*   FS_flog("DMA[%d] %06X->%04X SIZE:%05X VRAM : %04X\n", port,
-      DMA_address+(DMA_bank<<16), PPU_port, DMA_len, PPU_PORT[0x16]);*/
+      DMA_address+(DMA_bank<<16), PPU_port, DMA_len, CPU.PPU_PORT[0x16]);*/
 
   ADD_CYCLES (DMA_len % NB_CYCLES);
   if (DMA_len >= NB_CYCLES)
@@ -187,9 +187,9 @@ void DMA_transfert(uchar port)
     }
   }
   }
-  DMA_PORT[0x106+port*0x10] = DMA_PORT[0x105+port*0x10] = 0;
-  DMA_PORT[0x102+port*0x10] = DMA_address&0xff;
-  DMA_PORT[0x103+port*0x10] = DMA_address>>8;
+  CPU.DMA_PORT[0x106+port*0x10] = CPU.DMA_PORT[0x105+port*0x10] = 0;
+  CPU.DMA_PORT[0x102+port*0x10] = DMA_address&0xff;
+  CPU.DMA_PORT[0x103+port*0x10] = DMA_address>>8;
   END_PROFILE(DMA, 4);
 }
 
@@ -202,19 +202,19 @@ void		HDMA_transfert(unsigned char port)
 
   START_PROFILE(DMA, 4);
   SNES.HDMA_nblines[port] = 0;
-  ptr = map_memory((DMA_PORT[0x102+port*0x10])+(DMA_PORT[0x103+port*0x10]<<8),
-                    DMA_PORT[0x104+port*0x10]);
+  ptr = map_memory((CPU.DMA_PORT[0x102+port*0x10])+(CPU.DMA_PORT[0x103+port*0x10]<<8),
+                    CPU.DMA_PORT[0x104+port*0x10]);
 
   if (!ptr) {
 /*    iprintf(" (invalid memory access during a H-DMA transfert : %06X)",
-      DMA_PORT[0x102+port*0x10]+(DMA_PORT[0x103+port*0x10]<<8)+
-      (DMA_PORT[0x104+port*0x10]<<16));*/
+      CPU.DMA_PORT[0x102+port*0x10]+(CPU.DMA_PORT[0x103+port*0x10]<<8)+
+      (CPU.DMA_PORT[0x104+port*0x10]<<16));*/
       return;
 //    exit(255);
   }
 
-  SNES.HDMA_port[port] = DMA_PORT[0x101+port*0x10];
-  SNES.HDMA_info[port] = DMA_PORT[0x100+port*0x10]&7;
+  SNES.HDMA_port[port] = CPU.DMA_PORT[0x101+port*0x10];
+  SNES.HDMA_info[port] = CPU.DMA_PORT[0x100+port*0x10]&7;
 
   while(*ptr++ && tmp < GFX.ScreenHeight)
   {
@@ -224,10 +224,10 @@ void		HDMA_transfert(unsigned char port)
       len    = MIN(*(ptr-1)&0x7f,GFX.ScreenHeight-tmp);
       repeat = !(*(ptr-1)&0x80);
     }
-    if (DMA_PORT[0x100+port*0x10]&0x40) {
-      ptr2 = map_memory(*ptr+(*(ptr+1)<<8), DMA_PORT[0x107+port*0x10]);
+    if (CPU.DMA_PORT[0x100+port*0x10]&0x40) {
+      ptr2 = map_memory(*ptr+(*(ptr+1)<<8), CPU.DMA_PORT[0x107+port*0x10]);
       ptr += 2;
-      switch (DMA_PORT[0x100+port*0x10]&7) {
+      switch (CPU.DMA_PORT[0x100+port*0x10]&7) {
         case 0x00 :
           while (len--) {
             SNES.HDMA_values[tmp++][port] = ptr2; if (!repeat) ptr2++;
@@ -251,7 +251,7 @@ void		HDMA_transfert(unsigned char port)
       }
       continue;
     }
-    switch (DMA_PORT[0x100+port*0x10] & 7) {
+    switch (CPU.DMA_PORT[0x100+port*0x10] & 7) {
       case 0x00 :
         while (len--) {
           SNES.HDMA_values[tmp++][port] = ptr; if (!repeat) ptr++;
@@ -285,23 +285,23 @@ void		HDMA_transfert(unsigned char port)
 
 uint32	IONOP_DMA_READ(uint32 addr)
 {
-	return (DMA_PORT[addr]);
+	return (CPU.DMA_PORT[addr]);
 }
 
 uint32	IONOP_PPU_READ(uint32 addr)
 {
-	return (PPU_PORT[addr]);
+	return (CPU.PPU_PORT[addr]);
 }
 
 
 void	IONOP_PPU_WRITE(uint32 addr, uint32 byte)
 {
-	PPU_PORT[addr] = byte;
+	CPU.PPU_PORT[addr] = byte;
 }
 
 void	IONOP_DMA_WRITE(uint32 addr, uint32 byte)
 {
-	DMA_PORT[addr] = byte;
+	CPU.DMA_PORT[addr] = byte;
 }
 
 
@@ -322,42 +322,42 @@ void	W4200(uint32 addr, uint32 value)
 {
 	if (value & 0x10)
     	SNES.HIRQ_ok = 0;
-	DMA_PORT[0x00] = value;
+	CPU.DMA_PORT[0x00] = value;
 }
 
 void	W4203(uint32 addr, uint32 value)
 {
-      DMA_PORT[0x16]=DMA_PORT[0x02]*value;
-      DMA_PORT[0x17]=(DMA_PORT[0x16]>>8);
-      DMA_PORT[0x03] = value;
+      CPU.DMA_PORT[0x16]=CPU.DMA_PORT[0x02]*value;
+      CPU.DMA_PORT[0x17]=(CPU.DMA_PORT[0x16]>>8);
+      CPU.DMA_PORT[0x03] = value;
 }
       
 void	W4206(uint32 addr, uint32 value)
 {
       if (value) {
-        int tmp = (DMA_PORT[0x05]<<8)+DMA_PORT[0x04];
-        DMA_PORT[0x14]=tmp/value;
-        DMA_PORT[0x15]=DMA_PORT[0x14]>>8;
-        DMA_PORT[0x16]=tmp%value;
-        DMA_PORT[0x17]=DMA_PORT[0x16]>>8;
+        int tmp = (CPU.DMA_PORT[0x05]<<8)+CPU.DMA_PORT[0x04];
+        CPU.DMA_PORT[0x14]=tmp/value;
+        CPU.DMA_PORT[0x15]=CPU.DMA_PORT[0x14]>>8;
+        CPU.DMA_PORT[0x16]=tmp%value;
+        CPU.DMA_PORT[0x17]=CPU.DMA_PORT[0x16]>>8;
       } else { /* division par zero */
-        DMA_PORT[0x14] = DMA_PORT[0x15] = 0xFF;
-        DMA_PORT[0x16] = DMA_PORT[0x04];
-        DMA_PORT[0x17] = DMA_PORT[0x05];
+        CPU.DMA_PORT[0x14] = CPU.DMA_PORT[0x15] = 0xFF;
+        CPU.DMA_PORT[0x16] = CPU.DMA_PORT[0x04];
+        CPU.DMA_PORT[0x17] = CPU.DMA_PORT[0x05];
       }
- 	  DMA_PORT[0x06] = value;
+ 	  CPU.DMA_PORT[0x06] = value;
 }
 
 void	W4207(uint32 addr, uint32 value)
 {
 		SNES.HIRQ_value = (SNES.HIRQ_value&0xFF00) | value;
-		DMA_PORT[0x07] = value;
+		CPU.DMA_PORT[0x07] = value;
 }
 
 void	W4208(uint32 addr, uint32 value)
 {
 		SNES.HIRQ_value = (SNES.HIRQ_value&0x00FF) | (value << 8);
-		DMA_PORT[0x08] = value;
+		CPU.DMA_PORT[0x08] = value;
 }
 
 void	W420B(uint32 addr, uint32 value)
@@ -370,7 +370,7 @@ void	W420B(uint32 addr, uint32 value)
                  if (value & 0x20) DMA_transfert(5);
                  if (value & 0x40) DMA_transfert(6);
                  if (value & 0x80) DMA_transfert(7);
-                 DMA_PORT[0x0B] = value;
+                 CPU.DMA_PORT[0x0B] = value;
 }
 
 void	W420C(uint32 addr, uint32 value)
@@ -383,7 +383,7 @@ void	W420C(uint32 addr, uint32 value)
                  if (value & 0x20) HDMA_transfert(5);
                  if (value & 0x40) HDMA_transfert(6);
                  if (value & 0x80) HDMA_transfert(7);
-                 DMA_PORT[0x0C] = value;
+                 CPU.DMA_PORT[0x0C] = value;
 }                 
                  
 
@@ -414,23 +414,23 @@ uint32	R4210(uint32 addr)
   	  if (HCYCLES < NB_CYCLES-6 && SNES.V_Count == GFX.ScreenHeight-1)    
      // if (Cycles >= CPU.Cycles-6 && SNES.V_Count == GFX.ScreenHeight-1)    
       {
-        CPU.NMIActive = 1; DMA_PORT[0x10] = 0; return 0x80;
+        CPU.NMIActive = 1; CPU.DMA_PORT[0x10] = 0; return 0x80;
       }
       SET_WAITCYCLESDELAY(0);
       if (SNES.V_Count == GFX.ScreenHeight-1) SET_WAITCYCLESDELAY(6);
-      if (DMA_PORT[0x10]&0x80) {
-        DMA_PORT[0x10] &= ~0x80; return 0x80;
+      if (CPU.DMA_PORT[0x10]&0x80) {
+        CPU.DMA_PORT[0x10] &= ~0x80; return 0x80;
       }
-      return DMA_PORT[0x10];
+      return CPU.DMA_PORT[0x10];
 }
 
 uint32	R4211(uint32 addr)
 {
       SET_WAITCYCLESDELAY(0);
-      if (DMA_PORT[0x11] & 0x80) {
-        DMA_PORT[0x11] &= ~0x80; return 0x80;
+      if (CPU.DMA_PORT[0x11] & 0x80) {
+        CPU.DMA_PORT[0x11] &= ~0x80; return 0x80;
       }
-      return DMA_PORT[0x11];
+      return CPU.DMA_PORT[0x11];
 }
 
 uint32	R4212(uint32 addr)
@@ -439,92 +439,92 @@ uint32	R4212(uint32 addr)
       if (HCYCLES < NB_CYCLES - 65) SET_WAITCYCLESDELAY(60);
       if (SNES.V_Count == GFX.ScreenHeight-1)
         SET_WAITCYCLESDELAY(6);
-      DMA_PORT[0x12] =
+      CPU.DMA_PORT[0x12] =
         SNES.V_Count >= GFX.ScreenHeight && SNES.V_Count < GFX.ScreenHeight+3;
 	  // FiXME
 	  if (HCYCLES > 120)
-        DMA_PORT[0x12] |= 0x40;
+        CPU.DMA_PORT[0x12] |= 0x40;
 // FIXME            
 	  if (SNES.v_blank || (HCYCLES < NB_CYCLES-6 && SNES.V_Count == GFX.ScreenHeight-1))
 //      if (SNES.v_blank || (Cycles >= CPU.Cycles-6 && SNES.V_Count == GFX.ScreenHeight-1))     
-          DMA_PORT[0x12] |= 0x80;
-      return DMA_PORT[0x12];
+          CPU.DMA_PORT[0x12] |= 0x80;
+      return CPU.DMA_PORT[0x12];
 }
  	
 uint32	R2121(uint32 addr) 
 {  	
-      return (PPU_PORT[0x21]>>1);
+      return (CPU.PPU_PORT[0x21]>>1);
 }      
 /* 2134 - 2136 */
 
 uint32	R213X(uint32 addr) 
 {
       if (SNES.PPU_NeedMultiply) {
-        long result = (long)((short)(PPU_PORT[0x1B])) *
-                      (long)((short)(PPU_PORT[0x1C])>>8);
-//        long result = ((long)PPU_PORT[0x1B]*(long)PPU_PORT[0x1C])>>8;
-        PPU_PORT[0x34] = (result)&0xFF;
-        PPU_PORT[0x35] = (result>>8)&0xFF;
-        PPU_PORT[0x36] = (result>>16)&0xFF;
+        long result = (long)((short)(CPU.PPU_PORT[0x1B])) *
+                      (long)((short)(CPU.PPU_PORT[0x1C])>>8);
+//        long result = ((long)CPU.PPU_PORT[0x1B]*(long)CPU.PPU_PORT[0x1C])>>8;
+        CPU.PPU_PORT[0x34] = (result)&0xFF;
+        CPU.PPU_PORT[0x35] = (result>>8)&0xFF;
+        CPU.PPU_PORT[0x36] = (result>>16)&0xFF;
         SNES.PPU_NeedMultiply = 0;
       }
-      return PPU_PORT[addr];
+      return CPU.PPU_PORT[addr];
 }
 
 uint32	R2137(uint32 addr) 
 {
-      PPU_PORT[0x3C] = (HCYCLES)*9/5; // FIXME    	
-      PPU_PORT[0x3C] = (PPU_PORT[0x3C]>>8) | (PPU_PORT[0x3C]<<8);
-      PPU_PORT[0x3D] = SNES.V_Count;
-      PPU_PORT[0x3D] = (PPU_PORT[0x3D]>>8) | (PPU_PORT[0x3D]<<8);
-      return PPU_PORT[0x37];
+      CPU.PPU_PORT[0x3C] = (HCYCLES)*9/5; // FIXME    	
+      CPU.PPU_PORT[0x3C] = (CPU.PPU_PORT[0x3C]>>8) | (CPU.PPU_PORT[0x3C]<<8);
+      CPU.PPU_PORT[0x3D] = SNES.V_Count;
+      CPU.PPU_PORT[0x3D] = (CPU.PPU_PORT[0x3D]>>8) | (CPU.PPU_PORT[0x3D]<<8);
+      return CPU.PPU_PORT[0x37];
 }
 
 uint32	R2138(uint32 addr) 
 {
-      if ((PPU_PORT[0x02]) >= 0x100) {
-        if ((PPU_PORT[0x02]) < 0x110) {
+      if ((CPU.PPU_PORT[0x02]) >= 0x100) {
+        if ((CPU.PPU_PORT[0x02]) < 0x110) {
           if (GFX.OAM_upper_byte) {
             GFX.OAM_upper_byte = 0;
-            PPU_PORT[0x02]++;
-            return GFX.spr_info_ext[((PPU_PORT[0x02]-1)<<1)+1-0x200];
+            CPU.PPU_PORT[0x02]++;
+            return GFX.spr_info_ext[((CPU.PPU_PORT[0x02]-1)<<1)+1-0x200];
           } else {
             GFX.OAM_upper_byte = 1;
-            return GFX.spr_info_ext[(PPU_PORT[0x02]<<1)-0x200];
+            return GFX.spr_info_ext[(CPU.PPU_PORT[0x02]<<1)-0x200];
           }
         } else
-          PPU_PORT[0x02] = 0;
+          CPU.PPU_PORT[0x02] = 0;
       } else {
         if (GFX.OAM_upper_byte) {
           GFX.OAM_upper_byte = 0;
-          PPU_PORT[0x02]++;
-          return ((uchar *)GFX.spr_info)[((PPU_PORT[0x02]-1)<<1)+1];
+          CPU.PPU_PORT[0x02]++;
+          return ((uchar *)GFX.spr_info)[((CPU.PPU_PORT[0x02]-1)<<1)+1];
         } else {
           GFX.OAM_upper_byte = 1;
-          return ((uchar *)GFX.spr_info)[(PPU_PORT[0x02]<<1)];
+          return ((uchar *)GFX.spr_info)[(CPU.PPU_PORT[0x02]<<1)];
         }
       }
-      return PPU_PORT[0x38];
+      return CPU.PPU_PORT[0x38];
 }
 
 uint32	R2139(uint32 addr) 
 {
-         if (PPU_PORT[0x15]&0x80) {
-           return SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF];
+         if (CPU.PPU_PORT[0x15]&0x80) {
+           return SNESC.VRAM[(CPU.PPU_PORT[0x16]<<1)&0xFFFF];
          } else {
-           long result = SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF];
+           long result = SNESC.VRAM[(CPU.PPU_PORT[0x16]<<1)&0xFFFF];
            if (GFX.Dummy_VRAMRead) {
              GFX.Dummy_VRAMRead = 0;
            } else {
-             PPU_PORT[0x16] += GFX.SC_incr;
+             CPU.PPU_PORT[0x16] += GFX.SC_incr;
              if (GFX.FS_incr) {
-                PPU_PORT[0x16] += 8;
+                CPU.PPU_PORT[0x16] += 8;
                if (++GFX.FS_cnt == GFX.FS_incr) {
                  GFX.FS_cnt = 0;
                  if (++GFX.FS_cnt2 == 8) {
-                   GFX.FS_cnt2 = 0; PPU_PORT[0x16] -= 8-GFX.SC_incr;
+                   GFX.FS_cnt2 = 0; CPU.PPU_PORT[0x16] -= 8-GFX.SC_incr;
                  } else
-                   PPU_PORT[0x16] -= 8*GFX.FS_incr-GFX.SC_incr;
+                   CPU.PPU_PORT[0x16] -= 8*GFX.FS_incr-GFX.SC_incr;
                }
              }
            }
@@ -534,23 +534,23 @@ uint32	R2139(uint32 addr)
 
 uint32	R213A(uint32 addr) 
 {
-         if ((PPU_PORT[0x15]&0x80) == 0) {
-           return SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF];
+         if ((CPU.PPU_PORT[0x15]&0x80) == 0) {
+           return SNESC.VRAM[((CPU.PPU_PORT[0x16]<<1)+1)&0xFFFF];
          } else {
-           long result = SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF];
+           long result = SNESC.VRAM[((CPU.PPU_PORT[0x16]<<1)+1)&0xFFFF];
            if (GFX.Dummy_VRAMRead) {
              GFX.Dummy_VRAMRead = 0;
            } else {
-             PPU_PORT[0x16] += GFX.SC_incr;
+             CPU.PPU_PORT[0x16] += GFX.SC_incr;
              if (GFX.FS_incr) {
-               PPU_PORT[0x16]+=8;
+               CPU.PPU_PORT[0x16]+=8;
                if (++GFX.FS_cnt == GFX.FS_incr) {
                  GFX.FS_cnt = 0;
                  if (++GFX.FS_cnt2 == 8) {
-                   GFX.FS_cnt2 = 0; PPU_PORT[0x16]-=8-GFX.SC_incr;
+                   GFX.FS_cnt2 = 0; CPU.PPU_PORT[0x16]-=8-GFX.SC_incr;
                  }
                  else
-                   PPU_PORT[0x16]-=8*GFX.FS_incr-GFX.SC_incr;
+                   CPU.PPU_PORT[0x16]-=8*GFX.FS_incr-GFX.SC_incr;
                }
              }
            }
@@ -560,27 +560,27 @@ uint32	R213A(uint32 addr)
          
 uint32	R213B(uint32 addr) 
 {
-         if (PPU_PORT[0x21] == 0x200) PPU_PORT[0x21]=0;
-         if ((PPU_PORT[0x21]&1) == 0) {
-           GFX.CG_RAM_mem_temp = GFX.SNESPal[PPU_PORT[0x21]/2];
-           PPU_PORT[0x3B] = GFX.CG_RAM_mem_temp&0xFF;
+         if (CPU.PPU_PORT[0x21] == 0x200) CPU.PPU_PORT[0x21]=0;
+         if ((CPU.PPU_PORT[0x21]&1) == 0) {
+           GFX.CG_RAM_mem_temp = GFX.SNESPal[CPU.PPU_PORT[0x21]/2];
+           CPU.PPU_PORT[0x3B] = GFX.CG_RAM_mem_temp&0xFF;
          } else {
-           PPU_PORT[0x3B] = GFX.CG_RAM_mem_temp>>8;
+           CPU.PPU_PORT[0x3B] = GFX.CG_RAM_mem_temp>>8;
          }
-         PPU_PORT[0x21]++;
-         return PPU_PORT[0x3B];
+         CPU.PPU_PORT[0x21]++;
+         return CPU.PPU_PORT[0x3B];
 } 
         
 uint32	R213C(uint32 addr) 
 {
-      PPU_PORT[0x3C] = (PPU_PORT[0x3C]>>8)|(PPU_PORT[0x3C]<<8);
-      return PPU_PORT[0x3C];
+      CPU.PPU_PORT[0x3C] = (CPU.PPU_PORT[0x3C]>>8)|(CPU.PPU_PORT[0x3C]<<8);
+      return CPU.PPU_PORT[0x3C];
 }
 
 uint32	R213D(uint32 addr)
 {
-      PPU_PORT[0x3D] = (PPU_PORT[0x3D]>>8)|(PPU_PORT[0x3D]<<8);
-      return PPU_PORT[0x3D];
+      CPU.PPU_PORT[0x3D] = (CPU.PPU_PORT[0x3D]>>8)|(CPU.PPU_PORT[0x3D]<<8);
+      return CPU.PPU_PORT[0x3D];
 }
 
 uint32	R213F(uint32 addr)
@@ -594,7 +594,7 @@ uint32	R2140(uint32 addr)
       if (!CFG.Sound_output)
       { /* APU Skipper */
         switch ((MyIPC->skipper_cnt1++)%11) {
-          case 0: return PPU_PORT[0x40];
+          case 0: return CPU.PPU_PORT[0x40];
           case 1: return REAL_A;                                
           case 2: return X;
           case 3: return Y;
@@ -641,7 +641,7 @@ uint32	R2141(uint32 addr)
       if (!CFG.Sound_output)
       { /* APU Skipper */
         switch ((MyIPC->skipper_cnt2++)%13) {
-          case 0: return PPU_PORT[0x41];
+          case 0: return CPU.PPU_PORT[0x41];
           case 1: return REAL_A;
           case 2: return X;
           case 3: return Y;
@@ -664,7 +664,7 @@ uint32	R2142(uint32 addr)
       if (!CFG.Sound_output)
 	  {
         switch ((MyIPC->skipper_cnt3++)%7) {
-          case 0: return PPU_PORT[0x42];
+          case 0: return CPU.PPU_PORT[0x42];
           case 1: return REAL_A;
           case 2: return X;
           case 3: return Y;
@@ -681,7 +681,7 @@ uint32	R2143(uint32 addr)
       if (!CFG.Sound_output)
 	  {
         switch((MyIPC->skipper_cnt4++) % 9) {
-          case 0: return PPU_PORT[0x43];
+          case 0: return CPU.PPU_PORT[0x43];
           case 1: return REAL_A;
           case 2: return X;
           case 3: return Y;
@@ -697,13 +697,13 @@ uint32	R2143(uint32 addr)
 
 uint32	R2180(uint32 addr)
 {     
-      PPU_PORT[0x80] =
-        SNESC.RAM[PPU_PORT[0x81]+(PPU_PORT[0x82]<<8)+((PPU_PORT[0x83]&1)<<16)];
-      PPU_PORT[0x81] = (PPU_PORT[0x81]+1)&0xff;
-      if (!PPU_PORT[0x81]) {
-        PPU_PORT[0x82] = (PPU_PORT[0x82]+1)&0xff; if (!PPU_PORT[0x82]) PPU_PORT[0x83]++;
+      CPU.PPU_PORT[0x80] =
+        SNESC.RAM[CPU.PPU_PORT[0x81]+(CPU.PPU_PORT[0x82]<<8)+((CPU.PPU_PORT[0x83]&1)<<16)];
+      CPU.PPU_PORT[0x81] = (CPU.PPU_PORT[0x81]+1)&0xff;
+      if (!CPU.PPU_PORT[0x81]) {
+        CPU.PPU_PORT[0x82] = (CPU.PPU_PORT[0x82]+1)&0xff; if (!CPU.PPU_PORT[0x82]) CPU.PPU_PORT[0x83]++;
       }
-      return PPU_PORT[0x80];
+      return CPU.PPU_PORT[0x80];
 }
 
 #if 0
@@ -731,93 +731,93 @@ uint32	R2180(uint32 addr)
 void	W2100(uint32 addr, uint32 value)
 {
     GFX.Blank_Screen = (value&0x80) != 0;
-    if ((value&0xf) != (PPU_PORT[0x00]&0xf)) {
+    if ((value&0xf) != (CPU.PPU_PORT[0x00]&0xf)) {
           
     	GFX.new_color = 255;
 	    PPU_setScreen(value);             
     }
-    PPU_PORT[0x00] = value;
+    CPU.PPU_PORT[0x00] = value;
 }
 
 void	W2101(uint32 addr, uint32 value)
 {
-    	 if (value != PPU_PORT[0x01]) {
+    	 if (value != CPU.PPU_PORT[0x01]) {
            GFX.spr_addr_base = (value&0x03)<<14;
            GFX.spr_addr_select = (value&0x18)<<10;
            check_sprite_addr();
          }
-    	 PPU_PORT[0x01] = value;
+    	 CPU.PPU_PORT[0x01] = value;
 }
 
 void	W2102(uint32 addr, uint32 value)
 {
-         PPU_PORT[0x02] = (PPU_PORT[0x02]&0x100)+value;
-         GFX.Old_SpriteAddress = PPU_PORT[0x02];
-         if (PPU_PORT[0x03]&0x80)
-           GFX.HighestSprite = (PPU_PORT[0x02]>>1)&0x7f;
+         CPU.PPU_PORT[0x02] = (CPU.PPU_PORT[0x02]&0x100)+value;
+         GFX.Old_SpriteAddress = CPU.PPU_PORT[0x02];
+         if (CPU.PPU_PORT[0x03]&0x80)
+           GFX.HighestSprite = (CPU.PPU_PORT[0x02]>>1)&0x7f;
          GFX.OAM_upper_byte = 0;
            GFX.Sprites_table_dirty = 1;
 }
                     
 void	W2103(uint32 addr, uint32 value)
 {
-         PPU_PORT[0x02] = (PPU_PORT[0x02]&0xff)+(value&1)*0x100;
-         if (PPU_PORT[0x02] >= 0x110)
-           PPU_PORT[0x02] %= 0x110;
-         GFX.Old_SpriteAddress = PPU_PORT[0x02];
-         GFX.HighestSprite = (PPU_PORT[0x02]>>1)&0x7f;
+         CPU.PPU_PORT[0x02] = (CPU.PPU_PORT[0x02]&0xff)+(value&1)*0x100;
+         if (CPU.PPU_PORT[0x02] >= 0x110)
+           CPU.PPU_PORT[0x02] %= 0x110;
+         GFX.Old_SpriteAddress = CPU.PPU_PORT[0x02];
+         GFX.HighestSprite = (CPU.PPU_PORT[0x02]>>1)&0x7f;
          GFX.OAM_upper_byte = 0;
 //         GFX.Sprites_table_dirty = 1;
-         PPU_PORT[0x03] = value;
+         CPU.PPU_PORT[0x03] = value;
 }
 
 void	W2104(uint32 addr, uint32 value)
 {
-         if ((PPU_PORT[0x02]) >= 0x100) {
+         if ((CPU.PPU_PORT[0x02]) >= 0x100) {
            if (GFX.OAM_upper_byte) {
-             if (GFX.spr_info_ext[(PPU_PORT[0x02]<<1)+1-0x200] != value)
+             if (GFX.spr_info_ext[(CPU.PPU_PORT[0x02]<<1)+1-0x200] != value)
                {
-                 GFX.spr_info_ext[(PPU_PORT[0x02]<<1)+1-0x200] = value;
+                 GFX.spr_info_ext[(CPU.PPU_PORT[0x02]<<1)+1-0x200] = value;
                  GFX.Sprites_table_dirty = 1;
                }
-             PPU_PORT[0x02]++;
-             if (PPU_PORT[0x02] == 0x110)
-               PPU_PORT[0x02] = 0;
+             CPU.PPU_PORT[0x02]++;
+             if (CPU.PPU_PORT[0x02] == 0x110)
+               CPU.PPU_PORT[0x02] = 0;
              GFX.OAM_upper_byte = 0;
            } else {
-             if (GFX.spr_info_ext[(PPU_PORT[0x02]<<1)-0x200] != value)
+             if (GFX.spr_info_ext[(CPU.PPU_PORT[0x02]<<1)-0x200] != value)
                {
-                 GFX.spr_info_ext[(PPU_PORT[0x02]<<1)-0x200] = value;
+                 GFX.spr_info_ext[(CPU.PPU_PORT[0x02]<<1)-0x200] = value;
                  GFX.Sprites_table_dirty = 1;
                }
              GFX.OAM_upper_byte = 1;
            }
          } else {
            if (GFX.OAM_upper_byte) {
-             if (((uchar *)GFX.spr_info)[(PPU_PORT[0x02]<<1)+1] != value)
+             if (((uchar *)GFX.spr_info)[(CPU.PPU_PORT[0x02]<<1)+1] != value)
                {
-                 ((uchar *)GFX.spr_info)[(PPU_PORT[0x02]<<1)+1] = value;
+                 ((uchar *)GFX.spr_info)[(CPU.PPU_PORT[0x02]<<1)+1] = value;
                  GFX.Sprites_table_dirty = 1;
                }
-             PPU_PORT[0x02]++;
+             CPU.PPU_PORT[0x02]++;
              GFX.OAM_upper_byte = 0;
            } else {
-             if (((uchar *)GFX.spr_info)[(PPU_PORT[0x02]<<1)] != value)
+             if (((uchar *)GFX.spr_info)[(CPU.PPU_PORT[0x02]<<1)] != value)
                {
-                 ((uchar *)GFX.spr_info)[(PPU_PORT[0x02]<<1)] = value;
+                 ((uchar *)GFX.spr_info)[(CPU.PPU_PORT[0x02]<<1)] = value;
                  GFX.Sprites_table_dirty = 1;
                }
              GFX.OAM_upper_byte = 1;
            }
          }
-         PPU_PORT[0x04] = value;
+         CPU.PPU_PORT[0x04] = value;
 }
          
 void	W2105(uint32 addr, uint32 value)
 {		
-	if (value == PPU_PORT[0x05])
+	if (value == CPU.PPU_PORT[0x05])
 		return;
-	PPU_PORT[0x05] = value;		
+	CPU.PPU_PORT[0x05] = value;		
 	// Update tile system
 	PPU_add_tile_address(0); 
 	PPU_add_tile_address(1);
@@ -827,31 +827,31 @@ void	W2105(uint32 addr, uint32 value)
 void	W2107(uint32 addr, uint32 value)
 {		
 	GFX.map_slot[0] = (value&0x7C)>>2;
-	if (!(PPU_PORT[0x05]&(0x10 << 0)))	
+	if (!(CPU.PPU_PORT[0x05]&(0x10 << 0)))	
 	{
 		GFX.map_slot_ds[0] = GFX.map_slot[0];
 		GFX.map_size[0] = (value & 0x3) << 14; 
 	}
 
-	PPU_PORT[0x07] = value;
+	CPU.PPU_PORT[0x07] = value;
 }
 
 void	W2108(uint32 addr, uint32 value)
 {		
 	GFX.map_slot[1] = (value&0x7C)>>2;
-	if (!(PPU_PORT[0x05]&(0x10 << 1)))	
+	if (!(CPU.PPU_PORT[0x05]&(0x10 << 1)))	
 	{
 		GFX.map_slot_ds[1] = GFX.map_slot[1];
 		GFX.map_size[1] = (value & 0x3) << 14;
 	}
 	
-	PPU_PORT[0x08] = value;
+	CPU.PPU_PORT[0x08] = value;
 }
 
 void	W2109(uint32 addr, uint32 value)
 {		
 	GFX.map_slot[2] = (value&0x7C)>>2;
-	if (!(PPU_PORT[0x05]&(0x10 << 2)))
+	if (!(CPU.PPU_PORT[0x05]&(0x10 << 2)))
 	{	
 		// Bad palette in bg3 dirty fix
 		if (CFG.BG3PaletteFix)
@@ -861,23 +861,23 @@ void	W2109(uint32 addr, uint32 value)
 		GFX.map_size[2] = (value & 0x3) << 14;
 	}
 	
-	PPU_PORT[0x09] = value;
+	CPU.PPU_PORT[0x09] = value;
 }
 
 void	W210A(uint32 addr, uint32 value)
 {		
 	GFX.map_slot[3] = (value&0x7C)>>2;
-	if (!(PPU_PORT[0x05]&(0x10 << 3)))	
+	if (!(CPU.PPU_PORT[0x05]&(0x10 << 3)))	
 	{	
 		GFX.map_slot_ds[3] = GFX.map_slot[3];
 		GFX.map_size[3] = (value & 0x3) << 14;
 	}
-	PPU_PORT[0x0A] = value;
+	CPU.PPU_PORT[0x0A] = value;
 }
 
 void	W210B(uint32 addr, uint32 value)
 {		
-    if (value != PPU_PORT[0x0B])
+    if (value != CPU.PPU_PORT[0x0B])
     {
   	  GFX.tile_address[0] = ((value&0x07) << 0xd);
   	  GFX.tile_address[1] = ((value&0x70) << 0x9);
@@ -885,12 +885,12 @@ void	W210B(uint32 addr, uint32 value)
   	  PPU_add_tile_address(0);
   	  PPU_add_tile_address(1);
     }
-	PPU_PORT[0x0B] = value;    	  
+	CPU.PPU_PORT[0x0B] = value;    	  
 }
 
 void	W210C(uint32 addr, uint32 value)
 {		
-    if (value != PPU_PORT[0x0C])
+    if (value != CPU.PPU_PORT[0x0C])
     {
   	  GFX.tile_address[2] = ((value&0x07) << 0xd);
   	  GFX.tile_address[3] = ((value&0x70) << 0x9);
@@ -898,83 +898,83 @@ void	W210C(uint32 addr, uint32 value)
   	  PPU_add_tile_address(2);
   	  PPU_add_tile_address(3);
     }
-	PPU_PORT[0x0C] = value;    	  
+	CPU.PPU_PORT[0x0C] = value;    	  
 }
 
 void	W210D(uint32 addr, uint32 value) {
      if ((GFX.BG_scroll_reg&0x01)==0) {
-       GFX.old_scrollx[0] = PPU_PORT[0x0D];
-       PPU_PORT[0x0D] = value; GFX.BG_scroll_reg |= 0x01;
+       GFX.old_scrollx[0] = CPU.PPU_PORT[0x0D];
+       CPU.PPU_PORT[0x0D] = value; GFX.BG_scroll_reg |= 0x01;
      } else {
-       PPU_PORT[0x0D] += (value<<8); GFX.BG_scroll_reg &= ~0x01;
+       CPU.PPU_PORT[0x0D] += (value<<8); GFX.BG_scroll_reg &= ~0x01;
 //           update_scrollx(0);
      }
 }
          
 void	W210E(uint32 addr, uint32 value) {
          if ((GFX.BG_scroll_reg&0x02)==0) {
-           GFX.old_scrolly[0] = PPU_PORT[0x0E];
-           PPU_PORT[0x0E] = value; GFX.BG_scroll_reg |= 0x02;
+           GFX.old_scrolly[0] = CPU.PPU_PORT[0x0E];
+           CPU.PPU_PORT[0x0E] = value; GFX.BG_scroll_reg |= 0x02;
          } else {
-           PPU_PORT[0x0E] += (value<<8); GFX.BG_scroll_reg &= ~0x02;
+           CPU.PPU_PORT[0x0E] += (value<<8); GFX.BG_scroll_reg &= ~0x02;
 //           update_scrolly(0);
          }
 }
          
 void	W210F(uint32 addr, uint32 value) {
          if ((GFX.BG_scroll_reg&0x04)==0) {
-           GFX.old_scrollx[1] = PPU_PORT[0x0F];
-           PPU_PORT[0x0F] = value; GFX.BG_scroll_reg |= 0x04;
+           GFX.old_scrollx[1] = CPU.PPU_PORT[0x0F];
+           CPU.PPU_PORT[0x0F] = value; GFX.BG_scroll_reg |= 0x04;
          } else {
-           PPU_PORT[0x0F] += (value<<8); GFX.BG_scroll_reg &= ~0x04;
+           CPU.PPU_PORT[0x0F] += (value<<8); GFX.BG_scroll_reg &= ~0x04;
   //         update_scrollx(1);
      }
 }
 
 void	W2110(uint32 addr, uint32 value) {
      if ((GFX.BG_scroll_reg&0x08)==0) {
-       GFX.old_scrolly[1] = PPU_PORT[0x10];
-       PPU_PORT[0x10] = value; GFX.BG_scroll_reg |= 0x08;
+       GFX.old_scrolly[1] = CPU.PPU_PORT[0x10];
+       CPU.PPU_PORT[0x10] = value; GFX.BG_scroll_reg |= 0x08;
      } else {
-       PPU_PORT[0x10] += (value<<8); GFX.BG_scroll_reg &= ~0x08;
+       CPU.PPU_PORT[0x10] += (value<<8); GFX.BG_scroll_reg &= ~0x08;
 //           update_scrolly(1);
      }
 }
      
 void	W2111(uint32 addr, uint32 value) {
      if ((GFX.BG_scroll_reg&0x10)==0) {
-       GFX.old_scrollx[2] = PPU_PORT[0x11];
-       PPU_PORT[0x11] = value; GFX.BG_scroll_reg |= 0x10;
+       GFX.old_scrollx[2] = CPU.PPU_PORT[0x11];
+       CPU.PPU_PORT[0x11] = value; GFX.BG_scroll_reg |= 0x10;
      } else {
-       PPU_PORT[0x11] += (value<<8); GFX.BG_scroll_reg &= ~0x10;
+       CPU.PPU_PORT[0x11] += (value<<8); GFX.BG_scroll_reg &= ~0x10;
 //           update_scrollx(2);
      }
 } 
     
 void	W2112(uint32 addr, uint32 value) {
      if ((GFX.BG_scroll_reg&0x20)==0) {
-       GFX.old_scrolly[2] = PPU_PORT[0x12];
-       PPU_PORT[0x12] = value; GFX.BG_scroll_reg |= 0x20;
+       GFX.old_scrolly[2] = CPU.PPU_PORT[0x12];
+       CPU.PPU_PORT[0x12] = value; GFX.BG_scroll_reg |= 0x20;
      } else {
-       PPU_PORT[0x12] += (value<<8); GFX.BG_scroll_reg &= ~0x20;
+       CPU.PPU_PORT[0x12] += (value<<8); GFX.BG_scroll_reg &= ~0x20;
 //           update_scrolly(2);
      }
 }
      
 void	W2113(uint32 addr, uint32 value) {
      if ((GFX.BG_scroll_reg&0x40)==0) {
-       PPU_PORT[0x13] = value; GFX.BG_scroll_reg |= 0x40;
+       CPU.PPU_PORT[0x13] = value; GFX.BG_scroll_reg |= 0x40;
      } else {
-       PPU_PORT[0x13] += (value<<8); GFX.BG_scroll_reg &= ~0x40;
+       CPU.PPU_PORT[0x13] += (value<<8); GFX.BG_scroll_reg &= ~0x40;
      } 
 //         GFX.tiles_ry[3] = 8; return;
 }
 
 void	W2114(uint32 addr, uint32 value) {
      if ((GFX.BG_scroll_reg&0x80)==0) {
-       PPU_PORT[0x14] = value; GFX.BG_scroll_reg |= 0x80;
+       CPU.PPU_PORT[0x14] = value; GFX.BG_scroll_reg |= 0x80;
      } else {
-       PPU_PORT[0x14] += (value<<8); GFX.BG_scroll_reg &= ~0x80;
+       CPU.PPU_PORT[0x14] += (value<<8); GFX.BG_scroll_reg &= ~0x80;
      } 
 //         GFX.tiles_ry[3] = 8; return;
 }
@@ -993,72 +993,72 @@ void	W2115(uint32 addr, uint32 value)
            case 0x8 : GFX.FS_incr = 0x40; GFX.FS_cnt2 = GFX.FS_cnt = 0; break;
            case 0xC : GFX.FS_incr = 0x80; GFX.FS_cnt2 = GFX.FS_cnt = 0; break;
          }
-         PPU_PORT[0x15] = value;
+         CPU.PPU_PORT[0x15] = value;
 }
 
 void	W2116(uint32 addr, uint32 value) 
 {
-         PPU_PORT[0x16] = (PPU_PORT[0x16]&0xff00) + value;
+         CPU.PPU_PORT[0x16] = (CPU.PPU_PORT[0x16]&0xff00) + value;
          GFX.Dummy_VRAMRead = 1;
 }
 
 void	W2117(uint32 addr, uint32 value) 
 {
-         PPU_PORT[0x16] = (PPU_PORT[0x16]&0xff) + (value << 8);
+         CPU.PPU_PORT[0x16] = (CPU.PPU_PORT[0x16]&0xff) + (value << 8);
          GFX.Dummy_VRAMRead = 1;
-         PPU_PORT[0x17] = value;
+         CPU.PPU_PORT[0x17] = value;
 }
 
 void	W2118(uint32 addr, uint32 value)
 {
-   	 if (PPU_PORT[0x15]&0x80) {
-           if (SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] != value)
+   	 if (CPU.PPU_PORT[0x15]&0x80) {
+           if (SNESC.VRAM[(CPU.PPU_PORT[0x16]<<1)&0xFFFF] != value)
 			 check_tile();
-           SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] = value;
+           SNESC.VRAM[(CPU.PPU_PORT[0x16]<<1)&0xFFFF] = value;
          } else {
-           if (SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] != value)
+           if (SNESC.VRAM[(CPU.PPU_PORT[0x16]<<1)&0xFFFF] != value)
 			 check_tile();
-           SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] = value;
-           PPU_PORT[0x16] += GFX.SC_incr;
+           SNESC.VRAM[(CPU.PPU_PORT[0x16]<<1)&0xFFFF] = value;
+           CPU.PPU_PORT[0x16] += GFX.SC_incr;
            if (GFX.FS_incr) {
-             PPU_PORT[0x16] += 8;
+             CPU.PPU_PORT[0x16] += 8;
              if (++GFX.FS_cnt == GFX.FS_incr) {
                GFX.FS_cnt = 0;
                if (++GFX.FS_cnt2 == 8) {
-                 GFX.FS_cnt2 = 0; PPU_PORT[0x16] -= 7;
+                 GFX.FS_cnt2 = 0; CPU.PPU_PORT[0x16] -= 7;
                } else
-                 PPU_PORT[0x16] -= 8*GFX.FS_incr-1;
+                 CPU.PPU_PORT[0x16] -= 8*GFX.FS_incr-1;
              }
            }
          }
-	PPU_PORT[0x18] = value; // needed ?
+	CPU.PPU_PORT[0x18] = value; // needed ?
 }
          
 void	W2119(uint32 addr, uint32 value)
 {
-   	 if ((PPU_PORT[0x15]&0x80) == 0) {
-           if (SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] != value)
+   	 if ((CPU.PPU_PORT[0x15]&0x80) == 0) {
+           if (SNESC.VRAM[((CPU.PPU_PORT[0x16]<<1)+1)&0xFFFF] != value)
 				check_tile();
-           SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] = value;
+           SNESC.VRAM[((CPU.PPU_PORT[0x16]<<1)+1)&0xFFFF] = value;
          } else {
-           if (SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] != value)
+           if (SNESC.VRAM[((CPU.PPU_PORT[0x16]<<1)+1)&0xFFFF] != value)
 			 check_tile();
-           SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] = value;
+           SNESC.VRAM[((CPU.PPU_PORT[0x16]<<1)+1)&0xFFFF] = value;
            if (!GFX.FS_incr) {
-             PPU_PORT[0x16] += GFX.SC_incr;
+             CPU.PPU_PORT[0x16] += GFX.SC_incr;
            } else {
-             PPU_PORT[0x16] += 8;
+             CPU.PPU_PORT[0x16] += 8;
              if (++GFX.FS_cnt == GFX.FS_incr) {
                GFX.FS_cnt = 0;
                if (++GFX.FS_cnt2 == 8) {
-                 GFX.FS_cnt2 = 0; PPU_PORT[0x16] -= 8-GFX.SC_incr;
+                 GFX.FS_cnt2 = 0; CPU.PPU_PORT[0x16] -= 8-GFX.SC_incr;
                }
                else
-                 PPU_PORT[0x16] -= 8*GFX.FS_incr-GFX.SC_incr;
+                 CPU.PPU_PORT[0x16] -= 8*GFX.FS_incr-GFX.SC_incr;
              }
            }
          }
-	PPU_PORT[0x19] = value;
+	CPU.PPU_PORT[0x19] = value;
 }
 
 void	W211A(uint32 addr, uint32 value)
@@ -1066,66 +1066,66 @@ void	W211A(uint32 addr, uint32 value)
 	 SNES.Mode7Repeat = value>>6;
 /*	 SNES.Mode7VFlip = (Byte & 2) >> 1;
 	 SNES.Mode7HFlip = Byte & 1;*/
-	 PPU_PORT[0x1A] = value;
+	 CPU.PPU_PORT[0x1A] = value;
 }
 
 void	W211B(uint32 addr, uint32 value)
 {
-         PPU_PORT[0x1B] = (PPU_PORT[0x1B] >> 8) + (value << 8);
+         CPU.PPU_PORT[0x1B] = (CPU.PPU_PORT[0x1B] >> 8) + (value << 8);
          SNES.PPU_NeedMultiply = 1;
 }
 
 void	W211C(uint32 addr, uint32 value)
 {
-         PPU_PORT[0x1C] = (PPU_PORT[0x1C] >> 8) + (value << 8);
+         CPU.PPU_PORT[0x1C] = (CPU.PPU_PORT[0x1C] >> 8) + (value << 8);
          SNES.PPU_NeedMultiply = 1;
 }
          
 void	W211D(uint32 addr, uint32 value)
 {
-         PPU_PORT[0x1D] = (PPU_PORT[0x1D] >> 8) + (value << 8);
+         CPU.PPU_PORT[0x1D] = (CPU.PPU_PORT[0x1D] >> 8) + (value << 8);
 }
          
 void	W211E(uint32 addr, uint32 value)
 {
-         PPU_PORT[0x1E] = (PPU_PORT[0x1E] >> 8) + (value << 8);
+         CPU.PPU_PORT[0x1E] = (CPU.PPU_PORT[0x1E] >> 8) + (value << 8);
 }
          
 void	W211F(uint32 addr, uint32 value)
 {
-         PPU_PORT[0x1F] = (PPU_PORT[0x1F] >> 8) + (value << 8);
+         CPU.PPU_PORT[0x1F] = (CPU.PPU_PORT[0x1F] >> 8) + (value << 8);
 }
          
 void	W2120(uint32 addr, uint32 value)
 {
-         PPU_PORT[0x20] = (PPU_PORT[0x20] >> 8) + (value << 8);
+         CPU.PPU_PORT[0x20] = (CPU.PPU_PORT[0x20] >> 8) + (value << 8);
 }
 
 void	W2121(uint32 addr, uint32 value)
 {
-         PPU_PORT[0x21] = (value << 1);
+         CPU.PPU_PORT[0x21] = (value << 1);
 }
 
 void	W2122(uint32 addr, uint32 value)
 {
-         if (PPU_PORT[0x21] == 0x200) PPU_PORT[0x21]=0;
-         if ((PPU_PORT[0x21]&1) == 0)
+         if (CPU.PPU_PORT[0x21] == 0x200) CPU.PPU_PORT[0x21]=0;
+         if ((CPU.PPU_PORT[0x21]&1) == 0)
            GFX.CG_RAM_mem_temp = value;
          else {
            uint16	p;
            GFX.CG_RAM_mem_temp = (GFX.CG_RAM_mem_temp&0xff)+(value<<8);
            p = GFX.CG_RAM_mem_temp&0x7FFF;
-           if (p != GFX.SNESPal[PPU_PORT[0x21]/2])
+           if (p != GFX.SNESPal[CPU.PPU_PORT[0x21]/2])
 		   {
-             GFX.SNESPal[PPU_PORT[0x21]/2] = p;
+             GFX.SNESPal[CPU.PPU_PORT[0x21]/2] = p;
              GFX.new_color |= 1;
-			 GFX.new_colors[PPU_PORT[0x21]/2] = 1;
-             if ((PPU_PORT[0x21]/2) != 0)
-		     	PPU_setPalette(PPU_PORT[0x21]/2, p);
+			 GFX.new_colors[CPU.PPU_PORT[0x21]/2] = 1;
+             if ((CPU.PPU_PORT[0x21]/2) != 0)
+		     	PPU_setPalette(CPU.PPU_PORT[0x21]/2, p);
            }
          } 
-         PPU_PORT[0x21]++;
-         PPU_PORT[0x22] = value;
+         CPU.PPU_PORT[0x21]++;
+         CPU.PPU_PORT[0x22] = value;
 }
 
 void	W2132(uint32 addr, uint32 value) 
@@ -1133,13 +1133,13 @@ void	W2132(uint32 addr, uint32 value)
 	if ((value & 0x20)) GFX.BACK = (GFX.BACK&0x7fe0)|((value&0x1f)<<0); /* R */
     if ((value & 0x40)) GFX.BACK = (GFX.BACK&0x7c1f)|((value&0x1f)<<5); /* G */
     if ((value & 0x80)) GFX.BACK = (GFX.BACK&0x03ff)|((value&0x1f)<<10); /* B */
-    PPU_PORT[0x32] = value;
+    CPU.PPU_PORT[0x32] = value;
 }
 
 void	W2133(uint32 addr, uint32 value)
 {
          GFX.ScreenHeight = (value&4)?240:224;
-         PPU_PORT[0x33] = value;
+         CPU.PPU_PORT[0x33] = value;
 }
 
 /*
@@ -1201,7 +1201,7 @@ void	W2140(uint32 addr, uint32 value)
 			MyIPC->APU_ADDR_BLKP[0] = 1;    	
     }
     else
-        PPU_PORT[0x40] = value; 
+        CPU.PPU_PORT[0x40] = value; 
 }
 
 //
@@ -1237,7 +1237,7 @@ void	W2141(uint32 addr, uint32 value)
 			MyIPC->APU_ADDR_BLKP[1] = 1;			    	
     }
     else
-        PPU_PORT[0x41] = value;
+        CPU.PPU_PORT[0x41] = value;
 }
 
 //
@@ -1262,7 +1262,7 @@ void	W2142(uint32 addr, uint32 value)
 			MyIPC->APU_ADDR_BLKP[2] = 1;			    	
     }
     else
-        PPU_PORT[0x42] = value;    	     
+        CPU.PPU_PORT[0x42] = value;    	     
 }
 
 //
@@ -1287,70 +1287,70 @@ void	W2143(uint32 addr, uint32 value)
 			MyIPC->APU_ADDR_BLKP[3] = 1;			    	
     }
     else
-        PPU_PORT[0x43] = value; 
+        CPU.PPU_PORT[0x43] = value; 
 }
 
 
 void	W2180(uint32 addr, uint32 value)
 {
-      SNESC.RAM[PPU_PORT[0x81]+(PPU_PORT[0x82]<<8)+((PPU_PORT[0x83]&1)<<16)] = value;
-      PPU_PORT[0x81] = (PPU_PORT[0x81]+1)&0xff;
-      if (!PPU_PORT[0x81]) {
-        PPU_PORT[0x82] = (PPU_PORT[0x82]+1)&0xff;
-        if (!PPU_PORT[0x82]) PPU_PORT[0x83]++;
+      SNESC.RAM[CPU.PPU_PORT[0x81]+(CPU.PPU_PORT[0x82]<<8)+((CPU.PPU_PORT[0x83]&1)<<16)] = value;
+      CPU.PPU_PORT[0x81] = (CPU.PPU_PORT[0x81]+1)&0xff;
+      if (!CPU.PPU_PORT[0x81]) {
+        CPU.PPU_PORT[0x82] = (CPU.PPU_PORT[0x82]+1)&0xff;
+        if (!CPU.PPU_PORT[0x82]) CPU.PPU_PORT[0x83]++;
       }
 }
 
 void	WW210D(uint32 addr, uint32 value) {
-   GFX.old_scrollx[0] = PPU_PORT[0x0D];
-   PPU_PORT[0x0D] = value;
+   GFX.old_scrollx[0] = CPU.PPU_PORT[0x0D];
+   CPU.PPU_PORT[0x0D] = value;
 //           update_scrollx(0);
 }         
 void	WW210E(uint32 addr, uint32 value) {
-   GFX.old_scrolly[0] = PPU_PORT[0x0E];
-   PPU_PORT[0x0E] = value;
+   GFX.old_scrolly[0] = CPU.PPU_PORT[0x0E];
+   CPU.PPU_PORT[0x0E] = value;
 //           update_scrolly(0);
 }         
 void	WW210F(uint32 addr, uint32 value) {
-   GFX.old_scrollx[1] = PPU_PORT[0x0F];
-   PPU_PORT[0x0F] = value;
+   GFX.old_scrollx[1] = CPU.PPU_PORT[0x0F];
+   CPU.PPU_PORT[0x0F] = value;
 //         update_scrollx(1);
 }
 void	WW2110(uint32 addr, uint32 value) {
-   GFX.old_scrolly[1] = PPU_PORT[0x10];
-   PPU_PORT[0x10] = value;
+   GFX.old_scrolly[1] = CPU.PPU_PORT[0x10];
+   CPU.PPU_PORT[0x10] = value;
 //           update_scrolly(1);
 }     
 void	WW2111(uint32 addr, uint32 value) {
-   GFX.old_scrollx[2] = PPU_PORT[0x11];
-   PPU_PORT[0x11] = value;
+   GFX.old_scrollx[2] = CPU.PPU_PORT[0x11];
+   CPU.PPU_PORT[0x11] = value;
 //           update_scrollx(2);
 }     
 void	WW2112(uint32 addr, uint32 value) {
-   GFX.old_scrolly[2] = PPU_PORT[0x12];
-   PPU_PORT[0x12] = value;
+   GFX.old_scrolly[2] = CPU.PPU_PORT[0x12];
+   CPU.PPU_PORT[0x12] = value;
 //           update_scrolly(2);
 }     
 void	WW2113(uint32 addr, uint32 value) {
-    PPU_PORT[0x13] = value;
+    CPU.PPU_PORT[0x13] = value;
 //         GFX.tiles_ry[3] = 8; return;
 }
 void	WW2114(uint32 addr, uint32 value) {
-	PPU_PORT[0x14] = value;
+	CPU.PPU_PORT[0x14] = value;
 //         GFX.tiles_ry[3] = 8; return;
 }
 void	WW2122(uint32 addr, uint32 value) {
-     if (PPU_PORT[0x21] == 0x200) PPU_PORT[0x21]=0;
+     if (CPU.PPU_PORT[0x21] == 0x200) CPU.PPU_PORT[0x21]=0;
      uint16	p;
      GFX.CG_RAM_mem_temp = value;
      p = GFX.CG_RAM_mem_temp & 0x7FFF;
-     if (p != GFX.SNESPal[PPU_PORT[0x21]/2]) {
-       GFX.SNESPal[PPU_PORT[0x21]/2] = p;
-       GFX.new_color |= 1; GFX.new_colors[PPU_PORT[0x21]/2] = 1;
-       if ((PPU_PORT[0x21] >> 1) != 0)
-	   		PPU_setPalette(PPU_PORT[0x21] >> 1, p);
+     if (p != GFX.SNESPal[CPU.PPU_PORT[0x21]/2]) {
+       GFX.SNESPal[CPU.PPU_PORT[0x21]/2] = p;
+       GFX.new_color |= 1; GFX.new_colors[CPU.PPU_PORT[0x21]/2] = 1;
+       if ((CPU.PPU_PORT[0x21] >> 1) != 0)
+	   		PPU_setPalette(CPU.PPU_PORT[0x21] >> 1, p);
      }
-     PPU_PORT[0x21]+=2;
+     CPU.PPU_PORT[0x21]+=2;
 }
 
 typedef void (*IOWriteFunc)(uint32 addr, uint32 byte);
@@ -1489,7 +1489,7 @@ void	DMA_port_write(uint32 address, uint8 byte)
 			IOWrite_DMA[address-0x4200](address-0x4200, byte);
 		else
 		if (address < 0x4380)
-			DMA_PORT[address-0x4200]=byte;
+			CPU.DMA_PORT[address-0x4200]=byte;
 	}
 	else
 		if (address == 0x4016)
@@ -1509,7 +1509,7 @@ uint8	DMA_port_read(uint32 address)
 			return (uint8)IORead_DMA[address-0x4200](address-0x4200);
 		else
 		if (address < 0x4380)
-			return (uint8)DMA_PORT[address-0x4200];
+			return (uint8)CPU.DMA_PORT[address-0x4200];
 	}
 	else
 		if (address == 0x4016)
@@ -1612,7 +1612,7 @@ inline void HDMA_write_port(uchar port, uint8 *data)
 
 void	HDMA_write()
 {
-	int		HDMASel = DMA_PORT[0x0C];
+	int		HDMASel = CPU.DMA_PORT[0x0C];
 	uint8	**HDMAdata;
 	int		i;
 
@@ -1757,12 +1757,12 @@ void read_scope()
 	if (y < 0)
 	    y = 0;
 
-        PPU_PORT[0x3C] = x;
-        PPU_PORT[0x3C] = (PPU_PORT[0x3C]>>8) | (PPU_PORT[0x3C]<<8);
-        PPU_PORT[0x3D] = y+1;
-        PPU_PORT[0x3D] = (PPU_PORT[0x3D]>>8) | (PPU_PORT[0x3D]<<8);
+        CPU.PPU_PORT[0x3C] = x;
+        CPU.PPU_PORT[0x3C] = (CPU.PPU_PORT[0x3C]>>8) | (CPU.PPU_PORT[0x3C]<<8);
+        CPU.PPU_PORT[0x3D] = y+1;
+        CPU.PPU_PORT[0x3D] = (CPU.PPU_PORT[0x3D]>>8) | (CPU.PPU_PORT[0x3D]<<8);
 
-	PPU_PORT[0x3F] |= 0x40;
+	CPU.PPU_PORT[0x3F] |= 0x40;
 	SNES.joypads[1] = scope;
     }
 }
@@ -1779,13 +1779,13 @@ void	update_joypads()
   if (CFG.scope)
   	read_scope();
 
-  if (DMA_PORT[0x00]&1)
+  if (CPU.DMA_PORT[0x00]&1)
     {
   	  SNES.Joy1_cnt = 16;    	
-      DMA_PORT[0x18] = SNES.joypads[0];
-      DMA_PORT[0x19] = SNES.joypads[0]>>8;
-      DMA_PORT[0x1A] = SNES.joypads[1];
-      DMA_PORT[0x1B] = SNES.joypads[1]>>8;
+      CPU.DMA_PORT[0x18] = SNES.joypads[0];
+      CPU.DMA_PORT[0x19] = SNES.joypads[0]>>8;
+      CPU.DMA_PORT[0x1A] = SNES.joypads[1];
+      CPU.DMA_PORT[0x1B] = SNES.joypads[1]>>8;
     }
 }
 
@@ -1793,22 +1793,22 @@ void SNES_update()
 { 
   int value;
   
-  value = PPU_PORT[0x01];
+  value = CPU.PPU_PORT[0x01];
   GFX.spr_addr_base = (value&0x03)<<14;
   GFX.spr_addr_select = (value&0x18)<<10;
   
-  value = PPU_PORT[0x0B];
+  value = CPU.PPU_PORT[0x0B];
   GFX.tile_address[0] = ((value&0x0f) << 0xd);
   GFX.tile_address[1] = ((value&0xf0) << 0x9);
  
-  value = PPU_PORT[0x0C];  
+  value = CPU.PPU_PORT[0x0C];  
   GFX.tile_address[2] = ((value&0x0f) << 0xd);
   GFX.tile_address[3] = ((value&0xf0) << 0x9);
   
-  GFX.map_slot[0] = (PPU_PORT[0x07]&0x7C)>>2;
-  GFX.map_slot[1] = (PPU_PORT[0x08]&0x7C)>>2;
-  GFX.map_slot[2] = (PPU_PORT[0x09]&0x7C)>>2;
-  GFX.map_slot[3] = (PPU_PORT[0x0A]&0x7C)>>2;
+  GFX.map_slot[0] = (CPU.PPU_PORT[0x07]&0x7C)>>2;
+  GFX.map_slot[1] = (CPU.PPU_PORT[0x08]&0x7C)>>2;
+  GFX.map_slot[2] = (CPU.PPU_PORT[0x09]&0x7C)>>2;
+  GFX.map_slot[3] = (CPU.PPU_PORT[0x0A]&0x7C)>>2;
 }
 
 
@@ -1880,7 +1880,64 @@ void GoIRQ()
   CPU.unpacked = 0; // ASM registers to update  
 #endif  
   
-  DMA_PORT[0x11] = 0x80;
+  CPU.DMA_PORT[0x11] = 0x80;
 //  if (CFG.CPU_log) fprintf(SNES.flog, "--> IRQ\n");
 }
 
+
+//what does irqactive?
+//if( irqactive >0 -> S9xOpcode_IRQ)
+
+//this causes the device to raise IRQs
+void setirq(uint32 irqs_to_set){
+    
+    CPU.irqactive |= irqs_to_set;
+    CPU.cpuflags |= IRQ_PENDING_FLAG;
+    
+    CHECK_FOR_IRQ();
+}
+
+//this will continue to clear (acknowledge) irqs until IRQ_PENDING_FLAG is unset
+void clear_irq_source (uint32 M)
+{
+    CPU.irqactive &= ~M;
+    
+    if (!CPU.irqactive)
+        CPU.cpuflags &= ~IRQ_PENDING_FLAG;
+}
+
+//should be called instead goIRQ directly for NDS HBLANK periods, AND timed sync events. also clears interrupts
+void CHECK_FOR_IRQ(){
+
+    if(CPU.irqactive & PPU_H_BEAM_IRQ_SOURCE){
+        GoIRQ();
+        clear_irq_source (PPU_H_BEAM_IRQ_SOURCE);
+    }
+    
+    if(CPU.irqactive & PPU_V_BEAM_IRQ_SOURCE){
+        GoIRQ();
+        clear_irq_source (PPU_V_BEAM_IRQ_SOURCE);
+    }
+        
+    if(CPU.irqactive & SNES_IRQ_SOURCE){
+        GoNMI();
+        clear_irq_source (SNES_IRQ_SOURCE);
+    }
+    
+    if(CPU.irqactive & TIMER_IRQ_SOURCE){
+        GoIRQ();
+        clear_irq_source (TIMER_IRQ_SOURCE);
+    }
+    
+    if(CPU.irqactive & DMA_IRQ_SOURCE){
+        GoIRQ();
+        clear_irq_source (DMA_IRQ_SOURCE);
+    }
+    
+    if(CPU.irqactive & GSU_IRQ_SOURCE){
+        CPU.Cycles = CPU.SavedCycles;
+        CPU.IRQState = CPU.SavedIRQState;
+        clear_irq_source (GSU_IRQ_SOURCE);
+    }
+    
+}

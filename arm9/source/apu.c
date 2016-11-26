@@ -94,7 +94,9 @@ void APU_playSong(uint8 *data, int size)
 		return;
 	
     APU_command(0x00000004);    // Disable APU
-	memcpy(APU_RAM_ADDRESS-0x100, data, size);
+	
+    
+    memcpy(APU_RAM_ADDRESS-0x100, data, size);
     APU_command(0x00000003);    // Put APU in PLAY MODE	
 }
 

@@ -24,6 +24,8 @@
 #include "cfg.h"
 #include "memmap.h"
 
+#include "../../common/common.h"
+#include "../../common/settings.h"
 
 inline void fillMemory( void * addr, u32 count, u32 value )
 {
@@ -290,10 +292,6 @@ void InitHiROMMap(int mode)
 	WriteProtectROM();
 }
 
-/*#define	PAGE_SIZE		8192
- #define PAGE_OFFSET		0*/
-#define	PAGE_SIZE		65536
-#define PAGE_OFFSET		3
 
 uchar *ROM_paging= NULL;
 uint16 *ROM_paging_offs= NULL;
@@ -319,20 +317,19 @@ void mem_init_paging()
 	 iprintf("Not enough memory for ROM paging.\n");
 	 while(1);
 	 }*/
-	ROM_paging = SNES_ROM_PAGING_ADDRESS;
+	ROM_paging = (u8*)rom_page;
 	memset(ROM_paging, 0, ROM_PAGING_SIZE);
 	ROM_paging_offs = malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
 	if (!ROM_paging_offs)
 	{
 		iprintf("Not enough memory for ROM paging (2).\n");
-		while (1)
-			;
+		while (1);
 	}
 	memset(ROM_paging_offs, 0xFF, (ROM_PAGING_SIZE/PAGE_SIZE)*2);
 	ROM_paging_cur = 0;
 }
 
-IN_ITCM3
+IN_ITCM
 void mem_setCacheBlock(int block, uchar *ptr)
 {
 	int i;
@@ -352,7 +349,7 @@ void mem_setCacheBlock(int block, uchar *ptr)
 	}
 }
 
-IN_ITCM3
+IN_ITCM
 void mem_removeCacheBlock(int block)
 {
 	int i;
@@ -372,14 +369,14 @@ void mem_removeCacheBlock(int block)
 	}
 }
 
-IN_ITCM3
+IN_ITCM
 uint8 *mem_checkReload(int block)
 {
 	int i;
 	uchar *ptr;
 	
 	//	FS_flog("==> %d\n", block);
-	LOG("==> %d\n", block);
+	//LOG("==> %d\n", block);
 
 	if (!CFG.LargeROM)
 	return NULL;
@@ -405,7 +402,7 @@ uint8 *mem_checkReload(int block)
 		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET;
 		if (ROM_paging_offs[ROM_paging_cur] == PC_blk)
 		{
-			LOG("Detected PC unloading, pass it...\n");
+			//LOG("Detected PC unloading, pass it...\n");
 			ROM_paging_cur++;
 			if (ROM_paging_cur >= ROM_PAGING_SIZE/PAGE_SIZE)
 			ROM_paging_cur = 0;
@@ -419,19 +416,19 @@ uint8 *mem_checkReload(int block)
 
 	ROM_paging_offs[ROM_paging_cur] = i;
 	ptr = ROM_paging+(ROM_paging_cur*PAGE_SIZE);
-
+	
 	//	LOG("@%d(%d) => blk %d\n", i*PAGE_SIZE, SNES.ROMHeader+i*PAGE_SIZE, ROM_paging_cur);
 	FS_loadROMPage((char *)ptr, SNES.ROMHeader+i*PAGE_SIZE, PAGE_SIZE);
 	//	LOG("ret = %d %x %x %x %x\n", ret, ptr[0], ptr[1], ptr[2], ptr[3]);
 
-	mem_setCacheBlock(i, ptr+0x400000); // Give Read-only memory
+	mem_setCacheBlock(i, ptr);
 
 	ROM_paging_cur++;
 	if (ROM_paging_cur >= ROM_PAGING_SIZE/PAGE_SIZE)
 		ROM_paging_cur = 0;
 
 	//FS_flog("%d %p\n", i, ptr+(block&7)*8192-(block << 13));
-	LOG("<== %d %p\n", block, ptr+(block&7)*8192-(block << 13));
+	//LOG("<== %d %p\n", block, ptr+(block&7)*8192-(block << 13));
 	return ptr+(block&7)*8192-(block << 13)+0x400000;
 }
 
@@ -595,7 +592,6 @@ IN_ITCM3
 	}
 }
 
-//#include "memmap.h"
 IN_ITCM
 uchar mem_getbyte(uint32 offset,uchar bank)
 {

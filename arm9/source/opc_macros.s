@@ -1856,14 +1856,28 @@ SBCD_m1:
 @=========================================================================
 .macro Push8
     mov     r2, SnesSP, lsr #16
-    add     r2, r2, #snesWramBase
+    
+    @add     r2, r2, #snesWramBase
+    stmdb   sp!,    {r1}
+    ldr r1,=snes_ram_address
+    ldr r1,[r1]
+    add r2, r2, r1
+    ldmia   sp!,    {r1}
+    
     strb    r1, [r2]                
     sub     SnesSP, SnesSP, #0x00010000
 .endm
 
 .macro Push16
     mov     r2, SnesSP, lsr #16
-    add     r2, r2, #snesWramBase
+    
+    @add     r2, r2, #snesWramBase
+    stmdb   sp!,    {r1}
+    ldr r1,=snes_ram_address
+    ldr r1,[r1]
+    add r2, r2, r1
+    ldmia   sp!,    {r1}
+    
     strb    r1, [r2, #-1]           @ low byte
     mov     r1, r1, lsr #8
     strb    r1, [r2]                @ high byte
@@ -1872,7 +1886,14 @@ SBCD_m1:
 
 .macro Push24
     mov     r2, SnesSP, lsr #16
-    add     r2, r2, #snesWramBase
+
+    @add     r2, r2, #snesWramBase
+    stmdb   sp!,    {r1}
+    ldr r1,=snes_ram_address
+    ldr r1,[r1]
+    add r2, r2, r1
+    ldmia   sp!,    {r1}
+
     strb    r1, [r2, #-2]           @ low byte
     mov     r1, r1, lsr #8
     strb    r1, [r2, #-1]           @ middle byte
@@ -1884,14 +1905,28 @@ SBCD_m1:
 .macro Pop8
     add     SnesSP, SnesSP, #0x00010000
     mov     r0, SnesSP, lsr #16
-    add     r0, r0, #snesWramBase
+    
+    @add     r0, r0, #snesWramBase
+    stmdb   sp!,    {r1}
+    ldr r1,=snes_ram_address
+    ldr r1,[r1]
+    add r0, r0, r1
+    ldmia   sp!,    {r1}
+    
     ldrb    r1, [r0]                
 .endm
 
 .macro Pop16
     add     SnesSP, SnesSP, #0x00020000
     mov     r0, SnesSP, lsr #16
-    add     r0, r0, #snesWramBase
+    
+    @add     r0, r0, #snesWramBase
+    stmdb   sp!,    {r1}
+    ldr r1,=snes_ram_address
+    ldr r1,[r1]
+    add r0, r0, r1
+    ldmia   sp!,    {r1}
+    
     ldrb    r1, [r0, #-1]           @ low byte
     ldrb    r2, [r0]                @ high byte
     add     r1, r1, r2, lsl #8
@@ -1900,7 +1935,14 @@ SBCD_m1:
 .macro Pop24
     add     SnesSP, SnesSP, #0x00030000
     mov     r0, SnesSP, lsr #16
-    add     r0, r0, #snesWramBase
+    
+    @add     r0, r0, #snesWramBase
+    stmdb   sp!,    {r1}
+    ldr r1,=snes_ram_address
+    ldr r1,[r1]
+    add r0, r0, r1
+    ldmia   sp!,    {r1}
+    
     ldrb    r1, [r0, #-2]           @ low byte
     ldrb    r2, [r0, #-1]           @ low byte
     add     r1, r1, r2, lsl #8

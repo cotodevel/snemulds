@@ -233,7 +233,7 @@ void	PPU_add_tile_address(int bg)
 {
   int 		tile_zone = (GFX.tile_address[bg]>>13);
   int		ds_tile_zone;
-  int		mode = PPU_PORT[0x05] & 7;
+  int		mode = CPU.PPU_PORT[0x05] & 7;
   int		bg_mode;
   int		i;
    	
@@ -508,7 +508,7 @@ int		PPU_AddTile4InCache(t_TileZone *tilezone, int addr)
 
 void check_tile()
 {	
-    int		addr = (PPU_PORT[0x16]<<1)&0xFFFF;
+    int		addr = (CPU.PPU_PORT[0x16]<<1)&0xFFFF;
 
   GFX.map_def[addr/2048] = 0;
   // Check tile zone
@@ -680,14 +680,14 @@ void	PPU_setMap(int i, int j, int tilenb, int bg, int p, int f)
 
 void update_scroll()
 {
-   REG_BG0HOFS = PPU_PORT[(0x0D)+(0<<1)];
-   REG_BG0VOFS = PPU_PORT[(0x0E)+(0<<1)]+GFX.YScroll;
-   REG_BG1HOFS = PPU_PORT[(0x0D)+(1<<1)];
-   REG_BG1VOFS = PPU_PORT[(0x0E)+(1<<1)]+GFX.YScroll;
-   REG_BG2HOFS = PPU_PORT[(0x0D)+(2<<1)];
-   REG_BG2VOFS = PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll;
-   REG_BG3HOFS = PPU_PORT[(0x0D)+(3<<1)];
-   REG_BG3VOFS = PPU_PORT[(0x0E)+(3<<1)]+GFX.BG3YScroll;
+   REG_BG0HOFS = CPU.PPU_PORT[(0x0D)+(0<<1)];
+   REG_BG0VOFS = CPU.PPU_PORT[(0x0E)+(0<<1)]+GFX.YScroll;
+   REG_BG1HOFS = CPU.PPU_PORT[(0x0D)+(1<<1)];
+   REG_BG1VOFS = CPU.PPU_PORT[(0x0E)+(1<<1)]+GFX.YScroll;
+   REG_BG2HOFS = CPU.PPU_PORT[(0x0D)+(2<<1)];
+   REG_BG2VOFS = CPU.PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll;
+   REG_BG3HOFS = CPU.PPU_PORT[(0x0D)+(3<<1)];
+   REG_BG3VOFS = CPU.PPU_PORT[(0x0E)+(3<<1)]+GFX.BG3YScroll;
 }
 
 
@@ -1046,12 +1046,12 @@ void draw_plane_32_30(unsigned char bg, unsigned char bg_mode)
   int nb_tilex, nb_tiley;
   int tile_size;	
 
-  //LOG("> draw 32x30 %d %d %08x\n", bg, GFX.map_slot[bg], PPU_PORT[0x05]&(0x10 << bg));
+  //LOG("> draw 32x30 %d %d %08x\n", bg, GFX.map_slot[bg], CPU.PPU_PORT[0x05]&(0x10 << bg));
   if ((GFX.map_def[GFX.map_slot[bg]] & (1<<bg)) && 
   	  (GFX.tiles_def[GFX.tile_address[bg]>>13] & (1<<bg)))
   {
   	//LOG("> no draw 32x30 %d\n", GFX.tile_address[bg]>>13);
-  	if (!(PPU_PORT[0x05]&(0x10 << bg)))
+  	if (!(CPU.PPU_PORT[0x05]&(0x10 << bg)))
   	{
 #if 0  		
   	if (bg == 2 /*&& 
@@ -1075,10 +1075,10 @@ void draw_plane_32_30(unsigned char bg, unsigned char bg_mode)
   GFX.tiles_def[tile_zone+1] &= 0xF;
   GFX.tiles_def[tile_zone+1] |= (GFX.tile_address[bg]>>9)|(1 << bg);*/
   
-  LOG("< draw 32x32 %d %d %d %02x l=%d\n", bg, GFX.map_slot[bg], GFX.tile_address[bg]>>13, PPU_PORT[0x05]&(0x10 << bg), SNES.V_Count);
+  LOG("< draw 32x32 %d %d %d %02x l=%d\n", bg, GFX.map_slot[bg], GFX.tile_address[bg]>>13, CPU.PPU_PORT[0x05]&(0x10 << bg), SNES.V_Count);
 
   
-  if (PPU_PORT[0x05]&(0x10 << bg)) {
+  if (CPU.PPU_PORT[0x05]&(0x10 << bg)) {
   	GFX.map_slot_ds[bg] = map_duplicate4(GFX.map_slot[bg]);
   	GFX.map_size[bg] = BG_64x64;
   	nb_tilex = 32; nb_tiley = 32;
@@ -1112,12 +1112,12 @@ void draw_plane_64_30(unsigned char bg, unsigned char bg_mode)
   int 	nb_tilex, nb_tiley;
   int	tile_size;  
 
-  //LOG("> draw 64x30 %d %d %08x\n", bg, GFX.map_slot[bg], PPU_PORT[0x05]&(0x10 << bg));
+  //LOG("> draw 64x30 %d %d %08x\n", bg, GFX.map_slot[bg], CPU.PPU_PORT[0x05]&(0x10 << bg));
   if ((GFX.map_def[GFX.map_slot[bg]]   & (1<<bg)) &&
   	  (GFX.map_def[GFX.map_slot[bg]+1] & (1<<bg)) &&
   	  (GFX.tiles_def[GFX.tile_address[bg]>>13] & (1<<bg)))
   {
-  	if (!(PPU_PORT[0x05]&(0x10 << bg)))
+  	if (!(CPU.PPU_PORT[0x05]&(0x10 << bg)))
   	{
   		GFX.map_slot_ds[bg] = GFX.map_slot[bg];  		
   		GFX.map_size[bg] = BG_64x32;
@@ -1127,8 +1127,8 @@ void draw_plane_64_30(unsigned char bg, unsigned char bg_mode)
   GFX.map_def[GFX.map_slot[bg]] |= (1 << bg);
   GFX.map_def[GFX.map_slot[bg]+1] |= (1 << bg);
     
-  LOG("< draw 64x32 %d %d %d %02x\n", bg, GFX.map_slot[bg], GFX.tile_address[bg]>>13, PPU_PORT[0x05]&(0x10 << bg));
-  if (PPU_PORT[0x05]&(0x10 << bg)) {
+  LOG("< draw 64x32 %d %d %d %02x\n", bg, GFX.map_slot[bg], GFX.tile_address[bg]>>13, CPU.PPU_PORT[0x05]&(0x10 << bg));
+  if (CPU.PPU_PORT[0x05]&(0x10 << bg)) {
   	GFX.map_slot_ds[bg] = map_duplicate4(GFX.map_slot[bg]);
   	GFX.map_size[bg] = BG_64x64;
   	nb_tilex = 32; nb_tiley = 32;
@@ -1158,7 +1158,7 @@ void draw_plane_32_60(unsigned char bg, unsigned char bg_mode)
   	  (GFX.map_def[GFX.map_slot[bg]+1] & (1<<bg)) && 
   	  (GFX.tiles_def[GFX.tile_address[bg]>>13] & (1<<bg)))
   {
-  	if (!(PPU_PORT[0x05]&(0x10 << bg)))
+  	if (!(CPU.PPU_PORT[0x05]&(0x10 << bg)))
   	{
   		GFX.map_slot_ds[bg] = GFX.map_slot[bg];
   		GFX.map_size[bg] = BG_32x64;
@@ -1168,9 +1168,9 @@ void draw_plane_32_60(unsigned char bg, unsigned char bg_mode)
   GFX.map_def[GFX.map_slot[bg]] |= (1 << bg);
   GFX.map_def[GFX.map_slot[bg]+1] |= (1 << bg);
   
-  LOG("< draw 32x64 %d %d %d %02x\n", bg, GFX.map_slot[bg], GFX.tile_address[bg]>>13, PPU_PORT[0x05]&(0x10 << bg));
+  LOG("< draw 32x64 %d %d %d %02x\n", bg, GFX.map_slot[bg], GFX.tile_address[bg]>>13, CPU.PPU_PORT[0x05]&(0x10 << bg));
 
-  if (PPU_PORT[0x05]&(0x10 << bg)) {
+  if (CPU.PPU_PORT[0x05]&(0x10 << bg)) {
   	GFX.map_slot_ds[bg] = map_duplicate4(GFX.map_slot[bg]);
   	GFX.map_size[bg] = BG_64x64;
   	nb_tilex = 32; nb_tiley = 32;
@@ -1196,7 +1196,7 @@ void draw_plane_64_60(unsigned char bg, unsigned char bg_mode)
   	  (GFX.map_def[GFX.map_slot[bg]+3] & (1<<bg)) &&
   	  (GFX.tiles_def[GFX.tile_address[bg]>>13] & (1<<bg)))
   {
-  	if (!(PPU_PORT[0x05]&(0x10 << bg)))
+  	if (!(CPU.PPU_PORT[0x05]&(0x10 << bg)))
   	{
   		GFX.map_slot_ds[bg] = GFX.map_slot[bg];
   		GFX.map_size[bg] = BG_64x64;
@@ -1209,7 +1209,7 @@ void draw_plane_64_60(unsigned char bg, unsigned char bg_mode)
   GFX.map_def[GFX.map_slot[bg]+2] |= (1 << bg);
   GFX.map_def[GFX.map_slot[bg]+3] |= (1 << bg);
 
-  LOG("< draw 64x64 %d %d %d %02x l=%d\n", bg, GFX.map_slot[bg], GFX.tile_address[bg]>>13, PPU_PORT[0x05]&(0x10 << bg), SNES.V_Count);
+  LOG("< draw 64x64 %d %d %d %02x l=%d\n", bg, GFX.map_slot[bg], GFX.tile_address[bg]>>13, CPU.PPU_PORT[0x05]&(0x10 << bg), SNES.V_Count);
 
   if (GFX.map_slot[bg] > 28)
   {
@@ -1217,7 +1217,7 @@ void draw_plane_64_60(unsigned char bg, unsigned char bg_mode)
   	return;	
   }
 
-  if (PPU_PORT[0x05]&(0x10 << bg)) {
+  if (CPU.PPU_PORT[0x05]&(0x10 << bg)) {
   	GFX.map_slot_ds[bg] = map_duplicate4(GFX.map_slot[bg]);
   	GFX.map_size[bg] = BG_64x64;
   	nb_tilex = 32; nb_tiley = 32;
@@ -1305,7 +1305,7 @@ void draw_sprites(/*unsigned char pf*/)
 
 			spr_size = GFX.spr_info_ext[i>>2]&(1<<(((i&0x3)<<1)+1));
 
-			switch (PPU_PORT[0x01]>>5)
+			switch (CPU.PPU_PORT[0x01]>>5)
 			{
 			case 0x00:
 				if (spr_size)
@@ -1464,7 +1464,7 @@ void renderMode1(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
 {
    uint32 SB;
 
-   SB = (PPU_PORT[0x2D]|PPU_PORT[0x2C])&CFG.BG_Layer&((1<<NB_BG)-1);
+   SB = (CPU.PPU_PORT[0x2D]|CPU.PPU_PORT[0x2C])&CFG.BG_Layer&((1<<NB_BG)-1);
    
    if ((SB&0x08)) {
     DRAW_PLANE(3, MODE_4);
@@ -1482,7 +1482,7 @@ void renderMode1(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
 
 void renderMode3(MODE_1, MODE_2)
 {
-  uint32 SB = (PPU_PORT[0x2D]|PPU_PORT[0x2C])&CFG.BG_Layer&((1<<2)-1);
+  uint32 SB = (CPU.PPU_PORT[0x2D]|CPU.PPU_PORT[0x2C])&CFG.BG_Layer&((1<<2)-1);
 
   if ((SB&0x02)) {
     DRAW_PLANE(1, MODE_2);
@@ -1505,22 +1505,22 @@ void PPU_RenderLineMode1(uint32 NB_BG, uint32 MODE_1, uint32 MODE_2, uint32 MODE
   if (CFG.BG3TilePriority)
   {
   	if (GFX.map_size[2] == BG_32x32)
-   		BG3TilePriority = GFX.BG3TilePriority[((SNES.V_Count+PPU_PORT[0x12])/8)&31];
+   		BG3TilePriority = GFX.BG3TilePriority[((SNES.V_Count+CPU.PPU_PORT[0x12])/8)&31];
    	else
   	if (GFX.map_size[2] == BG_64x32)
-   		BG3TilePriority = GFX.BG3TilePriority[(((SNES.V_Count+PPU_PORT[0x12])/8)&31)
-   											  /*+((PPU_PORT[0x11]/8)&32)*/];
+   		BG3TilePriority = GFX.BG3TilePriority[(((SNES.V_Count+CPU.PPU_PORT[0x12])/8)&31)
+   											  /*+((CPU.PPU_PORT[0x11]/8)&32)*/];
    	else
   	if (GFX.map_size[2] == BG_32x64)
-   		BG3TilePriority = GFX.BG3TilePriority[((SNES.V_Count+PPU_PORT[0x12])/8)&63];
+   		BG3TilePriority = GFX.BG3TilePriority[((SNES.V_Count+CPU.PPU_PORT[0x12])/8)&63];
   }
 
    
-  SB = PPU_PORT[0x2C]&CFG.BG_Layer&0xF;
+  SB = CPU.PPU_PORT[0x2C]&CFG.BG_Layer&0xF;
 
   /* SPRITE MAINSCREEN : 3 2 */
   /* 3=1 1=2 0=0 */ 
-  if ((PPU_PORT[0x2D]&CFG.BG_Layer&0xF) && (SB&0x04)) order[2] = 2;
+  if ((CPU.PPU_PORT[0x2D]&CFG.BG_Layer&0xF) && (SB&0x04)) order[2] = 2;
   if (CFG.TilePriorityBG == -1)
   {
   	if (SB&0x02) order[1]=2;
@@ -1542,7 +1542,7 @@ void PPU_RenderLineMode1(uint32 NB_BG, uint32 MODE_1, uint32 MODE_2, uint32 MODE
   } 
 
   /* SPRITE MAINSCREEN : 1 0 */
-  if ((SB&0x04) && (PPU_PORT[0x05]&8) && BG3TilePriority > 0) order[2] = 0;
+  if ((SB&0x04) && (CPU.PPU_PORT[0x05]&8) && BG3TilePriority > 0) order[2] = 0;
   
 /*  if (SNES.V_Count == CFG.Debug2)
   	LOG("%x / %x / %x / %x\n", order[0], order[1], order[2], order[3]);*/
@@ -1555,7 +1555,7 @@ void PPU_RenderLineMode1(uint32 NB_BG, uint32 MODE_1, uint32 MODE_2, uint32 MODE
   order[3] = CFG.LayerPr[3];
   }
   
-  SB = (PPU_PORT[0x2D]|PPU_PORT[0x2C])&CFG.BG_Layer&0x17/*0x1f*/;
+  SB = (CPU.PPU_PORT[0x2D]|CPU.PPU_PORT[0x2C])&CFG.BG_Layer&0x17/*0x1f*/;
   
   if (CFG.TilePriorityBG != -1)
   {
@@ -1577,18 +1577,18 @@ void PPU_RenderLineMode1(uint32 NB_BG, uint32 MODE_1, uint32 MODE_2, uint32 MODE
   l->lBG2_CR = BG_COLOR_16 | order[2] | (GFX.tile_slot[2]<<2)  | (GFX.map_slot_ds[2]<<8) | GFX.map_size[2];
 
   /* Transparency */
-  if (CFG.Transparency && (PPU_PORT[0x30]&0x02) && (PPU_PORT[0x31] != 0))
+  if (CFG.Transparency && (CPU.PPU_PORT[0x30]&0x02) && (CPU.PPU_PORT[0x31] != 0))
   {
   	int AB;
-  	if (PPU_PORT[0x31]&0x40) // Half blending
+  	if (CPU.PPU_PORT[0x31]&0x40) // Half blending
   		AB = 0x0808;
   	else 
   		AB = 0x0F0F;
 
   	// Destination is sub screen
   	// Source is main screen
-  	int source = PPU_PORT[0x2C]&PPU_PORT[0x31]&0x1F;
-  	int destination = PPU_PORT[0x2D]&0x1F;
+  	int source = CPU.PPU_PORT[0x2C]&CPU.PPU_PORT[0x31]&0x1F;
+  	int destination = CPU.PPU_PORT[0x2D]&0x1F;
   	
   	if (CFG.TilePriorityBG != -1)
   	{
@@ -1610,14 +1610,14 @@ void PPU_RenderLineMode3(uint32 MODE_1, uint32 MODE_2, t_GFX_lineInfo *l)
    uint32 	order[2];
    uint32	SB;
 
-  SB = PPU_PORT[0x2D]&CFG.BG_Layer&((1<<2)-1);
+  SB = CPU.PPU_PORT[0x2D]&CFG.BG_Layer&((1<<2)-1);
   if (SB&0x02) order[1]=3;
   if (SB&0x01) order[0]=3;
-  SB = PPU_PORT[0x2C]&CFG.BG_Layer&((1<<2)-1);
+  SB = CPU.PPU_PORT[0x2C]&CFG.BG_Layer&((1<<2)-1);
   if (SB&0x02) order[1]=1;
   if (SB&0x01) order[0]=0;
 
-  SB = (PPU_PORT[0x2D]|PPU_PORT[0x2C])&CFG.BG_Layer&0x13;
+  SB = (CPU.PPU_PORT[0x2D]|CPU.PPU_PORT[0x2C])&CFG.BG_Layer&0x13;
 
   // FIXME: should block interrupt here / moved vram to 0x06020000
   l->lDISPLAY_CR = MODE_0_2D | DISPLAY_SPR_2D | (SB << 8) | DISPLAY_SCREEN_BASE(2) | DISPLAY_CHAR_BASE(2);
@@ -1639,15 +1639,15 @@ void PPU_RenderLineMode7(t_GFX_lineInfo *l)
 		l->lBG3_CR = BG_COLOR_256 | (GFX.tile_slot[0]<<2) | BG_RS_128x128 | BG_PRIORITY(3) ;
 
 
-	int X0 = (int)PPU_PORT[0x1F] << 19; X0 >>= 19;
-	int Y0 = (int)PPU_PORT[0x20] << 19; Y0 >>= 19;
-	int HOffset = (int)PPU_PORT[0x0D] << 19; HOffset >>= 19;
-	int VOffset = (int)PPU_PORT[0x0E] << 19; VOffset >>= 19;
+	int X0 = (int)CPU.PPU_PORT[0x1F] << 19; X0 >>= 19;
+	int Y0 = (int)CPU.PPU_PORT[0x20] << 19; Y0 >>= 19;
+	int HOffset = (int)CPU.PPU_PORT[0x0D] << 19; HOffset >>= 19;
+	int VOffset = (int)CPU.PPU_PORT[0x0E] << 19; VOffset >>= 19;
 	 
-	l->A = PPU_PORT[0x1B];
-	l->B = PPU_PORT[0x1C];
-	l->C = PPU_PORT[0x1D];
-	l->D = PPU_PORT[0x1E];
+	l->A = CPU.PPU_PORT[0x1B];
+	l->B = CPU.PPU_PORT[0x1C];
+	l->C = CPU.PPU_PORT[0x1D];
+	l->D = CPU.PPU_PORT[0x1E];
 	l->CX = l->A*(-X0+HOffset)+l->B*(SNES.V_Count-Y0+VOffset)+(X0<<8);
 	l->CY = l->C*(-X0+HOffset)+l->D*(SNES.V_Count-Y0+VOffset)+(Y0<<8);
 }
@@ -1735,8 +1735,8 @@ void	update_scrolly(int bg)
 {
   int delta;
 
-  if (GFX.tiles_ry[bg] != 8 && PPU_PORT[(0x0E)+bg*2] != GFX.old_scrolly[bg]) {
-    delta = GFX.tiles_ry[bg] + PPU_PORT[(0x0E)+bg*2]-GFX.old_scrolly[bg];
+  if (GFX.tiles_ry[bg] != 8 && CPU.PPU_PORT[(0x0E)+bg*2] != GFX.old_scrolly[bg]) {
+    delta = GFX.tiles_ry[bg] + CPU.PPU_PORT[(0x0E)+bg*2]-GFX.old_scrolly[bg];
     if (delta >= 0 && delta < 8)
       GFX.tiles_ry[bg] = delta;
     else
@@ -1748,8 +1748,8 @@ void	update_scrollx(int bg)
 {
   int i, delta;
 
-  if (GFX.tiles_ry[bg] != 8 && PPU_PORT[(0x0D)+bg*2] != GFX.old_scrollx[bg]) {
-    delta = PPU_PORT[(0x0D)+bg*2]-GFX.old_scrollx[bg];
+  if (GFX.tiles_ry[bg] != 8 && CPU.PPU_PORT[(0x0D)+bg*2] != GFX.old_scrollx[bg]) {
+    delta = CPU.PPU_PORT[(0x0D)+bg*2]-GFX.old_scrollx[bg];
 
     if (delta < -7 || delta > 7)
       GFX.tiles_ry[bg] = 8;
@@ -1872,11 +1872,11 @@ inline void	PPU_line_handle_BG3()
 	{ 
   	  int BG3TilePriority = 1;  	 
   	  if (CFG.BG3TilePriority)	
-      	BG3TilePriority = GFX.BG3TilePriority[((SNES.V_Count+PPU_PORT[0x12])/8)&31];	  	
+      	BG3TilePriority = GFX.BG3TilePriority[((SNES.V_Count+CPU.PPU_PORT[0x12])/8)&31];	  	
 	  order=3;
-	  SB = PPU_PORT[0x2C]&CFG.BG_Layer&0xF;
-	  if ((PPU_PORT[0x2D]&CFG.BG_Layer&0xF) && (SB&0x04)) order = 2;
-	  if ((SB&0x04) && (PPU_PORT[0x05]&8) && BG3TilePriority > 0) order = 0;
+	  SB = CPU.PPU_PORT[0x2C]&CFG.BG_Layer&0xF;
+	  if ((CPU.PPU_PORT[0x2D]&CFG.BG_Layer&0xF) && (SB&0x04)) order = 2;
+	  if ((SB&0x04) && (CPU.PPU_PORT[0x05]&8) && BG3TilePriority > 0) order = 0;
 	}
 	else
 	{
@@ -1884,16 +1884,16 @@ inline void	PPU_line_handle_BG3()
 	}
 	
 	l->lBG2_CR = BG_COLOR_16 | order | (GFX.tile_slot[2]<<2)  | (GFX.map_slot_ds[2]<<8) | GFX.map_size[2];
-    l->lBG2_X0 = PPU_PORT[(0x0D)+(2<<1)];
+    l->lBG2_X0 = CPU.PPU_PORT[(0x0D)+(2<<1)];
 
 	if (CFG.BG3Squish != 0)
 	{
 		if (y < 96)
-			l->lBG2_Y0 = PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll-CFG.BG3Squish*8;
+			l->lBG2_Y0 = CPU.PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll-CFG.BG3Squish*8;
 		else
-			l->lBG2_Y0 = PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll+CFG.BG3Squish*8;
+			l->lBG2_Y0 = CPU.PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll+CFG.BG3Squish*8;
 	} else
-	l->lBG2_Y0 = PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll;
+	l->lBG2_Y0 = CPU.PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll;
   }
 }
 
@@ -1902,9 +1902,9 @@ void	PPU_line_render()
 	int y;
 	t_GFX_lineInfo *l;
 		
-	if ((GFX.YScroll != GFX.BG3YScroll || CFG.BG3Squish != 0) && (PPU_PORT[0x05]&7) == 1)
+	if ((GFX.YScroll != GFX.BG3YScroll || CFG.BG3Squish != 0) && (CPU.PPU_PORT[0x05]&7) == 1)
 	{
-		if ((!(PPU_PORT[0x00]&0x80)) && (PPU_PORT[0x00]&0x0f)) 
+		if ((!(CPU.PPU_PORT[0x00]&0x80)) && (CPU.PPU_PORT[0x00]&0x0f)) 
 			PPU_line_handle_BG3();
 	}
 	
@@ -1913,7 +1913,7 @@ void	PPU_line_render()
 		return;
 	l = &GFX.lineInfo[y];
 	
-	if (((PPU_PORT[0x00]&0x80)) || !(PPU_PORT[0x00]&0x0f)) // Line hidden
+	if (((CPU.PPU_PORT[0x00]&0x80)) || !(CPU.PPU_PORT[0x00]&0x0f)) // Line hidden
 	{
 		l->mode = -1;
 		return;
@@ -1964,34 +1964,34 @@ void	PPU_line_render()
 		return;
 	}
 		
-	l->mode = (PPU_PORT[0x05]&7);	
+	l->mode = (CPU.PPU_PORT[0x05]&7);	
 
-	if ((PPU_PORT[0x31]&0x20))
+	if ((CPU.PPU_PORT[0x31]&0x20))
 		l->lBACK_color = GFX.SNESPal[0]+GFX.BACK;
 	else
 		l->lBACK_color = GFX.SNESPal[0];
 		
-	l->lBG0_X0 = PPU_PORT[(0x0D)+(0<<1)];
-    l->lBG0_Y0 = PPU_PORT[(0x0E)+(0<<1)]+GFX.YScroll;
-    l->lBG1_X0 = PPU_PORT[(0x0D)+(1<<1)];
-    l->lBG1_Y0 = PPU_PORT[(0x0E)+(1<<1)]+GFX.YScroll;
+	l->lBG0_X0 = CPU.PPU_PORT[(0x0D)+(0<<1)];
+    l->lBG0_Y0 = CPU.PPU_PORT[(0x0E)+(0<<1)]+GFX.YScroll;
+    l->lBG1_X0 = CPU.PPU_PORT[(0x0D)+(1<<1)];
+    l->lBG1_Y0 = CPU.PPU_PORT[(0x0E)+(1<<1)]+GFX.YScroll;
     if (GFX.YScroll == GFX.BG3YScroll && CFG.BG3Squish == 0)
     {
-    l->lBG2_X0 = PPU_PORT[(0x0D)+(2<<1)];
-    l->lBG2_Y0 = PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll;
+    l->lBG2_X0 = CPU.PPU_PORT[(0x0D)+(2<<1)];
+    l->lBG2_Y0 = CPU.PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll;
     }
-/*    l->lBG3_X0 = PPU_PORT[(0x0D)+(3<<1)];
-    l->lBG3_Y0 = PPU_PORT[(0x0E)+(3<<1)]+16;*/
+/*    l->lBG3_X0 = CPU.PPU_PORT[(0x0D)+(3<<1)];
+    l->lBG3_Y0 = CPU.PPU_PORT[(0x0E)+(3<<1)]+16;*/
 
     if (CFG.TilePriorityBG != -1)
     {
-	l->lBG3_X0 = PPU_PORT[(0x0D)+(CFG.TilePriorityBG<<1)];
-    l->lBG3_Y0 = PPU_PORT[(0x0E)+(CFG.TilePriorityBG<<1)]+GFX.YScroll;
+	l->lBG3_X0 = CPU.PPU_PORT[(0x0D)+(CFG.TilePriorityBG<<1)];
+    l->lBG3_Y0 = CPU.PPU_PORT[(0x0E)+(CFG.TilePriorityBG<<1)]+GFX.YScroll;
     }
 
    
     //l->lBRIGHTNESS = (2<<14) | ((0x0f - GFX.brightness)<<1);
-    switch (PPU_PORT[0x05]&7) {
+    switch (CPU.PPU_PORT[0x05]&7) {
       case 0 : PPU_RenderLineMode1(4, 2, 2, 2, 2, l); break;
       case 1 : PPU_RenderLineMode1(3, 4, 4, 2, 0, l); break;
       case 2 : PPU_RenderLineMode1(2, 4, 4, 0, 0, l); break;
@@ -2019,7 +2019,7 @@ void	PPU_line_render_scaled()
 
 	l = &GFX.lineInfo[y];
 	
-	if (((PPU_PORT[0x00]&0x80)) || !(PPU_PORT[0x00]&0x0f)) // Line hidden
+	if (((CPU.PPU_PORT[0x00]&0x80)) || !(CPU.PPU_PORT[0x00]&0x0f)) // Line hidden
 	{
 		l->mode = -1;
 		return;
@@ -2069,32 +2069,32 @@ void	PPU_line_render_scaled()
 		return;
 	}
 		
-	l->mode = (PPU_PORT[0x05]&7);	
+	l->mode = (CPU.PPU_PORT[0x05]&7);	
 
-	if ((PPU_PORT[0x31]&0x20))
+	if ((CPU.PPU_PORT[0x31]&0x20))
 		l->lBACK_color = GFX.SNESPal[0]+GFX.BACK;
 	else
 		l->lBACK_color = GFX.SNESPal[0];
 	
 	int per_px = (CFG.Scaled == 1) ? 12 : 6;
-	l->lBG0_X0 = PPU_PORT[(0x0D)+(0<<1)];
-	l->lBG1_X0 = PPU_PORT[(0x0D)+(1<<1)];
-	l->lBG2_X0 = PPU_PORT[(0x0D)+(2<<1)];
-	l->lBG0_Y0 = PPU_PORT[(0x0E)+(0<<1)]+offset+y/per_px;
-	l->lBG1_Y0 = PPU_PORT[(0x0E)+(1<<1)]+offset+y/per_px;
-	l->lBG2_Y0 = PPU_PORT[(0x0E)+(2<<1)]+offset+y/per_px;
+	l->lBG0_X0 = CPU.PPU_PORT[(0x0D)+(0<<1)];
+	l->lBG1_X0 = CPU.PPU_PORT[(0x0D)+(1<<1)];
+	l->lBG2_X0 = CPU.PPU_PORT[(0x0D)+(2<<1)];
+	l->lBG0_Y0 = CPU.PPU_PORT[(0x0E)+(0<<1)]+offset+y/per_px;
+	l->lBG1_Y0 = CPU.PPU_PORT[(0x0E)+(1<<1)]+offset+y/per_px;
+	l->lBG2_Y0 = CPU.PPU_PORT[(0x0E)+(2<<1)]+offset+y/per_px;
 
 	if (CFG.TilePriorityBG != -1)
     {
-	l->lBG3_X0 = PPU_PORT[(0x0D)+(CFG.TilePriorityBG<<1)];
-    l->lBG3_Y0 = PPU_PORT[(0x0E)+(CFG.TilePriorityBG<<1)]+offset+y/per_px;
+	l->lBG3_X0 = CPU.PPU_PORT[(0x0D)+(CFG.TilePriorityBG<<1)];
+    l->lBG3_Y0 = CPU.PPU_PORT[(0x0E)+(CFG.TilePriorityBG<<1)]+offset+y/per_px;
     }
 	
 	if (y % per_px == per_px-1)
 		l->mode |= 0x40;
    
     //l->lBRIGHTNESS = (2<<14) | ((0x0f - GFX.brightness)<<1);
-    switch (PPU_PORT[0x05]&7) {
+    switch (CPU.PPU_PORT[0x05]&7) {
       case 0 : PPU_RenderLineMode1(4, 2, 2, 2, 2, l); break;
       case 1 : PPU_RenderLineMode1(3, 4, 4, 2, 0, l); break;
       case 2 : PPU_RenderLineMode1(2, 4, 4, 0, 0, l); break;
@@ -2159,7 +2159,7 @@ void draw_screen()
       GFX.Sprites_table_dirty = 0;  	
     }
     
-    switch (PPU_PORT[0x05]&7) {
+    switch (CPU.PPU_PORT[0x05]&7) {
       case 0 : renderMode1(4, 2, 2, 2, 2); break;
       case 1 : renderMode1(3, 4, 4, 2, 0); break;
       case 2 : renderMode1(2, 4, 4, 0, 0); break;
@@ -2195,9 +2195,9 @@ void draw_screen()
 
 inline void	PPU_setPalette(int c, uint16 rgb)
 {
-	if ((PPU_PORT[0x05]&7) > 1)
+	if ((CPU.PPU_PORT[0x05]&7) > 1)
 	{
-		if (c > 0/* || !(PPU_PORT[0x31]&0x20)*/) // FIXME
+		if (c > 0/* || !(CPU.PPU_PORT[0x31]&0x20)*/) // FIXME
 			BG_PALETTE[c] = rgb; 
 		if (c >= 128)
 			SPRITE_PALETTE[c-128] = rgb;
@@ -2207,7 +2207,7 @@ inline void	PPU_setPalette(int c, uint16 rgb)
 	if (c < 128) // TILE color
 	{
 		
-		if (c > 0/* || !(PPU_PORT[0x31]&0x20)*/) // FIXME
+		if (c > 0/* || !(CPU.PPU_PORT[0x31]&0x20)*/) // FIXME
 			BG_PALETTE[c] = rgb;
 		// Recopie pour les palettes 2 bits
 		if (c < 32)

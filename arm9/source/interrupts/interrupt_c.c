@@ -15,7 +15,6 @@
 #include "../gfx.h"
 #include "../cfg.h"
 #include "../apu.h"
-#include "../m3sd.h"
 #include "../mpu/pu.h"
 #include "../memmap.h"
 #include "../common.h"              //snes common

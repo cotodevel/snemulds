@@ -29,7 +29,7 @@ int		FS_getFileSize(char *filename);
 int		FS_loadROM(char *ROM, char *filename);
 int		FS_loadROMForPaging(char *ROM, char *filename, int size);
 int		FS_loadROMPage(char *buf, unsigned int pos, int size);
-int		FS_loadFile(char *filename, char *buf, int size);
+int	    FS_loadFile(char *filename, char *buf, int size);
 int		FS_loadAllFile(char *filename, char *buf, int *size);
 int		FS_shouldFreeROM();
 int		FS_chdir(const char *path);

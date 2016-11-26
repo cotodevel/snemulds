@@ -16,22 +16,14 @@ GNU General Public License for more details.
 -------------------------------------------------------------------
 */
 
-    .equ    memoryMapBase,      0x06898000              @ 8k in VRAM Bank H
-@  	.equ    memoryMapBase,      0x023E0000
-    .equ    MemoryMap,          memoryMapBase           @ for code compatibility
-    .equ	MemoryWriteMap,		0x0689A000
-    
-/*    .equ    snesWramBase,       0x027C0000*/
-	.equ    snesWramBase,       0x02FC0000              
-/*    .equ    snesWramBase,       0x02200000              @ either 0x2100000 or 0x6800000*/
-/*    .equ    snesVramBase,       0x02220000*/
+.equ    memoryMapBase,      0x06898000              @ 8k in VRAM Bank H
+.equ    MemoryMap,          memoryMapBase           @ for code compatibility
+.equ	MemoryWriteMap,		0x0689A000
 
 
-  #include "opc_macros.s"
-
+#include "opc_macros.s"
 
 @*************************************************************************
-.section    .itcm, "aw", %progbits
 
 @=========================================================================
 @ memory mapping table
@@ -175,6 +167,10 @@ m1x1Decoder:
     .long BEQ_m1x1,BEQ_m1x1,  SBC_m1x1,DIY_25,    SBC_m1x1,DI_25,     SBC_m1x1,DSIY_27,   PEA_m1x1,PEA_m1x1,  SBC_m1x1,DX_24,     INC_m1x1,DX_26,     SBC_m1x1,DILY_26    
     .long SED_m1x1,SED_m1x1,  SBC_m1x1,AY_34,     PLX_m1x1,PLX_m1x1,  XCE_m1x1,XCE_m1x1,  JSR_m1x1I,JSR_m1x1I,SBC_m1x1,AX_34,     INC_m1x1,AX_37,     SBC_m1x1,ALX_45     
 @ version 0.27DS fix end 
+
+.pool
+
+.section    .itcm, "aw", %progbits
    
 @-------------------------------------------------------------------
 @ First bank for DP addressing

@@ -54,22 +54,24 @@ typedef struct sMyIPC {
     u8 APU_ADDR_BLKP[4];
     u32 APU_ADDR_BLK;     //deprecated in v6 but declared
     
-    //"APU2"
     uint32 	TIM0, TIM1, TIM2;
     uint32    T0, T1, T2;
-
     
     //WIFI
     bool wifi_enabled;
     bool wifi_working;    //true = yes / false = no
-
 
     //transfer queue
     u8 status; //see processor ipc read/writes flags
     u32 buf_queue[0x10];
   
     //IPCStruct snemuldsv6: deprecated
-  
+ 
+    char * ROM;   //pointer to ROM page
+    int rom_size;   //rom total size
+    
+    bool starfoxhack;   //true / false: if starfox is ran
+    bool fx_busy;       //true: SuperFX is running / false: it is not
 } tMyIPC;
 
 //Shared Work     027FF000h 4KB    -     -    -    R/W
@@ -78,10 +80,6 @@ typedef struct sMyIPC {
 #define MyIPC ((tMyIPC volatile *)(0x027FF000))
 #define PORT_SNES_TO_SPC ((volatile uint8*)((0x027FF000+(sizeof(tMyIPC))+4+0)))   
 #define PORT_SPC_TO_SNES ((volatile uint8*)(0x027FF000+(sizeof(tMyIPC))+4+4))     
-
-//APU Memory Region
-#define APU_RAM_ADDRESS     ((uint8*)(0x6010000))
-#define APU_SNES_ADDRESS    APU_RAM_ADDRESS //ori: #define APU_SNES_ADDRESS ((uint8*)(0x3000000-0x12000))       //could cause lockups
 
 //irqs
 #define VCOUNT_LINE_INTERRUPT 159
@@ -110,11 +108,13 @@ extern "C" {
 #endif
 
 #ifdef ARM9
+extern void update_ram_snes();
 extern void SendArm7Command(u32 command1, u32 command2, u32 command3,u32 command4);
 #endif
 
 #ifdef ARM7
 extern void SendArm9Command(u32 command1, u32 command2, u32 command3,u32 command4);
+extern void update_spc_ports();
 #endif
 
 extern void sendbyte_ipc(uint8 word);
@@ -122,17 +122,11 @@ extern u8 recvbyte_ipc();
 
 extern u32 ADDR_PORT_SNES_TO_SPC;
 extern u32 ADDR_PORT_SPC_TO_SNES;
-extern void update_spc_ports();
 
 //direct
-extern u32 read_ext_cpu(u32 address,u8 read_mode);
-extern void write_ext_cpu(u32 address,u32 value,u8 write_mode);
+extern inline u32 read_ext_cpu(u32 address,u8 read_mode);
+extern inline void write_ext_cpu(u32 address,u32 value,u8 write_mode);
 
-//cx4
-extern uint8 S9xGetC4 (uint16 Address);
-extern void S9xSetC4 (uint8 byte, uint16 Address);
-
-extern u32 read_firmware_other_cpu(u32 address);
 #ifdef __cplusplus
 }
 #endif

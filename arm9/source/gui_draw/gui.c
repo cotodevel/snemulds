@@ -117,8 +117,8 @@ t_GUIImage	*GUI_loadImage(char *path, int width, int height, int flags)
 		if (ptr == NULL)
 			return NULL;
 		
-		ptr->data = (uint8*)(ptr)+sizeof(t_GUIImage);
-		FS_loadFile(path, ptr->data, size);
+		ptr->data = (uint8*)(ptr)+sizeof(t_GUIImage);   
+		FS_loadFile(path, ptr->data, size);             
 		
 	}
 	if (flags == IMG_NOLOAD)

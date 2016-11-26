@@ -34,8 +34,6 @@ GNU General Public License for more details.
 #include "cfg.h"
 #include "gui_draw/gui.h"
 
-#define DS_SRAM          ((uint8*)0x0A000000)
-
 void writeSRAM(int offset, uint8* src, int size) {
         REG_EXMEMCNT &= ~0x0880;
         uint8* dest = DS_SRAM+offset;
@@ -147,41 +145,39 @@ int	changeROM(char *ROM, int size)
 
 int initSNESEmpty()
 {
-  CFG.BG3Squish = 0;
-  CFG.WaitVBlank = 0;
-  CFG.YScroll = 0;
-  CFG.CPU_speedhack = 1;
-  //CFG.TileMode = 1;
-  CFG.Scaled = 0;
-  CFG.LayersConf = 0;
-  
-  CFG.frame_rate = 1;
-  CFG.DSP1 = CFG.SuperFX = 0;
-  CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
-  CFG.Sound_output = 1;
-  //CFG.Sound_output = 0;
-  CFG.FastDMA = 1;
-  CFG.Transparency = 1;
+    CFG.BG3Squish = 0;
+    CFG.WaitVBlank = 0;
+    CFG.YScroll = 0;
+    CFG.CPU_speedhack = 1;
+    //CFG.TileMode = 1;
+    CFG.Scaled = 0;
+    CFG.LayersConf = 0;
 
-  memset(&SNES, 0, sizeof(SNES));
-  memset(&SNESC, 0, sizeof(SNESC));
+    CFG.frame_rate = 1;
+    CFG.DSP1 = CFG.SuperFX = 0;
+    CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
+    CFG.Sound_output = 1;
+    //CFG.Sound_output = 0;
+    CFG.FastDMA = 1;
+    CFG.Transparency = 1;
 
-//  SNES.flog = fopen("snemul.log", "w");
-//	SNES.flog = stdout;
+    memset(&SNES, 0, sizeof(SNES));
+    memset(&SNESC, 0, sizeof(SNESC));
 
-/* allocate memory */
-  SNESC.ROM = NULL;  /* Should be a fixed allocation */
-  //SNESC.RAM = (uchar *)malloc(0x020000);
-  SNESC.RAM = (uchar *)SNES_RAM_ADDRESS;
-  SNESC.VRAM = (uchar *)malloc(0x010000);
-  //SNESC.BSRAM = (uchar *)malloc(0x8000);
-  SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
-  init_GFX();
+    //  SNES.flog = fopen("snemul.log", "w");
+    //	SNES.flog = stdout;
 
-  GFX.Graph_enabled = 1;
+    SNESC.ROM = NULL;  // Should be a fixed allocation 
+    SNESC.RAM = (uchar *)&snes_ram_bsram[0x6000];
+    SNESC.VRAM = (uchar *)&snes_vram[0];
+    SNESC.BSRAM = (uchar *)&snes_ram_bsram[0x0];
 
-//  iprintf("Init OK...\n");
-  return 0;
+    init_GFX();
+
+    GFX.Graph_enabled = 1;
+
+    //  iprintf("Init OK...\n");
+    return 0;
 }
 
 IN_DTCM
@@ -189,176 +185,182 @@ int OldPC;
 
 int go()
 {
-    //dont jump here so cpu is executing.
-  if (CPU.IsBreak) {
-        //GUI_printf("SNES IS BREAK %d\n",rand()&0xff);
+    if (CPU.IsBreak) {
         return 0;
-  }
-  
-  
-  while (1)
-  {			
-	if (GFX.v_blank)
-	{
-    	if (!CFG.WaitVBlank && GFX.need_update)
-    	{
-			draw_screen();
-			GFX.need_update = 0;
-    	}
-		GFX.v_blank = 0;
-		update_joypads();	
-		return 0;
-	}
-	
-	
-	CPU.HCycles = SNES.UsedCycles;	
-    if (DMA_PORT[0x00]&0x10) 
-    {
-      if (!(DMA_PORT[0x00]&0x20) ||
-           SNES.V_Count == (DMA_PORT[0x09]&0xff)+((DMA_PORT[0x0A]&0xff)<<8)) 
-      {
-	    int H_cycles;
-	    H_cycles = (DMA_PORT[0x07]+(DMA_PORT[0x08]<<8))/2;
-		SET_WAITCYCLES(H_cycles);
-		CPU.WaitAddress = -1;
-
-		CPU_goto(H_cycles); 
-		if (CPU.IsBreak) 
-			return 0;
-		CPU.HCycles += H_cycles;	
-        GoIRQ();
-        DMA_PORT[0x11] = 0x80;
-      }
-    } 
-
-	SET_WAITCYCLES(NB_CYCLES-CPU.HCycles);
-	CPU.WaitAddress = -1; 
-    CPU_goto(NB_CYCLES-CPU.HCycles); 
-    if (CPU.IsBreak) 
-    	return 0;
-    CPU.HCycles = NB_CYCLES;
-
-    SNES.UsedCycles = 0;
- 
- 	/* HBLANK Starts here */
- 
-	SNES.V_Count++;
-	if (SNES.V_Count > (SNES.NTSC ? 261 : 311))
-	{
-      SNES.V_Count = 0;
-      update_joypads();
-	}
-#if 0
-    if (CFG.Sound_output) {
-      if (SNES.V_Count & 63) {
-        if (SNES.V_Count & 1) {
-          if (!SNES.NTSC && ((SNES.V_Count&7) == 1)) {
-            MyIPC->TIM0++; MyIPC->TIM1++; MyIPC->TIM2+=4;
-          }
-          if (++MyIPC->TIM0 >= MyIPC->T0) {
-            MyIPC->TIM0 -= MyIPC->T0; MyIPC->CNT0++;
-            //if (MyIPC->CONTROL&1) { SPC700_emu = 1; APU_WaitCounter++; }
-          }
-          if (++MyIPC->TIM1 >= MyIPC->T1) {
-            MyIPC->TIM1 -= MyIPC->T1; MyIPC->CNT1++;
-            //if (MyIPC->CONTROL&2) { SPC700_emu = 1; APU_WaitCounter++; }
-          }
-        }
-        MyIPC->TIM2 += 4;
-        if (MyIPC->TIM2 >= MyIPC->T2) {
-          MyIPC->TIM2 -= MyIPC->T2; MyIPC->CNT2++;
-          //if (APU.CONTROL&4) { SPC700_emu = 1; APU_WaitCounter++; }
-        }
-      }
     }
-#endif
-    if (SNES.V_Count < GFX.ScreenHeight) 
-    {   	
-#if 0    	
-      if (GFX.Sprites_table_dirty) {
-/*        if ((CFG.BG_Layer&0x10))
-          draw_sprites();*/
-		//draw_screen();    
+
+    while (1)
+    {			
+        if (GFX.v_blank)
+        {
+            if (!CFG.WaitVBlank && GFX.need_update)
+            {
+                draw_screen();
+                GFX.need_update = 0;
+            }
+            GFX.v_blank = 0;
+            update_joypads();	
+            return 0;
+        }
+
+
+        CPU.HCycles = SNES.UsedCycles;	
+        if (CPU.DMA_PORT[0x00]&HV_IRQ_HH_V_ANY) 
+        {
+            if (!(CPU.DMA_PORT[0x00]&HV_IRQ_VV_H_0) || SNES.V_Count == (CPU.DMA_PORT[0x09]&0xff)+((CPU.DMA_PORT[0x0A]&0xff)<<8)) 
+            {
+                int H_cycles;
+                H_cycles = (CPU.DMA_PORT[0x07]+(CPU.DMA_PORT[0x08]<<8))/2;
+                SET_WAITCYCLES(H_cycles);
+                CPU.WaitAddress = -1;
+
+                CPU_goto(H_cycles); 
+                if (CPU.IsBreak) 
+                    return 0;
+                CPU.HCycles += H_cycles;	
+                //GoIRQ();
+                setirq(PPU_H_BEAM_IRQ_SOURCE);
+                CPU.DMA_PORT[0x11] = 0x80;
+            }
+        }
+
+        SET_WAITCYCLES(NB_CYCLES-CPU.HCycles);
+        CPU.WaitAddress = -1; 
+        CPU_goto(NB_CYCLES-CPU.HCycles); 
+        if (CPU.IsBreak) 
+            return 0;
+        CPU.HCycles = NB_CYCLES;
+
+        SNES.UsedCycles = 0;
+
+        // HBLANK Starts here
+        SNES.V_Count++;
+        if (SNES.V_Count > (SNES.NTSC ? 261 : 311))
+        {
+            SNES.V_Count = 0;
+            update_joypads();
+        }
+        #if 0
+        if (CFG.Sound_output) {
+            if (SNES.V_Count & 63) {
+                if (SNES.V_Count & 1) {
+                    if (!SNES.NTSC && ((SNES.V_Count&7) == 1)) {
+                        MyIPC->TIM0++; MyIPC->TIM1++; MyIPC->TIM2+=4;
+                    }
+                    if (++MyIPC->TIM0 >= MyIPC->T0) {
+                        MyIPC->TIM0 -= MyIPC->T0; MyIPC->CNT0++;
+                        //if (MyIPC->CONTROL&1) { SPC700_emu = 1; APU_WaitCounter++; }
+                    }
+                    if (++MyIPC->TIM1 >= MyIPC->T1) {
+                        MyIPC->TIM1 -= MyIPC->T1; MyIPC->CNT1++;
+                        //if (MyIPC->CONTROL&2) { SPC700_emu = 1; APU_WaitCounter++; }
+                    }
+                }
+                MyIPC->TIM2 += 4;
+                if (MyIPC->TIM2 >= MyIPC->T2) {
+                    MyIPC->TIM2 -= MyIPC->T2; MyIPC->CNT2++;
+                    //if (APU.CONTROL&4) { SPC700_emu = 1; APU_WaitCounter++; }
+                }
+            }
+        }
+        #endif
+        if (SNES.V_Count < GFX.ScreenHeight) 
+        {   	
+            #if 0    	
+            if (GFX.Sprites_table_dirty) {
+                /*        if ((CFG.BG_Layer&0x10))
+                draw_sprites();*/
+                //draw_screen();    
+
+                GFX.Sprites_table_dirty = 0;
+            }
+            #endif      
+            if (!(CPU.PPU_PORT[0x00]&0x80) && CPU.DMA_PORT[0x0C] && CFG.BG_Layer&0x80)
+                HDMA_write();
+            SNES.HDMA_line++;
+
+            // draw line
+            if (CFG.Scaled)
+                PPU_line_render_scaled();
+            else
+                PPU_line_render();
+        }
+        if (
+            (CPU.DMA_PORT[0x00]&HV_IRQ_VV_H_0) && !(CPU.DMA_PORT[0x00]&HV_IRQ_HH_V_ANY) 
+            && 
+            SNES.V_Count == ((CPU.DMA_PORT[0x09]&0xff)+((CPU.DMA_PORT[0x0A]&0xff)<<8))
+           ){
+            //GoIRQ();
+            setirq(PPU_V_BEAM_IRQ_SOURCE);
+        }
         
-		GFX.Sprites_table_dirty = 0;
-      }
-#endif      
-      if (!(PPU_PORT[0x00]&0x80) && DMA_PORT[0x0C] && CFG.BG_Layer&0x80)
-        HDMA_write();
-      SNES.HDMA_line++;
+        if (SNES.V_Count == (SNES.NTSC ? 261 : 311)) {
+            // V_blank
+            SNES.v_blank = 0; CPU.DMA_PORT[0x10] = 0;
+            if (CPU.DMA_PORT[0x0C] && CFG.BG_Layer&0x80) {
+                if (CPU.DMA_PORT[0x0C]&0x01) HDMA_transfert(0);
+                if (CPU.DMA_PORT[0x0C]&0x02) HDMA_transfert(1);
+                if (CPU.DMA_PORT[0x0C]&0x04) HDMA_transfert(2);
+                if (CPU.DMA_PORT[0x0C]&0x08) HDMA_transfert(3);
+                if (CPU.DMA_PORT[0x0C]&0x10) HDMA_transfert(4);
+                if (CPU.DMA_PORT[0x0C]&0x20) HDMA_transfert(5);
+                if (CPU.DMA_PORT[0x0C]&0x40) HDMA_transfert(6);
+                if (CPU.DMA_PORT[0x0C]&0x80) HDMA_transfert(7);
+            }
+            //memset(GFX.tiles_ry,8,4);
+            //if (GFX.frame_d && (CFG.BG_Layer & 0x10))
+            //draw_sprites();
 
-      // draw line
-      if (CFG.Scaled)
-    	  PPU_line_render_scaled();
-      else
-    	  PPU_line_render();
-    }
-    if ((DMA_PORT[0x00]&0x20) && !(DMA_PORT[0x00]&0x10) &&
-      SNES.V_Count == (DMA_PORT[0x09]&0xff)+((DMA_PORT[0x0A]&0xff)<<8))
-      GoIRQ();
-    if (SNES.V_Count == (SNES.NTSC ? 261 : 311)) {
-    	
-      // V_blank
-      SNES.v_blank = 0; DMA_PORT[0x10] = 0;
-      if (DMA_PORT[0x0C] && CFG.BG_Layer&0x80) {
-        if (DMA_PORT[0x0C]&0x01) HDMA_transfert(0);
-        if (DMA_PORT[0x0C]&0x02) HDMA_transfert(1);
-        if (DMA_PORT[0x0C]&0x04) HDMA_transfert(2);
-        if (DMA_PORT[0x0C]&0x08) HDMA_transfert(3);
-        if (DMA_PORT[0x0C]&0x10) HDMA_transfert(4);
-        if (DMA_PORT[0x0C]&0x20) HDMA_transfert(5);
-        if (DMA_PORT[0x0C]&0x40) HDMA_transfert(6);
-        if (DMA_PORT[0x0C]&0x80) HDMA_transfert(7);
-      }
-//      memset(GFX.tiles_ry,8,4);
-/*      if (GFX.frame_d && (CFG.BG_Layer & 0x10))
-        draw_sprites();*/
-      
-	  draw_screen();
-      GFX.BG_scroll_reg = 0;
-      SNES.HDMA_line = 0;
-      PPU_PORT[0x02] = GFX.Old_SpriteAddress;
-      GFX.OAM_upper_byte = 0;
-
-	  GFX.brightness = PPU_PORT[0x00]&0xF;
-    }
-    if (SNES.V_Count == GFX.ScreenHeight || SNES.DelayedNMI) {
-      if (DMA_PORT[0x00]&0x80) GoNMI();
-      SNES.HIRQ_ok = 1;
-//      GFX.was_not_blanked = 0; 
-      GFX.nb_frames++;
-      
-      if (GFX.nb_frames >= 100 && !GUI.log && !CFG.Debug)
-      {
-		  scanKeys();
-    	  GFX.speed = GFX.nb_frames * 100 / (GFX.DSFrame - GFX.DSLastFrame);
-    	  GFX.DSLastFrame = GFX.DSFrame;  
-    	  GUI_console_printf(0, 23, "% 3d%%             ",  GFX.speed);
-//        GUI_console_printf(20, 23, "DBG=%d", CFG.Debug2),
-
-		  //time_t unixTime = time(NULL);
-		 //struct tm* timeStruct = gmtime((const time_t *)&unixTime);
-		  //GUI_console_printf(26, 23, "%02d:%02d", timeStruct->tm_hour, timeStruct->tm_min);	        	
-
-          GFX.nb_frames = 0;
-          
-          if (CFG.AutoSRAM && SNES.SRAMWritten)
-          {
-        	  saveSRAM();
-        	  GUI_console_printf(0, 23, "Auto SRAM written");
-        	  SNES.SRAMWritten = 0;
-          }
-      }
-      
+            draw_screen();
+            GFX.BG_scroll_reg = 0;
+            SNES.HDMA_line = 0;
+            CPU.PPU_PORT[0x02] = GFX.Old_SpriteAddress;
+            GFX.OAM_upper_byte = 0;
+            GFX.brightness = CPU.PPU_PORT[0x00]&0xF;
+        }
+    
+        if (SNES.V_Count == GFX.ScreenHeight || SNES.DelayedNMI) {
             
-      if (!CPU.NMIActive) DMA_PORT[0x10] |= 0x80;
-      SNES.v_blank = 1; CPU.NMIActive = 0;
-      update_joypads();
-      SNES.DelayedNMI = 0;
-	}
-   }
+            if (CPU.DMA_PORT[0x00]&VBLANK_NMI_IRQENABLE){ 
+                //GoNMI();
+                setirq(SNES_IRQ_SOURCE);
+            }
+            
+            SNES.HIRQ_ok = 1;
+            //      GFX.was_not_blanked = 0; 
+            GFX.nb_frames++;
 
-	return 0;
+            if (GFX.nb_frames >= 100 && !GUI.log && !CFG.Debug)
+            {
+                scanKeys();
+                GFX.speed = GFX.nb_frames * 100 / (GFX.DSFrame - GFX.DSLastFrame);
+                GFX.DSLastFrame = GFX.DSFrame;  
+                GUI_console_printf(0, 23, "% 3d%%             ",  GFX.speed);
+                //        GUI_console_printf(20, 23, "DBG=%d", CFG.Debug2),
+
+                //time_t unixTime = time(NULL);
+                //struct tm* timeStruct = gmtime((const time_t *)&unixTime);
+                //GUI_console_printf(26, 23, "%02d:%02d", timeStruct->tm_hour, timeStruct->tm_min);	        	
+
+                GFX.nb_frames = 0;
+
+                if (CFG.AutoSRAM && SNES.SRAMWritten)
+                {
+                    saveSRAM();
+                    GUI_console_printf(0, 23, "Auto SRAM written");
+                    SNES.SRAMWritten = 0;
+                }
+            }
+            
+            if (!CPU.NMIActive) 
+                CPU.DMA_PORT[0x10] |= VBLANK_NMI_IRQENABLE;
+            SNES.v_blank = 1; CPU.NMIActive = 0;
+            update_joypads();
+            SNES.DelayedNMI = 0;
+        }
+    }
+
+    return 0;
 }
 
 void show_opcode(char *buf, unsigned char opcode, int pc, int pb, unsigned short flags)

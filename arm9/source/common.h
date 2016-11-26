@@ -145,27 +145,6 @@ extern "C" {
 
 int	setBacklight(int flags);
 
-//ARM asm opcodes 
-u32 ldsbasm_arm(u32 x, u32 y);
-u32 ldshasm_arm(u32 x, u32 y);
-u32 ldru32extasm_arm(u32 x, u32 y);
-u32 ldru16extasm_arm(u32 x, u32 y);
-u32 ldru8extasm_arm(u32 x, u32 y);
-u32 stru32extasm_arm(u32 x, u32 y);
-u32 stru16extasm_arm(u32 x, u32 y);
-u32 stru8extasm_arm(u32 x, u32 y);
-u32 rorasm(u32 x, u32 y);
-
-//THUMB asm opcodes
-u32 ldsbasm_tmb(u32 x, u32 y);
-u32 ldshasm_tmb(u32 x, u32 y);
-u32 ldru32extasm_tmb(u32 x, u32 y);
-u32 ldru16extasm_tmb(u32 x, u32 y);
-u32 ldru8extasm_tmb(u32 x, u32 y);
-u32 stru32extasm_tmb(u32 x, u32 y);
-u32 stru16extasm_tmb(u32 x, u32 y);
-u32 stru8extasm_tmb(u32 x, u32 y);
-
 
 #ifdef __cplusplus
 }

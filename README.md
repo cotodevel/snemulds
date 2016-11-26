@@ -25,12 +25,11 @@ Coto, changes:
 
 -   up to date devkitpro , using libfat sources directly instead a precompiled library.
 
--   replaced fifo commands from libnds. Now using a new NDS hardware FIFO overlayer (written by Coto), which fixes
+-   replaced fifo commands from libnds. Now using a new NDS hardware FIFO overlayer, which fixes
     most games that didn't boot on earlier builds, (but they did boot on old Snemuldsv6 0.2 precompiled from SnemulDS site).
 
 -   new IPC FIFO hardware API that allows to read/write from map that is ONLY available to the other ARM Core.
-    Ie: You want to read/write 0x037f8000 which is ARM7-only, now you can from ARM9! with VERY little overhead due to hardware IPC.
-    This has been tested and works, but its currently unused.
+    Ie: You want to read/write 0x037f8000 which is ARM7-only, now you can from ARM9!
     
 to do:
 
