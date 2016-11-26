@@ -38,7 +38,6 @@
 #include "gui_draw/snemul_str.h"
 #include "frontend.h"
 #include "main.h"
-#include "mpu/pu.h" //use MPU + DTCM
 #include "font_8x8_uv.h"
 
 #include "ppu.h"
@@ -56,8 +55,7 @@
 #include "interrupts/interrupts.h"
 #include "interrupts/fifo_handler.h"
 
-#include "../../common/common.h"
-#include "../../common/settings.h"
+#include "ipc_libnds_extended.h"
 
 IN_DTCM
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
@@ -374,8 +372,8 @@ int loadROM(char *name, int confirm)
 
 	mem_clear_paging(); // FIXME: move me...
 
-	MyIPC->ROM = ROM = (char *)(char *)&rom_buffer[0];
-	MyIPC->rom_size = size = FS_getFileSize(romname);
+	ROM = (char *)(char *)&rom_buffer[0];
+	size = FS_getFileSize(romname);
 
 	size = FS_getFileSize(romname);
 	
@@ -436,7 +434,6 @@ int loadROM(char *name, int confirm)
 	return 0;
 }
 
-#define DEBUG_BUF ((char *)memUncached(0x2FFE200))
 
 int selectSong(char *name)
 {
@@ -589,7 +586,7 @@ int main(int _argc, char **_argv)
     irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifo);
     
 	//upon data transfer IRQ_CARD
-	irqEnable(IRQ_VBLANK | IRQ_VCOUNT | IRQ_HBLANK | IRQ_FIFO_NOT_EMPTY | IRQ_IPC_SYNC);
+	irqEnable(IRQ_VBLANK | IRQ_VCOUNT | IRQ_HBLANK | IRQ_FIFO_NOT_EMPTY);
     
    // REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR | IPC_FIFO_RECV_IRQ;
     REG_IPC_FIFO_CR |= (1<<2);  //send empty irq
@@ -705,7 +702,6 @@ int main(int _argc, char **_argv)
 			// set system into sleep 
 			while (keys & KEY_LID)
 			{
-				swiWaitForVBlank();
 				scanKeys();
 				keys = keysHeld();
 			}
@@ -720,7 +716,7 @@ int main(int _argc, char **_argv)
             go();   //boots here
         }
         
-        swiIntrWait(1,IRQ_VBLANK | IRQ_HBLANK | IRQ_VCOUNT | IRQ_FIFO_NOT_EMPTY);
+		swiIntrWait(1,IRQ_VBLANK | IRQ_HBLANK | IRQ_VCOUNT | IRQ_FIFO_NOT_EMPTY);
 	}
 
 	return 0;

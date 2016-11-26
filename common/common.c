@@ -1,7 +1,29 @@
 #include <nds.h>
-#include "common.h"
-#include "settings.h"
+#include "ipc_libnds_extended.h"
 
+#ifdef ARM7
+void SendArm9Command(u32 command1, u32 command2, u32 command3, u32 command4) {
+#endif
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+void SendArm7Command(u32 command1, u32 command2, u32 command3, u32 command4) {
+#endif
+    
+    //while (!(REG_IPC_FIFO_CR & IPC_FIFO_SEND_EMPTY)){
+    //}
+    
+    //if (REG_IPC_FIFO_CR & IPC_FIFO_ERROR) {
+    //    REG_IPC_FIFO_CR |= IPC_FIFO_SEND_CLEAR;
+    //}
+    
+    REG_IPC_FIFO_TX = (u32)command1;
+    REG_IPC_FIFO_TX = (u32)command2;
+    REG_IPC_FIFO_TX = (u32)command3;
+    REG_IPC_FIFO_TX = (u32)command4;
+    
+    //REG_IPC_FIFO_CR |= (1<<14); //1
+}
 
 #ifdef ARM9
 #include "../arm9/source/snes.h"
@@ -10,24 +32,6 @@
 void update_ram_snes(){
     snes_ram_address = (u32)&snes_ram_bsram[0x6000];
 }
-
-__attribute__((section(".itcm")))
-inline void SendArm7Command(u32 command1, u32 command2, u32 command3, u32 command4) {
-    
-    while (!(REG_IPC_FIFO_CR & IPC_FIFO_SEND_EMPTY)){
-    }
-    
-    //if (REG_IPC_FIFO_CR & IPC_FIFO_ERROR) {
-    //    REG_IPC_FIFO_CR |= IPC_FIFO_SEND_CLEAR;
-    //}
-    
-    REG_IPC_FIFO_TX = (u32)command1;
-    REG_IPC_FIFO_TX = (u32)command2;
-    REG_IPC_FIFO_TX = (u32)command3;
-    REG_IPC_FIFO_TX = (u32)command4;
-    
-    //REG_IPC_FIFO_CR |= (1<<14); //1
-}
 #endif
 
 #ifdef ARM7
@@ -35,22 +39,6 @@ inline void SendArm7Command(u32 command1, u32 command2, u32 command3, u32 comman
 void update_spc_ports(){
     ADDR_PORT_SNES_TO_SPC       =   (u32)(u8*)PORT_SNES_TO_SPC;
     ADDR_PORT_SPC_TO_SNES   =   (u32)(u8*)PORT_SPC_TO_SNES;
-}
-inline void SendArm9Command(u32 command1, u32 command2, u32 command3, u32 command4) {
-    
-    while (!(REG_IPC_FIFO_CR & IPC_FIFO_SEND_EMPTY)){
-    }
-    
-    //if (REG_IPC_FIFO_CR & IPC_FIFO_ERROR) {
-    //    REG_IPC_FIFO_CR |= IPC_FIFO_SEND_CLEAR;
-    //}
-    
-    REG_IPC_FIFO_TX = (u32)command1;
-    REG_IPC_FIFO_TX = (u32)command2;
-    REG_IPC_FIFO_TX = (u32)command3;
-    REG_IPC_FIFO_TX = (u32)command4;
-    
-    //REG_IPC_FIFO_CR |= (1<<14); //1
 }
 #endif
 

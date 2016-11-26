@@ -24,15 +24,14 @@
 #include "cfg.h"
 #include "memmap.h"
 
-#include "../../common/common.h"
-#include "../../common/settings.h"
+#include "ipc_libnds_extended.h"
 
-inline void fillMemory( void * addr, u32 count, u32 value )
+void fillMemory( void * addr, u32 count, u32 value )
 {
 	swiFastCopy( (void*)(&value), addr, (count>>2) | COPY_MODE_WORD | COPY_MODE_FILL);
 }
 
-inline void zeroMemory( void * addr, u32 count ) 
+void zeroMemory( void * addr, u32 count ) 
 {
 	fillMemory( addr, count, 0 );
 

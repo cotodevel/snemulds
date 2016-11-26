@@ -7,7 +7,7 @@
 #include "../snes.h"
 #include "../cfg.h"
 #include "../main.h"
-#include "../../../common/common.h"
+#include "ipc_libnds_extended.h"
 
 //Coto:
 IN_ITCM
@@ -84,7 +84,6 @@ inline void HandleFifo() {
         
     }
     
-    REG_IPC_FIFO_CR |= ~(1<<14); //flush receive
     REG_IF = IRQ_FIFO_NOT_EMPTY;
     
 }

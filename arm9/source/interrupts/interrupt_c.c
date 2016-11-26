@@ -15,10 +15,9 @@
 #include "../gfx.h"
 #include "../cfg.h"
 #include "../apu.h"
-#include "../mpu/pu.h"
 #include "../memmap.h"
 #include "../common.h"              //snes common
-#include "../../../common/common.h" //NDS IPC
+#include "ipc_libnds_extended.h"
 
 #include "fifo_handler.h"
 
@@ -28,7 +27,6 @@
 IN_ITCM
 void vcounter(){
     //iprintf("vcount! \n");
-    REG_IF = IRQ_VCOUNT;
 }
 
 //---------------------------------------------------------------------------------
@@ -49,9 +47,8 @@ void Vblank() {
 	MyIPC->APU_ADDR_CNT = APU_MAX;
 	MyIPC->counter = 0;
 
-
+	
     //iprintf("vblank! \n");
-    REG_IF = IRQ_VBLANK;
 }
 
 //---------------------------------------------------------------------------------
@@ -76,5 +73,4 @@ void Hblank() {
 	}
     
     //iprintf("hblank! \n");
-    REG_IF = IRQ_HBLANK;
 }

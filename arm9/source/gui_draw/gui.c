@@ -23,13 +23,10 @@ GNU General Public License for more details.
 #include <stdarg.h>
 #include "snes.h"
 #include "../common.h"
-
+#include "ipc_libnds_extended.h"
 
 #include "gui.h"
 #include "../fs.h"
-
-
-#include "../../../common/common.h"
 
 t_GUI GUI;
 

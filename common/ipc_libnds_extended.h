@@ -1,13 +1,15 @@
-#ifndef snemuldsv6_commonipc
-#define snemuldsv6_commonipc
+#ifndef ipc_libnds_extended_commonipc
+#define ipc_libnds_extended_commonipc
 
 #include <nds/ndstypes.h>
+#include <nds/ipc.h>
 
+#include <nds/ipc.h>
+#include <nds/fifocommon.h>
 
 //---------------------------------------------------------------------------------
 typedef struct sMyIPC {
 //---------------------------------------------------------------------------------
-    //uint32 heartbeat;          // counts frames
     int16 touchX,   touchY;   // raw x/y
     int16 touchXpx, touchYpx; // TFT x/y pixel
 
@@ -38,8 +40,6 @@ typedef struct sMyIPC {
     uint16 battery;            
     uint16 aux;                
 
-    vuint8 mailBusy;
-
     //APU Core
     int	    skipper_cnt1;
     int	    skipper_cnt2;
@@ -56,30 +56,20 @@ typedef struct sMyIPC {
     
     uint32 	TIM0, TIM1, TIM2;
     uint32    T0, T1, T2;
-    
-    //WIFI
-    bool wifi_enabled;
-    bool wifi_working;    //true = yes / false = no
 
     //transfer queue
     u8 status; //see processor ipc read/writes flags
     u32 buf_queue[0x10];
+	
   
-    //IPCStruct snemuldsv6: deprecated
- 
-    char * ROM;   //pointer to ROM page
-    int rom_size;   //rom total size
-    
-    bool starfoxhack;   //true / false: if starfox is ran
-    bool fx_busy;       //true: SuperFX is running / false: it is not
 } tMyIPC;
 
 //Shared Work     027FF000h 4KB    -     -    -    R/W
 
 //IPC Struct
 #define MyIPC ((tMyIPC volatile *)(0x027FF000))
-#define PORT_SNES_TO_SPC ((volatile uint8*)((0x027FF000+(sizeof(tMyIPC))+4+0)))   
-#define PORT_SPC_TO_SNES ((volatile uint8*)(0x027FF000+(sizeof(tMyIPC))+4+4))     
+#define PORT_SNES_TO_SPC ((volatile uint8*)(0x027FF000+(sizeof(tMyIPC))+4+0))
+#define PORT_SPC_TO_SNES ((volatile uint8*)(0x027FF000+(sizeof(tMyIPC))+4+4)) 
 
 //irqs
 #define VCOUNT_LINE_INTERRUPT 159
@@ -124,8 +114,8 @@ extern u32 ADDR_PORT_SNES_TO_SPC;
 extern u32 ADDR_PORT_SPC_TO_SNES;
 
 //direct
-extern inline u32 read_ext_cpu(u32 address,u8 read_mode);
-extern inline void write_ext_cpu(u32 address,u32 value,u8 write_mode);
+extern u32 read_ext_cpu(u32 address,u8 read_mode);
+extern void write_ext_cpu(u32 address,u32 value,u8 write_mode);
 
 #ifdef __cplusplus
 }

@@ -26,8 +26,7 @@ GNU General Public License for more details.
 //#include "superfx.h"
 #include "opcodes.h"
 
-#include "../../common/common.h"
-#include "../../common/settings.h"
+#include "ipc_libnds_extended.h"
 
 //GSU Memory Map (at SNES Side)
 /*

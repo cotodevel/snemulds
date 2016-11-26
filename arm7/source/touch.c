@@ -26,7 +26,7 @@
 
 ---------------------------------------------------------------------------------*/
 
-#include "../../common/common.h"
+#include "ipc_libnds_extended.h"
 
 #include <nds/ndstypes.h>
 #include <nds/system.h>
@@ -50,12 +50,6 @@
 //#define TSC_MEASURE_AUX      0xE4
 #define TSC_MEASURE_TEMP2    0xF4
 
-static u8 last_time_touched = 0;
-static u8 range_counter_1 = 0;
-static u8 range_counter_2 = 0;
-static u8 range = 20;
-static u8 min_range = 20;
-
 //coto: original libnds touchscreen usage.
 void updateMyIPC()
 {
@@ -67,7 +61,7 @@ void updateMyIPC()
 	
     touchPosition tempPos;
     touchReadXY(&tempPos);
-     
+    
 	// Read the touch screen
 	but = REG_KEYXY;
 	batt = touchRead(TSC_MEASURE_BATTERY);
@@ -79,7 +73,6 @@ void updateMyIPC()
 	// Read the temperature
 	temp = touchReadTemperature(&t1, &t2);
  
-	MyIPC->mailBusy = 1;
 	// Update the MyIPC struct
 	MyIPC->buttons	            	= REG_KEYINPUT;
     MyIPC->buttons_xy_folding		= but;
@@ -97,7 +90,6 @@ void updateMyIPC()
 	MyIPC->touchZ1 = tempPos.z1;
 	MyIPC->touchZ2 = tempPos.z2;
 	MyIPC->battery		= batt;
-	MyIPC->mailBusy = 0;
  
 	for(i=0; i<sizeof(ct); i++) {
 		MyIPC->curtime[i] = ct[i];

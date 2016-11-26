@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "common.h"                 //snes common
-#include "../../common/common.h"    //NDS IPC
+#include "ipc_libnds_extended.h"
 
 #include "gfx.h"
 #include "snes.h"

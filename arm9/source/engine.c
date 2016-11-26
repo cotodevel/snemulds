@@ -34,6 +34,8 @@ GNU General Public License for more details.
 #include "cfg.h"
 #include "gui_draw/gui.h"
 
+#include "ipc_libnds_extended.h"
+
 void writeSRAM(int offset, uint8* src, int size) {
         REG_EXMEMCNT &= ~0x0880;
         uint8* dest = DS_SRAM+offset;

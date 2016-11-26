@@ -9,7 +9,7 @@
 #include "../mixrate.h"
 
 #include "../touch.h"
-#include "../../../common/common.h"
+#include "ipc_libnds_extended.h"
 
 #include "fifo_handler.h"
 #include "interrupts.h"
@@ -74,7 +74,6 @@ void hblank(){
       	}
 #endif
 
-    REG_IF = IRQ_HBLANK;
 }
 
 void vblank(){
@@ -105,8 +104,7 @@ inputGetAndSend();
         TIMER3_CR = TIMER_CASCADE | TIMER_ENABLE;
 #endif
 
-    updateMyIPC();    
-    REG_IF = IRQ_VBLANK;
+    updateMyIPC();
 }
 
 void vcounter(){
@@ -118,7 +116,6 @@ void vcounter(){
         SendArm9Command(0xc1710102, 0x00000000, 0x00000000,0x00000000);
     }
     */
-    REG_IF = IRQ_VCOUNT;
 }
 
 void timer1(){
@@ -165,6 +162,5 @@ void timer1(){
 
 #endif
 
-
-    REG_IF = IRQ_TIMER1;
+	REG_IF = IRQ_TIMER1;
 }

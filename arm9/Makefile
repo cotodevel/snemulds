@@ -16,14 +16,12 @@ include $(DEVKITARM)/ds_rules
 #---------------------------------------------------------------------------------
 BUILD		:=	build
 SOURCES		:=	source \
-				source/mpu \
 				source/disk \
 				source/interrupts \
 				source/gui_draw \
 				../common/
 				
 INCLUDES	:=	source \
-				source/mpu \
 				source/disk \
 				source/interrupts \
 				source/gui_draw \
@@ -34,7 +32,7 @@ DATA		:=
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:= -mthumb-interwork -march=armv5te -mtune=arm946e-s -marm
+ARCH	:= -mthumb-interwork -march=armv5te -mtune=arm946e-s -marm	-mfloat-abi=soft
 CFLAGS	:= -g -Wall -O3	-fmessage-length=0 -fsigned-char -funsafe-math-optimizations \
 		$(ARCH)
 
@@ -43,7 +41,7 @@ CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	$(ARCH) -march=armv5te -mtune=arm946e-s $(INCLUDE) -Ddebug=0 -DARM9 -DNDS -DASM_OPCODES
 
-LDFLAGS	=	-specs=ds_arm9_snemulds.specs $(ARCH) -Wl,-Map,$(notdir $*.map)
+LDFLAGS	=	-specs=ds_arm9.specs $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project

@@ -37,7 +37,7 @@ GNU General Public License for more details.
 #include "gfx.h"
 #include "cfg.h"
 #include "ppu.h"
-#include "../../common/common.h"
+#include "ipc_libnds_extended.h"
 
 //#include "superfx.h"
 //#include "sfxinst.h"

@@ -28,7 +28,6 @@ GNU General Public License for more details.
 #include "apu.h"
 #include "opcodes.h"
 //#include "cpu.h" //added to opcodes.h
-#include "mpu/pu.h"
 
 //snemulds
 IN_DTCM

@@ -23,7 +23,7 @@ GNU General Public License for more details.
 //#include <malloc.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include "common.h"
+#include "ipc_libnds_extended.h"
 
 #include "fs.h"
 
@@ -36,7 +36,6 @@ GNU General Public License for more details.
 #include <sys/dir.h>
 #include <fcntl.h>
 
-#include "../../common/common.h"
 
 uint16	*g_extRAM = NULL;
 int		g_UseExtRAM = 0;

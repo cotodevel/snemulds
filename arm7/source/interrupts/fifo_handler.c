@@ -2,6 +2,7 @@
 #include <nds/ndstypes.h>
 #include <nds/system.h>
 #include <nds/interrupts.h>
+#include <string.h>
 
 #include "fifo_handler.h"
 #include "../pocketspc.h"
@@ -9,10 +10,10 @@
 #include "../dsp.h"
 #include "../main.h"
 #include "../mixrate.h"
-#include "../../../common/common.h"
+#include "ipc_libnds_extended.h"
 
 //Coto:
-inline void HandleFifo() {
+void HandleFifo() {
     
     volatile u32 command1 = 0, command2 = 0, command3 = 0, command4 = 0;
     
@@ -50,6 +51,7 @@ inline void HandleFifo() {
 			paused = false;
 			SPC_disable = false;
 			SPC_freedom = false;
+			swiWaitForVBlank();
         }
         break;
         case 0x00000002:{
@@ -61,7 +63,8 @@ inline void HandleFifo() {
 			}
 			if (SPC_disable)
 				SPC_disable = false;        
-			paused = !paused;      
+			paused = !paused;
+			swiWaitForVBlank();
         }
         break;
         case 0x00000003:{ /* PLAY SPC */	
@@ -71,33 +74,39 @@ inline void HandleFifo() {
 			paused = false;
 			SPC_freedom = true;
 			SPC_disable = false;
+			swiWaitForVBlank();
         }
         break;
             
         case 0x00000004:{ /* DISABLE */
             SPC_disable = true;
+			swiWaitForVBlank();
         }
         break;        
         
         case 0x00000005:{ /* CLEAR MIXER BUFFER */
             memset(playBuffer, 0, MIXBUFSIZE * 8);
-        }
+			swiWaitForVBlank();
+		}
         break;
 
         case 0x00000006:{ /* SAVE state */
             SaveSpc(APU_SNES_ADDRESS-0x100);
-        }
+			swiWaitForVBlank();
+		}
         break;  
             
         case 0x00000007:{ /* LOAD state */
             LoadSpc(APU_SNES_ADDRESS-0x100);
 			MyIPC->APU_ADDR_CNT = 0; 
-        }
+			swiWaitForVBlank();
+		}
         break;
         
         case 0x00000008:{
             writePowerManagement(PM_SOUND_AMP, (int)command2>>16);  // void * data == command2 
-        }
+			
+		}
         break;
         
         //arm7 wants to WifiSync
@@ -165,7 +174,6 @@ inline void HandleFifo() {
         
     }
     
-    REG_IPC_FIFO_CR |= ~(1<<14); //flush receive
     REG_IF = IRQ_FIFO_NOT_EMPTY;
     
 }

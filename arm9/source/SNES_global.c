@@ -21,16 +21,13 @@ GNU General Public License for more details.
 #include "apu.h"
 #include "gfx.h"
 #include "cfg.h"
+#include "memmap.h"
 
-IN_DTCM
-struct s_cpu	CPU;
-struct s_gfx	GFX;
-IN_DTCM
-struct s_cfg	CFG;
 struct s_snes	SNES;
-
-IN_DTCM
+struct s_cpu	CPU;
 struct s_snescore	SNESC;
+struct s_gfx	GFX;
+struct s_cfg	CFG;
 
 //struct s_apu	APU;                                        
 //struct s_apu2 *APU2 = ((struct s_apu2 *)(0x2CED000));     //@ coto: IPC now
@@ -38,8 +35,8 @@ struct s_snescore	SNESC;
 volatile u8 snes_ram_bsram[0x20000+0x6000];    //128K SNES RAM + 8K (Big) SNES SRAM
 volatile u8 snes_vram[0x010000];
 
-IN_DTCM
-volatile u8 * rom_page = (u8*)&rom_buffer[ROM_STATIC_SIZE*1];        //second slot of rombuffer
+IN_DTCM 
+u8 * rom_page = (u8*)&rom_buffer[ROM_STATIC_SIZE*1];        //second slot of rombuffer
 
 volatile u8 rom_buffer[ROM_MAX_SIZE];
 
@@ -64,7 +61,7 @@ void resetMemory2_ARM9()
 	VRAM_I_CR = 0x80;
 	
 	// clear vram
-	u16 * vram = 0x6800000;
+	u16 * vram = (u16 *)0x6800000;
 	zeroMemory(vram, 656 * 1024 );
 	// clear video palette
 	zeroMemory( BG_PALETTE, 2048 );//BG_PALETTE[0] = RGB15(1,1,1);

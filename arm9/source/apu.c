@@ -20,7 +20,7 @@ GNU General Public License for more details.
 
 #include "cfg.h"
 #include "apu.h"
-#include "../../common/common.h"
+#include "ipc_libnds_extended.h"
 
 //Coto: deprecated, new hardware IPC fifo is better
 /*

@@ -194,7 +194,7 @@ void	load_ROM(char *ROM, int ROM_size);
 
 extern volatile u8 snes_ram_bsram[0x20000+0x6000];    //128K SNES RAM + 8K (Big) SNES SRAM
 extern volatile u8 snes_vram[0x010000];
-extern volatile u8 * rom_page;        //second slot of rombuffer
+extern u8 * rom_page;        //second slot of rombuffer
 extern volatile u8 rom_buffer[ROM_MAX_SIZE];
 extern u32 snes_ram_address;
 
