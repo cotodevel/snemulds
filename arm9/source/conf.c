@@ -20,7 +20,6 @@
 #include <nds/memory.h>
 #include <nds/system.h>
 #include <unistd.h>
-
 #include <stdlib.h>
 
 //FIXME
@@ -32,7 +31,7 @@
 #include <string.h>
 
 #include "fs.h"
-
+#include "opcodes.h"    //stricmp support
 
 #define TRUE	1
 #define FALSE	0

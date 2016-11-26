@@ -33,10 +33,9 @@ extern "C" {
 
 extern int OldPC;
 extern char *ROM_Image;
-inline void fillMemory( void * addr, u32 count, u32 value );
-inline void zeroMemory( void * addr, u32 count );
-
-int	FS_loadROMPage(char *buf, unsigned int pos, int size);
+extern void fillMemory( void * addr, u32 count, u32 value );
+extern void zeroMemory( void * addr, u32 count );
+extern int	FS_loadROMPage(char *buf, unsigned int pos, int size);
 
 
 /*

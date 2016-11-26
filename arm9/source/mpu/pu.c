@@ -14,8 +14,8 @@
 //Protection Unit calls, wrappers, go here.
 #include "pu.h"
 
-#include "..\main.h"
-#include "..\opcodes.h"
+#include "../main.h"
+#include "../opcodes.h"
 
 /* exception vector abort handlers
 arm variables		status

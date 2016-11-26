@@ -33,34 +33,43 @@ GNU General Public License for more details.
 
 #define P_E  0x100
 
+//coto: 23/04/2016 stricmp was deprecated by GCC in 2015, so good candidates are both strcasecmp and strncasecmp
+
+#ifndef stricmp
+    #define stricmp  strcasecmp 	//stricmp
+#endif
+
+#ifndef strnicmp
+    #define strnicmp strncasecmp   //strnicmp
+#endif
+
 #endif
 
 
 #ifdef ASM_OPCODES
-extern unsigned short P;
-extern unsigned short PC;
-extern unsigned char  PB, DB, t;
-extern unsigned int A, X, Y, D, S;
-extern long Cycles;
-extern unsigned char	*PCptr;
+    extern unsigned short P;
+    extern unsigned short PC;
+    extern unsigned char  PB, DB, t;
+    extern unsigned int A, X, Y, D, S;
+    extern long Cycles;
+    extern unsigned char	*PCptr;
 
-extern unsigned int		SnesPCOffset;
-extern unsigned int		SaveR6;
-extern unsigned int		SaveR8;
+    extern unsigned int		SnesPCOffset;
+    extern unsigned int		SaveR6;
+    extern unsigned int		SaveR8;
 
-extern unsigned int		SnesB;
+    extern unsigned int		SnesB;
 
-extern	uint32			CPU_log;
-extern	uint32			AsmDebug[16];
+    extern	uint32			CPU_log;
+    extern	uint32			AsmDebug[16];
 
-extern	sint32			CPU_NextCycles;
-extern	uint32			CPU_LoopSpeedHacks;
-extern	unsigned char	*CPU_WaitAddress;
-extern	unsigned char	*CPU_LoopAddress;
+    extern	sint32			CPU_NextCycles;
+    extern	uint32			CPU_LoopSpeedHacks;
+    extern	unsigned char	*CPU_WaitAddress;
+    extern	unsigned char	*CPU_LoopAddress;
 
-extern	uint32			BRKaddress;
-extern	uint32			COPaddress;
-
+    extern	uint32			BRKaddress;
+    extern	uint32			COPaddress;
 
 #define REAL_A ((SaveR8 & 0x00000080) ? \
 				(A >> 24 | (SnesB&0xFF000000) >> 16) : (A >> 16))
@@ -76,11 +85,11 @@ extern	uint32			COPaddress;
 									 else CPU_NextCycles = 0; }
 #else
 
-extern unsigned short P;
-extern unsigned short PC;
-extern unsigned char  PB, DB, t;
-extern unsigned short A, X, Y, D, S;
-extern long Cycles;
+    extern unsigned short P;
+    extern unsigned short PC;
+    extern unsigned char  PB, DB, t;
+    extern unsigned short A, X, Y, D, S;
+    extern long Cycles;
 
 #define REAL_A	A
 #define REAL_CYCLES	Cycles
@@ -217,7 +226,6 @@ void PPU_ChangeLayerConf(int i);
 
 //opcodes2.s
 extern void CPU_update();
-
 
 #ifdef __cplusplus
 }

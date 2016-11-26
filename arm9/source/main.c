@@ -41,12 +41,13 @@
 #include "frontend.h"
 
 #include "main.h"
-#include "disk/diskstr.h"
 #include "mpu/pu.h" //use MPU + DTCM
 
 #include "font_8x8_uv.h"
 
 #include "ppu.h"
+#include "disk/libfat.h"
+#include "disk/fatmore.h"
 
 #include <nds/dma.h>
 #include <nds/ndstypes.h>
@@ -415,16 +416,6 @@ int loadROM(char *name, int confirm)
 
 	ROM = (char *) SNES_ROM_ADDRESS;
 	
-	if (opengbarom((const char *) romname,(const char *)"r")==0)
-	{
-		
-		iprintf("ROM OPEN OK! romfs:%d",(int)getfilesizegbarom());
-		closegbarom();
-		
-	}
-	else
-		iprintf("ROM open error");
-		
 	size = FS_getFileSize(romname);
 	ROMheader = size & 8191;
 	if (ROMheader != 0&& ROMheader != 512)
