@@ -41,8 +41,8 @@
 #include "frontend.h"
 
 #include "main.h"
-#include "disk\diskstr.h"
-#include "mpu\pu.h" //use MPU + DTCM
+#include "disk/diskstr.h"
+#include "mpu/pu.h" //use MPU + DTCM
 
 #include "font_8x8_uv.h"
 

@@ -1,5 +1,5 @@
 #include <nds.h>
-#include <nds\memory.h>
+#include <nds/memory.h>
 #include <string.h>
 
 #include "common.h"

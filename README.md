@@ -15,6 +15,10 @@ btw, use cycle hacks if you want decent speed.
 
 -changes:
 
+- SPC Playback is using ARM7 DMAs
+
+- Moved from thumb to arm code (-marm)
+
 -re-fixed some arm7 sound code (hopefully fixes allocation problems)
 
 -more cleanup (itcm/dtcm relocated data)
@@ -29,9 +33,6 @@ to do:
 
 -fix memory leaks when running sfx games
 
-thanks to:
-
-Archeide for the emulator & source code
 
 
 
