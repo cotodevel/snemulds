@@ -1,6 +1,3 @@
-# SnemulDS
-SnemulDS 0.6 [Revival]
-
 extract all four linker files (linker_files.zip) on this directory:
 
 <path to devkitpro folder>\devkitARM\arm-none-eabi\lib
@@ -21,11 +18,11 @@ btw, use cycle hacks if you want decent speed.
 
 -using nds dma 3 for pixel copy to vram bank
 
--up to date devkitpro (as of 07/09/2015) , and no more old libfat compiled libs
+-up to date devkitpro , and no more old libfat compiled libs
 
 to do:
 
--replace fifo commands from libnds to hardware nds fifo ipc
+-replace fifo commands from libnds to nds fifo ipc
 
 -fix memory leaks when running sfx games
 
