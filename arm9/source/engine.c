@@ -187,7 +187,8 @@ int initSNESEmpty()
 IN_DTCM
 int OldPC;
 
-__attribute__ ((hot))
+IN_ITCM
+__attribute__ ((weak))
 int go()
 {
 

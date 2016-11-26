@@ -11,7 +11,6 @@
 #include <fat.h>
 #include <sys/stat.h>
 
-
 #include "pocketspc.h"
 #include "apu.h"
 #include "apumisc.h"
@@ -20,7 +19,6 @@
 // Hacks
 ////////////////////////////////////////////////////////////////////////////
 struct s_apu2 *APU2 = ((struct s_apu2 *)(0x2FED000));
-
 
 ////////////////////////////////////////////////////////////////////////////
 // Definitions
@@ -33,10 +31,6 @@ u8 iplRom[64] ALIGNED =
 	0xCB,0xF4,0xD7,0x00,0xFC,0xD0,0xF3,0xAB,0x01,0x10,0xEF,0x7E,0xF4,0x10,0xEB,0xBA,
 	0xF6,0xDA,0x00,0xBA,0xF4,0xC4,0xF4,0xDD,0x5D,0xD0,0xDB,0x1F,0x00,0x00,0xC0,0xFF
 };
-
-#ifdef APU_MEM_IN_RAM  
-u8 RAW_APU_MEM[0x10000] ALIGNED;
-#endif
 
 // Asm uses these defines, so don't change them around
 u8 *APU_MEM;
@@ -75,41 +69,18 @@ void SetStateFromRawPSW(u32 state[16], u8 psw) {
 	APU_STATE[4] = ((psw >> 5) & 1) << 8;
 }
 
-//replaced with libnds's
-/*
-void _memset(void *data, int fill, int length) {
-    uint8 *data2 = (uint8*)data;
-    while (length-- > 0) {
-        *data2++ = fill;
-    }
-}
-*/
-
 void  ApuReset() {
     apuSleeping = 0;
 
-    // 64k of arm7 iwram
-	#ifndef APU_MEM_IN_RAM    
-		APU_MEM = (u8*)APU_RAM_ADDRESS;
-	#else    
-		APU_MEM = (u8*)RAW_APU_MEM;
-	#endif    
-    
+    APU_MEM = (u8*)APU_RAM_ADDRESS;
+	
 	APU_MEM_ZEROPAGEREAD = (u8*)&MemZeroPageReadTable;
     APU_MEM_ZEROPAGEWRITE = (u8*)&MemZeroPageWriteTable;
 	
-	/*
 	int i=0;
     for (i = 0; i < 65472; i += 0x40) { 
         memset(APU_MEM+i, 0, 0x20);
         memset(APU_MEM+i+0x20, 0xFF, 0x20);
-    }
-	*/
-	
-	int i=0;
-    for (i = 0; i < 32736; i += 0x20) { 
-        dmaFillHalfWords (0,(void *)(APU_MEM+i) , (int)(0x10));
-        dmaFillHalfWords (0,(void *)(APU_MEM+i+0x40) , (int)(0x10));
     }
 	
 	memset(APU_MEM + 0xF0, 0, 0x10);

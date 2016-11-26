@@ -2460,7 +2460,7 @@ void IOWrite16(uint32 addr, uint16 word)
 #ifdef ASM_OPCODES
 
 #include "opc_asm.h"
-
+IN_ITCM
 void CPU_pack()
 {
   if (CPU.packed)
@@ -2489,6 +2489,7 @@ void CPU_pack()
   CPU.packed = 1;
 }
 
+IN_ITCM
 void CPU_unpack()
 {
   if (CPU.unpacked)
@@ -2562,11 +2563,11 @@ uint16	pullw()
 }
 
 
-
+IN_ITCM
 void CPU_goto(int cycles)
 {	
 	if (CFG.CPU_speedhack & 1)
-		cycles -= cycles >> 2; // Speed hack: 25 % speed up
+		cycles -= cycles / 4; // Speed hack: 25 % speed up
 	CPU_LoopSpeedHacks = (CFG.CPU_speedhack >= 2);
 	CPU.Cycles = cycles;
 		
@@ -2580,12 +2581,5 @@ void CPU_goto(int cycles)
 //	CPU_pack();
 }
 
-inline __attribute__((always_inline))
-u32 nopinlasm(u32 x1,u32 x2,u32 y1){
-__asm__ volatile(
-				"nop" "\n\t"
-				);
-return 0;
-}
 
 #endif

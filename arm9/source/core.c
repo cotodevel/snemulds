@@ -45,6 +45,7 @@ IN_DTCM
 int	SPC700_emu;
 
 // A OPTIMISER
+IN_ITCM
 int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 {
 	int i;
@@ -112,7 +113,7 @@ int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 	return offs+len;
 }
 
-IN_ITCM
+
 void DMA_transfert(uchar port)
 {
   uint		tmp;
@@ -193,7 +194,7 @@ void DMA_transfert(uchar port)
   END_PROFILE(DMA, 4);
 }
 
-IN_ITCM
+
 void		HDMA_transfert(unsigned char port)
 {
   uint		len;
@@ -282,28 +283,29 @@ void		HDMA_transfert(unsigned char port)
 
 /* ============================ I/O registers ========================== */
 
-IN_ITCM
+
 uint32	IONOP_DMA_READ(uint32 addr)
 {
 	return (DMA_PORT[addr]);
 }
-IN_ITCM
+
 uint32	IONOP_PPU_READ(uint32 addr)
 {
 	return (PPU_PORT[addr]);
 }
 
-IN_ITCM
+
 void	IONOP_PPU_WRITE(uint32 addr, uint32 byte)
 {
 	PPU_PORT[addr] = byte;
 }
-IN_ITCM
+
 void	IONOP_DMA_WRITE(uint32 addr, uint32 byte)
 {
 	DMA_PORT[addr] = byte;
 }
-IN_ITCM
+
+
 void	W4016(uint32 addr, uint32 value)
 {
     			 if ((value&1) && !(SNES.JOY_PORT16&1))
@@ -312,25 +314,25 @@ void	W4016(uint32 addr, uint32 value)
                    }
                  SNES.JOY_PORT16 = value;
 }
-IN_ITCM                 
+                 
 void	W4017(uint32 addr, uint32 value)
 {
 }
-IN_ITCM
+
 void	W4200(uint32 addr, uint32 value)
 {
 	if (value & 0x10)
     	SNES.HIRQ_ok = 0;
 	DMA_PORT[0x00] = value;
 }
-IN_ITCM
+
 void	W4203(uint32 addr, uint32 value)
 {
       DMA_PORT[0x16]=DMA_PORT[0x02]*value;
       DMA_PORT[0x17]=(DMA_PORT[0x16]>>8);
       DMA_PORT[0x03] = value;
 }
-IN_ITCM      
+      
 void	W4206(uint32 addr, uint32 value)
 {
       if (value) {
@@ -346,19 +348,19 @@ void	W4206(uint32 addr, uint32 value)
       }
  	  DMA_PORT[0x06] = value;
 }
-IN_ITCM
+
 void	W4207(uint32 addr, uint32 value)
 {
 		SNES.HIRQ_value = (SNES.HIRQ_value&0xFF00) | value;
 		DMA_PORT[0x07] = value;
 }
-IN_ITCM
+
 void	W4208(uint32 addr, uint32 value)
 {
 		SNES.HIRQ_value = (SNES.HIRQ_value&0x00FF) | (value << 8);
 		DMA_PORT[0x08] = value;
 }
-IN_ITCM
+
 void	W420B(uint32 addr, uint32 value)
 {
 			     if (value & 0x01) DMA_transfert(0);
@@ -371,7 +373,7 @@ void	W420B(uint32 addr, uint32 value)
                  if (value & 0x80) DMA_transfert(7);
                  DMA_PORT[0x0B] = value;
 }
-IN_ITCM
+
 void	W420C(uint32 addr, uint32 value)
 {
 				 if (value & 0x01) HDMA_transfert(0);
@@ -385,7 +387,7 @@ void	W420C(uint32 addr, uint32 value)
                  DMA_PORT[0x0C] = value;
 }                 
                  
-IN_ITCM
+
 uint32	R4016(uint32 addr)
 {
          uchar tmp;
@@ -401,12 +403,12 @@ uint32	R4016(uint32 addr)
          SNES.Joy1_cnt++;
          return (tmp&1);
 }
-IN_ITCM
+
 uint32	R4017(uint32 addr)
 {
       return 0x00;
 }
-IN_ITCM
+
 uint32	R4210(uint32 addr)
 {
 //FIXME
@@ -422,7 +424,7 @@ uint32	R4210(uint32 addr)
       }
       return DMA_PORT[0x10];
 }
-IN_ITCM
+
 uint32	R4211(uint32 addr)
 {
       SET_WAITCYCLESDELAY(0);
@@ -431,7 +433,7 @@ uint32	R4211(uint32 addr)
       }
       return DMA_PORT[0x11];
 }
-IN_ITCM
+
 uint32	R4212(uint32 addr)
 {
       SET_WAITCYCLESDELAY(0);
@@ -449,13 +451,13 @@ uint32	R4212(uint32 addr)
           DMA_PORT[0x12] |= 0x80;
       return DMA_PORT[0x12];
 }
-IN_ITCM 	
+ 	
 uint32	R2121(uint32 addr) 
 {  	
       return (PPU_PORT[0x21]>>1);
 }      
 /* 2134 - 2136 */
-IN_ITCM
+
 uint32	R213X(uint32 addr) 
 {
       if (SNES.PPU_NeedMultiply) {
@@ -469,7 +471,7 @@ uint32	R213X(uint32 addr)
       }
       return PPU_PORT[addr];
 }
-IN_ITCM
+
 uint32	R2137(uint32 addr) 
 {
       PPU_PORT[0x3C] = (HCYCLES)*9/5; // FIXME    	
@@ -478,7 +480,7 @@ uint32	R2137(uint32 addr)
       PPU_PORT[0x3D] = (PPU_PORT[0x3D]>>8) | (PPU_PORT[0x3D]<<8);
       return PPU_PORT[0x37];
 }
-IN_ITCM
+
 uint32	R2138(uint32 addr) 
 {
       if ((PPU_PORT[0x02]) >= 0x100) {
@@ -505,7 +507,7 @@ uint32	R2138(uint32 addr)
       }
       return PPU_PORT[0x38];
 }
-IN_ITCM
+
 uint32	R2139(uint32 addr) 
 {
          if (PPU_PORT[0x15]&0x80) {
@@ -530,7 +532,7 @@ uint32	R2139(uint32 addr)
            return result;         
          }
 }
-IN_ITCM
+
 uint32	R213A(uint32 addr) 
 {
          if ((PPU_PORT[0x15]&0x80) == 0) {
@@ -556,7 +558,7 @@ uint32	R213A(uint32 addr)
            return result;
          }
 }
-IN_ITCM         
+         
 uint32	R213B(uint32 addr) 
 {
          if (PPU_PORT[0x21] == 0x200) PPU_PORT[0x21]=0;
@@ -569,24 +571,24 @@ uint32	R213B(uint32 addr)
          PPU_PORT[0x21]++;
          return PPU_PORT[0x3B];
 } 
-IN_ITCM        
+        
 uint32	R213C(uint32 addr) 
 {
       PPU_PORT[0x3C] = (PPU_PORT[0x3C]>>8)|(PPU_PORT[0x3C]<<8);
       return PPU_PORT[0x3C];
 }
-IN_ITCM
+
 uint32	R213D(uint32 addr)
 {
       PPU_PORT[0x3D] = (PPU_PORT[0x3D]>>8)|(PPU_PORT[0x3D]<<8);
       return PPU_PORT[0x3D];
 }
-IN_ITCM
+
 uint32	R213F(uint32 addr)
 {
       return (SNES.NTSC ? 0x01 : 0x11);
 }
-IN_ITCM      
+      
 uint32	R2140(uint32 addr)
 {
 //	LOG("0 %02x (%04x, %04x)\n", PORT_SPC_TO_SNES[0], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
@@ -611,7 +613,7 @@ uint32	R2140(uint32 addr)
 
 //static int oldapupc = 0;
 
-IN_ITCM      
+      
 uint32	R2141(uint32 addr)
 {
 	//int newapupc = ((*(uint32*)memUncached((void *)0x2FE0000)) & 0xFFFF);
@@ -657,7 +659,7 @@ uint32	R2141(uint32 addr)
       }
       return PORT_SPC_TO_SNES[1];       
 }
-IN_ITCM      
+      
 uint32	R2142(uint32 addr)
 {
       if (!CFG.Sound_output)
@@ -674,7 +676,7 @@ uint32	R2142(uint32 addr)
       }
       return PORT_SPC_TO_SNES[2];      
 }
-IN_ITCM
+
 uint32	R2143(uint32 addr)
 {     
       if (!CFG.Sound_output)
@@ -693,7 +695,7 @@ uint32	R2143(uint32 addr)
       }
       return PORT_SPC_TO_SNES[3];      
 }
-IN_ITCM
+
 uint32	R2180(uint32 addr)
 {     
       PPU_PORT[0x80] =
@@ -726,7 +728,7 @@ uint32	R2180(uint32 addr)
       return (byte);
     }
 #endif
-IN_ITCM
+
 void	W2100(uint32 addr, uint32 value)
 {
     GFX.Blank_Screen = (value&0x80) != 0;
@@ -737,7 +739,7 @@ void	W2100(uint32 addr, uint32 value)
     }
     PPU_PORT[0x00] = value;
 }
-IN_ITCM
+
 void	W2101(uint32 addr, uint32 value)
 {
     	 if (value != PPU_PORT[0x01]) {
@@ -747,7 +749,7 @@ void	W2101(uint32 addr, uint32 value)
          }
     	 PPU_PORT[0x01] = value;
 }
-IN_ITCM
+
 void	W2102(uint32 addr, uint32 value)
 {
          PPU_PORT[0x02] = (PPU_PORT[0x02]&0x100)+value;
@@ -757,7 +759,7 @@ void	W2102(uint32 addr, uint32 value)
          GFX.OAM_upper_byte = 0;
            GFX.Sprites_table_dirty = 1;
 }
-IN_ITCM                    
+                    
 void	W2103(uint32 addr, uint32 value)
 {
          PPU_PORT[0x02] = (PPU_PORT[0x02]&0xff)+(value&1)*0x100;
@@ -769,7 +771,7 @@ void	W2103(uint32 addr, uint32 value)
 //         GFX.Sprites_table_dirty = 1;
          PPU_PORT[0x03] = value;
 }
-IN_ITCM
+
 void	W2104(uint32 addr, uint32 value)
 {
          if ((PPU_PORT[0x02]) >= 0x100) {
@@ -811,7 +813,7 @@ void	W2104(uint32 addr, uint32 value)
          }
          PPU_PORT[0x04] = value;
 }
-IN_ITCM         
+         
 void	W2105(uint32 addr, uint32 value)
 {		
 	if (value == PPU_PORT[0x05])
@@ -822,7 +824,7 @@ void	W2105(uint32 addr, uint32 value)
 	PPU_add_tile_address(1);
 	PPU_add_tile_address(2);
 }
-IN_ITCM         
+         
 void	W2107(uint32 addr, uint32 value)
 {		
 	GFX.map_slot[0] = (value&0x7C)>>2;
@@ -834,7 +836,7 @@ void	W2107(uint32 addr, uint32 value)
 
 	PPU_PORT[0x07] = value;
 }
-IN_ITCM
+
 void	W2108(uint32 addr, uint32 value)
 {		
 	GFX.map_slot[1] = (value&0x7C)>>2;
@@ -846,7 +848,7 @@ void	W2108(uint32 addr, uint32 value)
 	
 	PPU_PORT[0x08] = value;
 }
-IN_ITCM
+
 void	W2109(uint32 addr, uint32 value)
 {		
 	GFX.map_slot[2] = (value&0x7C)>>2;
@@ -862,7 +864,7 @@ void	W2109(uint32 addr, uint32 value)
 	
 	PPU_PORT[0x09] = value;
 }
-IN_ITCM
+
 void	W210A(uint32 addr, uint32 value)
 {		
 	GFX.map_slot[3] = (value&0x7C)>>2;
@@ -873,7 +875,7 @@ void	W210A(uint32 addr, uint32 value)
 	}
 	PPU_PORT[0x0A] = value;
 }
-IN_ITCM
+
 void	W210B(uint32 addr, uint32 value)
 {		
     if (value != PPU_PORT[0x0B])
@@ -886,7 +888,7 @@ void	W210B(uint32 addr, uint32 value)
     }
 	PPU_PORT[0x0B] = value;    	  
 }
-IN_ITCM
+
 void	W210C(uint32 addr, uint32 value)
 {		
     if (value != PPU_PORT[0x0C])
@@ -899,7 +901,7 @@ void	W210C(uint32 addr, uint32 value)
     }
 	PPU_PORT[0x0C] = value;    	  
 }
-IN_ITCM
+
 void	W210D(uint32 addr, uint32 value) {
      if ((GFX.BG_scroll_reg&0x01)==0) {
        GFX.old_scrollx[0] = PPU_PORT[0x0D];
@@ -909,7 +911,7 @@ void	W210D(uint32 addr, uint32 value) {
 //           update_scrollx(0);
      }
 }
-IN_ITCM         
+         
 void	W210E(uint32 addr, uint32 value) {
          if ((GFX.BG_scroll_reg&0x02)==0) {
            GFX.old_scrolly[0] = PPU_PORT[0x0E];
@@ -919,7 +921,7 @@ void	W210E(uint32 addr, uint32 value) {
 //           update_scrolly(0);
          }
 }
-IN_ITCM         
+         
 void	W210F(uint32 addr, uint32 value) {
          if ((GFX.BG_scroll_reg&0x04)==0) {
            GFX.old_scrollx[1] = PPU_PORT[0x0F];
@@ -929,7 +931,7 @@ void	W210F(uint32 addr, uint32 value) {
   //         update_scrollx(1);
      }
 }
-IN_ITCM
+
 void	W2110(uint32 addr, uint32 value) {
      if ((GFX.BG_scroll_reg&0x08)==0) {
        GFX.old_scrolly[1] = PPU_PORT[0x10];
@@ -939,7 +941,7 @@ void	W2110(uint32 addr, uint32 value) {
 //           update_scrolly(1);
      }
 }
-IN_ITCM     
+     
 void	W2111(uint32 addr, uint32 value) {
      if ((GFX.BG_scroll_reg&0x10)==0) {
        GFX.old_scrollx[2] = PPU_PORT[0x11];
@@ -949,7 +951,7 @@ void	W2111(uint32 addr, uint32 value) {
 //           update_scrollx(2);
      }
 } 
-IN_ITCM    
+    
 void	W2112(uint32 addr, uint32 value) {
      if ((GFX.BG_scroll_reg&0x20)==0) {
        GFX.old_scrolly[2] = PPU_PORT[0x12];
@@ -959,7 +961,7 @@ void	W2112(uint32 addr, uint32 value) {
 //           update_scrolly(2);
      }
 }
-IN_ITCM     
+     
 void	W2113(uint32 addr, uint32 value) {
      if ((GFX.BG_scroll_reg&0x40)==0) {
        PPU_PORT[0x13] = value; GFX.BG_scroll_reg |= 0x40;
@@ -968,7 +970,7 @@ void	W2113(uint32 addr, uint32 value) {
      } 
 //         GFX.tiles_ry[3] = 8; return;
 }
-IN_ITCM
+
 void	W2114(uint32 addr, uint32 value) {
      if ((GFX.BG_scroll_reg&0x80)==0) {
        PPU_PORT[0x14] = value; GFX.BG_scroll_reg |= 0x80;
@@ -977,7 +979,7 @@ void	W2114(uint32 addr, uint32 value) {
      } 
 //         GFX.tiles_ry[3] = 8; return;
 }
-IN_ITCM
+
 void	W2115(uint32 addr, uint32 value) 
 {
          switch(value&0x3) {
@@ -994,20 +996,20 @@ void	W2115(uint32 addr, uint32 value)
          }
          PPU_PORT[0x15] = value;
 }
-IN_ITCM
+
 void	W2116(uint32 addr, uint32 value) 
 {
          PPU_PORT[0x16] = (PPU_PORT[0x16]&0xff00) + value;
          GFX.Dummy_VRAMRead = 1;
 }
-IN_ITCM
+
 void	W2117(uint32 addr, uint32 value) 
 {
          PPU_PORT[0x16] = (PPU_PORT[0x16]&0xff) + (value << 8);
          GFX.Dummy_VRAMRead = 1;
          PPU_PORT[0x17] = value;
 }
-IN_ITCM
+
 void	W2118(uint32 addr, uint32 value)
 {
    	 if (PPU_PORT[0x15]&0x80) {
@@ -1032,7 +1034,7 @@ void	W2118(uint32 addr, uint32 value)
          }
 	PPU_PORT[0x18] = value; // needed ?
 }
-IN_ITCM         
+         
 void	W2119(uint32 addr, uint32 value)
 {
    	 if ((PPU_PORT[0x15]&0x80) == 0) {
@@ -1059,7 +1061,7 @@ void	W2119(uint32 addr, uint32 value)
          }
 	PPU_PORT[0x19] = value;
 }
-IN_ITCM
+
 void	W211A(uint32 addr, uint32 value)
 {
 	 SNES.Mode7Repeat = value>>6;
@@ -1067,44 +1069,44 @@ void	W211A(uint32 addr, uint32 value)
 	 SNES.Mode7HFlip = Byte & 1;*/
 	 PPU_PORT[0x1A] = value;
 }
-IN_ITCM
+
 void	W211B(uint32 addr, uint32 value)
 {
          PPU_PORT[0x1B] = (PPU_PORT[0x1B] >> 8) + (value << 8);
          SNES.PPU_NeedMultiply = 1;
 }
-IN_ITCM
+
 void	W211C(uint32 addr, uint32 value)
 {
          PPU_PORT[0x1C] = (PPU_PORT[0x1C] >> 8) + (value << 8);
          SNES.PPU_NeedMultiply = 1;
 }
-IN_ITCM         
+         
 void	W211D(uint32 addr, uint32 value)
 {
          PPU_PORT[0x1D] = (PPU_PORT[0x1D] >> 8) + (value << 8);
 }
-IN_ITCM         
+         
 void	W211E(uint32 addr, uint32 value)
 {
          PPU_PORT[0x1E] = (PPU_PORT[0x1E] >> 8) + (value << 8);
 }
-IN_ITCM         
+         
 void	W211F(uint32 addr, uint32 value)
 {
          PPU_PORT[0x1F] = (PPU_PORT[0x1F] >> 8) + (value << 8);
 }
-IN_ITCM         
+         
 void	W2120(uint32 addr, uint32 value)
 {
          PPU_PORT[0x20] = (PPU_PORT[0x20] >> 8) + (value << 8);
 }
-IN_ITCM
+
 void	W2121(uint32 addr, uint32 value)
 {
          PPU_PORT[0x21] = (value << 1);
 }
-IN_ITCM
+
 void	W2122(uint32 addr, uint32 value)
 {
          if (PPU_PORT[0x21] == 0x200) PPU_PORT[0x21]=0;
@@ -1179,7 +1181,7 @@ void	pseudoSleep(int d)
 
 #define	SYNC_TIME	500
 
-//IN_ITCM
+//
 void	W2140(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
@@ -1203,7 +1205,7 @@ void	W2140(uint32 addr, uint32 value)
         PPU_PORT[0x40] = value; 
 }
 
-//IN_ITCM
+//
 void	W2141(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
@@ -1239,7 +1241,7 @@ void	W2141(uint32 addr, uint32 value)
         PPU_PORT[0x41] = value;
 }
 
-//IN_ITCM
+//
 void	W2142(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
@@ -1264,7 +1266,7 @@ void	W2142(uint32 addr, uint32 value)
         PPU_PORT[0x42] = value;    	     
 }
 
-//IN_ITCM
+//
 void	W2143(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
@@ -1289,7 +1291,7 @@ void	W2143(uint32 addr, uint32 value)
         PPU_PORT[0x43] = value; 
 }
 
-IN_ITCM
+
 void	W2180(uint32 addr, uint32 value)
 {
       SNESC.RAM[PPU_PORT[0x81]+(PPU_PORT[0x82]<<8)+((PPU_PORT[0x83]&1)<<16)] = value;
@@ -1465,7 +1467,6 @@ IOReadFunc	IORead_DMA[0x20] =
 };
 #undef NOP
 
-IN_ITCM
 void	PPU_port_write(uint32 address, uint8 byte)
 {
 	if (address >= 0x2100 && address < 0x2190)
@@ -1480,7 +1481,6 @@ uint8	PPU_port_read(uint32 address)
 	return 0;
 }
 
-IN_ITCM
 void	DMA_port_write(uint32 address, uint8 byte)
 {
 	if (address >= 0x4200)
@@ -1499,6 +1499,7 @@ void	DMA_port_write(uint32 address, uint8 byte)
 			W4017(0x17, byte);
 				
 }
+
 IN_ITCM
 uint8	DMA_port_read(uint32 address)
 {

@@ -27,18 +27,11 @@
 		distribution.
 
 ---------------------------------------------------------------------------------*/
-
 #include <nds.h>
-#include <nds/memory.h>
-#include <nds/system.h>
-#include <unistd.h>
-
 //#include <stdio.h>
 #include "pocketspc.h"
 #include "apu.h"
 #include "dsp.h"
-#include "apumisc.h"
-#include "main.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 u16's, right buffer is next
 u16 *playBuffer;
@@ -50,6 +43,18 @@ int scanlineCount = 0;
 bool paused = true;
 bool SPC_disable = true;
 bool SPC_freedom = false;
+void BreakR11();
+void memcpy(const void *dst, const void *src, int length);
+extern void _memset(void *data, int fill, int length); 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void swiWaitForVBlank_0(void);
+void __libnds_exit(int rc) {}
+#ifdef __cplusplus
+}
+#endif
 
 //---------------------------------------------------------------------------------
 void HblankHandler(void) {
@@ -144,7 +149,7 @@ inputGetAndSend();
 }
 
 //---------------------------------------------------------------------------------
-void __attribute__((hot)) Timer1Handler() {
+void Timer1Handler() {
 //---------------------------------------------------------------------------------
 #if PROFILING_ON
     long long begin = TIMER2_DATA + ((long long)TIMER3_DATA << 19);
@@ -236,23 +241,15 @@ void LoadSpc(const u8 *spc) {
 
 #if defined (APU_MEM_IN_VRAM) || defined (APU_MEM_IN_RAM) 
     //for (int i=0; i<=0xffff; i++) APU_MEM[i] = spc[0x100 + i];
-    //ori: memcpy(APU_MEM, spc+0x100, 65536); //byte
-	dmaCopyHalfWords(1,(void *)(spc+0x100),(void *)APU_MEM, 0x8000); //halfw
-	
+    memcpy(APU_MEM, spc+0x100, 65536);
 #endif    
     /*for (int i=0; i<=0x7f; i++) {
         DSP_MEM[i] = spc[0x10100 + i];
     }*/
-	dmaCopyHalfWords(1,(void *)(spc+0x10100),(void *)DSP_MEM, 0x40); //halfw
-	
     //for (int i=0; i<=0x3f; i++) APU_EXTRA_MEM[i] = spc[0x101c0 + i];
-    //ori: memcpy(DSP_MEM, spc+0x10100, 0x80); //byte
-    dmaCopyHalfWords(1,(void *)(spc+0x10100),(void *)DSP_MEM, 0x40); //halfw
-	
-	//ori: memcpy(APU_EXTRA_MEM, spc+0x101c0, 0x40);   //byte
-	dmaCopyHalfWords(1,(void *)(spc+0x101c0),(void *)APU_EXTRA_MEM, 0x20); //halfw
-	
-	
+    memcpy(DSP_MEM, spc+0x10100, 0x80);
+    memcpy(APU_EXTRA_MEM, spc+0x101c0, 0x40);   
+
     ApuPrepareStateAfterReload();    
     DspPrepareStateAfterReload();    
 }
@@ -275,34 +272,25 @@ void SaveSpc(u8 *spc) {
 
 #if defined (APU_MEM_IN_VRAM) || defined (APU_MEM_IN_RAM)
     //for (int i=0; i<=0xffff; i++) spc[0x100 + i] = APU_MEM[i];
-    //ori: memcpy(spc+0x100, APU_MEM, 65536);
-	
-	dmaCopyHalfWords(2,(void *)APU_MEM,(void *)(spc+0x100), 0x8000);
-	
+    memcpy(spc+0x100, APU_MEM, 65536);
 #endif    
 /*    for (int i=0; i<=0x7f; i++) {
         spc[0x10100 + i] = DSP_MEM[i];
     }
     for (int i=0; i<=0x3f; i++) 
     	spc[0x101c0 + i] = APU_EXTRA_MEM[i];*/
-		
-    //ori: memcpy(spc+0x10100, DSP_MEM, 0x80); //byte
-    dmaCopyHalfWords(2,(void *)DSP_MEM , (void *)(spc+0x10100), 0x40); //halfw
-	
-	//ori: memcpy(spc+0x101c0, APU_EXTRA_MEM, 0x40);    
-	dmaCopyHalfWords(2,(void *)APU_EXTRA_MEM , (void *)(spc+0x101c0), 0x20); //halfw
-	
+    memcpy(spc+0x10100, DSP_MEM, 0x80);
+    memcpy(spc+0x101c0, APU_EXTRA_MEM, 0x40);       	
 }
 
-static __attribute__((hot)) void HandleFifo(u32 value, void* data) {
+static void HandleFifo(u32 value, void* data) {
     switch (value&0xFFFF) {
 		case 1:
 			// Reset
 			StopSound();
 
-			//ori: _memset(playBuffer, 0, MIXBUFSIZE * 8); //byte
-			dmaFillHalfWords (0,(void *)(playBuffer) , (int)((MIXBUFSIZE * 4)));
-	
+			memset(playBuffer, 0, MIXBUFSIZE * 8);
+
 			*APU_ADDR_CNT = 0; 
 			ApuReset();
 			DspReset();
@@ -337,9 +325,7 @@ static __attribute__((hot)) void HandleFifo(u32 value, void* data) {
 			break;        
 		
 		case 5: /* CLEAR MIXER BUFFER */
-			//ori: _memset(playBuffer, 0, MIXBUFSIZE * 8);
-			dmaFillHalfWords (0,(void *)(playBuffer) , (int)(MIXBUFSIZE * 4));
-			
+			memset(playBuffer, 0, MIXBUFSIZE * 8);
 			break;
 
 		case 6: /* SAVE state */
@@ -367,8 +353,11 @@ u8 *bootstub;
 typedef void (*type_void)();
 type_void bootstub_arm7;
 static void sys_exit(){
-	if(NDSType>=2)writePowerManagement(0x10, 1);
-	else writePowerManagement(0, PM_SYSTEM_PWR);
+	//if(!bootstub_arm7){
+		if(NDSType>=2)writePowerManagement(0x10, 1);
+		else writePowerManagement(0, PM_SYSTEM_PWR);
+	//}
+	//bootstub_arm7(); //won't return
 }
 
 //---------------------------------------------------------------------------------
@@ -394,9 +383,8 @@ int main() {
 	installSystemFIFO();
 	
 	playBuffer = (u16*)0x6000000;
-    //ori: _memset(playBuffer, 0, MIXBUFSIZE * 8);
-	dmaFillHalfWords(0,(void *)(playBuffer) , (int)(MIXBUFSIZE * 4));
-	
+    memset(playBuffer, 0, MIXBUFSIZE * 8);
+
 	irqSet(IRQ_HBLANK, HblankHandler); //this seems to cause sync problems
 	irqSet(IRQ_TIMER1, Timer1Handler);
 	irqSet(IRQ_VBLANK, VblankHandler);
@@ -417,7 +405,11 @@ int main() {
 	setPowerButtonCB(sys_exit);
 	bootstub=(u8*)0x02ff4000;
 	bootstub_arm7=(*(u64*)bootstub==0x62757473746F6F62ULL)?(*(type_void*)(bootstub+0x0c)):0;
-
+    
+    int i = 0;
+    for (i = 0; i < 100; i++)
+		swiWaitForVBlank();
+        
 #ifdef USE_SCANLINE_COUNT
 	// This is incremented by the arm9 on every *SNES* scanline
 	vu32 *scanlinesRun = (vu32*)(0x3000000-60);

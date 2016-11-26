@@ -11,7 +11,13 @@ typedef struct s_Options
 	uint8 WaitVBlank :1;
 	uint8 SpeedHack :3;
 } t_Options;
+
+typedef int (*intfuncptr)();
+typedef u32 (*u32funcptr)();
+typedef void (*voidfuncptr)();
+
 #endif
+
 
 
 #ifdef __cplusplus
@@ -61,21 +67,15 @@ extern u32 dtcm_end_alloced __attribute__((section(".dtcm")));
 extern unsigned int __ewram_start;
 extern unsigned int __ewram_end;
 
-
-typedef int (*intfuncptr)();
-typedef u32 (*u32funcptr)();
-typedef void (*voidfuncptr)();
-
-
 //snapshot.c
-void	FS_lock();
-void	FS_unlock();
-void	APU_stop();
-void	APU_loadSpc();
-void	GUI_console_printf(int x, int y, char *fmt, ...);
-void	APU_saveSpc();
+extern void	FS_lock();
+extern void	FS_unlock();
+extern void	APU_stop();
+extern void	APU_loadSpc();
+extern void	GUI_console_printf(int x, int y, char *fmt, ...);
+extern void	APU_saveSpc();
 
-
+extern u32 keys;
 
 #ifdef __cplusplus
 }

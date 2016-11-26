@@ -21,10 +21,12 @@ GNU General Public License for more details.
 #include "gfx.h"
 #include "cfg.h"
 
-//IN_DTCM
+IN_DTCM
 struct s_cpu	CPU;
+IN_DTCM
 struct s_apu	APU;
 struct s_gfx	GFX;
+IN_DTCM
 struct s_cfg	CFG;
 struct s_snes	SNES;
 

@@ -8,25 +8,20 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-
 #include "pocketspc.h"
 #include "apumisc.h"
-
 #include "dsp.h"
 #include "apu.h"
 
-
 // Envelope timing table.  Number of counts that should be subtracted from the counter
 // The counter starts at 30720 (0x7800).
-static const s16 ENVCNT_START = 0x7800;
-static const s16 ENVCNT[0x20] = {
+const s16 ENVCNT_START = 0x7800;
+const s16 ENVCNT[0x20] = {
 	0x0000,0x000F,0x0014,0x0018,0x001E,0x0028,0x0030,0x003C,
 	0x0050,0x0060,0x0078,0x00A0,0x00C0,0x00F0,0x0140,0x0180,
 	0x01E0,0x0280,0x0300,0x03C0,0x0500,0x0600,0x0780,0x0A00,
 	0x0C00,0x0F00,0x1400,0x1800,0x1E00,0x2800,0x3C00,0x7800
 };
-
-void DspSetEndOfSample(u32 channel);
 
 DspChannel channels[8];
 u8 DSP_MEM[0x100];
@@ -35,14 +30,10 @@ s32 mixBuffer[DSPMIXBUFSIZE * 2];
 s16 brrTab[16 * 16];
 //u32 firTable[8 * 2 * 2];
 u8 *echoBase;
-u16 dspPreamp ALIGNED = 0x140;
-u16 echoDelay ALIGNED;
-u16 echoCursor ALIGNED;
+u16 dspPreamp = 0x140;
+u16 echoDelay;
+u16 echoCursor;
 //u8 firOffset ALIGNED;
-
-// externs from dspmixer.S
-u32 DecodeSampleBlockAsm(u8 *blockPos, s16 *samplePos, DspChannel *channel);
-extern u8 channelNum;
 
 u32 DecodeSampleBlock(DspChannel *channel) {
     u8 *cur = (u8*)&(APU_MEM[channel->blockPos]);
@@ -92,18 +83,14 @@ void DspReset() {
         firTable[i] = 0;
     }*/
  
-    //ori: _memset(DSP_MEM, 0, 0x100);
-	dmaFillHalfWords (0,(void *)(DSP_MEM) , (int)0x80);
+    memset(DSP_MEM, 0, 0x100);
 	
     // Disable echo emulation
     DSP_MEM[DSP_FLAG] = 0x20;
 	
-	
 	for (i = 0; i < 2; i++) {
-		//ori: memset(&channels[i], 0, sizeof(DspChannel));
-        dmaFillHalfWords (1,(void *)(&channels[i]) , (int) (sizeof(DspChannel))/2 );
-	
-		
+		memset(&channels[i], 0, sizeof(DspChannel));
+        
 		//removed by author
 		/*channels[i].samplePos = 0;
         channels[i].envCount = 0;
@@ -345,12 +332,10 @@ void DspPrepareStateAfterReload() {
 
     echoBase = APU_MEM + (DSP_MEM[DSP_ESA] << 8);
     
-	//ori: _memset(echoBase, 0, echoDelay);
-	dmaFillHalfWords (0,(void *)(echoBase) , (int)(echoDelay/2));
+	memset(echoBase, 0, echoDelay);
 	
 	u32 i=0;
-	//ori: for (i = 0; i < 8; i++) {
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 8; i++) {
 		
         channels[i].echoEnabled = (DSP_MEM[DSP_EON] >> i) & 1;
 		

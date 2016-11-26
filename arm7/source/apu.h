@@ -2,10 +2,6 @@
 // Definitions
 ////////////////////////////////////////////////////////////////////////////
 
-#ifndef APUARM7DEFINES
-
-#define APUARM7DEFINES
-
 #define APU_MEM_IN_VRAM
 //#define APU_MEM_IN_RAM
 
@@ -25,11 +21,10 @@
 // IPC is at 0x27FF000 - 0x10000 = 0x27EF000 - 0x100 = 0x27EEF00
 
 #define APU_SNES_ADDRESS ((uint8*)(0x3000000-0x12000))
-
 #ifndef APU_MEM_IN_VRAM 
-	#define APU_RAM_ADDRESS ((uint8*)(0x3000000-0x12000))
+#define APU_RAM_ADDRESS ((uint8*)(0x3000000-0x12000))
 #else
-	#define APU_RAM_ADDRESS ((uint8*)(0x6010000))
+#define APU_RAM_ADDRESS ((uint8*)(0x6010000))
 #endif
 
 #define SNEMUL_CMD ((vu32*)(0x3000000-16))
@@ -48,35 +43,16 @@
 // 8Khz timer clock divisor
 #define t8Shift 7
 
-struct s_apu2
-{
-/* timers */
-  uint32 	TIM0, TIM1, TIM2; /* 0x27ED000 */
-  uint32    T0, T1, T2;
-//  uint32    T0, T1, T2; /* 0x27ED000 */
-//  uint32 	TIM0, TIM1, TIM2; /* 0x27ED00C */
-//  uint32	CNT0, CNT1, CNT2; /* 0x27ED018 */
-};
-
-
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern struct s_apu2 *APU2;
-
-/*extern u32 APU_PC_save;
-extern u32 APU_WaitAddress;*/
-
+//extern "C" {
 void ApuExecute(u32 cycles);
 
 extern u8 *APU_MEM;
 extern u8 APU_EXTRA_MEM[64];
 extern u32 APU_SP;
 extern u32 CpuJumpTable[];
+
 extern u32 APU_STATE[16];
+//}
 
 // Memory post read/write functions
 extern u32 MemWriteDoNothing;
@@ -96,6 +72,7 @@ extern u32 MemReadDspData;
 extern u32 MemZeroPageReadTable;
 extern u32 MemZeroPageWriteTable;
 
+
 // 0 - A, 1 - X, 2 - Y, 3 - RAMBASE, 4 - DP, 5 - PC (Adjusted into rambase)
 // 6 - Cycles (bit 0 - C, bit 1 - v, bit 2 - h, bits 3+ cycles left)
 // 7 - Optable
@@ -108,10 +85,22 @@ void ApuReset();
 void ApuPrepareStateAfterReload();
 void ApuUpdateTimers(u32 cycles);
 
+//extern "C" {	
 void ApuWriteControlByte(u8 byte);
 u32 ApuReadCounter(u32 address);
 void ApuWriteUpperByte(u8 byte, u32 address);
+//}
 
-#ifdef __cplusplus
-}
-#endif
+struct s_apu2
+{
+/* timers */
+  uint32 	TIM0, TIM1, TIM2; /* 0x27ED000 */
+  uint32    T0, T1, T2;
+//  uint32    T0, T1, T2; /* 0x27ED000 */
+//  uint32 	TIM0, TIM1, TIM2; /* 0x27ED00C */
+//  uint32	CNT0, CNT1, CNT2; /* 0x27ED018 */
+};
+extern struct s_apu2 *APU2;
+
+/*extern u32 APU_PC_save;
+extern u32 APU_WaitAddress;*/

@@ -67,7 +67,10 @@ uint32 screen_mode;
 IN_DTCM
 int APU_MAX = 262;
 
+IN_DTCM
+u32 keys = 0;
 
+IN_ITCM
 void VblankHandler()
 {
 	GFX.DSFrame++;
@@ -84,6 +87,7 @@ void VblankHandler()
 	APU.counter = 0;
 }
 
+IN_ITCM
 void HblankHandler()
 {
 	*APU_ADDR_CMD = 0xFFFFFFFF;
@@ -103,9 +107,6 @@ void HblankHandler()
 		*APU_ADDR_CMD = 0;
 	}
 }
-
-u32 keys;
-
 
 
 void applyOptions()
@@ -478,10 +479,10 @@ int selectSong(char *name)
 		return -1;
 	APU_playSpc();
 	// Wait APU init
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	swiWaitForVBlank();
+	
+	
+	
+	
 	//	iprintf("\nDBG: %s", DEBUG_BUF);	
 	return 0;
 }
@@ -514,7 +515,7 @@ else
 	 */
 	exceptionAddress = savedPC - (thumbState ? 2 : 4);
 }
-
+/*
 iprintf(
 		"r0=%08x r1=%08x r2=%08x r3=%08x\n",
 		(unsigned int)AsmDebug[0],(unsigned int)AsmDebug[1],(unsigned int)AsmDebug[2],(unsigned int)AsmDebug[3] );
@@ -522,6 +523,7 @@ iprintf(
 iprintf("\nException %02x @ %08x (%s)\n",
 		(unsigned int)currentMode, (unsigned int)exceptionAddress,
 		(const char*)thumbState ? "Thumb" : "ARM");
+*/
 
 /*    for (i = 0; i < 8; i++) {
  LOG(" %-03s %08x ", registerNames[i], exceptionRegisters[i]);
@@ -534,6 +536,7 @@ iprintf("\nException %02x @ %08x (%s)\n",
 //---------------------------------------------------------------------------------
 int argc;
 char **argv;
+
 int main(int _argc, char **_argv)
 {
 	//initMem();
@@ -560,8 +563,8 @@ int main(int _argc, char **_argv)
 
 
 	// 256Ko for Tiles (SNES: 32-64Ko) 
-	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-	vramSetBankB(VRAM_B_MAIN_BG_0x06020000);
+	vramSetBankA(VRAM_A_MAIN_BG_0x06020000);
+	vramSetBankB(VRAM_B_MAIN_BG_0x06040000);
 
 	// 128Ko (+48kb) for sub screen / GUI 
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
@@ -610,8 +613,8 @@ int main(int _argc, char **_argv)
 
 	REG_DISPSTAT = DISP_VBLANK_IRQ | DISP_HBLANK_IRQ;
 
-	swiWaitForVBlank();
-	swiWaitForVBlank();
+	
+	
 
 	GUI_printf(_STR(IDS_INITIALIZATION));
 	if (FS_init())
@@ -667,7 +670,7 @@ int main(int _argc, char **_argv)
 
 #ifndef	DSEMUL_BUILD	
 	for (i = 0; i < 100; i++)
-		swiWaitForVBlank();
+		
 #endif	
 	
 	GUI_clear();
@@ -721,36 +724,32 @@ int main(int _argc, char **_argv)
 
 	while (1)
 	{
-		//scanKeys();	
-		if (/*!CFG.mouse && */REG_POWERCNT & POWER_SWAP_LCDS)
+        if (REG_POWERCNT & POWER_SWAP_LCDS)
 			GUI_update();
 		if (keys & KEY_LID)
 		{
 			saveSRAM();
 			APU_pause();
 			//			APU_stop();
-			/* hinge is closed */
-			/* power off everything not needed */
+			// hinge is closed 
+			// power off everything not needed 
 			powerOff(POWER_ALL) ;
-			/* set system into sleep */
+			// set system into sleep 
 			while (keys & KEY_LID)
 			{
 				swiWaitForVBlank();
 				scanKeys();
 				keys = keysHeld();
 			}
-			/* wait a bit until returning power */
-			/* power on again */
+			// wait a bit until returning power 
+			// power on again 
 			powerOn(POWER_ALL_2D) ;
-			/* set up old irqs again */
-
+			// set up old irqs again 
 			APU_pause();
 		}
 		
 		if (!SNES.Stopped)
 			go();
-		else
-			swiWaitForVBlank();
 	}
 
 	return 0;

@@ -33,12 +33,9 @@ DATA		:=
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-mthumb-interwork -march=armv5te -mtune=arm946e-s -marm -mstructure-size-boundary=32
-
-CFLAGS	:=	-Wall -O2 -DNO_VIZ -DUSE_EXTRAM\
- 			-fomit-frame-pointer\
-			-ffast-math \
-			$(ARCH)
+ARCH	:= -mthumb-interwork -march=armv5te -mtune=arm946e-s -marm
+CFLAGS	:= -g -Wall -O3	-fmessage-length=0 -fsigned-char -funsafe-math-optimizations \
+		$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions
@@ -65,7 +62,7 @@ LIBDIRS	:=	$(LIBNDS) $(CURDIR)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
  
-export ARM9ELF	:=	$(CURDIR)/$(TARGET).elf
+export OUTPUT	:=	$(CURDIR)/$(TARGET)
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
@@ -118,10 +115,10 @@ else
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-$(ARM9ELF)	:	$(OFILES)
-	@echo linking $(notdir $@)
-	@$(LD)  $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
 
+# All Target
+$(OUTPUT).elf	:	$(OFILES)
+ 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data 
 #---------------------------------------------------------------------------------

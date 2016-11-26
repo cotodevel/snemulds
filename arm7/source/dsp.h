@@ -1,13 +1,5 @@
-void DspReset();
-void DspPrepareStateAfterReload();
-
-//extern "C" {
-extern u8 DSP_MEM[0x100];
-extern u16 dspPreamp;
-
-void DspMixSamplesStereo(u32 samples, u16 *mixBuf);
-void DspWriteByte(u8 val, u8 address);
-
+#ifndef apu_snes
+#define apu_snes
 struct _DspChannel {
     int sampleSpeed;
     int samplePos;
@@ -32,9 +24,6 @@ struct _DspChannel {
     bool echoEnabled;
 } ALIGNED;
 typedef struct _DspChannel DspChannel;
-
-extern DspChannel channels[8];
-//}
 
 // DSP Register defintions
 
@@ -79,3 +68,26 @@ extern DspChannel channels[8];
 #define ENVSTATE_BENTLINE	7
 #define ENVSTATE_DECREASE	8
 #define ENVSTATE_DECEXP		9
+
+#endif
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern u8 DSP_MEM[0x100];
+extern u16 dspPreamp;
+// externs from dspmixer.S
+extern u32 DecodeSampleBlockAsm(u8 *blockPos, s16 *samplePos, DspChannel *channel);
+extern u8 channelNum;
+extern void DspMixSamplesStereo(u32 samples, u16 *mixBuf);
+extern void DspWriteByte(u8 val, u8 address);
+extern void DspSetEndOfSample(u32 channel);
+extern DspChannel channels[8];
+extern void DspReset();
+extern void DspPrepareStateAfterReload();
+
+#ifdef __cplusplus
+}
+#endif

@@ -27,16 +27,11 @@ GNU General Public License for more details.
 /*    .equ    snesVramBase,       0x02220000*/
 
 
-  @.include    "opc_macros.s"
   #include "opc_macros.s"
 
 
 @*************************************************************************
-
-@ All code here in IWRAM (GBA) , because there is no way 40KB app fit in either ITCM (32K) or DTCM (16K)
-@*************************************************************************
-
-    @.section    .dtcm, "aw", %progbits
+.section    .itcm, "aw", %progbits
 
 @=========================================================================
 @ memory mapping table
@@ -179,14 +174,8 @@ m1x1Decoder:
     .long INX_m1x1,INX_m1x1,  SBC_m1x1I,SBC_m1x1I,NOP_m1x1,NOP_m1x1,  XBA_m1x1,XBA_m1x1,  CPX_m1x1,A_34,      SBC_m1x1,A_34,      INC_m1x1,A_36,      SBC_m1x1,AL_45      
     .long BEQ_m1x1,BEQ_m1x1,  SBC_m1x1,DIY_25,    SBC_m1x1,DI_25,     SBC_m1x1,DSIY_27,   PEA_m1x1,PEA_m1x1,  SBC_m1x1,DX_24,     INC_m1x1,DX_26,     SBC_m1x1,DILY_26    
     .long SED_m1x1,SED_m1x1,  SBC_m1x1,AY_34,     PLX_m1x1,PLX_m1x1,  XCE_m1x1,XCE_m1x1,  JSR_m1x1I,JSR_m1x1I,SBC_m1x1,AX_34,     INC_m1x1,AX_37,     SBC_m1x1,ALX_45     
-@ version 0.27DS fix end
-
-    .section    .itcm, "awx", %progbits
-
-    .align 4
-/*    .ascii  ".IWRAMSTART"
-    .align 4*/
-    
+@ version 0.27DS fix end 
+   
 @-------------------------------------------------------------------
 @ First bank for DP addressing
 @-------------------------------------------------------------------
@@ -1134,7 +1123,7 @@ DB:	.word	0
 P:	.word 	0
 .GLOBAL Cycles
 Cycles:	.word	0
-
+/*
 .GLOBAL AsmDebug
 AsmDebug:	
 AsmDebug1:
@@ -1157,6 +1146,4 @@ AsmDebug4:
 		.word	0
 		.word	0
 		.word	0
-	
-
-@	.include	"../opc_misc.s"
+*/

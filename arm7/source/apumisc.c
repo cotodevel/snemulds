@@ -1,12 +1,13 @@
 #include <nds/memory.h>
 #include <nds.h>
+#include <string.h>
 #include "pocketspc.h"
 #include "apu.h"
 #include "apumisc.h"
 
 // archeide: shared structure with SNEmul
 
-static u8 apuShowRom;
+u8 apuShowRom;
 
 void ApuWriteControlByte(u8 byte) {
     u8 orig = APU_MEM[APU_CONTROL_REG];
@@ -45,16 +46,14 @@ void ApuWriteControlByte(u8 byte) {
 	if (byte & 0x80) {
 		if (!apuShowRom) {
 			apuShowRom = 1;
-			//ori: memcpy(APU_MEM+0xFFC0, iplRom, 0x40);
-			dmaCopyHalfWords(2,(const void*)iplRom, (u8*)(APU_MEM+0xFFC0), 0x20); //half
+			memcpy(APU_MEM+0xFFC0, iplRom, 0x40);
 			
 			//for (int i=0; i<=0x3F; i++) APU_MEM[0xFFC0 + i] = iplRom[i];
 		}
 	} else {
 		if (apuShowRom) {
 			apuShowRom = 0;
-			//ori: memcpy(APU_MEM+0xFFC0, APU_EXTRA_MEM, 0x40);
-			dmaCopyHalfWords(2,(const void*)APU_EXTRA_MEM, (void *)(APU_MEM+0xFFC0), 0x20); //half
+            memcpy(APU_MEM+0xFFC0, APU_EXTRA_MEM, 0x40);
 			
 			//for (int i=0; i<=0x3F; i++) APU_MEM[0xFFC0 + i] = APU_EXTRA_MEM[i];
 		}
@@ -77,13 +76,11 @@ void ApuPrepareStateAfterReload() {
 	apuShowRom = APU_MEM[APU_CONTROL_REG] >> 7;
     if (apuShowRom) {
 		//for (int i=0; i<=0x3F; i++) APU_MEM[0xFFC0 + i] = iplRom[i];
-		//ori: memcpy(APU_MEM+0xFFC0, iplRom, 0x40);
-		dmaCopyHalfWords(2,(const void*)iplRom, (void *)(APU_MEM+0xFFC0), 0x20); //half
+		memcpy(APU_MEM+0xFFC0, iplRom, 0x40);
 			
 	} else {
 		//for (int i=0; i<=0x3F; i++) APU_MEM[0xFFC0 + i] = APU_EXTRA_MEM[i];
-		//memcpy(APU_MEM+0xFFC0, APU_EXTRA_MEM, 0x40);
-		dmaCopyHalfWords(2,(const void*)APU_EXTRA_MEM, (void *)(APU_MEM+0xFFC0), 0x20); //half
+		memcpy(APU_MEM+0xFFC0, APU_EXTRA_MEM, 0x40);
 
 	}
 }
@@ -96,12 +93,7 @@ void ApuWriteUpperByte(u8 byte, u32 address) {
         APU_MEM[address] = iplRom[address - 0xFFC0];
 	}
 
-
-
 void ApuSetShowRom()
 {
 	apuShowRom = 0;
 }
-
-/*uint8	*g_ApuTrace = (uint8*)0x27E0000;
-uint32	g_ApuCnt = 0;*/

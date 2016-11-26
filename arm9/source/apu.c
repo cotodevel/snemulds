@@ -43,8 +43,6 @@ void	APU_nice_reset()
 	APU_reset();	
 #endif
 	
-	swiWaitForVBlank();
-	swiWaitForVBlank();
 }
 
 void	APU_pause()
@@ -70,16 +68,16 @@ void	APU_saveSpc()
 	
 	// Wait the ARM7 to save the SPC
 	// FIXME : replace this with a variable check
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	swiWaitForVBlank();	
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	swiWaitForVBlank();	
-	swiWaitForVBlank();
-	swiWaitForVBlank();		
+	
+	
+		
+	
+	
+	
+	
+		
+	
+			
 }
 
 void	APU_loadSpc()
@@ -88,16 +86,16 @@ void	APU_loadSpc()
 
 	// Wait the ARM7 to load the SPC
 	// FIXME : replace this with a variable check
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	swiWaitForVBlank();	
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	swiWaitForVBlank();	
-	swiWaitForVBlank();
-	swiWaitForVBlank();		
+	
+	
+		
+	
+	
+	
+	
+		
+	
+			
 }
 
 
