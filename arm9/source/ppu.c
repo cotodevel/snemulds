@@ -30,28 +30,6 @@ GNU General Public License for more details.
 //#include "cpu.h" //added to opcodes.h
 #include "mpu/pu.h"
 
-/* should be 64 bytes long */
-typedef struct s_OAM_entry
-{
-	uint8 Y;
-	uint8 rot_data:2;
-	uint8 mode:2;
-	uint8 mosaic:1;
-	uint8 color_depth:1;
-	uint8 shape:2;
-	
-	uint16 X:9;
-	uint8 rot_data2:3;
-	uint8 flip:2;
-	uint8 size:2;
-	
-	uint16 tile_index:10;
-	uint8 pr:2;
-	uint8 palette:4;
-	
-	uint16 rot_data3;
-} t_OAM_entry;
-
 //snemulds
 IN_DTCM
 uint32 bittab[256]={0};
@@ -120,16 +98,6 @@ void check_tile_addr()
 {
 //	GFX.tiles_dirty = 1;	
 }
-
-/* Testing stuff... */
-
-typedef struct
-{
-	int 	base;	// SNES base address
-	int		depth;  // Bpp depth: 2 4 8
-	uint16	*DSVRAMAddress;
-	int		used;	
-} t_TileZone;
 
 int			NeedUpdate2b;
 int			NeedUpdate4b;
@@ -647,10 +615,6 @@ void	PPU_updateCache()
 	PPU_add_tile_address(2);
 }
 
-#define CONVERT_SPR_TILE(tn) (((tn)&0xF)|(((tn)>>4)<<5))
-//#define CONVERT_SPR_TILE(tn) (tn)
-#define SNES_VRAM_OFFSET ((SNES_Port[0x01]&0x03) << 14)
-
 IN_ITCM
 void     add_sprite_tile_4(uint16 tilenb, int pos)
 {
@@ -714,9 +678,6 @@ void	PPU_setMap(int i, int j, int tilenb, int bg, int p, int f)
 }
 
 
-#define DRAW_TILE(I, J, TILENB, BG, P, F) \
-	PPU_setMap(I, J, (TILENB)&1023, BG, P, F) 
-
 void update_scroll()
 {
    REG_BG0HOFS = PPU_PORT[(0x0D)+(0<<1)];
@@ -728,16 +689,6 @@ void update_scroll()
    REG_BG3HOFS = PPU_PORT[(0x0D)+(3<<1)];
    REG_BG3VOFS = PPU_PORT[(0x0E)+(3<<1)]+GFX.BG3YScroll;
 }
-
-#define ADD_TILE(TILE_BASE, TILENB, BG_MODE) \
-  switch (BG_MODE) { \
-    case 2 : if (!(GFX.tiles2b_def[TILE_BASE/16+(TILENB)] & 2)) \
-  			    add_tile_2(TILE_BASE, TILENB); break; \
-    case 4 : if (!GFX.tiles4b_def[TILE_BASE/32+(TILENB)]) \
-    			add_tile_4(TILE_BASE, TILENB); break; \
-    case 8 : if (!GFX.tiles8b_def[TILE_BASE/64+(TILENB)]) \
-    			add_tile_8(TILE_BASE, TILENB); break; \
-  }
 
 
 void	draw_plane(int bg, int bg_mode, int nb_tilex, int nb_tiley, int tile_size)
@@ -1282,12 +1233,6 @@ void draw_plane_64_60(unsigned char bg, unsigned char bg_mode)
 }
 
 
-#define SPRITE_ADD_X(INDEX) \
-  -(((GFX.spr_info_ext[INDEX>>2]&(1<<((INDEX&0x3)<<1))) != 0)<<8)
-
-#define SPRITE_POS_Y(INDEX) \
-  (GFX.spr_info[INDEX].pos_y > 239 ? (char)GFX.spr_info[INDEX].pos_y : GFX.spr_info[INDEX].pos_y)
-
 
 inline void draw_tile_sprite(int TILENB, int X, int Y, int SIZEX)
 {
@@ -1514,14 +1459,6 @@ void draw_sprites(/*unsigned char pf*/)
 		OAM[48+15] = 0xFEE0;
 	}
 }
-
-#define DRAW_PLANE(BG, BG_MODE) \
-  switch(PPU_PORT[0x07+BG]&3) { \
-    case 0: { draw_plane_32_30(BG, BG_MODE); } break; \
-    case 1: { draw_plane_64_30(BG, BG_MODE); } break; \
-    case 2: { draw_plane_32_60(BG, BG_MODE); } break; \
-    case 3: { draw_plane_64_60(BG, BG_MODE); } break; \
-  }
 
 void renderMode1(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
 {
@@ -2203,13 +2140,13 @@ void draw_screen()
 	{
 		//LOG("Clear all tiles\n");
   		//ori: memset(GFX.tiles2b_def, 0, 4096);
-  		dmaFillHalfWords (0, (void *)GFX.tiles2b_def, 4096);
+  		dmaFillWords (0, (void *)GFX.tiles2b_def, 4096);
 
 		//ori: memset(GFX.tiles4b_def, 0, 2048);
-  		dmaFillHalfWords (0, (void *)GFX.tiles4b_def, 2048);
+  		dmaFillWords (0, (void *)GFX.tiles4b_def, 2048);
 		
 		//ori: memset(GFX.tiles8b_def, 0, 1024);		
-		dmaFillHalfWords (0, (void *)GFX.tiles8b_def, 1024);
+		dmaFillWords (0, (void *)GFX.tiles8b_def, 1024);
 		
 		GFX.tiles_dirty = 0;
 	}

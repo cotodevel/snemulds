@@ -24,8 +24,12 @@ GNU General Public License for more details.
 #include "snes.h"
 #include "../common.h"
 
+
 #include "gui.h"
 #include "../fs.h"
+
+
+#include "../../../common/common.h"
 
 t_GUI GUI;
 
@@ -442,8 +446,11 @@ int GUI_update()
 	int new_event = 0;
 		
 	scanKeys();
-	uint32 keys = keysHeld() | keysUp() | keysDown();
-
+	
+	int pressed = keysDown(); 	// buttons pressed this loop
+	int held = keysHeld(); 		// buttons currently held
+	int released = keysUp();	// buttons unpressed this loop, but pressed past loop
+	int repeated = keysDownRepeat();	//buttons both pressed past loop, and pressed this loop
 	//GUI_printf2(0, 20, "                \n");
 	//GUI_printf2(0, 20, "keys = %04x\n", keys);
 	
@@ -460,55 +467,62 @@ int GUI_update()
 		}
 	}
 	
-	//GUI_printf2(15, 8, "                       \n");
-	
-	if ( keys & KEY_TOUCH )
+	//coto: rewritten a bit since we rewrote IPC / FIFO API
+	if (MyIPC->touched)
 	{
-		touchPosition  touchXY;
-		touchRead(&touchXY);
-
-		if (keysUp() & KEY_TOUCH)
+		swiWaitForVBlank();
+			
+        if (!MyIPC->touch_pendown)
+        {
+            g_event.event = EVENT_STYLUS_RELEASED;
+            //GUI_printf2(15, 8, "          \n");
+            //GUI_printf2(15, 8, "released\n");
+			new_event = GUI_EVENT_STYLUS;
+		}
+        
+		else if (MyIPC->touched)
+        {
+            g_event.event = EVENT_STYLUS_PRESSED;
+            g_event.stl.x = MyIPC->touchXpx;
+            g_event.stl.y = MyIPC->touchYpx;		
+            //GUI_printf2(15, 8, "          \n");					
+            //GUI_printf2(15, 8, "pressed\n");
+			new_event = GUI_EVENT_STYLUS;
+		}
+		
+        else
 		{
-			g_event.event = EVENT_STYLUS_RELEASED;
-			//GUI_printf2(15, 8, "          \n");
-			//GUI_printf2(15, 8, "released\n");
-		} 
-		else if (keysDown() & KEY_TOUCH)
-		{
-			g_event.event = EVENT_STYLUS_PRESSED;
-			g_event.stl.x = touchXY.px;
-			g_event.stl.y = touchXY.py;		
-			//GUI_printf2(15, 8, "          \n");					
-			//GUI_printf2(15, 8, "pressed\n");
-		} 
-		else// if (keysHeld() & KEY_TOUCH)
-		{
-			if (touchXY.px == 0 && touchXY.py == 0)
+			if (MyIPC->touchXpx == 0 && MyIPC->touchYpx == 0)
 				return 0; // FIX for stylus problem
 			g_event.event = EVENT_STYLUS_DRAGGED;
 
-			g_event.stl.dx = touchXY.px - g_event.stl.x;
-			g_event.stl.dy = touchXY.py - g_event.stl.y;
-			g_event.stl.x = touchXY.px;
-			g_event.stl.y = touchXY.py;
+			g_event.stl.dx = MyIPC->touchXpx - g_event.stl.x;
+			g_event.stl.dy = MyIPC->touchYpx - g_event.stl.y;
+			g_event.stl.x = MyIPC->touchXpx;
+			g_event.stl.y = MyIPC->touchYpx;
 			//GUI_printf2(15, 8, "          \n");											
 			//GUI_printf2(15, 8, "dragged\n");
+			new_event = GUI_EVENT_STYLUS;
 		}
-		new_event = GUI_EVENT_STYLUS;
-	} else {
-		if (keys != 0 && GUI.ScanJoypad)
+        
+	} 
+    
+    else {
+		if (MyIPC->buttons != 0 && GUI.ScanJoypad)
 		{
 			g_event.event = EVENT_BUTTON_ANY;
 			new_event = GUI_EVENT_BUTTON;
-			g_event.joy.buttons = keysHeld();
-			g_event.joy.pressed = keysDown();
-			g_event.joy.repeated = keysDownRepeat();
-			g_event.joy.released = keysUp();
+			g_event.joy.buttons = MyIPC->buttons;
+			g_event.joy.pressed = pressed;
+			g_event.joy.repeated = repeated;
+			g_event.joy.released = released;
 				//GUI_printf2(15, 8, "keys\n");
 		}
 	}
-			
-	if (new_event)
+	
+	
+    //serve & dispatch (destroys) events
+    if (new_event)
 	{
 		//GUI_printf2(60, 1, "event = %d\n", new_event);
 		//if (new_event == GUI_EVENT_STYLUS)

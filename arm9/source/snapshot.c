@@ -19,7 +19,9 @@ GNU General Public License for more details.
 #include "common.h"
 #include "opcodes.h"
 
-#include "main.h" //For linking snapshot cb
+#include "main.h" //For linking snapshot callback
+#include "../../common/common.h"
+
 
 #ifdef USE_GBA_FAT_LIB
 #include "fat/gba_nds_fat.h"

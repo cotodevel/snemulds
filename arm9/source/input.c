@@ -2,7 +2,9 @@
 #include <nds/memory.h>
 #include <string.h>
 
-#include "common.h"
+#include "common.h"                 //snes common
+#include "../../common/common.h"    //NDS IPC
+
 #include "gfx.h"
 #include "snes.h"
 #include "cfg.h"
@@ -16,7 +18,7 @@ uint32	mouse_cur_b;
 
 int	setBacklight(int flags)
 {
-	SendArm7Command(8 | (flags << 16));
+	SendArm7Command(0x00000008,(flags << 16),0x00000000,0x00000000);
 	return 0;
 }
 
@@ -37,12 +39,11 @@ int get_joypad()
 {
 	int res = 0;
 
-/*#define KEYS_CUR (( ((~REG_KEYINPUT)&0x3ff) | (((~IPC->buttons)&3)<<10) | \
-	 			 (((~IPC->buttons)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID)	
-	keys = KEYS_CUR;*/
-	
+    #define KEYS_CUR (( ((~REG_KEYINPUT)&0x3ff) | (((~MyIPC->buttons_xy_folding)&3)<<10) | (((~MyIPC->buttons_xy_folding)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID)	
+	keys = KEYS_CUR;
+
 	//scanKeys();	
-	keys = keysCurrent();
+	//keys = keysCurrent();
 
 #if 0
 		if( (keys & KEY_L))
@@ -67,7 +68,7 @@ int get_joypad()
 				(uint32)((sint32)PCptr+(sint32)SnesPCOffset),
 				PORT_SNES_TO_SPC[1], PORT_SPC_TO_SNES[1],  
 				
-				 (*(uint32*)memUncached(0x2FE0000)) & 0xFFFF, *(uint16 *)(APU_RAM_ADDRESS+0x18));
+				// (*(uint32*)memUncached(0x2FE0000)) & 0xFFFF, *(uint16 *)(APU_RAM_ADDRESS+0x18));
 				
 				//PORT_SNES_TO_SPC[1] = 0x44; 		
 			}
@@ -164,8 +165,8 @@ int get_joypad()
 	}
 #endif	 	 
 	 
-/*	scanKeys();	
-	keys = keysHeld();*/
+//	scanKeys();	
+//	keys = keysHeld();
 	if( keys & KEY_B ) res |= 0x8000;
 	if( keys & KEY_Y ) res |= 0x4000;
 	if( keys & KEY_SELECT ) res |= 0x2000;
@@ -203,19 +204,18 @@ int get_joypad()
 			}  
 		}
 
-		touchPosition touchXY;
-		touchRead(&touchXY);
-		if (keys & KEY_TOUCH)
+        
+		if (MyIPC->touched)
 		{		
 			int tx=0, ty=0;
 
-			tx = touchXY.px;
+			tx = MyIPC->touchXpx;
 			if (CFG.Scaled == 0) // No scaling
-				ty = touchXY.py+GFX.YScroll;
+				ty = MyIPC->touchYpx+GFX.YScroll;
 			else if (CFG.Scaled == 1) // Half scaling
-				ty = touchXY.py*208/192+12; // FIXME			
+				ty = MyIPC->touchYpx*208/192+12; // FIXME			
 			else if (CFG.Scaled == 2) // Full screen
-				ty = touchXY.py*224/192;
+				ty = MyIPC->touchYpx*224/192;
 			
 			if (CFG.MouseMode == 0)
 			{

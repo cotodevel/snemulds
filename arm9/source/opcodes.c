@@ -2573,9 +2573,9 @@ void CPU_goto(int cycles)
 		
 	CPU_unpack();
 	
-//	*APU_ADDR_BLK = 0;
+//ori removed:	*APU_ADDR_BLK = 0;
 	CPU_goto2(cycles);
-//	*APU_ADDR_BLK = 1;
+//ori removed:	*APU_ADDR_BLK = 1;
 	CPU.packed = 0;
 
 //	CPU_pack();

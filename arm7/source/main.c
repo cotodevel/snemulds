@@ -32,6 +32,11 @@
 #include "pocketspc.h"
 #include "apu.h"
 #include "dsp.h"
+#include "main.h"
+#include "interrupts/fifo_handler.h"
+#include "interrupts/interrupts.h"
+#include "interrupts/cpu_utils.h"
+#include "../../common/common.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 u16's, right buffer is next
 u16 *playBuffer;
@@ -40,160 +45,10 @@ int apuMixPosition;
 int pseudoCnt;
 int frame = 0;
 int scanlineCount = 0;
+u32 interrupts_to_wait_arm7 = 0;
 bool paused = true;
 bool SPC_disable = true;
 bool SPC_freedom = false;
-void BreakR11();
-void memcpy(const void *dst, const void *src, int length);
-extern void _memset(void *data, int fill, int length); 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-void swiWaitForVBlank_0(void);
-void __libnds_exit(int rc) {}
-#ifdef __cplusplus
-}
-#endif
-
-//---------------------------------------------------------------------------------
-void HblankHandler(void) {
-//---------------------------------------------------------------------------------
-     	// Block execution until the hblank processing on ARM9
-/*     	int	i;
-     	for (i = 0; i < 100; i++)
-     		pseudoCnt++;*/
-/*        if (!SPC_disable)
-        {     		
-     	while (*SNEMUL_CMD == 0);
-     	while (*SNEMUL_CMD == 0xFFFFFFFF);
-        }*/
-#if 1        
-        if (!SPC_disable)
-      	{
-        //while (*SNEMUL_CMD == 0);
-		int VCount = REG_VCOUNT;        
-
-#ifndef USE_SCANLINE_COUNT
-		//if (scanlineCount < 20)
-			scanlineCount++;
-#endif	
-/*		if (VCount == 80)
-		{		
-			updateMyIPC();
-		} else*/
-		{
-		 
-		uint32 T0 = APU_MEM[APU_TIMER0]?APU_MEM[APU_TIMER0]:0x100;
-		uint32 T1 = APU_MEM[APU_TIMER1]?APU_MEM[APU_TIMER1]:0x100;
-		uint32 T2 = APU_MEM[APU_TIMER2]?APU_MEM[APU_TIMER2]:0x100;
-		
-		//*((vu32*)0x27E0004) = APU2->T0;
-		//*((vu32*)0x27E0004) = scanlineCount;
-
-//	    if (VCount & 63) {
-	      if ((VCount & 1) == 1) {        		      	
-	        if (++APU2->TIM0 >= T0) {
-	          APU2->TIM0 -= T0;
-	          APU_MEM[APU_COUNTER0]++;
-	          APU_MEM[APU_COUNTER0] &= 0xf;
-	        }
-	        if (++APU2->TIM1 >= T1) {
-	          APU2->TIM1 -= T1;
-	          APU_MEM[APU_COUNTER1]++;
-	          APU_MEM[APU_COUNTER1] &= 0xf;
-	        }
-	      }
-	      APU2->TIM2 += 4;
-	      if (APU2->TIM2 >= T2) {
-	        APU2->TIM2 -= T2;
-            APU_MEM[APU_COUNTER2]++;
-	        APU_MEM[APU_COUNTER2] &= 0xf;
-	      }
-		}
-//	    }
-	    //while (*SNEMUL_CMD == 0xFFFFFFFF);
-      	}
-#endif
-}
-
-//---------------------------------------------------------------------------------
-void VblankHandler(void) {
-//---------------------------------------------------------------------------------
-inputGetAndSend();
-#ifdef USE_SCANLINE_COUNT        	
-		if (SPC_freedom)
-		{
-		vu32 * const scanlinesRun = (vu32*)(0x2800000-60);
-		*scanlinesRun += 265;		
-			
-		//*scanlinesRun += spcCyclesPerSec / (MIXRATE / MIXBUFSIZE) / 67;
-//		*scanlinesRun = MIXBUFSIZE / 2;
-
-//		const int cyclesToExecute = spcCyclesPerSec / (MIXRATE / MIXBUFSIZE);
-/*        ApuExecute(cyclesToExecute * 21);
-        DspMixSamplesStereo(MIXBUFSIZE, &playBuffer[soundCursor]);*/
-		}
-#endif		
-    	
-#if PROFILING_ON
-        // Debug time data
-        SPC_IPC->curTime += TIMER2_DATA | ((long long)TIMER3_DATA << 19);
-        TIMER2_CR = 0;
-        TIMER3_CR = 0;
-        TIMER2_DATA = 0;
-        TIMER2_CR = TIMER_DIV_64 | TIMER_ENABLE;
-        TIMER3_DATA = 0;
-        TIMER3_CR = TIMER_CASCADE | TIMER_ENABLE;
-#endif
-}
-
-//---------------------------------------------------------------------------------
-void Timer1Handler() {
-//---------------------------------------------------------------------------------
-#if PROFILING_ON
-    long long begin = TIMER2_DATA + ((long long)TIMER3_DATA << 19);
-#endif
-    soundCursor = MIXBUFSIZE - soundCursor;
-
-#if 1
-    // Left channel
-    int channel = soundCursor == 0 ? 0 : 1;
-    SCHANNEL_TIMER(channel) = SOUND_FREQ(MIXRATE);
-    SCHANNEL_SOURCE(channel) = (uint32)&(playBuffer[MIXBUFSIZE - soundCursor]);
-    SCHANNEL_LENGTH(channel) = (MIXBUFSIZE * 2) >> 2;
-    SCHANNEL_REPEAT_POINT(channel) = 0;
-    SCHANNEL_CR(channel) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_FORMAT_16BIT;
-
-    // Right channel
-    channel = soundCursor == 0 ? 2 : 3;
-    SCHANNEL_TIMER(channel) = SOUND_FREQ(MIXRATE);
-    SCHANNEL_SOURCE(channel) = (uint32)&(playBuffer[(MIXBUFSIZE - soundCursor) + (MIXBUFSIZE * 2)]);
-    SCHANNEL_LENGTH(channel) = (MIXBUFSIZE * 2) >> 2;
-    SCHANNEL_REPEAT_POINT(channel) = 0;
-    SCHANNEL_CR(channel) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x7F) | SOUND_FORMAT_16BIT;
-
-#ifndef SCANLINE_SYNC
-	vu32 * const scanlinesRun = (vu32*)(0x3000000-60);
-
-	if (*scanlinesRun < 20) {
-		// Mix into soundCursor now
-		const int cyclesToExecute = spcCyclesPerSec / (MIXRATE / MIXBUFSIZE);
-		ApuExecute(cyclesToExecute);
-	    DspMixSamplesStereo(MIXBUFSIZE, &playBuffer[soundCursor]);
-		*scanlinesRun += cyclesToExecute / 67;
-	}
-
-#endif
-
-#if PROFILING_ON
-    long long end = TIMER2_DATA + ((long long)TIMER3_DATA << 19);
-    SPC_IPC->cpuTime += end - begin;
-//    SPC_IPC->dspTime += (TIMER2_DATA + ((long long)TIMER3_DATA << 19)) - end;
-#endif
-
-#endif
-}
 
 //snemulDS stuff
 void SetupSound() {
@@ -283,74 +138,8 @@ void SaveSpc(u8 *spc) {
     memcpy(spc+0x101c0, APU_EXTRA_MEM, 0x40);       	
 }
 
-static void HandleFifo(u32 value, void* data) {
-    switch (value&0xFFFF) {
-		case 1:
-			// Reset
-			StopSound();
-
-			memset(playBuffer, 0, MIXBUFSIZE * 8);
-
-			*APU_ADDR_CNT = 0; 
-			ApuReset();
-			DspReset();
-
-			SetupSound();
-			paused = false;
-			SPC_disable = false;
-			SPC_freedom = false;
-			break;
-		case 2: 
-			// Pause/unpause
-			if (!paused) {
-				StopSound();
-			} else {
-				SetupSound();
-			}
-			if (SPC_disable)
-				SPC_disable = false;        
-			paused = !paused;        
-			break;
-		case 3: /* PLAY SPC */
-			LoadSpc(APU_SNES_ADDRESS-0x100);
-			SetupSound();   	
-			*APU_ADDR_CNT = 0;             	
-			paused = false;
-			SPC_freedom = true;
-			SPC_disable = false;
-			break;
-			
-		case 4: /* DISABLE */   	
-			SPC_disable = true;
-			break;        
-		
-		case 5: /* CLEAR MIXER BUFFER */
-			memset(playBuffer, 0, MIXBUFSIZE * 8);
-			break;
-
-		case 6: /* SAVE state */
-			SaveSpc(APU_SNES_ADDRESS-0x100);
-			break;  
-			
-		case 7: /* LOAD state */
-			LoadSpc(APU_SNES_ADDRESS-0x100);
-			*APU_ADDR_CNT = 0; 
-			break;
-			
-		case 8:
-			writePowerManagement(PM_SOUND_AMP, (int)data>>16); 
-			break; 
-			
-		default:
-			break;
-    }
-	
-	fifoSendValue32(FIFO_USER_01,1);
-}
-
 int NDSType=0;
 u8 *bootstub;
-typedef void (*type_void)();
 type_void bootstub_arm7;
 static void sys_exit(){
 	//if(!bootstub_arm7){
@@ -363,39 +152,54 @@ static void sys_exit(){
 //---------------------------------------------------------------------------------
 int main() {
 //---------------------------------------------------------------------------------
-	// read User Settings from firmware
-	readUserSettings();
 	
-	irqInit();
-	// Start the RTC tracking IRQ
-	initClockIRQ();
-	fifoInit();
-	
-#if 1
+    int i   = 0;
+	REG_IME = 0;
+
+	// Reset the clock if needed
+    rtcReset();
+
 	// Block execution until we get control of vram D
 	while (!(*((vu8*)0x04000240) & 0x2));
-#endif
+	
+    playBuffer = (u16*)0x6000000;
+    
+    for (i = 0; i < MIXBUFSIZE * 4; i++) {
+        playBuffer[i] = 0;
+    }
 
-	SetYtrigger(80);
+    interrupts_to_wait_arm7 = IRQ_HBLANK | IRQ_VBLANK | IRQ_VCOUNT | IRQ_FIFO_NOT_EMPTY | IRQ_TIMER1 | IRQ_NETWORK;
+    
+    irqInit();
+    fifoInit();
+    
+    REG_IPC_SYNC = 0;
+    REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR | IPC_FIFO_RECV_IRQ;
+    REG_IPC_FIFO_CR |= (1<<2);  //send empty irq
+    REG_IPC_FIFO_CR |= (1<<10); //recv empty irq
 	
-	fifoSetValue32Handler(FIFO_USER_01, HandleFifo, 0); 
+    irqSet(IRQ_HBLANK,hblank);
+    irqSet(IRQ_VBLANK, vblank);
+	irqSet(IRQ_VCOUNT,vcounter);
+    irqSet(IRQ_TIMER1,timer1);
+    irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifo);
+    
+	//upon data transfer IRQ_CARD
+	irqEnable(interrupts_to_wait_arm7);
+    
+    *(u16*)0x04000184 = *(u16*)0x04000184 | (1<<15); //enable fifo send recv
 
-	installSystemFIFO();
-	
-	playBuffer = (u16*)0x6000000;
-    memset(playBuffer, 0, MIXBUFSIZE * 8);
-
-	irqSet(IRQ_HBLANK, HblankHandler); //this seems to cause sync problems
-	irqSet(IRQ_TIMER1, Timer1Handler);
-	irqSet(IRQ_VBLANK, VblankHandler);
-	irqEnable( IRQ_HBLANK | IRQ_TIMER1 | IRQ_VBLANK);  
-	
-	REG_DISPSTAT = DISP_VBLANK_IRQ | DISP_HBLANK_IRQ;
-	
-	ApuReset();
+    //set up ppu: do irq on hblank/vblank/vcount/and vcount line is 159
+    REG_DISPSTAT = REG_DISPSTAT | DISP_HBLANK_IRQ |  DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ | (VCOUNT_LINE_INTERRUPT << 15);
+    
+    REG_IF = ~0;
+    REG_IME = 1;
+    
+    update_spc_ports(); //updates asm ipc apu core with snemulds IPC apu ports 
+    ApuReset();
     DspReset();
     SetupSound();
-
+    
 	{
 		NDSType=0;
 		u32 myself = readPowerManagement(4); //(PM_BACKLIGHT_LEVEL);
@@ -405,46 +209,12 @@ int main() {
 	setPowerButtonCB(sys_exit);
 	bootstub=(u8*)0x02ff4000;
 	bootstub_arm7=(*(u64*)bootstub==0x62757473746F6F62ULL)?(*(type_void*)(bootstub+0x0c)):0;
-    
-    int i = 0;
-    for (i = 0; i < 100; i++)
-		swiWaitForVBlank();
+   
+    while (1) {
         
-#ifdef USE_SCANLINE_COUNT
-	// This is incremented by the arm9 on every *SNES* scanline
-	vu32 *scanlinesRun = (vu32*)(0x3000000-60);
-#endif
-	// Keep the ARM7 mostly idle
-	while (1) {
-		if(0 == (REG_KEYINPUT & (KEY_SELECT | KEY_START | KEY_L | KEY_R))){
-			sys_exit();
-		}
-		//inputGetAndSend();
-		//continue;
-		
-		if (SPC_disable)
-		{
-			swiWaitForVBlank();			
-			continue;
-		}
-		
-#ifndef SCANLINE_SYNC
-		swiWaitForVBlank();
-#else
-#ifdef USE_SCANLINE_COUNT
-		int localCache = *scanlinesRun;
-/*		if (SPC_freedom)
-			localCache = 1;*/ 
-			
-		if (localCache > 0) {
-			// every snes scanline is 2 samples (roughly) - 31440 samples in 60fps * 262 scanlines.
-			// so, we need to add an extra sample every 66 scanlines (roughly)
-			localCache--;
-			*scanlinesRun = localCache;
-
-			scanlineCount++;
-#endif			
-			int cyclesToExecute, samplesToMix;
+        //Coto: Sound is best handled when NDS is NOT waiting for interrupt. 
+        if(!SPC_disable){
+            int cyclesToExecute, samplesToMix;
 			//if (scanlineCount >= 66) {
 			//	scanlineCount -= 66;
 			//	samplesToMix = 17;
@@ -456,7 +226,6 @@ int main() {
 			cyclesToExecute = spcCyclesPerSec / (32000 / 2);
 			ApuExecute(cyclesToExecute);
 			
-#if 1	
 			if (scanlineCount >= 16) {
 				scanlineCount -= 16;		
 				samplesToMix = 32;
@@ -471,13 +240,13 @@ int main() {
 				DspMixSamplesStereo(samplesToMix, &playBuffer[apuMixPosition]);
 				apuMixPosition += samplesToMix;								
 			}			
-#endif /* 1 */	
 
-#ifdef USE_SCANLINE_COUNT
-		}
-#endif		
-
-#endif /* SCANLINESYNC */
-	}
+            
+        }
+        else
+            //swiWaitForVBlank();
+            swiIntrWait(1,interrupts_to_wait_arm7);
+    }
+   
 	return 0;
 }

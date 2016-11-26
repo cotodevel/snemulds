@@ -15,16 +15,11 @@ endif
 BUILD		:=	bin
 SOURCES		:=	source/	\
                 source/interrupts/	\
-                source/wireless/	\
-				../common/	\
-                ../common/wifi/	\
-				../lib
+                ../common/
                 
 INCLUDES	:=	source/	\
                 source/interrupts/	\
-                source/wireless/	\
-				../common	\
-				../lib
+                ../common/
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -43,7 +38,7 @@ ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(CURDIR)/../pocketspc_arm7.specs -g $(ARCH) -Wl,-Map,$(notdir $*).map
 #LDFLAGS	=	-specs=ds_arm7.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*).map
 
-LIBS	:= -lnds7
+LIBS	:=  -lnds7
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

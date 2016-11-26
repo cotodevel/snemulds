@@ -189,8 +189,6 @@ void	PPU_line_render_scaled();
 void	PPU_line_render();
 
 extern int CPU_break;
-extern uint32 APU_MAX;
-extern uint32 screen_mode;
 
 //core.c
 void	DMA_port_write(uint32 address, uint8 byte);
@@ -221,7 +219,6 @@ extern u32 keys;
 
 //debug.c
 extern	uint32			CPU_log;
-extern uint32	APU_MAX;
 void PPU_ChangeLayerConf(int i);
 
 //opcodes2.s

@@ -19,7 +19,7 @@ GNU General Public License for more details.
 #define __apu_h__
 
 #include "common.h"
-
+/*
 struct s_apu
 {
 #if 0	
@@ -30,18 +30,18 @@ struct s_apu
 
   uint32	T0_LATCH, T1_LATCH, T2_LATCH;
 
-/* sound */
+// sound
   int		MasterVolume, MasterPanning;
   uchar		DSP_channel[8];
 
-/* sample */
+//sample
   uchar		sample_nb[256];
   ushort	CheckSum[256], Sample_len[256];
   uchar		sample_cnt;
   uchar         need_decode[8];
   short         samp[0x8000];
 
-/* voice */
+// voice 
   long		Voice_pos[8], old_Voice_pos[8];
   uchar		Voice_envx[8], Voice_start_envx[8];
   uchar		Voice_mode[8];
@@ -61,23 +61,21 @@ struct s_apu
 
 struct s_apu2
 {
-/* timers */
+// timers
   uint32    T0, T1, T2;
   uint32 	TIM0, TIM1, TIM2;
   uint32	CNT0, CNT1, CNT2;
 };
 
-
 #define PORT_SNES_TO_SPC ((volatile uint8*)memUncached((void *)0x3000000-8))
 #define PORT_SPC_TO_SNES ((volatile uint8*)memUncached((void *)0x3000000-4))
 
 #define APU_RAM_ADDRESS ((uint8*)memUncached((void *)0x3000000-0x12000))
-
 #define APU_ADDR_CNT ((volatile uint32*)memUncached((void *)0x3000000-60))
 #define APU_ADDR_CMD ((volatile uint32*)memUncached((void *)0x3000000-16))
-//#define APU_ADDR_ANS ((volatile uint32*)memUncached(0x3000000-20))
 #define APU_ADDR_BLK ((volatile uint32*)memUncached((void *)0x3000000-24))
 #define APU_ADDR_BLKP ((volatile uint8*)memUncached((void *)0x3000000-24))
+*/
 
 #endif
 
@@ -86,11 +84,23 @@ struct s_apu2
 extern "C" {
 #endif
 
-extern struct s_apu	APU;
+//extern struct s_apu	APU;
+//extern struct s_apu2 *APU2;
 
-void	APU_stop();
-void SendArm7Command(u32 command);
-extern struct s_apu2 *APU2;
+extern void	APU_reset();
+extern void	APU_nice_reset();
+extern void	APU_pause();
+extern void	APU_stop();
+extern void	APU_playSpc();
+extern void	APU_saveSpc();
+extern void	APU_loadSpc();
+extern void	APU_clear();
+extern void APU_playSong(uint8 *data, int size);
+extern void APU_command(uint32 command);
+
+//ARM7 only APU C->Assembly struct required by APU Core
+extern u32 ADDR_PORT_SNES_TO_SPC;
+extern u32 ADDR_PORT_SPC_TO_SNES;
 
 #ifdef __cplusplus
 }

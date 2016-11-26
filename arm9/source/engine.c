@@ -187,13 +187,15 @@ int initSNESEmpty()
 IN_DTCM
 int OldPC;
 
-IN_ITCM
-__attribute__ ((weak))
 int go()
 {
-
-  if (CPU.IsBreak) return 0;
-	
+    //dont jump here so cpu is executing.
+  if (CPU.IsBreak) {
+        //GUI_printf("SNES IS BREAK %d\n",rand()&0xff);
+        return 0;
+  }
+  
+  
   while (1)
   {			
 	if (GFX.v_blank)
@@ -251,20 +253,20 @@ int go()
       if (SNES.V_Count & 63) {
         if (SNES.V_Count & 1) {
           if (!SNES.NTSC && ((SNES.V_Count&7) == 1)) {
-            APU2->TIM0++; APU2->TIM1++; APU2->TIM2+=4;
+            MyIPC->TIM0++; MyIPC->TIM1++; MyIPC->TIM2+=4;
           }
-          if (++APU2->TIM0 >= APU2->T0) {
-            APU2->TIM0 -= APU2->T0; APU2->CNT0++;
-            //if (APU2->CONTROL&1) { SPC700_emu = 1; APU_WaitCounter++; }
+          if (++MyIPC->TIM0 >= MyIPC->T0) {
+            MyIPC->TIM0 -= MyIPC->T0; MyIPC->CNT0++;
+            //if (MyIPC->CONTROL&1) { SPC700_emu = 1; APU_WaitCounter++; }
           }
-          if (++APU2->TIM1 >= APU2->T1) {
-            APU2->TIM1 -= APU2->T1; APU2->CNT1++;
-            //if (APU2->CONTROL&2) { SPC700_emu = 1; APU_WaitCounter++; }
+          if (++MyIPC->TIM1 >= MyIPC->T1) {
+            MyIPC->TIM1 -= MyIPC->T1; MyIPC->CNT1++;
+            //if (MyIPC->CONTROL&2) { SPC700_emu = 1; APU_WaitCounter++; }
           }
         }
-        APU2->TIM2 += 4;
-        if (APU2->TIM2 >= APU2->T2) {
-          APU2->TIM2 -= APU2->T2; APU2->CNT2++;
+        MyIPC->TIM2 += 4;
+        if (MyIPC->TIM2 >= MyIPC->T2) {
+          MyIPC->TIM2 -= MyIPC->T2; MyIPC->CNT2++;
           //if (APU.CONTROL&4) { SPC700_emu = 1; APU_WaitCounter++; }
         }
       }

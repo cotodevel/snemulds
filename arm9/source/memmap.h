@@ -18,12 +18,17 @@ GNU General Public License for more details.
 #ifndef MEMMAP_H_
 #define MEMMAP_H_
 
-/*
-uint8	IO_getbyte(int addr, uint32 address);
-void	IO_setbyte(int addr, uint32 address, uint8 byte);
-uint16	IO_getword(int addr, uint32 address);
-void	IO_setword(int addr, uint32 address, uint16 word);
-*/
+#define NOT_LARGE	0
+#define USE_PAGING	1
+#define USE_EXTMEM	2
+
+#ifdef ASM_OPCODES
+#define SPECIAL_MAP(p) ((int)(p) & 0x80000000)
+#define REGULAR_MAP(p) (!((int)(p) & 0x80000000))  	
+#else
+#define SPECIAL_MAP(p) ((int)(p) < MAP_LAST)
+#define REGULAR_MAP(p) ((int)(p) >= MAP_LAST)  	
+#endif
 
 #endif /*MEMMAP_H_*/
 
@@ -36,16 +41,6 @@ extern char *ROM_Image;
 extern void fillMemory( void * addr, u32 count, u32 value );
 extern void zeroMemory( void * addr, u32 count );
 extern int	FS_loadROMPage(char *buf, unsigned int pos, int size);
-
-
-/*
-uchar DMA_port_read(long address);
-void DMA_port_write(long address, unsigned short value);
-void PPU_port_write(long address, unsigned short value);
-uchar PPU_port_read(long address);
-void	LOG(char *fmt, ...);
-int	FS_loadROMPage(char *buf, unsigned int pos, int size);
-*/
 
 #ifdef __cplusplus
 }

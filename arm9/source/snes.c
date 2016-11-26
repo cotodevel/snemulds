@@ -26,8 +26,62 @@ GNU General Public License for more details.
 //#include "superfx.h"
 #include "opcodes.h"
 
-#define bzero(p, s)	memset(p, 0, s)
+#include "../../common/common.h"
 
+//GSU Memory Map (at SNES Side)
+/*
+  00-3F:3000-32FF  GSU I/O Ports
+  00-3F:6000-7FFF  Mirror of fragment (err, which one(s)?) of Game Pak RAM
+  00-3F:8000-FFFF  Game Pak ROM in LoRom mapping (2Mbyte max)
+  40-5F:0000-FFFF  Game Pak ROM in HiRom mapping (mirror of above 2Mbyte)
+  70-71:0000-FFFF  Game Pak RAM       (128Kbyte max, usually 32K or 64K)
+  78-79:0000-FFFF  Additional "Backup" RAM  (128Kbyte max, usually none)
+  80-BF:3000-32FF  Mirror of GSU I/O Ports
+  80-BF:6000-7FFF  Mirror of fragment (err, which one(s)?) of Game Pak RAM
+  80-BF:8000-FFFF  Additional "CPU" ROM LoROM (2Mbyte max, usually none)
+  C0-FF:0000-FFFF  Additional "CPU" ROM HiROM (4Mbyte max, usually none)
+For HiROM mapping the address bits are shifted, so both LoROM and HiROM are
+linear (eg. Bank 40h contains mirrors of Bank 00h and 01h).
+Although both LoROM and HiROM are supported, the header & exception vectors are
+located at ROM Offset 7Fxxh (in LoROM fashion), accordingly the cartridge
+header declares the cartridge as LoROM.
+The additional ROM/RAM regions would be mapped to SNES CPU only (not to GSU),
+they aren't installed in existing cartridges, that implies that the "Fast" ROM
+banks (80h-FFh) are unused, so GSU games are restricted to "Slow" ROM.
+The "unspecified" 8K fragment(s) at 6000h-7FFFh are used by Super Mario World
+2; whereas, it seems as if ALL 8K fragments do mirror to the FIRST 8K of Game
+Pak RAM?
+*/
+
+//GSU Memory Map (at GSU Side)
+/*
+  00-3F:0000-7FFF  Mirror of LoROM at 00-3F:8000-FFFF (for "GETB R15" vectors)
+  00-3F:8000-FFFF  Game Pak ROM in LoRom mapping (2Mbyte max)
+  40-5F:0000-FFFF  Game Pak ROM in HiRom mapping (mirror of above 2Mbyte)
+  70-71:0000-FFFF  Game Pak RAM       (128Kbyte max, usually 32K or 64K)
+  PBR:0000-01FF    Code-Cache (when having manually stored opcodes in it)
+PBR can be set to both ROM/RAM regions (or cache region), ROMBR only to ROM
+region (00h-5Fh), RAMBR only to RAM region (70h-71h).
+
+GSU Interrupt Vectors
+The SNES Exception Vectors (at FFE4h-FFFFh) are normally located in Game Pak
+ROM. When the GSU is running (with GO=1 and RON=1), ROM isn't mapped to SNES
+memory, instead, fixed values are appearing as ROM (depending of the lower 4bit
+of the address):
+  Any Address     Exception Vectors
+  [xxx0h]=0100h   -
+  [xxx2h]=0100h   -
+  [xxx4h]=0104h   [FFE4h]=0104h  COP Vector in 65C816 mode (COP opcode)
+  [xxx6h]=0100h   [FFE6h]=0100h  BRK Vector in 65C816 mode (BRK opcode)
+  [xxx8h]=0100h   [FFE8h]=0100h  ABT Vector in 65C816 mode (Not used in SNES)
+  [xxxAh]=0108h   [FFEAh]=0108h  NMI Vector in 65C816 mode (Vblank)
+  [xxxCh]=0100h   -
+  [xxxEh]=010Ch   [FFEEh]=010Ch  IRQ Vector in 65C816 mode (H/V-IRQ & GSU-STOP)
+It'd be best to set the Game Pak ROM vectors to the same addresses, otherwise
+the vectors would change when the GSU is running (or possibly, the fixed-LSBs
+may be mixed-up with ROM-MSBs).
+
+*/
 #if 0
 struct s_SuperFX	SuperFX;
 
@@ -38,11 +92,12 @@ char    _use_lfn(const char *path)
 
 void	SuperFX_init()
 {
-  SuperFX.Regs = malloc(768);
-  SuperFX.RamBanks = 2;
-  SuperFX.Ram = SNES.ROM+1024*1024*4;
-  SuperFX.RomBanks = (2 * 1024 * 1024) / (32 * 1024);
-  SuperFX.Rom = (uint8 *)SNES.ROM;
+    SuperFX.Regs = malloc(768);
+    SuperFX.RamBanks = 2;
+    SuperFX.Ram = malloc(128*1024);
+    SuperFX.RomBanks = (2 * 1024 * 1024) / (32 * 1024);
+    SuperFX.Rom = (uint8 *)SNES.ROM;
+    SNES.ROMSize = 0;
 }
 
 void	reset_SuperFX()
@@ -141,9 +196,8 @@ if (CFG.DSP1)
 
   memset(SNESC.RAM, 0xFF, 0x20000);
   bzero(SNESC.VRAM, 0x10000);
-/*  bzero(PPU_PORT, 0x2000*2);
-  bzero(DMA_PORT, 0x2000*2);*/
-  
+    //  bzero(PPU_PORT, 0x2000*2);
+    //  bzero(DMA_PORT, 0x2000*2);  
   memset(PPU_PORT, 0, 0x90*2);
   memset(DMA_PORT, 0, 0x100*2);
   memset(DMA_PORT+0x100, 0xFF, 0x80*2);
@@ -173,7 +227,7 @@ if (CFG.DSP1)
 
 	//GUI_printf("test\n");
 	
-	APU.counter = 0;
+	MyIPC->counter = 0;
 	//  if (CFG.Sound_output) 
   	APU_nice_reset();
 	//GUI_printf("test1\n");
@@ -195,10 +249,10 @@ if (CFG.DSP1)
 
 	CFG.BG_Layer = 0xd7; //FIXME: BG3 is not used (MODE 0 broken)
 
-	APU.skipper_cnt1 = 0;  
-	APU.skipper_cnt2 = 0;  
-	APU.skipper_cnt3 = 0;  
-	APU.skipper_cnt4 = 0;
+	MyIPC->skipper_cnt1 = 0;  
+	MyIPC->skipper_cnt2 = 0;  
+	MyIPC->skipper_cnt3 = 0;  
+	MyIPC->skipper_cnt4 = 0;
 	SNES.V_Count = 0;
   
 	//GUI_printf("test4\n");
@@ -300,6 +354,7 @@ if (CFG.InterleavedROM)
 memcpy(&LoROM_info, SNESC.ROM+0x7FC0, sizeof(ROM_Info));
 memcpy(&HiROM_info, SNESC.ROM+0xFFC0, sizeof(ROM_Info));
 
+//make sure it points to ROM paging
 // conditions necessaires
 if (filesize < 0x80000 ||
 	*(unsigned short *)&SNESC.ROM[0xfffc] == 0xFFFF ||

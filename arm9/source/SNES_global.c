@@ -23,8 +23,6 @@ GNU General Public License for more details.
 
 IN_DTCM
 struct s_cpu	CPU;
-IN_DTCM
-struct s_apu	APU;
 struct s_gfx	GFX;
 IN_DTCM
 struct s_cfg	CFG;
@@ -32,7 +30,9 @@ struct s_snes	SNES;
 
 IN_DTCM
 struct s_snescore	SNESC;
-struct s_apu2 *APU2 = ((struct s_apu2 *)(0x2CED000));
+
+//struct s_apu	APU;                                        
+//struct s_apu2 *APU2 = ((struct s_apu2 *)(0x2CED000));     //@ IPC now
 
 IN_DTCM
 uint16	PPU_PORT[0x90]; // 2100 -> 2183

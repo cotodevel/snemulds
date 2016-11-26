@@ -24,19 +24,6 @@
 #include "cfg.h"
 #include "memmap.h"
 
-#define NOT_LARGE	0
-#define USE_PAGING	1
-#define USE_EXTMEM	2
-
-#ifdef ASM_OPCODES
-#define SPECIAL_MAP(p) ((int)(p) & 0x80000000)
-#define REGULAR_MAP(p) (!((int)(p) & 0x80000000))  	
-#else
-#define SPECIAL_MAP(p) ((int)(p) < MAP_LAST)
-#define REGULAR_MAP(p) ((int)(p) >= MAP_LAST)  	
-#endif
-
-
 
 inline void fillMemory( void * addr, u32 count, u32 value )
 {

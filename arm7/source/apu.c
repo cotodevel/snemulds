@@ -14,11 +14,12 @@
 #include "pocketspc.h"
 #include "apu.h"
 #include "apumisc.h"
+#include "../../common/common.h"
 
 ////////////////////////////////////////////////////////////////////////////
 // Hacks
 ////////////////////////////////////////////////////////////////////////////
-struct s_apu2 *APU2 = ((struct s_apu2 *)(0x2FED000));
+//struct s_apu2 *APU2 = ((struct s_apu2 *)(0x2FED000));     @IPC now
 
 ////////////////////////////////////////////////////////////////////////////
 // Definitions
@@ -147,7 +148,7 @@ void  ApuReset() {
     APU_STATE[8] = 0;
     APU_SP = 0x1FF;
 
-	APU2->TIM0 = 0;
-	APU2->TIM1 = 0;
-	APU2->TIM2 = 0;
+	MyIPC->TIM0 = 0;
+	MyIPC->TIM1 = 0;
+	MyIPC->TIM2 = 0;
 }

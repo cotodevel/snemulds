@@ -37,6 +37,7 @@ GNU General Public License for more details.
 #include "gfx.h"
 #include "cfg.h"
 #include "ppu.h"
+#include "../../common/common.h"
 
 //#include "superfx.h"
 //#include "sfxinst.h"
@@ -45,7 +46,6 @@ IN_DTCM
 int	SPC700_emu;
 
 // A OPTIMISER
-IN_ITCM
 int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 {
 	int i;
@@ -112,7 +112,6 @@ int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 	}
 	return offs+len;
 }
-
 
 void DMA_transfert(uchar port)
 {
@@ -594,7 +593,7 @@ uint32	R2140(uint32 addr)
 //	LOG("0 %02x (%04x, %04x)\n", PORT_SPC_TO_SNES[0], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
       if (!CFG.Sound_output)
       { /* APU Skipper */
-        switch ((APU.skipper_cnt1++)%11) {
+        switch ((MyIPC->skipper_cnt1++)%11) {
           case 0: return PPU_PORT[0x40];
           case 1: return REAL_A;                                
           case 2: return X;
@@ -641,7 +640,7 @@ uint32	R2141(uint32 addr)
 	//*(uint32*)(0x27E0000) = 0;	
       if (!CFG.Sound_output)
       { /* APU Skipper */
-        switch ((APU.skipper_cnt2++)%13) {
+        switch ((MyIPC->skipper_cnt2++)%13) {
           case 0: return PPU_PORT[0x41];
           case 1: return REAL_A;
           case 2: return X;
@@ -664,7 +663,7 @@ uint32	R2142(uint32 addr)
 {
       if (!CFG.Sound_output)
 	  {
-        switch ((APU.skipper_cnt3++)%7) {
+        switch ((MyIPC->skipper_cnt3++)%7) {
           case 0: return PPU_PORT[0x42];
           case 1: return REAL_A;
           case 2: return X;
@@ -681,7 +680,7 @@ uint32	R2143(uint32 addr)
 {     
       if (!CFG.Sound_output)
 	  {
-        switch((APU.skipper_cnt4++) % 9) {
+        switch((MyIPC->skipper_cnt4++) % 9) {
           case 0: return PPU_PORT[0x43];
           case 1: return REAL_A;
           case 2: return X;
@@ -1191,15 +1190,15 @@ void	W2140(uint32 addr, uint32 value)
     		pseudoSleep(SYNC_TIME);
 		if (CFG.SoundPortSync & 1)
 		{
-			if (APU_ADDR_BLKP[0])
+			if (MyIPC->APU_ADDR_BLKP[0])
 			{
-				while (APU_ADDR_BLKP[0]);
+				while (MyIPC->APU_ADDR_BLKP[0]);
 			}
 		}    	
     	PORT_SNES_TO_SPC[0] = value;
     	
 		if ((CFG.SoundPortSync & 1) && value) 
-			APU_ADDR_BLKP[0] = 1;    	
+			MyIPC->APU_ADDR_BLKP[0] = 1;    	
     }
     else
         PPU_PORT[0x40] = value; 
@@ -1215,9 +1214,9 @@ void	W2141(uint32 addr, uint32 value)
     		pseudoSleep(SYNC_TIME);
 		if (CFG.SoundPortSync & 2)
 		{
-			if (APU_ADDR_BLKP[1])
+			if (MyIPC->APU_ADDR_BLKP[1])
 			{
-				while (APU_ADDR_BLKP[1]);
+				while (MyIPC->APU_ADDR_BLKP[1]);
 			}
 		}
 /*				    	
@@ -1235,7 +1234,7 @@ void	W2141(uint32 addr, uint32 value)
     	PORT_SNES_TO_SPC[1] = value;
     	
 		if ((CFG.SoundPortSync & 2) && value) 
-			APU_ADDR_BLKP[1] = 1;			    	
+			MyIPC->APU_ADDR_BLKP[1] = 1;			    	
     }
     else
         PPU_PORT[0x41] = value;
@@ -1251,16 +1250,16 @@ void	W2142(uint32 addr, uint32 value)
     		pseudoSleep(SYNC_TIME);    	
 		if (CFG.SoundPortSync & 4)
 		{
-			if (APU_ADDR_BLKP[2])
+			if (MyIPC->APU_ADDR_BLKP[2])
 			{
-				while (APU_ADDR_BLKP[2]);
+				while (MyIPC->APU_ADDR_BLKP[2]);
 			}
 		}
 
     	PORT_SNES_TO_SPC[2] = value;
     	
 		if ((CFG.SoundPortSync & 4) && value) 
-			APU_ADDR_BLKP[2] = 1;			    	
+			MyIPC->APU_ADDR_BLKP[2] = 1;			    	
     }
     else
         PPU_PORT[0x42] = value;    	     
@@ -1276,16 +1275,16 @@ void	W2143(uint32 addr, uint32 value)
     		pseudoSleep(SYNC_TIME);    	
 		if (CFG.SoundPortSync & 8)
 		{	
-			if (APU_ADDR_BLKP[3])
+			if (MyIPC->APU_ADDR_BLKP[3])
 			{
-				while (APU_ADDR_BLKP[3]);
+				while (MyIPC->APU_ADDR_BLKP[3]);
 			}
 		}
 
     	PORT_SNES_TO_SPC[3] = value;
    	
 		if ((CFG.SoundPortSync & 8) && value) 
-			APU_ADDR_BLKP[3] = 1;			    	
+			MyIPC->APU_ADDR_BLKP[3] = 1;			    	
     }
     else
         PPU_PORT[0x43] = value; 
@@ -1467,6 +1466,7 @@ IOReadFunc	IORead_DMA[0x20] =
 };
 #undef NOP
 
+IN_ITCM
 void	PPU_port_write(uint32 address, uint8 byte)
 {
 	if (address >= 0x2100 && address < 0x2190)

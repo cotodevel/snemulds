@@ -36,13 +36,10 @@
 #include "m3sd.h"
 
 #include "conf.h"
-
 #include "gui_draw/snemul_str.h"
 #include "frontend.h"
-
 #include "main.h"
 #include "mpu/pu.h" //use MPU + DTCM
-
 #include "font_8x8_uv.h"
 
 #include "ppu.h"
@@ -57,6 +54,9 @@
 #include <nds/arm9/trig_lut.h>
 #include <nds/arm9/math.h>
 #include <nds/arm9/dynamicArray.h>
+#include "../../common/common.h"
+#include "interrupts/interrupts.h"
+#include "interrupts/fifo_handler.h"
 
 IN_DTCM
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
@@ -69,44 +69,6 @@ int APU_MAX = 262;
 
 IN_DTCM
 u32 keys = 0;
-
-IN_ITCM
-void VblankHandler()
-{
-	GFX.DSFrame++;
-	GFX.v_blank=1;
-
-	//FIX APU cycles
-#if 0	
-	if (APU.counter > 100 && APU.counter < 261)
-	*APU_ADDR_CNT += 261 - APU.counter;
-#endif		
-	//*APU_ADDR_CNT += 262;
-	if (CFG.Sound_output)
-	*APU_ADDR_CNT = APU_MAX;
-	APU.counter = 0;
-}
-
-IN_ITCM
-void HblankHandler()
-{
-	*APU_ADDR_CMD = 0xFFFFFFFF;
-
-	if (REG_VCOUNT >= 192)
-	{
-		if (REG_VCOUNT == 192) // We are last scanline, update first line GFX
-		{
-			PPU_updateGFX(0);
-		}
-		*APU_ADDR_CMD = 0;
-	}
-	else
-	{
-		PPU_updateGFX(REG_VCOUNT);
-		//	h_blank=1;
-		*APU_ADDR_CMD = 0;
-	}
-}
 
 
 void applyOptions()
@@ -449,8 +411,6 @@ int loadROM(char *name, int confirm)
 		GUI_printf("CRC = %08x\n", crc);
 	}
 
-	ROM = memUncached(ROM); // Protected ROM
-
 	changeROM(ROM-ROMheader, size);
 
 	checkConfiguration(name, crc);
@@ -480,10 +440,6 @@ int selectSong(char *name)
 	APU_playSpc();
 	// Wait APU init
 	
-	
-	
-	
-	//	iprintf("\nDBG: %s", DEBUG_BUF);	
 	return 0;
 }
 
@@ -539,12 +495,11 @@ char **argv;
 
 int main(int _argc, char **_argv)
 {
-	//initMem();
 	argc=_argc;
 	argv=_argv;
 	
-	*APU_ADDR_CNT = 0;
-	*APU_ADDR_CMD = 0;
+	MyIPC->APU_ADDR_CNT = 0;
+	MyIPC->APU_ADDR_CMD = 0;
 
 	resetMemory2_ARM9();
 	
@@ -606,14 +561,33 @@ int main(int _argc, char **_argv)
 	for (i = 0; i < 192; i++)
 		GFX.lineInfo[i].mode = -1;
 
-	irqSet(IRQ_HBLANK, HblankHandler);
-	irqSet(IRQ_VBLANK, VblankHandler);
-
-	irqEnable(IRQ_VBLANK | IRQ_HBLANK);
-
-	REG_DISPSTAT = DISP_VBLANK_IRQ | DISP_HBLANK_IRQ;
-
 	
+	
+    //fifo setups
+    irqInit();
+    fifoInit();
+
+    //custom IRQ handlers don't allow jumping to these handlers
+	irqSet(IRQ_VBLANK, Vblank); //remove for debug
+	irqSet(IRQ_HBLANK,Hblank);
+	irqSet(IRQ_VCOUNT,vcounter);
+    irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifo);
+    
+	//upon data transfer IRQ_CARD
+	irqEnable(IRQ_VBLANK | IRQ_VCOUNT | IRQ_HBLANK | IRQ_FIFO_NOT_EMPTY | IRQ_IPC_SYNC);
+    
+   // REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR | IPC_FIFO_RECV_IRQ;
+    REG_IPC_FIFO_CR |= (1<<2);  //send empty irq
+    REG_IPC_FIFO_CR |= (1<<10); //recv empty irq
+    
+    *(u16*)0x04000184 = *(u16*)0x04000184 | (1<<15); //enable fifo send recv
+    
+    //set up ppu: do irq on hblank/vblank/vcount/and vcount line is 159
+    REG_DISPSTAT = REG_DISPSTAT | DISP_HBLANK_IRQ |  DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ | (VCOUNT_LINE_INTERRUPT << 15);
+    
+    REG_IF = ~0;
+    REG_IME = 1;
+    
 	
 
 	GUI_printf(_STR(IDS_INITIALIZATION));
@@ -639,34 +613,29 @@ int main(int _argc, char **_argv)
 	CFG.ExtRAMSize = 0;
 #endif	
 	
-#if 0
+    /*
 	{	char *p = malloc(10);
 		iprintf("RAM = %p last malloc = %p", SNESC.RAM, p);
 	}
-	/* TOUCH SCREEN TEST */
+	//TOUCH SCREEN TEST
 	while (1)
 	{
 		int i;
 
-		mytouchPosition mytouchXY;
-
 		scanKeys();
 		keys = keysHeld();
-		//		mytouchXY=mytouchReadXY();
 
 		//GUI_printf2(0, 2, "keys = %x %d\n", keys, SNES.h_blank);
-		if (keys & KEY_TOUCH)
+		if (MyIPC->touched >0)
 		{
-			touchRead(&touchXY);
-			//GUI_printf2(0, 3, "x = %d y = %d       ", touchXY.px, touchXY.py);
+			GUI_printf2(0, 3, "x = %d y = %d       ", MyIPC->touchX, MyIPC->touchY);  //touchXY.px replace with MyIPC
 			//		waitReleaseTouch();	
 		}
 
 		if ((keys & KEY_START))
 		break;
 	}
-#endif	
-
+    */
 
 #ifndef	DSEMUL_BUILD	
 	for (i = 0; i < 100; i++)
@@ -675,12 +644,10 @@ int main(int _argc, char **_argv)
 	
 	GUI_clear();
 	
-	//GUI_printf("test!!\n");
-	
 	// Load SNEMUL.CFG
 	set_config_file("snemul.cfg");
 	
-	//GUI_printf("test!!\n");
+	GUI_printf("test!!\n");
 	
 	char *ROMfile;
 	if(readFrontend(&ROMfile,&CFG.ROMPath)){
@@ -693,40 +660,26 @@ int main(int _argc, char **_argv)
 		ROMfile = GUI_getROM(CFG.ROMPath);
 	}
 	
-	//GUI_printf("2\n");
+	GUI_printf("2\n");
 
 	loadROM(ROMfile, 0);
 	
-	//GUI_printf("3\n");
+	GUI_printf("3\n");
 
 	GUI_deleteROMSelector(); // Should also free ROMFile
 
-#if 0
-#ifdef ASM_OPCODES    
-	iprintf("CPU_init=%p\n", CPU_init);
-	iprintf("CPU_goto=%p\n", CPU_goto2);
-#endif      
-	iprintf("logbuf=%p\n", logbuf);
-
-	while (1)
-	{
-		scanKeys();
-		keys = keysHeld();
-		if ((keys & KEY_START))
-		break;
-	}
-#endif	
-
 	GUI_createMainMenu();
-
-	/*		GUI.log = 1;		
-	 consoleClear();*/
-
+    
+    //ok so far
+    
 	while (1)
 	{
-        if (REG_POWERCNT & POWER_SWAP_LCDS)
+        if (REG_POWERCNT & POWER_SWAP_LCDS){
 			GUI_update();
-		if (keys & KEY_LID)
+		}
+        
+        
+        if (keys & KEY_LID)
 		{
 			saveSRAM();
 			APU_pause();
@@ -748,8 +701,11 @@ int main(int _argc, char **_argv)
 			APU_pause();
 		}
 		
-		if (!SNES.Stopped)
-			go();
+        if (!SNES.Stopped){
+            go();   //boots here
+        }
+        
+        swiIntrWait(1,IRQ_VBLANK | IRQ_HBLANK | IRQ_VCOUNT | IRQ_FIFO_NOT_EMPTY);
 	}
 
 	return 0;

@@ -24,6 +24,9 @@ typedef void (*voidfuncptr)();
 extern "C" {
 #endif
 
+extern uint32 screen_mode;
+extern int APU_MAX;
+
 void	PPU_updateGFX(int line);
 void	APU_clear();
 void 	PPU_ChangeLayerConf(int i);
@@ -46,17 +49,8 @@ void 	GUI_createMainMenu();
 void	APU_pause();
 int 	go();
 
-//main.c
-//extern int CPU_goto();
-
-#ifdef ASM_OPCODES
-//extern int CPU_init();
-//extern int CPU_goto2();
-#endif
-
 extern char logbuf[];
 extern uint32 AsmDebug[16];
-
 
 //NDS MEMORY
 //DTCM TOP full memory

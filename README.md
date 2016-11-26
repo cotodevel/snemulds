@@ -13,27 +13,36 @@ then copy snemul.cfg and snemulds.nds to root of your SD, bootup cart, and enjoy
 
 btw, use cycle hacks if you want decent speed.
 
--changes:
 
-- SPC Playback is using ARM7 DMAs
+Coto, changes:
 
-- Moved from thumb to arm code (-marm)
+-   re-fixed some arm7 sound code, rewritten interrupts on both ARM Cores, includes APU     (IRQs 100% hardware now)
+    this means less battery usage, and better use of NDS hardware.
 
--re-fixed some arm7 sound code (hopefully fixes allocation problems)
+-   some code cleanup, fixed 0x06000000 vram conflicts for APU / background engines mapping (bg engines now use 0x06020000)
 
--more cleanup (itcm/dtcm relocated data)
+-   using nds dma 3 for pixel copy to vram bank
 
--using nds dma 3 for pixel copy to vram bank
+-   up to date devkitpro , using libfat sources directly instead a precompiled library.
 
--up to date devkitpro (as of 07/09/2015) , and no more old libfat compiled libs
+-   replaced fifo commands from libnds. Now using a new NDS hardware FIFO overlayer (written by Coto), which fixes
+    most games that didn't boot on earlier builds, (but they did boot on old Snemuldsv6 0.2 precompiled from SnemulDS site).
 
+-   new IPC FIFO hardware API that allows to read/write from map that is ONLY available to the other ARM Core.
+    Ie: You want to read/write 0x037f8000 which is ARM7-only, now you can from ARM9! with VERY little overhead due to hardware IPC.
+    This has been tested and works, but its currently unused.
+    
 to do:
 
--replace fifo commands from libnds to hardware nds fifo ipc
+-   fix Mode 0 (no transparency/broken)
+-   fix memory leaks when games exceed the existing paging memory pool (6MB games)
 
--fix memory leaks when running sfx games
 
+thanks to:
 
+Archeide for the emulator & source code
+Bubble2k for CPU core
+Gladius for Sound Core
 
 
 Coto.

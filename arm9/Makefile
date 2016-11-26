@@ -18,15 +18,16 @@ BUILD		:=	build
 SOURCES		:=	source \
 				source/mpu \
 				source/disk \
-				source/util \
+				source/interrupts \
 				source/gui_draw \
-				../common \
-				../lib
-				
+				../common/
 				
 INCLUDES	:=	source \
-				source/gui \
-				../lib
+				source/mpu \
+				source/disk \
+				source/interrupts \
+				source/gui_draw \
+				../common/
 DATA		:=
 
 

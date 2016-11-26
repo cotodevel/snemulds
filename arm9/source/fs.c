@@ -305,18 +305,6 @@ int	FS_getFileSize(char *filename)
 	return st.st_size;
 }
 
-
-/*int FS_getFileSize(char *filename)
-{
-	FS_lock();
-	FILE *f = fopen(filename, "rb");
-	fseek(f, 0, SEEK_END);
-	long l = ftell(f);
-	fclose(f);
-	FS_unlock();
-	return (int)l;
-}*/
-
 int	FS_loadFile(char *filename, char *buf, int size)
 {
 	FILE *f;

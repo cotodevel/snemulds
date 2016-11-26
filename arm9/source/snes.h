@@ -39,6 +39,8 @@ GNU General Public License for more details.
 #define MAP_LAST        0x0000000F
 #endif
 
+#define bzero(p, s)	memset(p, 0, s)
+
 typedef	struct {
 			char            title[21];
 			unsigned char   banksize:4;
@@ -77,8 +79,8 @@ struct s_snescore
 //#define PPU_PORT	((ushort *)(0x23E0000))
 //#define DMA_PORT	((ushort *)(0x23E4000))
 
-#define SNES_SRAM_ADDRESS ((uchar *)memUncached((void *)0x2FE6000))
-#define SNES_ROM_ADDRESS ((uchar *)memUncached((void *)0x20C0000))
+#define SNES_SRAM_ADDRESS ((uchar *)((void *)0x2FE6000))
+#define SNES_ROM_ADDRESS ((uchar *)((void *)0x20C0000))
 #define ROM_MAX_SIZE	(3*1024*1024)
 //#define ROM_STATIC_SIZE	(1*1024*1024)
 //#define ROM_PAGING_SIZE	(2*1024*1024)
