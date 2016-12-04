@@ -416,6 +416,9 @@ uint8 *mem_checkReload(int block)
 	ROM_paging_offs[ROM_paging_cur] = i;
 	ptr = ROM_paging+(ROM_paging_cur*PAGE_SIZE);
 	
+	//Prevent Cache problems.
+	DC_FlushRange((u32*)ptr, PAGE_SIZE);
+	
 	//	LOG("@%d(%d) => blk %d\n", i*PAGE_SIZE, SNES.ROMHeader+i*PAGE_SIZE, ROM_paging_cur);
 	FS_loadROMPage((char *)ptr, SNES.ROMHeader+i*PAGE_SIZE, PAGE_SIZE);
 	//	LOG("ret = %d %x %x %x %x\n", ret, ptr[0], ptr[1], ptr[2], ptr[3]);
@@ -428,7 +431,7 @@ uint8 *mem_checkReload(int block)
 
 	//FS_flog("%d %p\n", i, ptr+(block&7)*8192-(block << 13));
 	//LOG("<== %d %p\n", block, ptr+(block&7)*8192-(block << 13));
-	return ptr+(block&7)*8192-(block << 13)+0x400000;
+	return ptr+(block&7)*8192-(block << 13)+0x400000;	//0x400000 gives speedup
 }
 
 void InitMap()

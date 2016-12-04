@@ -372,10 +372,9 @@ int loadROM(char *name, int confirm)
 
 	mem_clear_paging(); // FIXME: move me...
 
-	ROM = (char *)(char *)&rom_buffer[0];
+	ROM = (char *)&rom_buffer[0];
 	size = FS_getFileSize(romname);
 
-	size = FS_getFileSize(romname);
 	
 	ROMheader = size & 8191;
 	if (ROMheader != 0&& ROMheader != 512)

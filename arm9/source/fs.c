@@ -288,6 +288,9 @@ int	FS_loadROM(char *ROM, char *filename)
 	int size = ftell(f);
 	fseek(f, 0, SEEK_SET);
 
+	//Prevent Cache problems.
+	DC_FlushRange((u32*)ROM, (int)size);
+	
 	fread(ROM, 1, size, f);
 	GUI_printf("Read done\n");
 	fclose(f);

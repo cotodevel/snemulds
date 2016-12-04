@@ -163,9 +163,13 @@ int initSNESEmpty()
     CFG.FastDMA = 1;
     CFG.Transparency = 1;
 
-    memset(&SNES, 0, sizeof(SNES));
-    memset(&SNESC, 0, sizeof(SNESC));
-
+    memset((u32*)&SNES, 0, sizeof(SNES));
+    memset((u32*)&SNESC, 0, sizeof(SNESC));
+	
+	//Prevent Cache problems.
+	DC_FlushRange((u32*)rom_buffer, (int)ROM_MAX_SIZE);
+	memset((u32*)rom_buffer, 0, (int)ROM_MAX_SIZE);
+	
     //  SNES.flog = fopen("snemul.log", "w");
     //	SNES.flog = stdout;
 
