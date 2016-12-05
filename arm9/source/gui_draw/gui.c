@@ -445,7 +445,7 @@ int GUI_update()
 	scanKeys();
 	
 	int pressed = keysDown(); 	// buttons pressed this loop
-	int held = keysHeld(); 		// buttons currently held
+	//int held = keysHeld(); 		// buttons currently held
 	int released = keysUp();	// buttons unpressed this loop, but pressed past loop
 	int repeated = keysDownRepeat();	//buttons both pressed past loop, and pressed this loop
 	//GUI_printf2(0, 20, "                \n");

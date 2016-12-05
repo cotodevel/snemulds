@@ -171,65 +171,64 @@ extern "C" {
 #endif
 
 //CPU opcodes
-void	CPU_init();
-void	CPU_goto(int cycles);
-void    CPU_goto2(int cycles);
+extern void	CPU_init();
+extern void	CPU_goto(int cycles);
+extern void    CPU_goto2(int cycles);
 
-uchar   mem_getbyte(uint32 offset, uchar bank);
-void	mem_setbyte(uint32 offset, uchar bank, uchar byte);
-ushort  mem_getword(uint32 offset, uchar bank);
-void    mem_setword(uint32 offset, uchar bank, ushort word);
-int		map_duplicate(int snes_block);
-void	LOG(char *fmt, ...);
-void	CPU_pack();
+extern uchar   mem_getbyte(uint32 offset, uchar bank);
+extern void	mem_setbyte(uint32 offset, uchar bank, uchar byte);
+extern ushort  mem_getword(uint32 offset, uchar bank);
+extern void    mem_setword(uint32 offset, uchar bank, ushort word);
+extern int		map_duplicate(int snes_block);
+extern void	LOG(char *fmt, ...);
+extern void	CPU_pack();
 
-void	PPU_port_write(uint32 address, uint8 value);
-uchar	PPU_port_read(uint32 address);
+extern void	PPU_port_write(uint32 address, uint8 value);
+extern uchar	PPU_port_read(uint32 address);
 
-u32 nopinlasm();
-u8 copy8arm(u32 src,u32 dest, u32 size);
+extern u32 nopinlasm();
+extern u8 copy8arm(u32 src,u32 dest, u32 size);
 
 extern struct s_cpu	CPU;
 
 //engine.c
 
-void	GUI_showROMInfos(int size);
-int		FS_saveFile(char *filename, char *buf, int size);
-void	PPU_line_render_scaled();
-void	PPU_line_render();
+extern void	GUI_showROMInfos(int size);
+extern int		FS_saveFile(char *filename, char *buf, int size);
+extern void	PPU_line_render_scaled();
+extern void	PPU_line_render();
 
 extern int CPU_break;
 
 //core.c
-void	DMA_port_write(uint32 address, uint8 byte);
-uint8	DMA_port_read(uint32 address);
-static inline void HDMA_write_port(uchar port, uint8 *data);
-void	HDMA_write();
-void	read_joypads();
-void	read_mouse();
-void 	read_scope();
-void	update_joypads();
-void 	SNES_update();
-void 	GoNMI();
-void 	GoIRQ();
-inline void HDMA_write_port(uchar port, uint8 *data);
-int		PPU_fastDMA_2118_1(int offs, int bank, int len);
-void 	DMA_transfert(uchar port);
-void	HDMA_transfert(unsigned char port);
+extern void	DMA_port_write(uint32 address, uint8 byte);
+extern uint8	DMA_port_read(uint32 address);
+extern void HDMA_write_port(uchar port, uint8 *data);
+extern void	HDMA_write();
+extern void	read_joypads();
+extern void	read_mouse();
+extern void 	read_scope();
+extern void	update_joypads();
+extern void 	SNES_update();
+extern void 	GoNMI();
+extern void 	GoIRQ();
+extern int		PPU_fastDMA_2118_1(int offs, int bank, int len);
+extern void 	DMA_transfert(uchar port);
+extern void	HDMA_transfert(unsigned char port);
 
-uint32	IONOP_DMA_READ(uint32 addr);
-uint32	IONOP_PPU_READ(uint32 addr);
-void	IONOP_PPU_WRITE(uint32 addr, uint32 byte);
-void	IONOP_DMA_WRITE(uint32 addr, uint32 byte);
+extern uint32	IONOP_DMA_READ(uint32 addr);
+extern uint32	IONOP_PPU_READ(uint32 addr);
+extern void	IONOP_PPU_WRITE(uint32 addr, uint32 byte);
+extern void	IONOP_DMA_WRITE(uint32 addr, uint32 byte);
 
-void CPU_pack();
+extern void CPU_pack();
 
 //input.c
 extern u32 keys;
 
 //debug.c
 extern	uint32			CPU_log;
-void PPU_ChangeLayerConf(int i);
+extern void PPU_ChangeLayerConf(int i);
 
 //opcodes2.s
 extern void CPU_update();

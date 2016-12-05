@@ -455,50 +455,51 @@ int selectSong(char *name)
 	return 0;
 }
 
+
+//unused
+/*
 void exception_handler()
 {
-//	int i;
+	
 	u32 currentMode = getCPSR() & 0x1f;
 	u32 thumbState = ((*(u32*)0x02CFFD90) & 0x20);
 	u32 savedPC = *(u32*)0x02CFFD98;
-	u32 exceptionAddress;
-/*
-	static const char *registerNames[] =
-	{ "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11",
-			"r12", "sp", "lr", "pc", 
-};*/
+	u32 exceptionAddress=0;
 
-exceptionRegisters[15] = savedPC;
+	exceptionRegisters[15] = savedPC;
 
-if (currentMode == 0x17)
-{
-	/* Data abort- actual faulting instruction was 8 bytes earlier */
-	exceptionAddress = savedPC - 8;
-}
-else
-{
-	/*
-	 * XXX: Assuming invalid instruction error?
-	 * Place the fault at the previous instruction.
-	 */
-	exceptionAddress = savedPC - (thumbState ? 2 : 4);
-}
-/*
-iprintf(
+	if (currentMode == 0x17)
+	{
+		// Data abort- actual faulting instruction was 8 bytes earlier 
+		exceptionAddress = savedPC - 8;
+	}
+	else
+	{
+		
+		// XXX: Assuming invalid instruction error?
+		// Place the fault at the previous instruction.
+		//
+		exceptionAddress = savedPC - (thumbState ? 2 : 4);
+	}
+
+
+
+	iprintf(
 		"r0=%08x r1=%08x r2=%08x r3=%08x\n",
 		(unsigned int)AsmDebug[0],(unsigned int)AsmDebug[1],(unsigned int)AsmDebug[2],(unsigned int)AsmDebug[3] );
 
-iprintf("\nException %02x @ %08x (%s)\n",
+	iprintf("\nException %02x @ %08x (%s)\n",
 		(unsigned int)currentMode, (unsigned int)exceptionAddress,
 		(const char*)thumbState ? "Thumb" : "ARM");
-*/
 
-/*    for (i = 0; i < 8; i++) {
- LOG(" %-03s %08x ", registerNames[i], exceptionRegisters[i]);
- LOG(" %-03s %08x \n", registerNames[i+8], exceptionRegisters[i+8]);
- }*/
+    for (i = 0; i < 8; i++) {
+		LOG(" %-03s %08x ", registerNames[i], exceptionRegisters[i]);
+		LOG(" %-03s %08x \n", registerNames[i+8], exceptionRegisters[i+8]);
+	}
+
 }
 
+*/
 
 
 //---------------------------------------------------------------------------------

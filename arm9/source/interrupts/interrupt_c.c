@@ -4,7 +4,6 @@
 
 #include <stdio.h>
 #include <nds/touch.h>
-#include <nds/registers_alt.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>

@@ -1576,7 +1576,8 @@ uint8	DMA_port_read(uint32 address)
 2105 : bg mode
  */ 
 
-inline void HDMA_write_port(uchar port, uint8 *data)
+IN_ITCM
+void HDMA_write_port(uchar port, uint8 *data)
 {
   uint32 	PPUport = SNES.HDMA_port[port];
   

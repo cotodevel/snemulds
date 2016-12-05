@@ -73,8 +73,15 @@ extern "C" {
 
 int	map_duplicate(int snes_block);
 
-
 extern void DRAW_PLANE(unsigned char BG,unsigned char  BG_MODE);
+extern void draw_plane_32_30(unsigned char bg, unsigned char bg_mode);
+extern void draw_plane_64_30(unsigned char bg, unsigned char bg_mode);
+extern void draw_plane_32_60(unsigned char bg, unsigned char bg_mode);
+extern void draw_plane_64_60(unsigned char bg, unsigned char bg_mode);
+
+extern void renderMode1(int NB_BG, int MODE_1, int MODE_2, int MODE_3, int MODE_4);
+extern void renderMode3(int MODE_1, int MODE_2);
+
 #ifdef __cplusplus
 }
 #endif

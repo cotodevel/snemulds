@@ -1471,7 +1471,7 @@ void draw_sprites(/*unsigned char pf*/)
 	}
 }
 
-void renderMode1(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
+void renderMode1(int NB_BG, int MODE_1, int MODE_2, int MODE_3, int MODE_4)
 {
    uint32 SB;
 
@@ -1491,7 +1491,7 @@ void renderMode1(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
   }  	
 }
 
-void renderMode3(MODE_1, MODE_2)
+void renderMode3(int MODE_1, int MODE_2)
 {
   uint32 SB = (CPU.PPU_PORT[0x2D]|CPU.PPU_PORT[0x2C])&CFG.BG_Layer&((1<<2)-1);
 
