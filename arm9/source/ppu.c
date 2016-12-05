@@ -688,7 +688,7 @@ void	PPU_setMap(int i, int j, int tilenb, int bg, int p, int f)
 }
 
 
-IN_ITCM
+//IN_ITCM //cant move to itcm because some stuff breaks
 void update_scroll()
 {
    REG_BG0HOFS = CPU.PPU_PORT[(0x0D)+(0<<1)];
