@@ -35,6 +35,15 @@ uint32 bittab[256]={0};
 IN_DTCM
 uint32 bittab8[16]={0};
 
+IN_ITCM
+void DRAW_PLANE(unsigned char BG,unsigned char  BG_MODE){
+	switch(CPU.PPU_PORT[0x07+BG]&3) {
+		case 0: { draw_plane_32_30(BG, BG_MODE); } break; 
+		case 1: { draw_plane_64_30(BG, BG_MODE); } break; 
+		case 2: { draw_plane_32_60(BG, BG_MODE); } break; 
+		case 3: { draw_plane_64_60(BG, BG_MODE); } break;
+	}
+}
  
 void    init_render()
 {
@@ -117,7 +126,9 @@ uint32		Mode7TileZone;
  
 t_TileZone	*SNESToDS_TileAddress[8*4];
 
+IN_DTCM
 uint16		ToUpdate2b[100];
+IN_DTCM
 uint16		ToUpdate4b[100];
 
 int	PPU_get_bgmode(int mode, int bg)
@@ -677,6 +688,7 @@ void	PPU_setMap(int i, int j, int tilenb, int bg, int p, int f)
 }
 
 
+IN_ITCM
 void update_scroll()
 {
    REG_BG0HOFS = CPU.PPU_PORT[(0x0D)+(0<<1)];

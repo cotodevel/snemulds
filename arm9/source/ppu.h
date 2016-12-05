@@ -61,13 +61,6 @@ typedef struct
 #define SPRITE_ADD_X(INDEX) -(((GFX.spr_info_ext[INDEX>>2]&(1<<((INDEX&0x3)<<1))) != 0)<<8)
 #define SPRITE_POS_Y(INDEX) (GFX.spr_info[INDEX].pos_y > 239 ? (char)GFX.spr_info[INDEX].pos_y : GFX.spr_info[INDEX].pos_y)
 
-#define DRAW_PLANE(BG, BG_MODE) \
-  switch(CPU.PPU_PORT[0x07+BG]&3) { \
-    case 0: { draw_plane_32_30(BG, BG_MODE); } break; \
-    case 1: { draw_plane_64_30(BG, BG_MODE); } break; \
-    case 2: { draw_plane_32_60(BG, BG_MODE); } break; \
-    case 3: { draw_plane_64_60(BG, BG_MODE); } break; \
-  }
 
 
 #endif
@@ -81,6 +74,7 @@ extern "C" {
 int	map_duplicate(int snes_block);
 
 
+extern void DRAW_PLANE(unsigned char BG,unsigned char  BG_MODE);
 #ifdef __cplusplus
 }
 #endif

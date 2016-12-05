@@ -46,6 +46,7 @@ IN_DTCM
 int	SPC700_emu;
 
 // A OPTIMISER
+IN_ITCM
 int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 {
 	int i;
