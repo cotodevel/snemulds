@@ -18,8 +18,6 @@ GNU General Public License for more details.
 #ifndef __common_h__
 #define __common_h__
 
-#define ASM_OPCODES
-
 /* Enable this if you want the GBFS version (the one which doesn't use the flash cart) */
 //#define USE_GBFS
 #define USE_LIBFAT

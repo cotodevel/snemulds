@@ -20,6 +20,7 @@ GNU General Public License for more details.
 .equ    MemoryMap,          memoryMapBase           @ for code compatibility
 .equ	MemoryWriteMap,		0x0689A000
 
+#ifdef ASM_OPCODES
 
 #include "opc_macros.s"
 
@@ -1143,3 +1144,6 @@ AsmDebug4:
 		.word	0
 		.word	0
 */
+
+
+#endif

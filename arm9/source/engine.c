@@ -724,7 +724,7 @@ int trace_CPU()
 #endif          
 
 	if (CPU.PB == 0 && CPU.PC == 0x8F15)
-		CPU_log = 0;
+		CFG.CPU_log = 0;
   
   return 0; 
 }
@@ -739,9 +739,9 @@ void trace_CPUFast()
 		CPU_log = 1;*/
 
 	if (PC == 0x008ECE)
-		CPU_log = 1;
+		CFG.CPU_log = 1;
 	if (PC == 0x008F15)
-		CPU_log = 0;
+		CFG.CPU_log = 0;
 
 #if 0
 	addrbuf[addri++] = PC;

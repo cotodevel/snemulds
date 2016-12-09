@@ -30,6 +30,8 @@ GNU General Public License for more details.
 #define MAP_NONE        0x86000000
 #define MAP_LAST        0x8F000000
 #else
+
+#define MAP_RELOAD      0x00000000
 #define MAP_PPU         0x00000001
 #define MAP_CPU         0x00000002
 #define MAP_DSP         0x00000003

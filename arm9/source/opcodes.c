@@ -29,6 +29,12 @@ GNU General Public License for more details.
 #endif
 
 #ifndef ASM_OPCODES
+
+u32 PCptr=0;
+u32 SnesPCOffset=0;
+u32	BRKaddress = 0;
+u32	COPaddress = 0;
+	
 IN_DTCM
 uint8 OpCycles_MX[256] = {
 	8, 6, 8, 4, 5, 3, 5, 6, 3, 2, 2, 4, 6, 4, 6, 5,		/* e=0, m=1, x=1 */
@@ -269,7 +275,7 @@ void  direct_setword(uint32 offset, uint16 word)
   	mem_setword(_offset, 0, word);	
 }
 
-IN_DTCM
+IN_ITCM
 uint8 rol_b(uint8 a)
 {
 	uint16 t = a;
@@ -279,7 +285,7 @@ uint8 rol_b(uint8 a)
 	return (uint8)t;
 }
 
-IN_DTCM
+IN_ITCM
 uint16 rol_w(uint16 a)
 {
 	uint32 t = a;
@@ -289,7 +295,7 @@ uint16 rol_w(uint16 a)
 	return (uint16)t;
 }
 
-IN_DTCM
+IN_ITCM
 uint8 ror_b(uint8 a)
 {
 	uint16 t = a;
@@ -299,7 +305,7 @@ uint8 ror_b(uint8 a)
 	return (uint8)t;
 }
 
-IN_DTCM
+IN_ITCM
 uint16 ror_w(uint16 a)
 {
 	uint32 t = a;
@@ -729,7 +735,6 @@ void	COP()
   PB = 0;
 }
 
-IN_ITCM
 void CPU_goto(int cycles)
 {	
 	uint8 			*PC_base;

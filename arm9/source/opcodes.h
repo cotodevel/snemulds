@@ -71,34 +71,39 @@ GNU General Public License for more details.
     extern	uint32			BRKaddress;
     extern	uint32			COPaddress;
 
-#define REAL_A ((SaveR8 & 0x00000080) ? \
+	#define REAL_A ((SaveR8 & 0x00000080) ? \
 				(A >> 24 | (SnesB&0xFF000000) >> 16) : (A >> 16))
-#define REAL_CYCLES (-((sint32)SaveR8 >> 14))
-#define HCYCLES (CPU.HCycles+CPU.Cycles+((sint32)SaveR8 >> 14))
-#define ADD_CYCLES(x)	(SaveR8 +=((x)<<14))
-//#define FIX_VCOUNT		{ if ((sint32)SaveR8 > 0) { SNES.VCount++; (sint32)SaveR8 -= NB_CYCLES; ) }  
-#define SET_WAITCYCLES(c) { CPU_WaitAddress = CPU_LoopAddress; \
+	#define REAL_CYCLES (-((sint32)SaveR8 >> 14))
+	#define HCYCLES (CPU.HCycles+CPU.Cycles+((sint32)SaveR8 >> 14))
+	#define ADD_CYCLES(x)	(SaveR8 +=((x)<<14))
+	//#define FIX_VCOUNT		{ if ((sint32)SaveR8 > 0) { SNES.VCount++; (sint32)SaveR8 -= NB_CYCLES; ) }  
+	#define SET_WAITCYCLES(c) { CPU_WaitAddress = CPU_LoopAddress; \
 								CPU_NextCycles = 0; }
-#define SET_WAITCYCLESDELAY(delay) { CPU_WaitAddress = CPU_LoopAddress; \
+	#define SET_WAITCYCLESDELAY(delay) { CPU_WaitAddress = CPU_LoopAddress; \
 									 uint32 tmp = NB_CYCLES-delay-CPU.Cycles-CPU.HCycles; \
 									 if (tmp < 0) CPU_NextCycles = (tmp) << 14; \
 									 else CPU_NextCycles = 0; }
-#else
 
-    extern unsigned short P;
+#else
+	extern 	u32 PCptr;
+    extern 	u32 SnesPCOffset;
+	extern	u32	BRKaddress;
+    extern	u32	COPaddress;
+	
+	extern unsigned short P;
     extern unsigned short PC;
     extern unsigned char  PB, DB, t;
     extern unsigned short A, X, Y, D, S;
     extern long Cycles;
 
-#define REAL_A	A
-#define REAL_CYCLES	Cycles
-#define HCYCLES	(CPU.HCycles+Cycles)
-#define ADD_CYCLES(x)	(Cycles +=(x))
-#define SET_WAITCYCLES(c) { CPU.WaitAddress = CPU.LastAddress; \
-							CPU.WaitCycles = c; }
-#define SET_WAITCYCLESDELAY(delay) { CPU.WaitAddress = CPU.LastAddress; \
-									 CPU.WaitCycles = CPU.Cycles-(delay); }
+	#define REAL_A	A
+	#define REAL_CYCLES	Cycles
+	#define HCYCLES	(CPU.HCycles+Cycles)
+	#define ADD_CYCLES(x)	(Cycles +=(x))
+	#define SET_WAITCYCLES(c) { CPU.WaitAddress = CPU.LastAddress; \
+								CPU.WaitCycles = c; }
+	#define SET_WAITCYCLESDELAY(delay) { CPU.WaitAddress = CPU.LastAddress; \
+										 CPU.WaitCycles = CPU.Cycles-(delay); }
 
 #endif
 
@@ -171,67 +176,67 @@ extern "C" {
 #endif
 
 //CPU opcodes
-extern void	CPU_init();
-extern void	CPU_goto(int cycles);
-extern void    CPU_goto2(int cycles);
+extern void		CPU_init();
+extern void		CPU_goto(int cycles);
+extern void    	CPU_goto2(int cycles);
 
-extern uchar   mem_getbyte(uint32 offset, uchar bank);
-extern void	mem_setbyte(uint32 offset, uchar bank, uchar byte);
-extern ushort  mem_getword(uint32 offset, uchar bank);
-extern void    mem_setword(uint32 offset, uchar bank, ushort word);
+extern uchar   	mem_getbyte(uint32 offset, uchar bank);
+extern void		mem_setbyte(uint32 offset, uchar bank, uchar byte);
+extern ushort  	mem_getword(uint32 offset, uchar bank);
+extern void    	mem_setword(uint32 offset, uchar bank, ushort word);
 extern int		map_duplicate(int snes_block);
-extern void	LOG(char *fmt, ...);
-extern void	CPU_pack();
+extern void		LOG(char *fmt, ...);
+extern void		CPU_pack();
 
-extern void	PPU_port_write(uint32 address, uint8 value);
+extern void		PPU_port_write(uint32 address, uint8 value);
 extern uchar	PPU_port_read(uint32 address);
 
-extern u32 nopinlasm();
-extern u8 copy8arm(u32 src,u32 dest, u32 size);
+extern u32 		nopinlasm();
+extern u8 		copy8arm(u32 src,u32 dest, u32 size);
 
-extern struct s_cpu	CPU;
+extern struct 	s_cpu	CPU;
 
 //engine.c
 
-extern void	GUI_showROMInfos(int size);
+extern void		GUI_showROMInfos(int size);
 extern int		FS_saveFile(char *filename, char *buf, int size);
-extern void	PPU_line_render_scaled();
-extern void	PPU_line_render();
+extern void		PPU_line_render_scaled();
+extern void		PPU_line_render();
 
-extern int CPU_break;
+extern int 		CPU_break;
 
 //core.c
-extern void	DMA_port_write(uint32 address, uint8 byte);
+extern void		DMA_port_write(uint32 address, uint8 byte);
 extern uint8	DMA_port_read(uint32 address);
-extern void HDMA_write_port(uchar port, uint8 *data);
-extern void	HDMA_write();
-extern void	read_joypads();
-extern void	read_mouse();
+extern void 	HDMA_write_port(uchar port, uint8 *data);
+extern void		HDMA_write();
+extern void		read_joypads();
+extern void		read_mouse();
 extern void 	read_scope();
-extern void	update_joypads();
+extern void		update_joypads();
 extern void 	SNES_update();
 extern void 	GoNMI();
 extern void 	GoIRQ();
 extern int		PPU_fastDMA_2118_1(int offs, int bank, int len);
 extern void 	DMA_transfert(uchar port);
-extern void	HDMA_transfert(unsigned char port);
+extern void		HDMA_transfert(unsigned char port);
 
 extern uint32	IONOP_DMA_READ(uint32 addr);
 extern uint32	IONOP_PPU_READ(uint32 addr);
-extern void	IONOP_PPU_WRITE(uint32 addr, uint32 byte);
-extern void	IONOP_DMA_WRITE(uint32 addr, uint32 byte);
+extern void		IONOP_PPU_WRITE(uint32 addr, uint32 byte);
+extern void		IONOP_DMA_WRITE(uint32 addr, uint32 byte);
 
-extern void CPU_pack();
+extern void 	CPU_pack();
 
 //input.c
-extern u32 keys;
+extern u32 		keys;
 
 //debug.c
-extern	uint32			CPU_log;
-extern void PPU_ChangeLayerConf(int i);
+extern	uint32	CPU_log;
+extern void 	PPU_ChangeLayerConf(int i);
 
 //opcodes2.s
-extern void CPU_update();
+extern void 	CPU_update();
 
 #ifdef __cplusplus
 }

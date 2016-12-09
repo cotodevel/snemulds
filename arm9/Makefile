@@ -36,10 +36,9 @@ ARCH	:= -mthumb-interwork -march=armv5te -mtune=arm946e-s -marm	-mfloat-abi=soft
 CFLAGS	:= -g -Wall -O3	-fmessage-length=0 -fsigned-char -funsafe-math-optimizations \
 		$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM9
+CFLAGS	+=	$(INCLUDE) -DARM9	-DASM_OPCODES
+ASFLAGS	:=	$(ARCH) -march=armv5te -mtune=arm946e-s $(INCLUDE) -Ddebug=0	-DNDS	$(CFLAGS)
 CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions
-
-ASFLAGS	:=	$(ARCH) -march=armv5te -mtune=arm946e-s $(INCLUDE) -Ddebug=0 -DARM9 -DNDS -DASM_OPCODES
 
 LDFLAGS	=	-specs=ds_arm9.specs $(ARCH) -Wl,-Map,$(notdir $*.map)
 
