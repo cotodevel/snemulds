@@ -22,17 +22,6 @@ GNU General Public License for more details.
 #include "apu.h"
 #include "ipc_libnds_extended.h"
 
-//Coto: deprecated, new hardware IPC fifo is better
-/*
-void SendArm7Command(u32 command) {
-   fifoSendValue32(FIFO_USER_01,command);
-   
-   //wait for command to complete
-   while(!fifoCheckValue32(FIFO_USER_01));
-   if(fifoGetValue32(FIFO_USER_01)!=1) while(1);
-} 
-*/
-
 void	APU_reset()
 {
     APU_command(0x00000001);
@@ -104,5 +93,5 @@ void APU_playSong(uint8 *data, int size)
 void APU_command(uint32 command)
 {
 	SendArm7Command(command,0x00000000,0x00000000,0x00000000);
-    swiWaitForVBlank();
+    swiWaitForVBlank();	//should be fixed on the upcoming update (new irqs)
 }

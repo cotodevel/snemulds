@@ -22,37 +22,16 @@ GNU General Public License for more details.
 //#define USE_GBFS
 #define USE_LIBFAT
 //#define FAKE_FS
-
 //#define USE_EXTRAM
 
-//#define DSEMUL_BUILD
-
-#ifndef DSEMUL_BUILD
-	#define SNEMULDS_TITLE "-= SNEmulDS 0.6 by archeide =-\n"
-#else
-	#define SNEMULDS_TITLE "DSEmul - SNES on DS\n"
-#endif
-
+#define SNEMULDS_TITLE "-= SNEmulDS 0.6 by archeide =-\n"
 #define SNEMULDS_SUBTITLE "CPU: bubble2k Sound: gladius\n"
+#define GAMES_DIR "/SNES/"
 
-#ifndef IN_EMULATOR
-	#define GAMES_DIR "/SNES/"
-#else
-	#define GAMES_DIR "/"
-#endif
-
+//count/time VCOUNT
 #define TIMER_Y
-
-#ifdef IN_EMULATOR
-	#define IN_DTCM
-	#define IN_ITCM
-	#define IN_ITCM2
-	#define IN_ITCM3
-
-#else
-
-	#define IN_DTCM __attribute__((section(".dtcm")))
-	#define IN_ITCM __attribute__((section(".itcm")))
+#define IN_DTCM __attribute__((section(".dtcm")))
+#define IN_ITCM __attribute__((section(".itcm")))
 
 
 #ifdef ASM_OPCODES
@@ -61,8 +40,6 @@ GNU General Public License for more details.
 #else
 	#define IN_ITCM3
 	#define IN_ITCM2 
-#endif
-
 #endif
 
 #include <nds/timers.h>
@@ -92,10 +69,10 @@ GNU General Public License for more details.
 	#undef SRAM
 #endif
 
-
+#ifdef LIBNDS
 #define PM_BACKLIGHT_BOTTOM  BIT(2)    // Enable the top backlight if set
 #define PM_BACKLIGHT_TOP     BIT(3)    // Enable the bottom backlight if set
-
+#endif
 
 #ifdef WIN32
 #define STATIC_INLINE static _inline
@@ -103,18 +80,18 @@ GNU General Public License for more details.
 #define STATIC_INLINE static inline
 #endif
 
-
+#if (TRUE != 1)
 #undef TRUE
 #define TRUE    1
+#endif
+
+#if (FALSE != 1)
 #undef FALSE
 #define FALSE   0
+#endif
 
-typedef
-	unsigned short	ushort;
-
-typedef
-	unsigned char	uchar;
-
+typedef unsigned short	ushort;
+typedef unsigned char	uchar;
 
 #ifndef _NDSTYPES_INCLUDE
 typedef	unsigned int	uint32;
@@ -125,7 +102,6 @@ typedef	int	sint32;
 typedef	short	sint16;
 typedef	char	sint8;
 typedef	char	bool8;
-
 
 #define GET_WORD16(a) (*((uint8 *)(a)) | (*(((uint8 *)(a))+1) << 8)) 
 #define SET_WORD16(a, v) { *((uint8 *)(a)) = (v) & 0xFF; *(((uint8 *)(a))+1) = (v) >> 8; } 
@@ -142,7 +118,6 @@ extern "C" {
 #endif
 
 int	setBacklight(int flags);
-
 
 #ifdef __cplusplus
 }

@@ -39,7 +39,6 @@ int get_joypad()
 {
 	int res = 0;
     
-    //can cause issues
     /*
     #define KEYS_CUR (( ((~REG_KEYINPUT)&0x3ff) | (((~MyIPC->buttons_xy_folding)&3)<<10) | (((~MyIPC->buttons_xy_folding)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID)	
 	keys = KEYS_CUR;
@@ -71,8 +70,6 @@ int get_joypad()
 				LOG("%04x %04x %02x %02x %04x %04x\n", CPU.PC,
 				(uint32)((sint32)PCptr+(sint32)SnesPCOffset),
 				PORT_SNES_TO_SPC[1], PORT_SPC_TO_SNES[1],  
-				
-				// (*(uint32*)memUncached(0x2FE0000)) & 0xFFFF, *(uint16 *)(APU_RAM_ADDRESS+0x18));
 				
 				//PORT_SNES_TO_SPC[1] = 0x44; 		
 			}

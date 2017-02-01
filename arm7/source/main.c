@@ -35,7 +35,6 @@
 #include "main.h"
 #include "fifo_handler.h"
 #include "interrupts.h"
-#include "cpu_utils.h"
 #include "ipc_libnds_extended.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 u16's, right buffer is next
@@ -50,7 +49,6 @@ bool paused = true;
 bool SPC_disable = true;
 bool SPC_freedom = false;
 
-//snemulDS stuff
 void SetupSound() {
     soundCursor = 0;
 	apuMixPosition = 0;
@@ -64,14 +62,14 @@ void SetupSound() {
     TIMER1_DATA = 0x10000 - MIXBUFSIZE;
     TIMER1_CR = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
 
-    // Timing stuff
-#if PROFILING_ON  
-    TIMER2_DATA = 0;
-    TIMER2_CR = TIMER_DIV_64 | TIMER_ENABLE;
+    // Debug
+	#if PROFILING_ON  
+		TIMER2_DATA = 0;
+		TIMER2_CR = TIMER_DIV_64 | TIMER_ENABLE;
 
-    TIMER3_DATA = 0;
-    TIMER3_CR = TIMER_CASCADE | TIMER_ENABLE;
-#endif    
+		TIMER3_DATA = 0;
+		TIMER3_CR = TIMER_CASCADE | TIMER_ENABLE;
+	#endif    
 }
  
 void StopSound() {
@@ -142,11 +140,12 @@ int NDSType=0;
 u8 *bootstub;
 type_void bootstub_arm7;
 static void sys_exit(){
-	//if(!bootstub_arm7){
-		if(NDSType>=2)writePowerManagement(0x10, 1);
-		else writePowerManagement(0, PM_SYSTEM_PWR);
-	//}
-	//bootstub_arm7(); //won't return
+	if(NDSType>=2){
+		writePowerManagement(0x10, 1);
+	}
+	else{
+		writePowerManagement(0, PM_SYSTEM_PWR);
+	}
 }
 
 //---------------------------------------------------------------------------------
@@ -184,7 +183,6 @@ int main() {
     irqSet(IRQ_TIMER1,timer1);
     irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifo);
     
-	//upon data transfer IRQ_CARD
 	irqEnable(interrupts_to_wait_arm7);
     
     *(u16*)0x04000184 = *(u16*)0x04000184 | (1<<15); //enable fifo send recv
@@ -200,18 +198,16 @@ int main() {
     DspReset();
     SetupSound();
     
-	{
-		NDSType=0;
-		u32 myself = readPowerManagement(4); //(PM_BACKLIGHT_LEVEL);
-		if(myself & (1<<6))
-			NDSType=(myself==readPowerManagement(5))?1:2;
-	}
+	NDSType=0;
+	u32 myself = readPowerManagement(4); //(PM_BACKLIGHT_LEVEL);
+	if(myself & (1<<6))
+		NDSType=(myself==readPowerManagement(5))?1:2;
+
 	setPowerButtonCB(sys_exit);
 	bootstub=(u8*)0x02ff4000;
 	bootstub_arm7=(*(u64*)bootstub==0x62757473746F6F62ULL)?(*(type_void*)(bootstub+0x0c)):0;
    
-    while (1) {
-        
+    while (1) {   
         //Coto: Sound is best handled when NDS is NOT waiting for interrupt. 
         if(!SPC_disable){
             int cyclesToExecute, samplesToMix;

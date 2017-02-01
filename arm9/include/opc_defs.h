@@ -275,8 +275,5 @@ static void *OpCodes[] = {
 &&I_INC_a_x,
 &&I_SBC_al_x
 };		
-
-
-
    
 #endif /*OPC_DEFS_H_*/

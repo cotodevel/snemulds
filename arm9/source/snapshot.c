@@ -35,9 +35,8 @@ GNU General Public License for more details.
 #endif
 
 #include <nds/memory.h>
+
 #include <string.h>
-
-
 #include "snes.h"
 #include "apu.h"
 #include "gfx.h"

@@ -76,13 +76,10 @@ void ApuPrepareStateAfterReload() {
 
 	apuShowRom = APU_MEM[APU_CONTROL_REG] >> 7;
     if (apuShowRom) {
-		//for (int i=0; i<=0x3F; i++) APU_MEM[0xFFC0 + i] = iplRom[i];
-		memcpy(APU_MEM+0xFFC0, iplRom, 0x40);
-			
-	} else {
-		//for (int i=0; i<=0x3F; i++) APU_MEM[0xFFC0 + i] = APU_EXTRA_MEM[i];
-		memcpy(APU_MEM+0xFFC0, APU_EXTRA_MEM, 0x40);
-
+		for (int i=0; i<=0x3F; i++) APU_MEM[0xFFC0 + i] = iplRom[i];
+	}
+	else {
+		for (int i=0; i<=0x3F; i++) APU_MEM[0xFFC0 + i] = APU_EXTRA_MEM[i];
 	}
 }
 

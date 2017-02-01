@@ -100,12 +100,9 @@ char *FS_getFileName(char *filename)
 
 static int	currentfd = -1;
 static char currentFileName[100];
-//static struct stat	st;
-//static char tfilename[260];
 
 int		FS_init()
 {
-	//return fatInit(8, true);
 	return (fatInitDefault());
 }
 
@@ -274,10 +271,8 @@ void	FS_flog(char *fmt, ...)
 int	FS_loadROM(char *ROM, char *filename)
 {
 	FILE	*f;
-//	struct stat	st;
 	
 	FS_lock();
-//	stat(filename, &st);
 	
 	f = fopen(filename, "rb");
 	fseek(f, 0, SEEK_END);
@@ -424,7 +419,6 @@ int	FS_loadROMPage(char *buf, unsigned int pos, int size)
 #ifdef USE_EXTRAM
 	if (g_UseExtRAM)
 	{
-		//swiFastCopy((uint8 *)extRAM+pos, buf, size / 4);
 		memcpy(buf, (uint8 *)g_extRAM+pos, size);				
 		return 0;
 	}
@@ -432,8 +426,6 @@ int	FS_loadROMPage(char *buf, unsigned int pos, int size)
 
 	int ret;	
 	FS_lock();
-
-	//REG_IE &= ~(IRQ_VBLANK);
 	
 	ret = lseek(currentfd, pos, SEEK_SET);
 	if (ret < 0)
@@ -444,7 +436,6 @@ int	FS_loadROMPage(char *buf, unsigned int pos, int size)
 		
 	read(currentfd, buf, size);
 	
-	//REG_IE |= (IRQ_VBLANK);	
 	FS_unlock();	
 	return ret;	
 }

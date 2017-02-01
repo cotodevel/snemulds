@@ -6,6 +6,7 @@
 //                                                                            //
 //============================================================================//
 
+#ifdef ARM9
 
 #ifndef __RAM
 #define __RAM
@@ -42,4 +43,6 @@ void  ram_lock ();
 #ifdef __cplusplus
 }
 #endif
+#endif
+
 #endif

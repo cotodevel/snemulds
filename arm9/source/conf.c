@@ -29,9 +29,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-
 #include "fs.h"
-#include "opcodes.h"    //stricmp support
 
 #define TRUE	1
 #define FALSE	0
@@ -661,7 +659,7 @@ void hook_config_section(char *section, int (*intgetter)(char *, int), char *(*s
    prev = &config_hook;
 
    while (hook) {
-      if (stricmp(section_name, hook->section) == 0) {
+      if (strcasecmp(section_name, hook->section) == 0) {
 	 if ((intgetter) || (stringgetter) || (stringsetter)) {
 	    /* modify existing hook */
 	    hook->intgetter = intgetter;
@@ -715,7 +713,7 @@ int config_is_hooked(char *section)
    prettify_section_name(section, section_name);
 
    while (hook) {
-      if (stricmp(section_name, hook->section) == 0)
+      if (strcasecmp(section_name, hook->section) == 0)
 	 return TRUE;
 
       hook = hook->next;
@@ -744,11 +742,11 @@ static CONFIG_ENTRY *find_config_string(CONFIG *config, char *section, char *nam
 	 if (p->name) {
 	    if ((section) && (p->name[0] == '[') && (p->name[strlen(p->name)-1] == ']')) {
 	       /* change section */
-	       in_section = (stricmp(section, p->name) == 0);
+	       in_section = (strcasecmp(section, p->name) == 0);
 	    }
 	    if ((in_section) || (name[0] == '[')) {
 	       /* is this the one? */
-	       if (stricmp(p->name, name) == 0)
+	       if (strcasecmp(p->name, name) == 0)
 		  return p;
 	    }
 	 }
@@ -780,7 +778,7 @@ char *get_config_string(char *section, char *name, char *def)
    hook = config_hook;
 
    while (hook) {
-      if (stricmp(section_name, hook->section) == 0) {
+      if (strcasecmp(section_name, hook->section) == 0) {
 	 if (hook->stringgetter)
 	    return hook->stringgetter(name, def);
 	 else
@@ -822,7 +820,7 @@ int get_config_int(char *section, char *name, int def)
    hook = config_hook;
 
    while (hook) {
-      if (stricmp(section_name, hook->section) == 0) {
+      if (strcasecmp(section_name, hook->section) == 0) {
 	 if (hook->intgetter) {
 	    return hook->intgetter(name, def);
 	 }
@@ -860,7 +858,7 @@ int get_config_hex(char *section, char *name, int def)
 
    if ((s) && (*s)) {
       i = strtol(s, NULL, 16);
-      if ((i == 0x7FFFFFFF) && (stricmp(s, "7FFFFFFF") != 0))
+      if ((i == 0x7FFFFFFF) && (strcasecmp(s, "7FFFFFFF") != 0))
 	 i = -1;
       return i;
    }
@@ -1000,7 +998,7 @@ void set_config_string(char *section, char *name, char *val)
    hook = config_hook;
 
    while (hook) {
-      if (stricmp(section_name, hook->section) == 0) {
+      if (strcasecmp(section_name, hook->section) == 0) {
 	 if (hook->stringsetter)
 	    hook->stringsetter(name, val);
 	 return;
@@ -1183,7 +1181,7 @@ int	is_section_exists(char *section)
       while (p) {
 	 if (p->name) {
 	    if ((section) && (p->name[0] == '[') && (p->name[strlen(p->name)-1] == ']')) {
-	       if (stricmp(section_name, p->name) == 0)
+	       if (strcasecmp(section_name, p->name) == 0)
 			return 1;
 	    }
 	 }
@@ -1220,7 +1218,7 @@ char *find_config_section_with_hex(char *name, int hex)
 	    }
 	    else
 	    /* is this the one? */
-	       if (stricmp(p->name, name) == 0)
+	       if (strcasecmp(p->name, name) == 0)
 	       {
 		   if ((p->data) && (*p->data)) {
 		        int i;
@@ -1259,11 +1257,11 @@ char *find_config_section_with_string(char *name, char *str)
 	    }
 	    else
 	    /* is this the one? */
-	       if (stricmp(p->name, name) == 0)
+	       if (strcasecmp(p->name, name) == 0)
 	       {
 		   if ((p->data) && (*p->data)) {
 		        int i;
-			i = stricmp(str, p->data);
+			i = strcasecmp(str, p->data);
 			if (i == 0)
 			    return g_section;
 		   }

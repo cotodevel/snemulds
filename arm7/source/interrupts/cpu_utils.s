@@ -2,11 +2,12 @@
 .code 32
 .arm
 
-.global HALTCNT_ARM7
-.type	HALTCNT_ARM7 STT_FUNC
-HALTCNT_ARM7:
-	swi 0x40000
-	bx lr
+@future ARM7 opcodes use this format, and here
+@.global HALTCNT_ARM7
+@.type	HALTCNT_ARM7 STT_FUNC
+@HALTCNT_ARM7:
+@	swi 0x40000
+@	bx lr
 
 
 .global ADDR_PORT_SNES_TO_SPC

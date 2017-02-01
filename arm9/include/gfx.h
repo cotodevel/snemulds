@@ -39,6 +39,7 @@ typedef
 	      unsigned   flip:2;
        } sprite_Info;
 
+//SnemulDSv6 format:
 typedef
        struct {
          unsigned	b:5;
@@ -46,7 +47,10 @@ typedef
          unsigned	r:5;
          unsigned	t:1;
        } RealColor;
-/*typedef
+
+/*
+SnemulDSv4 format:
+typedef
        struct {
          uint8		b;
          uint8		g;
@@ -124,8 +128,8 @@ struct s_gfx
   int		pal;
   int		FIXED_notblack;
   uint16	CG_RAM_mem_temp;
-/*  RealColor SNESPal[256];
-  RealColor	FIXED, BACK;*/
+	//RealColor SNESPal[256];
+	//RealColor	FIXED, BACK;
   uint16	SNESPal[256];
   uint16	FIXED, BACK;
   int		brightness;

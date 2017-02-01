@@ -1,3 +1,4 @@
+#ifdef ARM9
 #include <nds.h>
 
 ///// From MoonShell2.00b5 / M3Sakura /////
@@ -249,3 +250,4 @@ static vu16* M3ExtPack_Start(){
 static void M3ExtPack_InitReadOnly(){
 	DisableRAM();
 }
+#endif

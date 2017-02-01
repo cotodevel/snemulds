@@ -28,10 +28,6 @@ struct s_cpu	CPU;
 struct s_snescore	SNESC;
 struct s_gfx	GFX;
 struct s_cfg	CFG;
-
-//struct s_apu	APU;                                        
-//struct s_apu2 *APU2 = ((struct s_apu2 *)(0x2CED000));     //@ coto: IPC now
-
 volatile u8 snes_ram_bsram[0x20000+0x6000];    //128K SNES RAM + 8K (Big) SNES SRAM
 volatile u8 snes_vram[0x010000];
 
@@ -96,6 +92,5 @@ void resetMemory2_ARM9()
 	REG_POWERCNT  = 0x820F;
  
 	//set shared ram to ARM7
-	WRAM_CR = 0x03;
- 
+	WRAM_CR = 0x03; 
 }

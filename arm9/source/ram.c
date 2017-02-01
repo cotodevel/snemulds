@@ -1,3 +1,4 @@
+#ifdef ARM9
 //=============================================================================//
 //  Copyright 2007 Rick "Lick" Wong											//
 //  This library is licensed as described in the included readme (MIT License) //
@@ -605,4 +606,6 @@ bool extmem_Read(u32 SlotIndex,void *pData,u32 DataSize){
 	MemCopy16DMA3(pSrcData,pDstData,DstSize);
 	return true;
 }
+#endif
+
 #endif

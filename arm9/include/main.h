@@ -47,15 +47,12 @@ int 	go();
 
 extern char logbuf[];
 extern uint32 AsmDebug[16];
+extern void exception_handler();
 
-//NDS MEMORY
-//DTCM TOP full memory
-extern u32 dtcm_top_ld __attribute__((section(".dtcm")));
-//DTCM TOP reserved by compiler/user memory
-extern u32 dtcm_end_alloced __attribute__((section(".dtcm")));
-
+#ifdef LIBNDS
 extern unsigned int __ewram_start;
 extern unsigned int __ewram_end;
+#endif
 
 //snapshot.c
 extern void	FS_lock();

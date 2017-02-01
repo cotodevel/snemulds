@@ -16,19 +16,8 @@
 #define APU_COUNTER1		0xFE
 #define APU_COUNTER2		0xFF
 
-// IPC is at 0x27FF000
-//#define PORT_SNES_TO_SPC ((volatile uint8*)(0x3000000-8))
-//#define PORT_SPC_TO_SNES ((volatile uint8*)(0x3000000-4))
-//#define APU_SNES_ADDRESS ((uint8*)(0x3000000-0x12000))
-//#define APU_ADDR_CNT ((vu32*)(0x3000000-60))
-
-//@ IPC now
 #define APU_RAM_ADDRESS     ((uint8*)(0x6010000))
-#define APU_SNES_ADDRESS    APU_RAM_ADDRESS //ori: #define APU_SNES_ADDRESS ((uint8*)(0x3000000-0x12000))       //could cause lockups
-
-//deprecated/unused: #define SNEMUL_CMD ((vu32*)(0x3000000-16))
-//deprecated/unused: #define SNEMUL_ANS ((vu32*)(0x3000000-20))
-//deprecated/unused: #define SNEMUL_BLK ((vu32*)(0x3000000-24))
+#define APU_SNES_ADDRESS    APU_RAM_ADDRESS
 
 // Cycles per second
 //#define spcCyclesPerSec 2048000
@@ -41,20 +30,6 @@
 // 8Khz timer clock divisor
 #define t8Shift 7
 
-
-/*
-struct s_apu2
-{
-// timers
-  uint32 	TIM0, TIM1, TIM2;       // 0x27ED000
-  uint32    T0, T1, T2;
-//  uint32    T0, T1, T2;           // 0x27ED000
-//  uint32 	TIM0, TIM1, TIM2;       // 0x27ED00C 
-//  uint32	CNT0, CNT1, CNT2;       // 0x27ED018 
-};
-
-extern struct s_apu2 *APU2;
-*/
 #endif
 
 #ifdef __cplusplus

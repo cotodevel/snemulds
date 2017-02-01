@@ -67,6 +67,7 @@ struct s_snescore
   int		SRAMMask;  
 };
 
+#ifdef ARM9
 // DS->Snes Memory
 #define DS_SRAM          ((uint8*)0x0A000000)
 
@@ -77,6 +78,8 @@ struct s_snescore
 #define ROM_MAX_SIZE	(3*1024*1024)
 #define ROM_STATIC_SIZE	(64*1024)
 #define ROM_PAGING_SIZE	(ROM_MAX_SIZE-ROM_STATIC_SIZE)
+
+#endif
 
 //snes irqs
 #define IRQ_PENDING_FLAG    (1 << 11)

@@ -2,7 +2,6 @@
 #ifndef __snemuldsv6_fifohandler_
 #define __snemuldsv6_fifohandler_
 
-//#include <nds.h>
 #include <nds/ndstypes.h>
 
 #ifdef __cplusplus

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>//BRK(); SBRK();
+#include <unistd.h>
 #include <nds/ndstypes.h>
 #include <nds/memory.h>
 #include <nds/bios.h>
@@ -15,11 +15,6 @@
 #include "apu.h"
 #include "apumisc.h"
 #include "ipc_libnds_extended.h"
-
-////////////////////////////////////////////////////////////////////////////
-// Hacks
-////////////////////////////////////////////////////////////////////////////
-//struct s_apu2 *APU2 = ((struct s_apu2 *)(0x2FED000));     @IPC now
 
 ////////////////////////////////////////////////////////////////////////////
 // Definitions
@@ -109,12 +104,6 @@ void  ApuReset() {
     ((u32*)APU_MEM_ZEROPAGEREAD)[0xfe] = (u32)(&MemReadCounter);
     ((u32*)APU_MEM_ZEROPAGEREAD)[0xff] = (u32)(&MemReadCounter);    
 
-	/*   //originally removed
-	((u32*)APU_MEM_ZEROPAGEREAD)[0xfd] = (u32)(&MemReadCounterFD);
-    ((u32*)APU_MEM_ZEROPAGEREAD)[0xfe] = (u32)(&MemReadCounterFE);
-    ((u32*)APU_MEM_ZEROPAGEREAD)[0xff] = (u32)(&MemReadCounterFF);
-	*/
-
     ((u32*)APU_MEM_ZEROPAGEWRITE)[0xf1 + 0x40] = (u32)(&MemWriteApuControl);
     ((u32*)APU_MEM_ZEROPAGEWRITE)[0xf3 + 0x40] = (u32)(&MemWriteDspData);
     ((u32*)APU_MEM_ZEROPAGEWRITE)[0xfa + 0x40] = (u32)(&MemWriteCounter);
@@ -132,7 +121,6 @@ void  ApuReset() {
         ((u32*)APU_MEM_ZEROPAGEWRITE)[i] = (u32)(&MemWriteUpperByte);
     }
 	
-
 // 0 - A, 1 - X, 2 - Y, 3 - RAMBASE, 4 - DP, 5 - PC (Adjusted into rambase)
 // 6 - Cycles (bit 0 - C, bit 1 - v, bit 2 - h, bits 3+ cycles left)
 // 7 - Optable

@@ -30,8 +30,6 @@ GNU General Public License for more details.
 #include <allegro.h>
 #endif
 
-//cpu opcode linking
-//#include "cpu.h" //held in opcodes.h
 #include "apu.h"
 #include "snes.h"
 #include "gfx.h"
@@ -638,7 +636,6 @@ uint32	R2141(uint32 addr)
 	oldapupc = newapupc;
 	}*/
 	
-	//*(uint32*)(0x27E0000) = 0;	
       if (!CFG.Sound_output)
       { /* APU Skipper */
         switch ((MyIPC->skipper_cnt2++)%13) {
@@ -1143,32 +1140,6 @@ void	W2133(uint32 addr, uint32 value)
          CPU.PPU_PORT[0x33] = value;
 }
 
-/*
- * #if 0	
-	if (value == 0x55 && (newapupc & 0xf000) == 0xf000)
-	LOG("%02x 1 (%04x, %04x)\n", value, newapupc, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
-#else
-	if (value == 0x55 && (newapupc & 0xf000) == 0xf000)
-	{
-	int i;
-	for (i = 0; i < 100; i++)
-		dummy++;
-	}
-#endif		          		
-	if (APU_ADDR_BLKP[1])
-	{
-		//LOG("1 b %04x\n", newapupc);
-		while (APU_ADDR_BLKP[1]);
-#if 0
-  		LOG("1 w %02x %04x\n", value, *(uint16 *)(APU_RAM_ADDRESS+0x18));
-#else  		
-	{
-	int i;
-	for (i = 0; i < 200; i++)
-		dummy++;
-	}
-#endif			  		
-  	}*/
 
 static volatile uint32 dummy;	
 void	pseudoSleep(int d)
@@ -1220,18 +1191,6 @@ void	W2141(uint32 addr, uint32 value)
 				while (MyIPC->APU_ADDR_BLKP[1]);
 			}
 		}
-/*				    	
-#ifdef USE_APU_PORT_BLK    	
-		int newapupc = (*(uint32*)memUncached(0x2FE0000)) & 0xFFFF;
-		if (value == 0x55 && (newapupc & 0xf000) == 0x1000)
-			pseudoSleep(2000);	
-		if (APU_ADDR_BLKP[1])
-		{
-			while (APU_ADDR_BLKP[1]);
-			pseudoSleep(2000);
-		}
-#endif
-*/
     	PORT_SNES_TO_SPC[1] = value;
     	
 		if ((CFG.SoundPortSync & 2) && value) 
@@ -1844,7 +1803,6 @@ void GoNMI()
   CPU.unpacked = 0; // ASM registers to update
 #endif
 
-//  if (CFG.CPU_log) fprintf(SNES.flog, "--> NMI\n");
 }
 
 void GoIRQ()
@@ -1886,11 +1844,10 @@ void GoIRQ()
 //  if (CFG.CPU_log) fprintf(SNES.flog, "--> IRQ\n");
 }
 
-
 //what does irqactive?
-//if( irqactive >0 -> S9xOpcode_IRQ)
+//this: if( irqactive >0 -> S9xOpcode_IRQ)
 
-//this causes the device to raise IRQs
+//Raise SNES IRQs
 void setirq(uint32 irqs_to_set){
     
     CPU.irqactive |= irqs_to_set;
@@ -1899,7 +1856,7 @@ void setirq(uint32 irqs_to_set){
     CHECK_FOR_IRQ();
 }
 
-//this will continue to clear (acknowledge) irqs until IRQ_PENDING_FLAG is unset
+//Continues to clear (acknowledge) irqs until IRQ_PENDING_FLAG is unset
 void clear_irq_source (uint32 M)
 {
     CPU.irqactive &= ~M;

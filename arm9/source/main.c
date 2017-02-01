@@ -455,9 +455,8 @@ int selectSong(char *name)
 	return 0;
 }
 
-
-//unused
 /*
+#ifdef ARM9
 void exception_handler()
 {
 	
@@ -482,8 +481,6 @@ void exception_handler()
 		exceptionAddress = savedPC - (thumbState ? 2 : 4);
 	}
 
-
-
 	iprintf(
 		"r0=%08x r1=%08x r2=%08x r3=%08x\n",
 		(unsigned int)AsmDebug[0],(unsigned int)AsmDebug[1],(unsigned int)AsmDebug[2],(unsigned int)AsmDebug[3] );
@@ -498,9 +495,8 @@ void exception_handler()
 	}
 
 }
-
+#endif
 */
-
 
 //---------------------------------------------------------------------------------
 int argc;
@@ -559,13 +555,11 @@ int main(int _argc, char **_argv)
 	
 	GUI_setLanguage(PersonalData->language);
 	
-#ifndef DSEMUL_BUILD	
 	GUI.printfy = 32;
 	GUI_align_printf(GUI_TEXT_ALIGN_CENTER, SNEMULDS_TITLE);
 	GUI_align_printf(GUI_TEXT_ALIGN_CENTER, SNEMULDS_SUBTITLE);
     GUI.printfy += 32; // FIXME
 	GUI_align_printf(GUI_TEXT_ALIGN_CENTER, _STR(4));
-#endif	
 	
 	initSNESEmpty();
 	update_ram_snes();
@@ -649,12 +643,7 @@ int main(int _argc, char **_argv)
 	}
     */
 
-#ifndef	DSEMUL_BUILD	
-	for (i = 0; i < 100; i++)
-		
-#endif	
-	
-	GUI_clear();
+	for (i = 0; i < 100; i++)	GUI_clear();
 	
 	// Load SNEMUL.CFG
 	set_config_file("snemul.cfg");

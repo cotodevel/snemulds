@@ -33,16 +33,6 @@ GNU General Public License for more details.
 
 #define P_E  0x100
 
-//coto: 23/04/2016 stricmp was deprecated by GCC in 2015, so good candidates are both strcasecmp and strncasecmp
-
-#ifndef stricmp
-    #define stricmp  strcasecmp 	//stricmp
-#endif
-
-#ifndef strnicmp
-    #define strnicmp strncasecmp   //strnicmp
-#endif
-
 #endif
 
 
