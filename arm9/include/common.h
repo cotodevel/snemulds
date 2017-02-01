@@ -85,7 +85,7 @@ GNU General Public License for more details.
 #define TRUE    1
 #endif
 
-#if (FALSE != 1)
+#if (FALSE != 0)
 #undef FALSE
 #define FALSE   0
 #endif
