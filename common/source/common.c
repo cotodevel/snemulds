@@ -26,7 +26,7 @@ void SendArm7Command(u32 command1, u32 command2, u32 command3, u32 command4) {
 }
 
 #ifdef ARM9
-#include "../arm9/source/snes.h"
+#include "snes.h"
 
 //small hack to update SNES_ADDRESS at opcodes2.s
 void update_ram_snes(){

@@ -37,6 +37,7 @@
 #ifndef NDS
  #if defined ARM9 || defined ARM7
   #define NDS
+  
  #endif
 #endif
 

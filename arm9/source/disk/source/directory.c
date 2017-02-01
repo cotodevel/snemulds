@@ -34,8 +34,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "directory.h"
-#include "common.h"
+#include "directory_lfat.h"
+#include "common_lfat.h"
 #include "partition.h"
 #include "file_allocation_table.h"
 #include "bit_ops.h"

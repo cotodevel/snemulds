@@ -16,16 +16,17 @@ include $(DEVKITARM)/ds_rules
 #---------------------------------------------------------------------------------
 BUILD		:=	build
 SOURCES		:=	source \
-				source/disk \
-				source/interrupts \
-				source/gui_draw \
-				../common/
+				source/disk/source \
+				source/interrupts/source \
+				source/gui_draw/source \
+				../common/source
 				
-INCLUDES	:=	source \
-				source/disk \
-				source/interrupts \
-				source/gui_draw \
-				../common/
+INCLUDES		:=	include \
+				source/disk/include \
+				source/interrupts/include \
+				source/gui_draw/include \
+				../common/include
+
 DATA		:=
 
 

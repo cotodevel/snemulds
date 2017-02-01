@@ -29,7 +29,7 @@
 #ifndef _FILETIME_H
 #define _FILETIME_H
 
-#include "common.h"
+#include "common_lfat.h"
 #include <sys/types.h>
 
 uint16_t _FAT_filetime_getTimeFromRTC (void);

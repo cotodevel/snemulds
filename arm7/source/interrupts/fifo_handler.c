@@ -5,11 +5,11 @@
 #include <string.h>
 
 #include "fifo_handler.h"
-#include "../pocketspc.h"
-#include "../apu.h"
-#include "../dsp.h"
-#include "../main.h"
-#include "../mixrate.h"
+#include "pocketspc.h"
+#include "apu.h"
+#include "dsp.h"
+#include "main.h"
+#include "mixrate.h"
 #include "ipc_libnds_extended.h"
 
 //Coto:

@@ -2,13 +2,12 @@
 #include <nds/system.h>
 #include <nds/interrupts.h>
 
-#include "../pocketspc.h"
-#include "../apu.h"
-#include "../dsp.h"
-#include "../main.h"
-#include "../mixrate.h"
-
-#include "../touch.h"
+#include "pocketspc.h"
+#include "apu.h"
+#include "dsp.h"
+#include "main.h"
+#include "mixrate.h"
+#include "touch.h"
 #include "ipc_libnds_extended.h"
 
 #include "fifo_handler.h"

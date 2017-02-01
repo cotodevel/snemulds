@@ -31,7 +31,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "common.h"
+#include "common_lfat.h"
 #include "partition.h"
 #include "fatfile.h"
 #include "fatdir.h"

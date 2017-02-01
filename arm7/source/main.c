@@ -33,9 +33,9 @@
 #include "apu.h"
 #include "dsp.h"
 #include "main.h"
-#include "interrupts/fifo_handler.h"
-#include "interrupts/interrupts.h"
-#include "interrupts/cpu_utils.h"
+#include "fifo_handler.h"
+#include "interrupts.h"
+#include "cpu_utils.h"
 #include "ipc_libnds_extended.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 u16's, right buffer is next

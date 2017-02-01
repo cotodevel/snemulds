@@ -1,4 +1,4 @@
-#include "common.h"
+#include "common_lfat.h"
 
 #ifndef USE_LWP_LOCK
 

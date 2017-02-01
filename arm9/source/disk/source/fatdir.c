@@ -39,7 +39,7 @@
 #include "cache.h"
 #include "file_allocation_table.h"
 #include "partition.h"
-#include "directory.h"
+#include "directory_lfat.h"
 #include "bit_ops.h"
 #include "filetime.h"
 #include "lock.h"

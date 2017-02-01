@@ -2,11 +2,11 @@
 #include <nds/ndstypes.h>
 
 #include "fifo_handler.h"
-#include "../memmap.h"
-#include "../common.h"
-#include "../snes.h"
-#include "../cfg.h"
-#include "../main.h"
+#include "memmap.h"
+#include "common.h"
+#include "snes.h"
+#include "cfg.h"
+#include "main.h"
 #include "ipc_libnds_extended.h"
 
 //Coto:

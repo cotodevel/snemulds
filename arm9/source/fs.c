@@ -19,16 +19,12 @@ GNU General Public License for more details.
 #include <stdio.h>
 #include <string.h>
 #include <nds/memory.h>
-
-//#include <malloc.h>
 #include <stdarg.h>
 #include <ctype.h>
 #include "ipc_libnds_extended.h"
 
 #include "fs.h"
-
-#include "gui_draw/gui.h"
-
+#include "gui.h"
 #include "ram.h"
 
 #include <fat.h>

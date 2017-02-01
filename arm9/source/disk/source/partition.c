@@ -30,7 +30,7 @@
 #include "partition.h"
 #include "bit_ops.h"
 #include "file_allocation_table.h"
-#include "directory.h"
+#include "directory_lfat.h"
 #include "mem_allocate.h"
 #include "fatfile.h"
 

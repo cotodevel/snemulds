@@ -29,7 +29,7 @@
 #ifndef _DISC_H
 #define _DISC_H
 
-#include "common.h"
+#include "common_lfat.h"
 #include <nds/disc_io.h>
 
 /*

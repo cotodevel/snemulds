@@ -29,7 +29,7 @@
 
 #include <time.h>
 #include "filetime.h"
-#include "common.h"
+#include "common_lfat.h"
 
 #define MAX_HOUR 23
 #define MAX_MINUTE 59

@@ -1,8 +1,8 @@
-	.TEXT
-	.ARM
-	.ALIGN
+.align 4
+.code 32
+.ARM
 
-#include "apudef.h"
+#include "../include/apudef.h"
 
 /*
 .GLOBAL BreakR11

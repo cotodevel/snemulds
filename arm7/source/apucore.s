@@ -2,7 +2,7 @@
 .code 32
 .ARM
 
-#include "apudef.h"
+#include "../include/apudef.h"
 
 .MACRO notDone opc
 @    mov r0, #\opc

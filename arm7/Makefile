@@ -15,11 +15,10 @@ endif
 BUILD		:=	bin
 SOURCES		:=	source/	\
                 source/interrupts/	\
-                ../common/
+                ../common/source
                 
-INCLUDES	:=	source/	\
-                source/interrupts/	\
-                ../common/
+INCLUDES	:=	include/	\
+                ../common/include
 
 #---------------------------------------------------------------------------------
 # options for code generation

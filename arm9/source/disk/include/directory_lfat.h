@@ -32,7 +32,7 @@
 
 #include <sys/stat.h>
 
-#include "common.h"
+#include "common_lfat.h"
 #include "partition.h"
 
 #define DIR_ENTRY_DATA_SIZE 0x20

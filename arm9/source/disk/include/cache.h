@@ -36,7 +36,7 @@
 #ifndef _CACHE_H
 #define _CACHE_H
 
-#include "common.h"
+#include "common_lfat.h"
 #include "disc.h"
 
 typedef struct {

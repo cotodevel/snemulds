@@ -22,11 +22,11 @@ GNU General Public License for more details.
 #include <ctype.h>
 #include <stdarg.h>
 #include "snes.h"
-#include "../common.h"
+#include "common.h"
 #include "ipc_libnds_extended.h"
 
 #include "gui.h"
-#include "../fs.h"
+#include "fs.h"
 
 t_GUI GUI;
 

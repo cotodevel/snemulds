@@ -32,7 +32,7 @@ GNU General Public License for more details.
 #include "gfx.h"
 #include "apu.h"
 #include "cfg.h"
-#include "gui_draw/gui.h"
+#include "gui.h"
 
 #include "ipc_libnds_extended.h"
 

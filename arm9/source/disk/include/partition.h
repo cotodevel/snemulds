@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <unistd.h>//BRK(); SBRK();
 
-#include "common.h"
+#include "common_lfat.h"
 #include "cache.h"
 #include "lock.h"
 

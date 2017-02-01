@@ -10,7 +10,7 @@
 #include "cfg.h"
 #include "apu.h"
 #include "opcodes.h"
-#include "gui_draw/gui.h"
+#include "gui.h"
 
 
 uint32	joypad_conf_mode = 0;

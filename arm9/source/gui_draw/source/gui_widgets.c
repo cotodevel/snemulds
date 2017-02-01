@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
-#include "../common.h"
+#include "common.h"
 #include "gui.h"
 #include "gui_widgets.h"
 

@@ -24,7 +24,7 @@
 #include <nds/memory.h>
 #include <fcntl.h>
 
-#include "gui_draw/gui.h"
+#include "gui.h"
 
 #include "fs.h"
 #include "snes.h"
@@ -35,13 +35,13 @@
 #include "ram.h"
 
 #include "conf.h"
-#include "gui_draw/snemul_str.h"
+#include "snemul_str.h"
 #include "frontend.h"
 #include "main.h"
 #include "font_8x8_uv.h"
 
 #include "ppu.h"
-#include "disk/libfat.h"
+#include "libfat.h"
 
 #include <string.h>
 #include <nds/dma.h>
@@ -52,8 +52,8 @@
 #include <nds/arm9/trig_lut.h>
 #include <nds/arm9/math.h>
 #include <nds/arm9/dynamicArray.h>
-#include "interrupts/interrupts.h"
-#include "interrupts/fifo_handler.h"
+#include "interrupts.h"
+#include "fifo_handler.h"
 
 #include "ipc_libnds_extended.h"
 

@@ -29,7 +29,7 @@
 #ifndef _LOCK_H
 #define _LOCK_H
 
-#include "common.h"
+#include "common_lfat.h"
 
 #ifdef USE_LWP_LOCK
 

@@ -35,9 +35,9 @@
 #include <sys/reent.h>
 #include <sys/stat.h>
 
-#include "common.h"
+#include "common_lfat.h"
 #include "partition.h"
-#include "directory.h"
+#include "directory_lfat.h"
 
 #define FILE_MAX_SIZE ((uint32_t)0xFFFFFFFF)	// 4GiB - 1B
 

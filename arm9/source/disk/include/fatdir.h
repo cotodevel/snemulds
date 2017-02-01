@@ -36,8 +36,8 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/iosupport.h>
-#include "common.h"
-#include "directory.h"
+#include "common_lfat.h"
+#include "directory_lfat.h"
 
 typedef struct {
 	PARTITION* partition;

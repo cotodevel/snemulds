@@ -36,7 +36,7 @@
 #include <string.h>
 #include <limits.h>
 
-#include "common.h"
+#include "common_lfat.h"
 #include "cache.h"
 #include "disc.h"
 

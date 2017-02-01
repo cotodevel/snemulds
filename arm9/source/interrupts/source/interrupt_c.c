@@ -8,14 +8,14 @@
 #include <malloc.h>
 #include <string.h>
 
-#include "../main.h"
-#include "../fs.h"
-#include "../snes.h"
-#include "../gfx.h"
-#include "../cfg.h"
-#include "../apu.h"
-#include "../memmap.h"
-#include "../common.h"              //snes common
+#include "main.h"
+#include "fs.h"
+#include "snes.h"
+#include "gfx.h"
+#include "cfg.h"
+#include "apu.h"
+#include "memmap.h"
+#include "common.h"              //snes common
 #include "ipc_libnds_extended.h"
 
 #include "fifo_handler.h"

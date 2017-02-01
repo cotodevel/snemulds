@@ -30,7 +30,7 @@
 #ifndef _FAT_H
 #define _FAT_H
 
-#include "common.h"
+#include "common_lfat.h"
 #include "partition.h"
 
 #define CLUSTER_EOF_16	0xFFFF
