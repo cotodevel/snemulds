@@ -33,8 +33,7 @@ GNU General Public License for more details.
 #include "apu.h"
 #include "cfg.h"
 #include "gui.h"
-
-#include "ipc_libnds_extended.h"
+#include "common_shared.h"
 
 void writeSRAM(int offset, uint8* src, int size) {
         REG_EXMEMCNT &= ~0x0880;

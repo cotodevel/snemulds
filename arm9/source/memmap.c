@@ -23,8 +23,7 @@
 #include "snes.h"
 #include "cfg.h"
 #include "memmap.h"
-
-#include "ipc_libnds_extended.h"
+#include "common_shared.h"
 
 void fillMemory( void * addr, u32 count, u32 value )
 {

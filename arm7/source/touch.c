@@ -26,7 +26,7 @@
 
 ---------------------------------------------------------------------------------*/
 
-#include "ipc_libnds_extended.h"
+#include "common_shared.h"
 
 #include <nds/ndstypes.h>
 #include <nds/system.h>

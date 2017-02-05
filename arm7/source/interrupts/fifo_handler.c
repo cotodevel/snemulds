@@ -10,7 +10,7 @@
 #include "dsp.h"
 #include "main.h"
 #include "mixrate.h"
-#include "ipc_libnds_extended.h"
+#include "common_shared.h"
 
 //Coto:
 void HandleFifo() {

@@ -8,8 +8,7 @@
 #include "main.h"
 #include "mixrate.h"
 #include "touch.h"
-#include "ipc_libnds_extended.h"
-
+#include "common_shared.h"
 #include "fifo_handler.h"
 #include "interrupts.h"
 

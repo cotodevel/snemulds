@@ -23,7 +23,7 @@ GNU General Public License for more details.
 #include <stdarg.h>
 #include "snes.h"
 #include "common.h"
-#include "ipc_libnds_extended.h"
+#include "common_shared.h"
 
 #include "gui.h"
 #include "fs.h"

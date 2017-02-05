@@ -35,7 +35,7 @@
 #include "main.h"
 #include "fifo_handler.h"
 #include "interrupts.h"
-#include "ipc_libnds_extended.h"
+#include "common_shared.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 u16's, right buffer is next
 u16 *playBuffer;

@@ -16,10 +16,8 @@
 #include "apu.h"
 #include "memmap.h"
 #include "common.h"              //snes common
-#include "ipc_libnds_extended.h"
-
+#include "common_shared.h"
 #include "fifo_handler.h"
-
 #include "interrupts.h"
 
 

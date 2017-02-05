@@ -20,7 +20,7 @@ GNU General Public License for more details.
 
 #include "cfg.h"
 #include "apu.h"
-#include "ipc_libnds_extended.h"
+#include "common_shared.h"
 
 void	APU_reset()
 {

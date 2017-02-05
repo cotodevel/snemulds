@@ -54,8 +54,7 @@
 #include <nds/arm9/dynamicArray.h>
 #include "interrupts.h"
 #include "fifo_handler.h"
-
-#include "ipc_libnds_extended.h"
+#include "common_shared.h"
 
 IN_DTCM
 int _offsetY_tab[4] = { 16, 0, 32, 24 };

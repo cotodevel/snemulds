@@ -4,7 +4,7 @@
 #include "pocketspc.h"
 #include "apu.h"
 #include "apumisc.h"
-#include "ipc_libnds_extended.h"
+#include "common_shared.h"
 
 // archeide: shared structure with SNEmul
 

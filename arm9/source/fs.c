@@ -21,7 +21,7 @@ GNU General Public License for more details.
 #include <nds/memory.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include "ipc_libnds_extended.h"
+#include "common_shared.h"
 
 #include "fs.h"
 #include "gui.h"

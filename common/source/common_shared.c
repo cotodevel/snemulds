@@ -1,5 +1,5 @@
 #include <nds.h>
-#include "ipc_libnds_extended.h"
+#include "common_shared.h"
 
 #ifdef ARM7
 void SendArm9Command(u32 command1, u32 command2, u32 command3, u32 command4) {

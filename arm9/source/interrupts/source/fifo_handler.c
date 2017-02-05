@@ -7,7 +7,7 @@
 #include "snes.h"
 #include "cfg.h"
 #include "main.h"
-#include "ipc_libnds_extended.h"
+#include "common_shared.h"
 
 //Coto:
 IN_ITCM
