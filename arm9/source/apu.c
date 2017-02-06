@@ -93,5 +93,5 @@ void APU_playSong(uint8 *data, int size)
 void APU_command(uint32 command)
 {
 	SendArm7Command(command,0x00000000,0x00000000,0x00000000);
-    swiWaitForVBlank();	//should be fixed on the upcoming update (new irqs)
+	FIFO_DRAINWRITE();
 }
