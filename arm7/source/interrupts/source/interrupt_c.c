@@ -150,16 +150,3 @@ void irqInitExt(IntFn handler) {
 #endif
 	REG_IME = 1;			// enable global interrupt
 }
-
-//this will be removed once I update devkitarm.
-#ifdef ARM7
-
-#ifndef isDSiMode
-//!	Checks whether the application is running in DSi mode.
-inline bool isDSiMode() {
-	extern bool __dsimode;
-	return __dsimode;
-}
-#endif
-
-#endif

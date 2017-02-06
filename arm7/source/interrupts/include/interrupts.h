@@ -33,7 +33,6 @@ extern struct IntTable irqTable[MAX_INTERRUPTS];
 
 #ifdef ARM7
 extern void i2cIRQHandler();
-extern bool isDSiMode();
 #endif
 
 #ifdef INT_TABLE_SECTION
