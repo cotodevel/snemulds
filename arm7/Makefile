@@ -2,48 +2,55 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM)
+$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
 endif
 
--include $(DEVKITARM)/ds_rules
+include $(DEVKITARM)/ds_rules
 
 #---------------------------------------------------------------------------------
 # BUILD is the directory where object files & intermediate files will be placed
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
+# DATA is a list of directories containing binary files
+# all directories are relative to this makefile
 #---------------------------------------------------------------------------------
-BUILD		:=	bin
-SOURCES		:=	source/	\
-                source/interrupts/	\
-                ../common/source
-                
-INCLUDES	:=	include/	\
-                ../common/include
-
+BUILD		:=	build
+SOURCES		:=	source  \
+                source/interrupts/source/	\
+				source/wireless/	\
+                ../common/	\
+                ../common/dswifi
+INCLUDES	:=	include/  \
+				../include/  \
+                source/interrupts/include/	\
+				source/wireless/	\
+                ../common/	\
+                ../common/dswifi
+DATA		:=
+ 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-mthumb-interwork -marm
+ARCH	:=	#-mthumb-interwork
 
-CFLAGS	:=	-g -Wall -Os\
-			-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer\
-			-ffast-math \
-			$(ARCH)
+CFLAGS	:=	-Wall -O2 \
+		-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer\
+		-ffast-math \
+		$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM7
-CXXFLAGS := $(CFLAGS) -fno-exceptions -fno-rtti
+CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions -fno-rtti
 
-ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=$(CURDIR)/../pocketspc_arm7.specs -g $(ARCH) -Wl,-Map,$(notdir $*).map
-#LDFLAGS	=	-specs=ds_arm7.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*).map
 
-LIBS	:=  -lnds7
+ASFLAGS	:=	$(ARCH)	$(CFLAGS)
+LDFLAGS	=	-specs=ds_arm7.specs $(ARCH) -Wl,-Map,$(notdir $*).map
 
+LIBS	:= -lnds7
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS)
+LIBDIRS	:=	$(CURDIR) $(LIBNDS) $(LIBWIFI)
  
   
 #---------------------------------------------------------------------------------
@@ -53,27 +60,22 @@ LIBDIRS	:=	$(LIBNDS)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
  
-export ARM7BIN	:=	$(TOPDIR)/$(TARGET).arm7
-export ARM7ELF	:=	$(CURDIR)/$(TARGET).arm7.elf
+export ARM7ELF	:=	$(CURDIR)/$(TARGET).elf
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
  
-export CC		:=	$(PREFIX)gcc
-export CXX		:=	$(PREFIX)g++
-export AR		:=	$(PREFIX)ar
-export OBJCOPY	:=	$(PREFIX)objcopy
- 
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-SPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
-
-export OFILES	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o) $(SPPFILES:.S=.o)
+BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+ 
+export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
+			$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
  
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-					-I$(CURDIR)/$(BUILD)
+			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+			-I$(CURDIR)/$(BUILD)
  
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
@@ -92,7 +94,7 @@ endif
 #---------------------------------------------------------------------------------
 
 .PHONY: $(BUILD) clean
-
+ 
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
@@ -109,29 +111,21 @@ else
  
 DEPENDS	:=	$(OFILES:.o=.d)
  
-.PHONY: ../bin/pocketspc.arm7
- 
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
+$(ARM7ELF)	:	$(OFILES)
+	@echo linking $(notdir $@)
+	@$(LD)  $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
 
-../bin/pocketspc.arm7	:	../bin/pocketspc.elf
-	@$(OBJCOPY) -O binary pocketspc.elf pocketspc.arm7
-	@echo succesfully built pocketspc arm7 core, enjoy!
-
-../bin/pocketspc.elf	:	$(OFILES)
-	@echo linking pocketspc
-	@$(CC)  $(ASFLAGS) -c ../pocketspc_arm7_crt0.s -o../bin/pocketspc_arm7_crt0.o
-	$(LD)  $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o ../bin/pocketspc.elf
 
 #---------------------------------------------------------------------------------
-# Compile Targets for C/C++
+# you need a rule like this for each extension you use as binary data 
 #---------------------------------------------------------------------------------
- 
-%.o : %.S
+%.bin.o	:	%.bin
+#---------------------------------------------------------------------------------
 	@echo $(notdir $<)
-	@$(CC) -MM $(CFLAGS) -o $*.d $<
-	@$(CC)  $(ASFLAGS) -c $< -o$@
+	@$(bin2o)
 
 -include $(DEPENDS)
  

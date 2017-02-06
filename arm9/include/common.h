@@ -34,14 +34,6 @@ GNU General Public License for more details.
 #define IN_ITCM __attribute__((section(".itcm")))
 
 
-#ifdef ASM_OPCODES
-	#define IN_ITCM2 __attribute__((section(".itcm")))
-	#define IN_ITCM3 __attribute__((section(".itcm")))
-#else
-	#define IN_ITCM3
-	#define IN_ITCM2 
-#endif
-
 #include <nds/timers.h>
 
 #ifndef TIMER_Y

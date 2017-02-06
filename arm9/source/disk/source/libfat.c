@@ -41,7 +41,7 @@
 
 #include "file_browse.h"
 
-static const devoptab_t dotab_fat = {
+const devoptab_t dotab_fat = {
 	"fat",
 	sizeof (FILE_STRUCT),
 	_FAT_open_r,

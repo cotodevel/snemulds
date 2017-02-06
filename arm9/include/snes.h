@@ -75,7 +75,7 @@ struct s_snescore
 #define WMAP ((uchar **)(0x0689A000))
 
 //Rom Page variables
-#define ROM_MAX_SIZE	(3*1024*1024)
+#define ROM_MAX_SIZE	(2*1024*1024)
 #define ROM_STATIC_SIZE	(64*1024)
 #define ROM_PAGING_SIZE	(ROM_MAX_SIZE-ROM_STATIC_SIZE)
 

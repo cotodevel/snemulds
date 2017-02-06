@@ -1,41 +1,12 @@
-/*---------------------------------------------------------------------------------
-
-	default ARM7 core
-
-		Copyright (C) 2005 - 2010
-		Michael Noland (joat)
-		Jason Rogers (dovoto)
-		Dave Murphy (WinterMute)
-
-	This software is provided 'as-is', without any express or implied
-	warranty.  In no event will the authors be held liable for any
-	damages arising from the use of this software.
-
-	Permission is granted to anyone to use this software for any
-	purpose, including commercial applications, and to alter it and
-	redistribute it freely, subject to the following restrictions:
-
-	1.	The origin of this software must not be misrepresented; you
-		must not claim that you wrote the original software. If you use
-		this software in a product, an acknowledgment in the product
-		documentation would be appreciated but is not required.
-
-	2.	Altered source versions must be plainly marked as such, and
-		must not be misrepresented as being the original software.
-
-	3.	This notice may not be removed or altered from any source
-		distribution.
-
----------------------------------------------------------------------------------*/
 #include <nds.h>
 #include <string.h>
 #include "pocketspc.h"
 #include "apu.h"
 #include "dsp.h"
 #include "main.h"
-#include "fifo_handler.h"
 #include "interrupts.h"
 #include "common_shared.h"
+#include "wifi_arm7.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 u16's, right buffer is next
 u16 *playBuffer;
@@ -136,77 +107,53 @@ void SaveSpc(u8 *spc) {
     memcpy(spc+0x101c0, APU_EXTRA_MEM, 0x40);       	
 }
 
-int NDSType=0;
-u8 *bootstub;
-type_void bootstub_arm7;
-static void sys_exit(){
-	if(NDSType>=2){
-		writePowerManagement(0x10, 1);
-	}
-	else{
-		writePowerManagement(0, PM_SYSTEM_PWR);
-	}
-}
-
 //---------------------------------------------------------------------------------
 int main() {
 //---------------------------------------------------------------------------------
 	
-    int i   = 0;
-	REG_IME = 0;
-
-	// Reset the clock if needed
-    rtcReset();
-
+	interrupts_to_wait_arm7 = IRQ_TIMER1 | IRQ_HBLANK | IRQ_VBLANK | IRQ_VCOUNT | IRQ_FIFO_NOT_EMPTY;  //| IRQ_FIFO_EMPTY;    
+	
+    //fifo setups
+    irqInitExt(IntrMainExt);
+	fifoInit();
+    
+	installWifiFIFO();
+	
+    irqSet(IRQ_HBLANK,hblank);
+	irqSet(IRQ_VBLANK, vblank);
+	irqSet(IRQ_VCOUNT,vcounter);
+    irqSet(IRQ_TIMER1, timer1);
+	irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifoNotEmpty);
+    //irqSet(IRQ_FIFO_EMPTY,HandleFifoEmpty);
+    
+	irqEnable(interrupts_to_wait_arm7);
+    
+    REG_IPC_SYNC = 0;
+    REG_IPC_FIFO_CR = IPC_FIFO_RECV_IRQ | IPC_FIFO_SEND_IRQ | IPC_FIFO_ENABLE;
+    
+    //set up ppu: do irq on hblank/vblank/vcount/and vcount line is 159
+    REG_DISPSTAT = REG_DISPSTAT | DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ | (VCOUNT_LINE_INTERRUPT << 15);
+	
 	// Block execution until we get control of vram D
 	while (!(*((vu8*)0x04000240) & 0x2));
+	
+	int i   = 0;
+	readUserSettings();
+	
+	// Reset the clock if needed
+    rtcReset();
 	
     playBuffer = (u16*)0x6000000;
     
     for (i = 0; i < MIXBUFSIZE * 4; i++) {
         playBuffer[i] = 0;
     }
-
-    interrupts_to_wait_arm7 = IRQ_HBLANK | IRQ_VBLANK | IRQ_VCOUNT | IRQ_FIFO_NOT_EMPTY | IRQ_TIMER1 | IRQ_NETWORK;
-    
-    irqInit();
-    fifoInit();
-    
-    REG_IPC_SYNC = 0;
-    REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR | IPC_FIFO_RECV_IRQ;
-    REG_IPC_FIFO_CR |= (1<<2);  //send empty irq
-    REG_IPC_FIFO_CR |= (1<<10); //recv empty irq
 	
-    irqSet(IRQ_HBLANK,hblank);
-    irqSet(IRQ_VBLANK, vblank);
-	irqSet(IRQ_VCOUNT,vcounter);
-    irqSet(IRQ_TIMER1,timer1);
-    irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifo);
-    
-	irqEnable(interrupts_to_wait_arm7);
-    
-    *(u16*)0x04000184 = *(u16*)0x04000184 | (1<<15); //enable fifo send recv
-
-    //set up ppu: do irq on hblank/vblank/vcount/and vcount line is 159
-    REG_DISPSTAT = REG_DISPSTAT | DISP_HBLANK_IRQ |  DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ | (VCOUNT_LINE_INTERRUPT << 15);
-    
-    REG_IF = ~0;
-    REG_IME = 1;
-    
-    update_spc_ports(); //updates asm ipc apu core with snemulds IPC apu ports 
+	update_spc_ports(); //updates asm ipc apu core with snemulds IPC apu ports 
     ApuReset();
     DspReset();
     SetupSound();
     
-	NDSType=0;
-	u32 myself = readPowerManagement(4); //(PM_BACKLIGHT_LEVEL);
-	if(myself & (1<<6))
-		NDSType=(myself==readPowerManagement(5))?1:2;
-
-	setPowerButtonCB(sys_exit);
-	bootstub=(u8*)0x02ff4000;
-	bootstub_arm7=(*(u64*)bootstub==0x62757473746F6F62ULL)?(*(type_void*)(bootstub+0x0c)):0;
-   
     while (1) {   
         //Coto: Sound is best handled when NDS is NOT waiting for interrupt. 
         if(!SPC_disable){

@@ -38,7 +38,6 @@
 #include "snemul_str.h"
 #include "frontend.h"
 #include "main.h"
-#include "font_8x8_uv.h"
 
 #include "ppu.h"
 #include "libfat.h"
@@ -53,8 +52,37 @@
 #include <nds/arm9/math.h>
 #include <nds/arm9/dynamicArray.h>
 #include "interrupts.h"
-#include "fifo_handler.h"
 #include "common_shared.h"
+
+#include <nds.h>
+#include "sys/socket.h"
+#include "netinet/in.h"
+#include <netdb.h>
+#include <ctype.h>
+#include <fat.h>
+#include <stdarg.h>
+#include <string.h>
+#include <unistd.h>
+#include <fat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+#include <nds/memory.h>
+#include <nds/ndstypes.h>
+#include <nds/memory.h>
+#include <nds/bios.h>
+#include <nds/system.h>
+#include <nds/arm9/math.h>
+#include <nds/arm9/video.h>
+#include <nds/arm9/videoGL.h>
+#include <nds/arm9/trig_lut.h>
+#include <nds/arm9/sassert.h>
+
+#include "touch_ipc.h"
+
 
 IN_DTCM
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
@@ -497,21 +525,36 @@ void exception_handler()
 #endif
 */
 
-//---------------------------------------------------------------------------------
 int argc;
 char **argv;
-
-int main(int _argc, char **_argv)
-{
-	argc=_argc;
-	argv=_argv;
+int main(int _argc, char **_argv) {
 	
+	argc=_argc, argv=_argv;
+	defaultExceptionHandler();
 	MyIPC->APU_ADDR_CNT = 0;
 	MyIPC->APU_ADDR_CMD = 0;
-
+	
 	resetMemory2_ARM9();
 	
 	powerOn(POWER_ALL_2D | POWER_SWAP_LCDS);
+	
+	//fifo setups
+    irqInitExt(IntrMainExt);
+	
+	irqSet(IRQ_VBLANK, Vblank);
+	irqSet(IRQ_HBLANK,Hblank);
+	irqSet(IRQ_VCOUNT,vcounter);
+	irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifoNotEmpty);
+    //irqSet(IRQ_FIFO_EMPTY,HandleFifoEmpty);
+	
+	interrupts_to_wait_arm9 = IRQ_HBLANK|IRQ_VBLANK|IRQ_VCOUNT| IRQ_FIFO_NOT_EMPTY; //| IRQ_FIFO_EMPTY;
+	irqEnable(interrupts_to_wait_arm9);
+	
+	REG_IPC_SYNC = 0;
+    REG_IPC_FIFO_CR = IPC_FIFO_RECV_IRQ | IPC_FIFO_SEND_IRQ | IPC_FIFO_ENABLE;
+    
+    //set up ppu: do irq on hblank/vblank/vcount/and vcount line is 159
+    REG_DISPSTAT = REG_DISPSTAT | DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ | (VCOUNT_LINE_INTERRUPT << 15);
 	
 #ifndef TIMER_Y	
 	TIMER3_CR &= ~TIMER_ENABLE; // not strictly necessary if the timer hasn't been enabled before
@@ -550,7 +593,7 @@ int main(int _argc, char **_argv)
 	/* 32 first kilobytes for MAP */
 	/* remaning memory for tiles */
 	
-	GUI_init();	
+	GUI_init();		
 	
 	GUI_setLanguage(PersonalData->language);
 	
@@ -563,38 +606,22 @@ int main(int _argc, char **_argv)
 	initSNESEmpty();
 	update_ram_snes();
     
-	// Clear "HDMA"
-	int i=0;
-	for (i = 0; i < 192; i++)
-		GFX.lineInfo[i].mode = -1;
-
-    //fifo setups
-    irqInit();
-    //fifoInit();   //kills arm9 comms
-
-    //custom IRQ handlers don't allow jumping to these handlers
-	irqSet(IRQ_VBLANK, Vblank); //remove for debug
-	irqSet(IRQ_HBLANK,Hblank);
-	irqSet(IRQ_VCOUNT,vcounter);
-    irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifo);
-    
-	//upon data transfer IRQ_CARD
-	irqEnable(IRQ_VBLANK | IRQ_VCOUNT | IRQ_HBLANK | IRQ_FIFO_NOT_EMPTY);
-    
-   // REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR | IPC_FIFO_RECV_IRQ;
-    REG_IPC_FIFO_CR |= (1<<2);  //send empty irq
-    REG_IPC_FIFO_CR |= (1<<10); //recv empty irq
-    
-    *(u16*)0x04000184 = *(u16*)0x04000184 | (1<<15); //enable fifo send recv
-    
-    //set up ppu: do irq on hblank/vblank/vcount/and vcount line is 159
-    REG_DISPSTAT = REG_DISPSTAT | DISP_HBLANK_IRQ |  DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ | (VCOUNT_LINE_INTERRUPT << 15);
-    
-    REG_IF = ~0;
-    REG_IME = 1;
-    
 	
-
+	
+	int i=0;
+	// Clear "HDMA"
+	for (i = 0; i < 192; i++){
+		GFX.lineInfo[i].mode = -1;
+	}
+	
+    
+	//later
+	//nifi: 
+	//switch_dswnifi_mode((u8)dswifi_nifimode);
+	//wifi: 
+	//switch_dswnifi_mode((u8)dswifi_wifimode);
+	
+	
 	GUI_printf(_STR(IDS_INITIALIZATION));
 	if (FS_init())
 	{
@@ -672,12 +699,21 @@ int main(int _argc, char **_argv)
     
     //ok so far
     
+	//wifi test
+	/*
+	if(Wifi_InitDefault(true) == true)
+	{
+		iprintf("WIFI OK");
+	}
+	else{
+		iprintf("WIFI FAIL");
+	}
+	*/
 	while (1)
 	{
         if (REG_POWERCNT & POWER_SWAP_LCDS){
 			GUI_update();
 		}
-        
         
         if (keys & KEY_LID)
 		{
@@ -700,12 +736,13 @@ int main(int _argc, char **_argv)
 			APU_pause();
 		}
 		
+		
         if (!SNES.Stopped){
             go();   //boots here
         }
         
+		//swiWaitForVBlank();
 		swiIntrWait(1,IRQ_VBLANK | IRQ_HBLANK | IRQ_VCOUNT | IRQ_FIFO_NOT_EMPTY);
 	}
 
-	return 0;
 }

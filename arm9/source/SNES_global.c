@@ -39,8 +39,7 @@ volatile u8 rom_buffer[ROM_MAX_SIZE];
 void resetMemory2_ARM9() 
 {
  	register int i;
- 
-	//clear out ARM9 DMA channels
+    //clear out ARM9 DMA channels
 	for (i=0; i<4; i++) {
 		DMA_CR(i) = 0;
 		DMA_SRC(i) = 0;
@@ -90,7 +89,7 @@ void resetMemory2_ARM9()
 	VRAM_I_CR = 0;
 	VRAM_CR   = 0x03000000;
 	REG_POWERCNT  = 0x820F;
- 
+    
 	//set shared ram to ARM7
 	WRAM_CR = 0x03; 
 }

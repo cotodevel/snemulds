@@ -19,13 +19,16 @@ SOURCES		:=	source \
 				source/disk/source \
 				source/interrupts/source \
 				source/gui_draw/source \
-				../common/source
+				source/dswifi_arm9/	\
+				../common
 				
-INCLUDES		:=	include \
+INCLUDES		:=	include/ \
+				../include/	\
 				source/disk/include \
 				source/interrupts/include \
 				source/gui_draw/include \
-				../common/include
+				source/dswifi_arm9/	\
+				../common
 
 DATA		:=
 
@@ -33,13 +36,16 @@ DATA		:=
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:= -mthumb-interwork -march=armv5te -mtune=arm946e-s -marm	-mfloat-abi=soft
-CFLAGS	:= -g -Wall -O3	-fmessage-length=0 -fsigned-char -funsafe-math-optimizations \
-		$(ARCH)
+ARCH	:=	-mthumb-interwork -march=armv5te -mtune=arm946e-s -marm	-mfloat-abi=soft
+
+CFLAGS	:=	-Wall -O3 -DNO_VIZ\
+ 			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
+			-ffast-math \
+			$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM9	-DASM_OPCODES
 ASFLAGS	:=	$(ARCH) -march=armv5te -mtune=arm946e-s $(INCLUDE) -Ddebug=0	-DNDS	$(CFLAGS)
-CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions
+CXXFLAGS	:=	$(CFLAGS) 	-fno-rtti -fno-exceptions
 
 LDFLAGS	=	-specs=ds_arm9.specs $(ARCH) -Wl,-Map,$(notdir $*.map)
 
@@ -52,7 +58,7 @@ LIBS	:= -lnds9
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) $(CURDIR)
+LIBDIRS	:=	$(LIBNDS) $(CURDIR) $(LIBWIFI) $(LIBFAT)
  
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -61,7 +67,7 @@ LIBDIRS	:=	$(LIBNDS) $(CURDIR)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
  
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export ARM9ELF	:=	$(CURDIR)/$(TARGET).elf
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
@@ -85,7 +91,6 @@ else
 #---------------------------------------------------------------------------------
 endif
 #---------------------------------------------------------------------------------
-
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
  
@@ -96,7 +101,7 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 export LIBPATHS	:=	-L$(TOPDIR)/nifi $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
  
 .PHONY: $(BUILD) clean
- 
+  
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
@@ -114,10 +119,10 @@ else
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
+$(ARM9ELF)	:	$(OFILES)
+	@echo linking $(notdir $@)
+	@$(LD)  $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
 
-# All Target
-$(OUTPUT).elf	:	$(OFILES)
- 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data 
 #---------------------------------------------------------------------------------

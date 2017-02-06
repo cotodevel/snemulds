@@ -452,7 +452,7 @@ void InitMap()
 		mem_init_paging();
 }
 
-IN_ITCM3
+IN_ITCM
 /*inline */uint8 IO_getbyte(int addr, uint32 address)
 {
 	uint8 result;
@@ -485,7 +485,7 @@ IN_ITCM3
 
 }
 
-IN_ITCM3
+IN_ITCM
 /*inline */void IO_setbyte(int addr, uint32 address, uint8 byte)
 {
 	switch ((int)addr)
@@ -518,7 +518,7 @@ IN_ITCM3
 	}
 }
 
-IN_ITCM3
+IN_ITCM
 /*inline */uint16 IO_getword(int addr, uint32 address)
 {
 	uint16 result;
@@ -556,7 +556,7 @@ IN_ITCM3
 	}
 }
 
-IN_ITCM3
+IN_ITCM
 /*inline */void IO_setword(int addr, uint32 address, uint16 word)
 {
 	switch ((int)addr)
@@ -614,7 +614,7 @@ uchar mem_getbyte(uint32 offset,uchar bank)
 	return IO_getbyte((int)addr, address);
 }
 
-IN_ITCM2
+IN_ITCM
 void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 {
 	int address = (bank<<16)+offset;
@@ -653,7 +653,7 @@ ushort mem_getword(uint32 offset,uchar bank)
 	return IO_getword((int)addr, address);
 }
 
-IN_ITCM2
+IN_ITCM
 void mem_setword(uint32 offset, uchar bank, ushort word)
 {
 	int address = (bank<<16)+offset;

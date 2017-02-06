@@ -1,17 +1,11 @@
 //these just extend libnds interrupt libraries
-#ifndef nds_interrupt9_headers
-#define nds_interrupt9_headers
+#ifndef nds_interrupt7_headers
+#define nds_interrupt7_headers
 
 #include <nds.h>
-#include <nds/system.h>
 #include <nds/interrupts.h>
-#include <nds/touch.h>
-#include <stdio.h>
-#include <malloc.h>
-#include <string.h>
-
-#include "common_shared.h"
-#include "interrupts.h"
+#include <nds/system.h>
+#include <nds/ipc.h>
 
 #ifdef ARM7
 #include <nds/arm7/i2c.h>
@@ -19,18 +13,16 @@
 
 
 #endif
+
 #ifdef __cplusplus
 extern "C"{
 #endif
 
 //external (usermode)
+extern void hblank();
+extern void vblank();
 extern void vcounter();
-extern void Vblank();
-extern void Hblank();
-extern void initirqs();
-extern void refreshNESjoypads();
-
-extern volatile u32 interrupts_to_wait_arm9;
+extern void timer1();
 
 //internal code (kernel)
 extern void IntrMainExt();
@@ -39,12 +31,17 @@ extern void IntrMainExt();
 extern void irqDummy(void);
 extern struct IntTable irqTable[MAX_INTERRUPTS];
 
+#ifdef ARM7
+extern void i2cIRQHandler();
+extern bool isDSiMode();
+#endif
+
 #ifdef INT_TABLE_SECTION
 #else
 extern struct IntTable irqTable[MAX_INTERRUPTS];
 #endif
-
 extern void irqInitExt(IntFn handler);
+
 
 #ifdef __cplusplus
 }

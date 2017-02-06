@@ -2,17 +2,25 @@
 #include <nds/system.h>
 #include <nds/interrupts.h>
 
+#include "common_shared.h"
+#include "interrupts.h"
+#include "touch.h"
+#include "wifi_arm7.h"
+
+#include <nds.h>
+#include <nds/system.h>
+#include <nds/interrupts.h>
+
 #include "pocketspc.h"
 #include "apu.h"
 #include "dsp.h"
 #include "main.h"
 #include "mixrate.h"
-#include "touch.h"
-#include "common_shared.h"
-#include "fifo_handler.h"
-#include "interrupts.h"
 
-//Coto: rewritten all of this. IRQs are now fixed :)
+
+#ifdef ARM7
+#include <nds/arm7/i2c.h>
+#endif
 
 void hblank(){
 	// Block execution until the hblank processing on ARM9
@@ -47,11 +55,7 @@ void hblank(){
 	}
 }
 
-//so far ok
-
 void vblank(){
-	inputGetAndSend();
-
 	#if PROFILING_ON
 		// Debug time data
 		SPC_IPC->curTime += TIMER2_DATA | ((long long)TIMER3_DATA << 19);
@@ -62,17 +66,14 @@ void vblank(){
 		TIMER3_DATA = 0;
 		TIMER3_CR = TIMER_CASCADE | TIMER_ENABLE;
 	#endif
-
-    updateMyIPC();
+	
+	updateMyIPC();
+	Wifi_Update();
 }
-
-// so far ok
 
 void vcounter(){
-    
+	
 }
-
-//so far ok
 
 void timer1(){
 	#if PROFILING_ON
@@ -105,4 +106,60 @@ void timer1(){
 	REG_IF = IRQ_TIMER1;
 }
 
-//so far ok
+/*---------------------------------------------------------------------------------
+	Copyright (C) 2005
+		Dave Murphy (WinterMute)
+	This software is provided 'as-is', without any express or implied
+	warranty.  In no event will the authors be held liable for any
+	damages arising from the use of this software.
+	Permission is granted to anyone to use this software for any
+	purpose, including commercial applications, and to alter it and
+	redistribute it freely, subject to the following restrictions:
+	1.	The origin of this software must not be misrepresented; you
+		must not claim that you wrote the original software. If you use
+		this software in a product, an acknowledgment in the product
+		documentation would be appreciated but is not required.
+	2.	Altered source versions must be plainly marked as such, and
+		must not be misrepresented as being the original software.
+	3.	This notice may not be removed or altered from any source
+		distribution.
+---------------------------------------------------------------------------------*/
+
+
+//we need the irq handler exposed (so other projects that use custom IRQ handler can benefit..)
+
+//---------------------------------------------------------------------------------
+void irqInitExt(IntFn handler) {
+//---------------------------------------------------------------------------------
+	int i;
+
+	irqInitHandler(handler);
+
+	// Set all interrupts to dummy functions.
+	for(i = 0; i < MAX_INTERRUPTS; i ++)
+	{
+		irqTable[i].handler = irqDummy;
+		irqTable[i].mask = 0;
+	}
+
+#ifdef ARM7
+	if (isDSiMode()) {
+		irqSetAUX(IRQ_I2C, i2cIRQHandler);
+		irqEnableAUX(IRQ_I2C);
+	}
+#endif
+	REG_IME = 1;			// enable global interrupt
+}
+
+//this will be removed once I update devkitarm.
+#ifdef ARM7
+
+#ifndef isDSiMode
+//!	Checks whether the application is running in DSi mode.
+inline bool isDSiMode() {
+	extern bool __dsimode;
+	return __dsimode;
+}
+#endif
+
+#endif
