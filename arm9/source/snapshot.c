@@ -140,7 +140,7 @@ int	read_snapshot(char *file, uchar nb)
    if (CFG.Sound_output) {
 	APU_stop(); // Make sure that the APU is *completely* stopped
    	// Read SPC file format
-	fread(APU_RAM_ADDRESS-0x100, 1, 0x10200, f);
+	fread(APU_RAM_ADDRESS, 1, 0x10200, f);
 	APU_loadSpc(); 
   }
 
@@ -214,7 +214,7 @@ int write_snapshot(char *file, unsigned char nb, const char *name)
   	APU_stop(); // Make sure that the APU is *completely* stopped
 	APU_saveSpc(); 
    	
-	fwrite(APU_RAM_ADDRESS-0x100, 1, 0x10200, f);
+	fwrite(APU_RAM_ADDRESS, 1, 0x10200, f);
   }
   
   free(snapshot);

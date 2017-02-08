@@ -17,7 +17,6 @@
 #define APU_COUNTER2		0xFF
 
 #define APU_RAM_ADDRESS     ((uint8*)(0x6010000))
-#define APU_SNES_ADDRESS    APU_RAM_ADDRESS
 
 // Cycles per second
 //#define spcCyclesPerSec 2048000

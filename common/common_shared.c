@@ -163,8 +163,7 @@ inline void HandleFifoNotEmpty(){
 			paused = false;
 			SPC_disable = false;
 			SPC_freedom = false;
-			swiWaitForVBlank();
-        }
+		}
         break;
         case 0x00000002:{
             // Pause/unpause
@@ -176,42 +175,36 @@ inline void HandleFifoNotEmpty(){
 			if (SPC_disable)
 				SPC_disable = false;        
 			paused = !paused;
-			swiWaitForVBlank();
-        }
+		}
         break;
         case 0x00000003:{ /* PLAY SPC */	
-            LoadSpc(APU_SNES_ADDRESS-0x100);
+            LoadSpc(APU_RAM_ADDRESS);
 			SetupSound();   	
 			MyIPC->APU_ADDR_CNT = 0;             	
 			paused = false;
 			SPC_freedom = true;
 			SPC_disable = false;
-			swiWaitForVBlank();
-        }
+		}
         break;
             
         case 0x00000004:{ /* DISABLE */
             SPC_disable = true;
-			swiWaitForVBlank();
-        }
+		}
         break;        
         
         case 0x00000005:{ /* CLEAR MIXER BUFFER */
             memset(playBuffer, 0, MIXBUFSIZE * 8);
-			swiWaitForVBlank();
 		}
         break;
 
         case 0x00000006:{ /* SAVE state */
-            SaveSpc(APU_SNES_ADDRESS-0x100);
-			swiWaitForVBlank();
+            SaveSpc(APU_RAM_ADDRESS);
 		}
         break;  
             
         case 0x00000007:{ /* LOAD state */
-            LoadSpc(APU_SNES_ADDRESS-0x100);
+            LoadSpc(APU_RAM_ADDRESS);
 			MyIPC->APU_ADDR_CNT = 0; 
-			swiWaitForVBlank();
 		}
         break;
         

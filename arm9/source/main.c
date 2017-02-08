@@ -474,7 +474,7 @@ int selectSong(char *name)
 	CFG.Jukebox = 1;
 	CFG.Sound_output = 0;
 	APU_stop();
-	if (FS_loadFile(spcname, (char *)APU_RAM_ADDRESS-0x100, 0x10200) < 0)
+	if (FS_loadFile(spcname, (char *)APU_RAM_ADDRESS, 0x10200) < 0)
 		return -1;
 	APU_playSpc();
 	// Wait APU init
