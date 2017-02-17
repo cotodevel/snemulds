@@ -8,7 +8,6 @@
 #include <nds/bios.h>
 #include <nds/system.h>
 #include <fcntl.h>
-#include <fat.h>
 #include <sys/stat.h>
 
 #include "pocketspc.h"

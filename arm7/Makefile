@@ -43,7 +43,7 @@ CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions -fno-rtti
 
 
 ASFLAGS	:=	$(ARCH)	$(CFLAGS)
-LDFLAGS	=	-specs=ds_arm7.specs $(ARCH) -Wl,-Map,$(notdir $*).map
+LDFLAGS	=	-specs=../ds_arm7_nds.specs $(ARCH) -Wl,-Map,$(notdir $*).map
 
 LIBS	:= -lnds7
 #---------------------------------------------------------------------------------

@@ -47,7 +47,7 @@ CFLAGS	+=	$(INCLUDE) -DARM9	-DASM_OPCODES
 ASFLAGS	:=	$(ARCH) -march=armv5te -mtune=arm946e-s $(INCLUDE) -Ddebug=0	-DNDS	$(CFLAGS)
 CXXFLAGS	:=	$(CFLAGS) 	-fno-rtti -fno-exceptions
 
-LDFLAGS	=	-specs=ds_arm9.specs $(ARCH) -Wl,-Map,$(notdir $*.map)
+LDFLAGS	=	-specs=../ds_arm9_nds.specs $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project

@@ -143,7 +143,7 @@ void irqInitExt(IntFn handler) {
 	}
 
 #ifdef ARM7
-	if (isDSiMode()) {
+	if (0==1) {
 		irqSetAUX(IRQ_I2C, i2cIRQHandler);
 		irqEnableAUX(IRQ_I2C);
 	}
