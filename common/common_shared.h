@@ -1,3 +1,23 @@
+/*
+Copyright (C) 2015-2017  Coto
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
+*/
+
+//Coto: these are my FIFO handling libs. Works fine with NIFI (trust me this is very tricky to do without falling into freezes).
+//Use it at your will, just make sure you read WELL the descriptions below.
+
 #ifndef nds_common_ipc
 #define nds_common_ipc
 
@@ -17,28 +37,11 @@ typedef struct sMyIPC {
     uint16 buttons;            // keypad buttons
     uint16 buttons_xy_folding;  // X, Y, /PENIRQ buttons
     
-    union {
-        uint8 curtime[8];        // current time response from RTC
-
-        struct {
-                u8 rtc_command;
-                u8 rtc_year;           //add 2000 to get 4 digit year
-                u8 rtc_month;          //1 to 12
-                u8 rtc_day;            //1 to (days in month)
-
-                u8 rtc_incr;
-                u8 rtc_hours;          //0 to 11 for AM, 52 to 63 for PM
-                u8 rtc_minutes;        //0 to 59
-                u8 rtc_seconds;        //0 to 59
-        };
-    };
     u8 touched;				    //TSC touched?
     u8 touch_pendown;           //TSC already held before?
     uint16 battery;            
     uint16 aux;                
-
-    vuint8 mailBusy;
-    
+	
 	//IPC Clock
     //[0]; //yy
     //[1]; //mth
@@ -51,8 +54,6 @@ typedef struct sMyIPC {
 	
 	//dswnifi specific
 	TdsnwifisrvStr dswifiSrv;
-
-
 
 	//project specific
 	u32 * IPC_ADDR;
@@ -135,13 +136,13 @@ extern void write_ext_cpu(u32 address,u32 value,u8 write_mode);
 */
 
 //clock opcodes
-extern u8 gba_get_yearbytertc();
-extern u8 gba_get_monthrtc();
-extern u8 gba_get_dayrtc();
-extern u8 gba_get_dayofweekrtc();
-extern u8 gba_get_hourrtc();
-extern u8 gba_get_minrtc();
-extern u8 gba_get_secrtc();
+extern u8 nds7_get_yearbytertc();
+extern u8 nds7_get_monthrtc();
+extern u8 nds7_get_dayrtc();
+extern u8 nds7_get_dayofweekrtc();
+extern u8 nds7_get_hourrtc();
+extern u8 nds7_get_minrtc();
+extern u8 nds7_get_secrtc();
 
 //FIFO 
 extern void FIFO_DRAINWRITE();

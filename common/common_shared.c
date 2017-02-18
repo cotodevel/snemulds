@@ -1,3 +1,20 @@
+/*
+Copyright (C) 2015-2017  Coto
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
+*/
+
 //Coto: these are my FIFO handling libs. Works fine with NIFI (trust me this is very tricky to do without falling into freezes).
 //Use it at your will, just make sure you read WELL the descriptions below.
 
@@ -369,31 +386,31 @@ u8 recvbyte_ipc(){
 
 
 //ipc clock opcodes
-u8 gba_get_yearbytertc(){
+u8 nds7_get_yearbytertc(){
 	return (u8)(u32)MyIPC->clockdata[0];
 }
 
-u8 gba_get_monthrtc(){
+u8 nds7_get_monthrtc(){
 	return (u8)(u32)MyIPC->clockdata[1];
 }
 
-u8 gba_get_dayrtc(){
+u8 nds7_get_dayrtc(){
 	return (u8)(u32)MyIPC->clockdata[2];
 }
 
-u8 gba_get_dayofweekrtc(){
+u8 nds7_get_dayofweekrtc(){
 	return (u8)(u32)MyIPC->clockdata[3];
 }
 
 
-u8 gba_get_hourrtc(){
+u8 nds7_get_hourrtc(){
 	return (u8)(u32)MyIPC->clockdata[4];
 }
 
-u8 gba_get_minrtc(){
+u8 nds7_get_minrtc(){
 	return (u8)(u32)MyIPC->clockdata[5];
 }
 
-u8 gba_get_secrtc(){
+u8 nds7_get_secrtc(){
 	return (u8)(u32)MyIPC->clockdata[6];
 }
