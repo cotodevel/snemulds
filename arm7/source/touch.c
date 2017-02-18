@@ -45,52 +45,57 @@
 #define TSC_MEASURE_BATTERY  0xA4
 #define TSC_MEASURE_TEMP2    0xF4
 
-//coto: original libnds touchscreen usage.
+//coto: use it at vcount interrupts so you save battery (or vblank but vcount works just fine)
 void updateMyIPC()
 {
 	uint16 but=0, batt=0;
 	int t1=0, t2=0;
 	uint32 temp=0;
-	uint8 ct[sizeof(MyIPC->curtime)];
-	u32 i;
-	
-    touchPosition tempPos;
+	u32 i=0;
+	u8 clock_buf[sizeof(MyIPC->clockdata)];
+
+	touchPosition tempPos;
     touchReadXY(&tempPos);
-    
+     
 	// Read the touch screen
 	but = REG_KEYXY;
 	batt = touchRead(TSC_MEASURE_BATTERY);
- 
+	
+	
 	// Read the time
-	rtcGetTime((uint8 *)ct);
-	BCDToInteger((uint8 *)&(ct[1]), 7);
- 
+	rtcGetTimeAndDate(clock_buf);
+	
+	
 	// Read the temperature
 	temp = touchReadTemperature(&t1, &t2);
- 
+	
 	// Update the MyIPC struct
-	MyIPC->buttons	            	= REG_KEYINPUT;
-    MyIPC->buttons_xy_folding		= but;
-	MyIPC->touched                  = (u8)CheckStylus();
+	MyIPC->buttons     				= but;
+	MyIPC->buttons_xy_folding		= but;
+	MyIPC->touched                  = ((tempPos.px > 0) || (tempPos.py > 0)) ? 1 : 0;
     MyIPC->touch_pendown           = (u8)touchPenDown();
-    
-    //raw x/y
+	
+	
+	//raw x/y
     MyIPC->touchX    = tempPos.rawx;
     MyIPC->touchY    = tempPos.rawy;
     
     //TFT x/y pixel
     MyIPC->touchXpx = tempPos.px;
-    MyIPC->touchYpx = tempPos.py;    
-    
+    MyIPC->touchYpx = tempPos.py;   
+
 	MyIPC->touchZ1 = tempPos.z1;
 	MyIPC->touchZ2 = tempPos.z2;
-	MyIPC->battery		= batt;
- 
-	for(i=0; i<sizeof(ct); i++) {
-		MyIPC->curtime[i] = ct[i];
+	
+	MyIPC->battery     = batt;
+
+	//Get time
+	for(i=0; i< sizeof(clock_buf); i++){
+		MyIPC->clockdata[i] = clock_buf[i];
 	}
- 
+
 	MyIPC->temperature = temp;
 	MyIPC->tdiode1 = t1;
-	MyIPC->tdiode2 = t2;	
+	MyIPC->tdiode2 = t2;
+
 }
