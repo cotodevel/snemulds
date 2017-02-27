@@ -243,8 +243,9 @@ void		GUI_drawImage(t_GUIZone *zone, t_GUIImage *image, int x, int y)
 {
 	uint16		*ptr;
 	uint16		*img = NULL;
-	FILE		*f = NULL;
-
+	//FILE		*f = NULL;
+	
+	FIL fhandler;
 //	iprintf("XXX %p %d %d %d %p\n", image, image->width, image->height, image->flags, image->data);
 
 	ptr = GUI.DSFrameBuffer;
@@ -253,7 +254,8 @@ void		GUI_drawImage(t_GUIZone *zone, t_GUIImage *image, int x, int y)
 	if (image->flags == IMG_NOLOAD)
 	{		
 		FS_lock();
-		f = fopen(image->data, "rb");
+		//f = fopen(image->data, "rb");
+		f_open(&fhandler,image->data,FA_READ);
 	}
 	else
 		img = image->data;
@@ -263,7 +265,10 @@ void		GUI_drawImage(t_GUIZone *zone, t_GUIImage *image, int x, int y)
 	{
 		if (image->flags == IMG_NOLOAD)
 		{
-			fread(ptr, 4, image->width/4, f);
+			//fread(ptr, 4, image->width/4, f);
+			unsigned int read_so_far;
+			f_read(&fhandler, ptr, image->width, &read_so_far);
+	
 		}
 		else
 		{
@@ -275,7 +280,8 @@ void		GUI_drawImage(t_GUIZone *zone, t_GUIImage *image, int x, int y)
 	
 	if (image->flags == IMG_NOLOAD)
 	{
-		fclose(f);
+		//fclose(f);
+		f_close(&fhandler);
 		FS_unlock();
 	}
 }

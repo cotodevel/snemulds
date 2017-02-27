@@ -18,12 +18,6 @@ GNU General Public License for more details.
 #ifndef __common_h__
 #define __common_h__
 
-/* Enable this if you want the GBFS version (the one which doesn't use the flash cart) */
-//#define USE_GBFS
-#define USE_LIBFAT
-//#define FAKE_FS
-//#define USE_EXTRAM
-
 #define SNEMULDS_TITLE "-= SNEmulDS 0.6 by archeide =-\n"
 #define SNEMULDS_SUBTITLE "CPU: bubble2k Sound: gladius\n"
 #define GAMES_DIR "/SNES/"
@@ -88,12 +82,13 @@ typedef unsigned char	uchar;
 #ifndef _NDSTYPES_INCLUDE
 typedef	unsigned int	uint32;
 typedef	unsigned short	uint16;
-typedef	uchar	uint8;
+typedef	uchar			uint8;
 #endif
-typedef	int	sint32;
-typedef	short	sint16;
-typedef	char	sint8;
-typedef	char	bool8;
+
+typedef	int				sint32;
+typedef	short			sint16;
+typedef	char			sint8;
+typedef	char			bool8;
 
 #define GET_WORD16(a) (*((uint8 *)(a)) | (*(((uint8 *)(a))+1) << 8)) 
 #define SET_WORD16(a, v) { *((uint8 *)(a)) = (v) & 0xFF; *(((uint8 *)(a))+1) = (v) >> 8; } 

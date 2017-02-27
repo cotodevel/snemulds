@@ -27,14 +27,19 @@ GNU General Public License for more details.
 #include "gui.h"
 #include "ram.h"
 
-#include <fat.h>
+#include "diskio.h"
+#include "ff.h"
+
 #include <unistd.h>
-#include <sys/dir.h>
+//#include <sys/dir.h>
 #include <fcntl.h>
 
+//fatfs
+static FATFS dldiFs;
 
 uint16	*g_extRAM = NULL;
 int		g_UseExtRAM = 0;
+
 
 int		FS_extram_init()
 {
@@ -96,24 +101,24 @@ char *FS_getFileName(char *filename)
 	return name;
 }
 
-/* *********************** LIBFAT ************************ */
+/* *********************** FSFAT ************************ */
 
-static int	currentfd = -1;
+FIL GLOBAL_FHANDLER;
 static char currentFileName[100];
 
 int		FS_init()
 {
-	return (fatInitDefault());
+	return (f_mount(&dldiFs, "0:", 1));
 }
 
 int		FS_chdir(const char *path)
 {
 	FS_lock();
-	int ret = chdir(path);
+	//int ret = chdir(path);
+	int ret =f_chdir (path);
 	FS_unlock();
 	return ret;
 }
-
 
 
 char	**FS_getDirectoryList(char *path, char *mask, int *cnt)
@@ -121,71 +126,85 @@ char	**FS_getDirectoryList(char *path, char *mask, int *cnt)
 	int			size;
 		
 	FS_lock();	
-	DIR *dir = opendir (path); 
+	DIR dir;
 	*cnt = size = 0;
-	if( NULL != dir )
+	
+	FRESULT res;
+	
+	res = f_opendir (&dir, path);
+	
+	if( res == FR_OK )
 	{
 		while (1)
 		{
-			struct dirent* pent = readdir(dir);
-			if(pent == NULL) break;
+			FILINFO fno;
+			res = f_readdir (&dir, &fno);
 			
-			if ( pent->d_type & DT_DIR ) continue;
+			if(res != FR_OK || !(fno.fname[0])) break;
 			
-			if (!strcmp(pent->d_name, "."))
+			if (!strcmp(fno.fname, "."))
 				continue;		
-							
+			
+			if (!strcmp(fno.fname, ".."))
+				continue;		
+			
 			if (mask)
 			{
-				char *ext = _FS_getFileExtension(pent->d_name);
+				char *ext = _FS_getFileExtension(fno.fname);
 				if (ext && strstr(mask, ext))
 				{
 					(*cnt)++;
-					size += strlen(pent->d_name)+1;
+					size += strlen(fno.fname)+1;
 				}
 			} else
 			{
 			  (*cnt)++;
-			  size += strlen(pent->d_name)+1;
+			  size += strlen(fno.fname)+1;
 			}
 		}
 	}
-	rewinddir(dir);
-
+	
+	res = f_rewinddir(&dir);
+	
 	char	**list = malloc((*cnt)*sizeof(char *)+size);
 	char	*ptr = ((char *)list) + (*cnt)*sizeof(char *);
 	
 	int i = 0; 
-	if( NULL != dir )
+	if( res == FR_OK )
 	{
 		while (1)
 		{
-			struct dirent* pent = readdir(dir);
-			if(pent == NULL) break;
-				
-			if ( pent->d_type & DT_DIR ) continue;
 			
-			if (!strcmp(pent->d_name, "."))
+			FILINFO fno;
+			res = f_readdir (&dir, &fno);
+			
+			if(res != FR_OK || !fno.fname[0]) break;
+			
+			if (!strcmp(fno.fname, "."))
 				continue;		
-									
+			
+			if (!strcmp(fno.fname, ".."))
+				continue;		
+			
+			
 			if (mask)
 			{
-				char *ext = _FS_getFileExtension(pent->d_name);
+				char *ext = _FS_getFileExtension(fno.fname);
 				if (ext && strstr(mask, ext))
 				{
-					strcpy(ptr, pent->d_name);
+					strcpy(ptr, fno.fname);
 					list[i++] = ptr;
-					ptr += strlen(pent->d_name)+1;  
+					ptr += strlen(fno.fname)+1;  
 				}
 			} else
 			{
-				strcpy(ptr, pent->d_name);
+				strcpy(ptr, fno.fname);
 				list[i++] = ptr;
-				ptr += strlen(pent->d_name)+1;
+				ptr += strlen(fno.fname)+1;
 			}
 		}
 	}
-	closedir(dir);
+	f_closedir(&dir);
 	FS_unlock();
 	return list;
 }
@@ -195,9 +214,6 @@ static int logcnt = 0;
 
 void	FS_printlogBufOnly(char *buf)
 {
-	//static FILE *f_log = NULL;
-
-	
 	if (logcnt == 0)
 	{
 		// first call
@@ -216,17 +232,8 @@ void	FS_printlogBufOnly(char *buf)
 
 void	FS_printlog(char *buf)
 {
-#if 0
-		static FILE *f_log = NULL;
-
-		if (!f_log)
-			f_log = fopen("/SNEMUL.LOG", "w");	
-		fwrite(buf, 1, strlen(buf), f_log);
-		fflush(f_log);
-#else
  
-	static FILE *f_log = NULL;
-	
+	FIL f_log;
 	if (logcnt == 0)
 	{
 		// first call
@@ -241,9 +248,13 @@ void	FS_printlog(char *buf)
 		sprintf(name,"snemul%d.log", logcnt%100);
 		
 		FS_lock();
-		f_log = fopen(name, "w");	
-		fwrite(logbuf, 1, strlen(logbuf), f_log);
-		fclose(f_log);
+		f_open(&f_log,name,FA_WRITE | FA_OPEN_ALWAYS);
+		
+		unsigned int written;
+		f_write(&f_log, logbuf, strlen(logbuf), &written);
+		f_truncate(&f_log);
+		
+		f_close(&f_log);
 		FS_unlock();
 		
 		strcpy(logbuf, buf);
@@ -251,7 +262,6 @@ void	FS_printlog(char *buf)
 	}
 	else
 		strcat(logbuf, buf);
-#endif	
 }
 
 extern char g_printfbuf[100];
@@ -270,21 +280,23 @@ void	FS_flog(char *fmt, ...)
 
 int	FS_loadROM(char *ROM, char *filename)
 {
-	FILE	*f;
+	FIL	f;
 	
 	FS_lock();
 	
-	f = fopen(filename, "rb");
-	fseek(f, 0, SEEK_END);
-	int size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
+	f_open(&f,filename,FA_READ);
+	
+	int size = FS_getFileSize(filename);
+	
 	//Prevent Cache problems.
 	DC_FlushRange((u32*)ROM, (int)size);
 	
-	fread(ROM, 1, size, f);
+	unsigned int read_so_far;
+	f_read(&f, ROM, size, &read_so_far);
+	
 	GUI_printf("Read done\n");
-	fclose(f);
+	f_close(&f);
+	
 	FS_unlock();
 
 	return 1;
@@ -292,39 +304,46 @@ int	FS_loadROM(char *ROM, char *filename)
 
 
 int	FS_getFileSize(char *filename)
-{
-	struct stat	st;	
+{	
+	FIL FHANDLER;
 	FS_lock();	
-	stat(filename, &st);
-	FS_unlock();
-	return st.st_size;
+	
+	int retval = 0;
+	if(f_open(&FHANDLER, filename, FA_READ) != FR_OK){
+		retval = -1;
+	}
+	
+	retval = (int)f_size(&FHANDLER);
+	f_close(&FHANDLER);
+	return retval;
 }
 
+//tried size == file_size (rom size)
 int	FS_loadFile(char *filename, char *buf, int size)
 {
-	FILE *f;
+	FIL f;
 	int file_size;
 	
 	FS_lock();	
-	f = fopen(filename, "rb");
-	if (f == NULL)
+	if(!(f_open(&f,filename,FA_READ) == FR_OK))
 	{
 		FS_unlock();
 		return -1;
 	}
-	fseek(f, 0, SEEK_END);
-	file_size = ftell(f);
+	
+	file_size = FS_getFileSize(filename);
+	
 	if (file_size < size)
 	{
-		fclose(f);
+		f_close(&f);
 		FS_unlock();
 		return -1;
 	}
 	
-    fseek(f, 0, SEEK_SET);
-    fread(buf, 1, size, f);
+	unsigned int read_so_far;
+	f_read(&f, buf, size, &read_so_far);
 	
-    fclose(f);	
+    f_close(&f);
 	FS_unlock();
 	return 0;
 }
@@ -332,117 +351,66 @@ int	FS_loadFile(char *filename, char *buf, int size)
 
 int	FS_saveFile(char *filename, char *buf, int size)
 {
-	FILE *f;
+	FIL f;
+	
 	FS_lock();
-  	if ((f = fopen(filename, "wb")) == NULL)
-  	{
+  	if(!(f_open(&f,filename,FA_WRITE ) == FR_OK))
+	{
   		FS_unlock();
   		return 0;
   	}
-	fwrite(buf, 1, size, f);
-	fclose(f);	
+	
+	unsigned int written;
+	f_write(&f, buf, size, &written);
+	f_truncate(&f);
+	
+	f_close(&f);
 	FS_unlock();
 	return 0;
 }
+
 
 int	FS_loadROMForPaging(char *ROM, char *filename, int size)
 {
 	g_UseExtRAM = 0;
-	
 	FS_lock();
-	if (currentfd != -1)
-		close(currentfd);
 	
-	currentfd = open(filename, O_RDONLY);
-	if (currentfd < 0)
+	if (f_open(&GLOBAL_FHANDLER, filename, FA_READ)!= FR_OK)
 	{
 		FS_unlock();
 		return -1;
 	}
 	strcpy(currentFileName, filename);
-
-	read(currentfd, ROM, size);
+	unsigned int read_so_far;
+	f_read(&GLOBAL_FHANDLER, ROM, size, &read_so_far);
 
 	FS_unlock();
 	
 	return 0;
 }
 
+//Deprecated. 4MB support only
 int	FS_loadROMInExtRAM(char *ROM, char *filename, int size, int total_size)
 {
-#ifdef USE_EXTRAM
-	if (g_extRAM == NULL)
-		return -1;
-	
-	g_UseExtRAM = 0;
-	FS_lock();
-	if (currentfd != -1)
-		close(currentfd);
-	currentfd = open(filename, O_RDONLY);
-	if (currentfd < 0)
-	{
-		FS_unlock();
-		return -1;
-	}
-	strcpy(currentFileName, filename);
-
-	// Load all ROM by block of size, starting from the end
-	
-	// First read the last part
-	int i = total_size - (total_size % size);
-	GUI_printf("Load at %d, %d\n", i, total_size % size);
-	FS_loadROMPage(ROM, i, total_size % size);
-	// copy it in the external ram
-	swiFastCopy(ROM, (uint8 *)g_extRAM+i, (total_size % size) / 4);
-
-	i -= size;
-	
-	while (i >= 0)
-	{
-		// Read one piece of ROM into DS RAM
-		GUI_printf("Load at %d, %d\n", i, size);
-		FS_loadROMPage(ROM, i, size);
-		
-		// Than copy it in Ext RAM
-		swiFastCopy(ROM, (uint8 *)g_extRAM+i, size / 4);
-		
-		i -= size;
-	}
-	g_UseExtRAM = 1;
-	close(currentfd);
-#endif	
 	return -1;
 }
 
 int	FS_loadROMPage(char *buf, unsigned int pos, int size)
 {	
-#ifdef USE_EXTRAM
-	if (g_UseExtRAM)
-	{
-		memcpy(buf, (uint8 *)g_extRAM+pos, size);				
-		return 0;
-	}
-#endif	
 
-	int ret;	
 	FS_lock();
 	
-	ret = lseek(currentfd, pos, SEEK_SET);
-	if (ret < 0)
-	{
-		FS_unlock();
-		return -1;
-	}
-		
-	read(currentfd, buf, size);
+	f_lseek (&GLOBAL_FHANDLER, pos);
+	
+	unsigned int read_so_far;
+	f_read(&GLOBAL_FHANDLER, buf, size, &read_so_far);
 	
 	FS_unlock();	
-	return ret;	
+	return (int)read_so_far;	
 }
 
 int	FS_shouldFreeROM()
 {
 	return 1;
 }
-
 

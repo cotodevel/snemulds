@@ -22,17 +22,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include "netinet/in.h"
 #include <netdb.h>
 #include <ctype.h>
-#include <fat.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
-#include <fat.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h>
+
+//#include <dirent.h>
+#include "ff.h"
+
 #include <nds/memory.h>
 #include <nds/ndstypes.h>
 #include <nds/memory.h>

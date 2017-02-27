@@ -656,7 +656,7 @@ int trace_CPU()
   char	buf[64];
   char	buf2[256];
 
-
+/*
 #if 0
 	if (addri != 0)
 	{
@@ -667,6 +667,7 @@ int trace_CPU()
 		addri = 0;
 	}
 #endif
+*/
 
 #ifdef ASM_OPCODES
   Cycles = -((sint32)SaveR8 >> 14);

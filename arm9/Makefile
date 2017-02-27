@@ -16,7 +16,9 @@ include $(DEVKITARM)/ds_rules
 #---------------------------------------------------------------------------------
 BUILD		:=	build
 SOURCES		:=	source \
-				source/disk/source \
+				source/fatfs/	\
+				source/fatfs/dldi/	\
+				source/fatfs/option/	\
 				source/interrupts/source \
 				source/gui_draw/source \
 				source/dswifi_arm9/	\
@@ -24,7 +26,9 @@ SOURCES		:=	source \
 				
 INCLUDES		:=	include/ \
 				../include/	\
-				source/disk/include \
+				source/fatfs/	\
+				source/fatfs/dldi/	\
+				source/fatfs/option/	\
 				source/interrupts/include \
 				source/gui_draw/include \
 				source/dswifi_arm9/	\

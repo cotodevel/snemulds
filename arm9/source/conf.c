@@ -23,9 +23,12 @@
 #include <stdlib.h>
 
 //FIXME
-#include <fat.h>
 #include <unistd.h>
-#include <sys/dir.h>
+//#include <sys/dir.h>
+
+#include "diskio.h"
+#include "ff.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -36,53 +39,55 @@
 
 #include "conf.h"
 
-
+/*
 #if 0
 typedef struct CONFIG_ENTRY
 {
-   char *name;                      /* variable name (NULL if comment) */
-   char *data;                      /* variable value */
-   struct CONFIG_ENTRY *next;       /* linked list */
+   char *name;                      // variable name (NULL if comment) 
+   char *data;                      // variable value
+   struct CONFIG_ENTRY *next;       // linked list
 } CONFIG_ENTRY;
 
 typedef struct CONFIG_SECTION
 {
-   char *name;                      /* variable name (NULL if comment) */
-   char *data;                      /* variable value */
+   char *name;                      // variable name (NULL if comment) 
+   char *data;                      // variable value 
    int	*key;			    // one or more keys
 
-   struct CONFIG_SECTION *next;       /* linked list */
-   struct CONFIG_ENTRY	*head;	    /* linked list */
+   struct CONFIG_SECTION *next;       // linked list 
+   struct CONFIG_ENTRY	*head;	    // linked list 
 } CONFIG_SECTION;
 #else
 typedef struct CONFIG_ENTRY
 {
-   char *name;                      /* variable name (NULL if comment) */
-   char *data;                      /* variable value */
-   struct CONFIG_ENTRY *next;       /* linked list */
+   char *name;                      // variable name (NULL if comment) 
+   char *data;                      // variable value 
+   struct CONFIG_ENTRY *next;       // linked list 
 } CONFIG_ENTRY;
 #endif
+
 
 typedef struct CONFIG
 {
 #if 0
-   CONFIG_SECTION *head;              /* linked list of config entries */
+   CONFIG_SECTION *head;              //linked list of config entries 
 #else
-   CONFIG_ENTRY *head;              /* linked list of config entries */
+   CONFIG_ENTRY *head;              // linked list of config entries 
 #endif
-   char *filename;                  /* where were we loaded from? */
-   int dirty;                       /* has our data changed? */
+   char *filename;                  // where were we loaded from? 
+   int dirty;                       // has our data changed? 
 } CONFIG;
 
 
 typedef struct CONFIG_HOOK
 {
-   char *section;                   /* hooked config section info */
+   char *section;                   // hooked config section info 
    int (*intgetter)(char *name, int def);
    char *(*stringgetter)(char *name, char *def);
    void (*stringsetter)(char *name, char *value);
    struct CONFIG_HOOK *next; 
 } CONFIG_HOOK;
+*/
 
 
 #define MAX_CONFIGS     4
@@ -105,7 +110,7 @@ long file_size(char *filename)
 	return FS_getFileSize(filename);
 }
 
-static void save_config(CONFIG *cfg)
+void save_config(CONFIG *cfg)
 {
    CONFIG_ENTRY *pos;
 
@@ -114,42 +119,53 @@ static void save_config(CONFIG *cfg)
 		 if (cfg->dirty) {
 			FS_lock();
 		    /* write changed data to disk */
-		    FILE *f = fopen(cfg->filename, "w");
-	
-		    if (f) {
-		       pos = cfg->head;
+		    //FILE *f = fopen(cfg->filename, "w");
+			FIL fhandler;
+			
+			if(f_open(&fhandler,cfg->filename,FA_WRITE | FA_OPEN_ALWAYS) == FR_OK)
+			{   
+				pos = cfg->head;
 	
 		       while (pos) {
 			  	 if (pos->name) {
-			    	 fputs(pos->name, f);
-			     	 if (pos->name[0] != '[')
-					 fputs(" = ", f);
+			    	 
+					 //fputs(pos->name, f);
+			     	 f_puts(pos->name,&fhandler);
+					 
+					 if (pos->name[0] != '['){
+						//fputs(" = ", f);
+						f_puts(" = ",&fhandler);
+					 }
 			     }
-			     if (pos->data)
-			       fputs(pos->data, f);
-	
-			     fputs("\n", f);
-			     pos = pos->next;
+			    if (pos->data){
+			       //fputs(pos->data, f);
+				   f_puts(pos->data,&fhandler);
+				}
+			     //fputs("\n", f);
+			     f_puts("\n",&fhandler);
+				 
+				 pos = pos->next;
 		       }
-		       fclose(f);
-		    }
+		       //fclose(f);
+				f_close(&fhandler);
+			}
 		    FS_unlock();
 		  }
       }
    }
 }
 
+
 void save_config_file()
 {
 	save_config(config[0]);
 }
 
-
 /* destroy_config:
  *  Destroys a config structure, writing it out to disk if the contents
  *  have changed.
  */
-static void destroy_config(CONFIG *cfg)
+void destroy_config(CONFIG *cfg)
 {
    CONFIG_ENTRY *pos, *prev;
 
@@ -239,7 +255,7 @@ void config_cleanup()
  *  default config file if the loaddata flag is set and no other config
  *  file is in memory.
  */
-static void init_config(int loaddata)
+void init_config(int loaddata)
 {
    if (!config_installed) {
 //      _add_exit_func(config_cleanup);
@@ -261,7 +277,7 @@ static void init_config(int loaddata)
 /* get_line: 
  *  Helper for splitting files up into individual lines.
  */
-static int get_line(char *data, int length, char *name, char *val)
+int get_line(char *data, int length, char *name, char *val)
 {
    char buf[256], buf2[256];
    int pos, i, j;
@@ -435,7 +451,7 @@ static void set_config(CONFIG **config, char *data, int length, char *filename)
    }
 }
 #else
-static void set_config(CONFIG **config, char *data, int length, char *filename)
+void set_config(CONFIG **config, char *data, int length, char *filename)
 {
    char name[256];
    char val[256];
@@ -500,7 +516,7 @@ static void set_config(CONFIG **config, char *data, int length, char *filename)
 /* load_config_file:
  *  Does the work of loading a config file.
  */
-static void load_config_file(CONFIG **config, char *filename, char *savefile)
+void load_config_file(CONFIG **config, char *filename, char *savefile)
 {
 	int length;
 	GUI_printf("wtf\n");
@@ -517,19 +533,25 @@ static void load_config_file(CONFIG **config, char *filename, char *savefile)
 	if (length > 0)
 	{
 		FS_lock();
-		FILE *f = fopen(filename, "rb");
-		if (f)
+		//FILE *f = fopen(filename, "rb");
+		//if (f)
+		FIL fhandler;
+		if(f_open(&fhandler,filename,FA_READ) == FR_OK)
 		{
 			char *tmp = malloc(length);
 			if (tmp)
 			{
-				fread(tmp, 1, length, f);
+				//fread(tmp, 1, length, f);
+				unsigned int read_so_far;
+				f_read(&fhandler, tmp, length, &read_so_far);
+		
 				set_config(config, tmp, length, savefile);
 				free(tmp);
 			}
 			else
 				set_config(config, NULL, 0, savefile);
-			fclose(f);
+			//fclose(f);
+			f_close(&fhandler);
 		}
 		else
 			set_config(config, NULL, 0, savefile);
@@ -622,7 +644,7 @@ void pop_config_state()
 /* prettify_section_name:
  *  Helper for ensuring that a section name is enclosed by [ ] braces.
  */
-static void prettify_section_name(char *in, char *out)
+void prettify_section_name(char *in, char *out)
 {
    if (in) {
       if (in[0] != '[')
@@ -727,7 +749,7 @@ int config_is_hooked(char *section)
 /* find_config_string:
  *  Helper for finding an entry in the configuration file.
  */
-static CONFIG_ENTRY *find_config_string(CONFIG *config, char *section, char *name, CONFIG_ENTRY **prev)
+CONFIG_ENTRY *find_config_string(CONFIG *config, char *section, char *name, CONFIG_ENTRY **prev)
 {
    CONFIG_ENTRY *p;
    int in_section = TRUE;
@@ -943,7 +965,7 @@ char **get_config_argv(char *section, char *name, int *argc)
 /* insert_variable:
  *  Helper for inserting a new variable into a configuration file.
  */
-static CONFIG_ENTRY *insert_variable(CONFIG *the_config, CONFIG_ENTRY *p, char *name, char *data)
+CONFIG_ENTRY *insert_variable(CONFIG *the_config, CONFIG_ENTRY *p, char *name, char *data)
 {
    CONFIG_ENTRY *n = malloc(sizeof(CONFIG_ENTRY));
 

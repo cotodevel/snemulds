@@ -3,7 +3,9 @@
 #include <unistd.h>
 #include "frontend.h"
 
-//extern size_t _FAT_directory_ucs2tombs (char* dst, const unsigned short* src, size_t len);	//this should not be used, because fat.h does NOT list it.
+#include "diskio.h"
+#include "ff.h"
+
 size_t ucs2tombs(unsigned char* dst, const unsigned short* src, size_t len) {
 	size_t i=0,j=0;
 	for (;src[i];i++){
@@ -62,6 +64,7 @@ typedef struct {
   UnicodeChar NDSFilenameUnicode[ExtLinkBody_MaxLength];
 } TExtLinkBody;
 
+/*
 char* myfgets(char *buf,int n,FILE *fp){ //accepts LF/CRLF
 	char *ret=fgets(buf,n,fp);
 	if(!ret)return NULL;
@@ -69,6 +72,16 @@ char* myfgets(char *buf,int n,FILE *fp){ //accepts LF/CRLF
 	if(strlen(buf)&&buf[strlen(buf)-1]=='\r')buf[strlen(buf)-1]=0;
 	return ret;
 }
+*/
+
+char* myfgets(char *buf,int n,FIL *fp){ //accepts LF/CRLF
+	char *ret=f_gets(buf,n,fp);
+	if(!ret)return NULL;
+	if(strlen(buf)&&buf[strlen(buf)-1]=='\n')buf[strlen(buf)-1]=0;
+	if(strlen(buf)&&buf[strlen(buf)-1]=='\r')buf[strlen(buf)-1]=0;
+	return ret;
+}
+
 
 void SplitItemFromFullPathAlias(const char *pFullPathAlias,char *pPathAlias,char *pFilenameAlias){
 	u32 SplitPos=0;
@@ -98,12 +111,18 @@ void SplitItemFromFullPathAlias(const char *pFullPathAlias,char *pPathAlias,char
 }
 
 bool _readFrontend(char *target){
-	FILE *f=fopen("/loadfile.dat","rb");
-	if(f){
+	FIL f;
+	//if(f_open(&pathFile, "luma/path.txt", FA_READ) == FR_OK)
+	
+	if(f_open(&f,"/loadfile.dat",FA_READ) == FR_OK){
 		int i=0;
-		myfgets((char*)buf,768,f);
-		fclose(f);
-		unlink("/loadfile.dat");
+		myfgets((char*)buf,768,&f);
+		//fclose(f);
+		f_close(&f);
+		
+		//unlink("/loadfile.dat");
+		f_unlink("/loadfile.dat");
+		
 		//if(!memcmp((char*)buf,"fat:",4))i+=4;
 		if(!memcmp((char*)buf+i,"//",2))i+=1;
 		if(!memcmp((char*)buf+i,"/./",3))i+=2; //menudo dir handling is buggy?
@@ -111,13 +130,17 @@ bool _readFrontend(char *target){
 		if(strlen(target)<4||(strcasecmp(target+strlen(target)-4,".smc")&&strcasecmp(target+strlen(target)-4,".sfc")))return false;
 		return true;
 	}
-	f=fopen("/plgargs.dat","rb");
-	if(f){
+	//f=fopen("/plgargs.dat","rb");
+	if(f_open(&f,"/plgargs.dat",FA_READ) == FR_OK){
 		int i=0;
-		myfgets((char*)buf,768,f);
-		myfgets((char*)buf,768,f); //second line
-		fclose(f);
-		unlink("/plgargs.dat");
+		myfgets((char*)buf,768,&f);
+		myfgets((char*)buf,768,&f); //second line
+		//fclose(f);
+		f_close(&f);
+		
+		//unlink("/plgargs.dat");
+		f_unlink("/plgargs.dat");
+		
 		//if(!memcmp((char*)buf,"fat:",4))i+=4;
 		//if(!memcmp((char*)buf+i,"//",2))i+=1;
 		//if(!memcmp((char*)buf+i,"/./",3))i+=2;
@@ -125,19 +148,36 @@ bool _readFrontend(char *target){
 		if(strlen(target)<4||(strcasecmp(target+strlen(target)-4,".smc")&&strcasecmp(target+strlen(target)-4,".sfc")))return false;
 		return true;
 	}
-	f=fopen("/moonshl2/extlink.dat","r+b");
-	if(f){
+	//f=fopen("/moonshl2/extlink.dat","r+b");
+	if(f_open(&f,"/moonshl2/extlink.dat",FA_READ | FA_WRITE) == FR_OK){
 		TExtLinkBody extlink;
 		memset(&extlink,0,sizeof(TExtLinkBody));
-		fread(&extlink,1,sizeof(TExtLinkBody),f);
-		if(extlink.ID!=ExtLinkBody_ID){fclose(f);return false;}
+		
+		//fread(&extlink,1,sizeof(TExtLinkBody),f);
+		unsigned int read_so_far;
+		f_read(&f, &extlink, sizeof(TExtLinkBody), &read_so_far);
+		
+		if(extlink.ID!=ExtLinkBody_ID){
+			//fclose(f);
+			f_close(&f);
+			return false;
+		}
 		
 		//strcpy(target,extlink.DataFullPathFilenameAlias);
 		
 		ucs2tombs((unsigned char*)target,extlink.DataFullPathFilenameUnicode,768);
-		fseek(f,0,SEEK_SET);
-		fwrite("____",1,4,f);
-		fclose(f);
+		
+		//fseek(f,0,SEEK_SET);
+		f_lseek (&f, 0);
+		
+		//fwrite("____",1,4,f);
+		unsigned int written;
+		f_write(&f, "____", 4, &written);
+		f_truncate(&f);
+		
+		//fclose(f);
+		f_close(&f);
+		
 		if(strlen(target)<4||(strcasecmp(target+strlen(target)-4,".smc")&&strcasecmp(target+strlen(target)-4,".sfc")))return false;
 		return true;
 	}

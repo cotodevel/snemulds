@@ -1,3 +1,56 @@
+#ifndef conf_snemulds
+#define conf_snemulds
+
+#if 0
+typedef struct CONFIG_ENTRY
+{
+   char *name;                      // variable name (NULL if comment) 
+   char *data;                      // variable value
+   struct CONFIG_ENTRY *next;       // linked list
+} CONFIG_ENTRY;
+
+typedef struct CONFIG_SECTION
+{
+   char *name;                      // variable name (NULL if comment) 
+   char *data;                      // variable value 
+   int	*key;			    // one or more keys
+
+   struct CONFIG_SECTION *next;       // linked list 
+   struct CONFIG_ENTRY	*head;	    // linked list 
+} CONFIG_SECTION;
+#else
+typedef struct CONFIG_ENTRY
+{
+   char *name;                      // variable name (NULL if comment) 
+   char *data;                      // variable value 
+   struct CONFIG_ENTRY *next;       // linked list 
+} CONFIG_ENTRY;
+#endif
+
+
+typedef struct CONFIG
+{
+#if 0
+   CONFIG_SECTION *head;              //linked list of config entries 
+#else
+   CONFIG_ENTRY *head;              // linked list of config entries 
+#endif
+   char *filename;                  // where were we loaded from? 
+   int dirty;                       // has our data changed? 
+} CONFIG;
+
+
+typedef struct CONFIG_HOOK
+{
+   char *section;                   // hooked config section info 
+   int (*intgetter)(char *name, int def);
+   char *(*stringgetter)(char *name, char *def);
+   void (*stringsetter)(char *name, char *value);
+   struct CONFIG_HOOK *next; 
+} CONFIG_HOOK;
+
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,7 +93,19 @@ char *find_config_section_with_hex(char *name, int hex);
 char *find_config_section_with_string(char *name, char *str);
 int	is_section_exists(char *section);
 
-void save_config_file();
+
+extern void save_config_file();
+extern void save_config(CONFIG *cfg);
+
+extern void destroy_config(CONFIG *cfg);
+extern void init_config(int loaddata);
+
+extern void set_config(CONFIG **config, char *data, int length, char *filename);
+extern void load_config_file(CONFIG **config, char *filename, char *savefile);
+extern void prettify_section_name(char *in, char *out);
+extern CONFIG_ENTRY *find_config_string(CONFIG *config, char *section, char *name, CONFIG_ENTRY **prev);
+extern CONFIG_ENTRY *insert_variable(CONFIG *the_config, CONFIG_ENTRY *p, char *name, char *data);
+extern int get_line(char *data, int length, char *name, char *val);
 
 //gui
 void		GUI_printf(char *fmt, ...);

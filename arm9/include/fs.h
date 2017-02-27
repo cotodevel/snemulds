@@ -18,6 +18,11 @@ GNU General Public License for more details.
 #ifndef FS_H_
 #define FS_H_
 
+#include "diskio.h"
+#include "ff.h"
+
+#endif /*FS_H_*/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,10 +48,8 @@ char	**FS_getDirectoryList(char *path, char *mask, int *cnt);
 
 char 	*FS_getFileName(char *filename);
 
-
+extern FIL GLOBAL_FHANDLER;
 #ifdef __cplusplus
 }
 #endif
 
-
-#endif /*FS_H_*/

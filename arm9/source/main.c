@@ -39,8 +39,10 @@
 #include "frontend.h"
 #include "main.h"
 
+#include "dldi.h"
+
+
 #include "ppu.h"
-#include "libfat.h"
 
 #include <string.h>
 #include <nds/dma.h>
@@ -59,17 +61,16 @@
 #include "netinet/in.h"
 #include <netdb.h>
 #include <ctype.h>
-#include <fat.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
-#include <fat.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h>
+//#include <dirent.h>
+#include "ff.h"
 #include <nds/memory.h>
 #include <nds/ndstypes.h>
 #include <nds/memory.h>
@@ -607,7 +608,6 @@ int main(int _argc, char **_argv) {
 	update_ram_snes();
     
 	
-	
 	int i=0;
 	// Clear "HDMA"
 	for (i = 0; i < 192; i++){
@@ -621,29 +621,18 @@ int main(int _argc, char **_argv) {
 	//wifi: 
 	//switch_dswnifi_mode((u8)dswifi_wifimode);
 	
-	
-	GUI_printf(_STR(IDS_INITIALIZATION));
-	if (FS_init())
+	int ret=FS_init();
+	if (ret == 0)
 	{
 		GUI_printf(_STR(IDS_FS_SUCCESS));
-		FS_chdir("fat:/");
+		//FRESULT res = FS_chdir("0:/");
 	}
-	else
+	else if(ret == -1)
 	{
 		GUI_printf(_STR(IDS_FS_FAILED));
-	}	
+	}
 	
-#ifdef USE_EXTRAM	
-/*	if (ram_init(DETECT_RAM))
-	{
-		GUI_printf("External RAM detected !!\n");
-		CFG.ExtRAMSize = 32*1024*1024;
-		
-	} else*/
-	CFG.ExtRAMSize = FS_extram_init();
-#else
 	CFG.ExtRAMSize = 0;
-#endif	
 	
     /*
 	{	char *p = malloc(10);

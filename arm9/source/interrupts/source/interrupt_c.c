@@ -17,7 +17,6 @@
 #include "font_8x8_uv.h"
 
 #include "ppu.h"
-#include "libfat.h"
 
 
 volatile u32 interrupts_to_wait_arm9 = 0;

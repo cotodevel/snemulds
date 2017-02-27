@@ -147,9 +147,17 @@ SOFTWARE.
 //#define		IF			(*((u32 volatile *) 0x04000214))
 #define		HALTCNT		(*((u16 volatile *) 0x04000300))
 
+//definitions
+#define NDSSLOTBUS_ACCESS_PRIO	(1<<11)	//>1 ARM7, 0 ARM9
+#define GBASLOTBUS_ACCESS_PRIO	(1<<7)	//>1 ARM7, 0 ARM9
+#define NDSSLOT_ARM9BUS	0
+#define NDSSLOT_ARM7BUS	NDSSLOTBUS_ACCESS_PRIO
+#define GBASLOT_ARM9BUS	0
+#define GBASLOT_ARM7BUS	GBASLOTBUS_ACCESS_PRIO
 
 
-
+//dsregs extensions (for problem kaputt definitions)
+#define EXMEMCNT	WAITCNT
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -160,9 +168,9 @@ SOFTWARE.
 #define		SPI_CR		(*((u16 volatile *) 0x040001C0))
 #define		SPI_DATA	(*((u16 volatile *) 0x040001C2))
 
-
-
 #endif
+
+
 
 //////////////////////////////////////////////////////////////////////////
 // ARM9 specific registers
@@ -175,5 +183,11 @@ SOFTWARE.
 // End of file!
 #endif
 
+//helper NDS definitions!
+static inline void setCpuNdsBusAccessPrio(u16 bus_assignment){
+	EXMEMCNT	= (u16)((EXMEMCNT & ~(NDSSLOTBUS_ACCESS_PRIO)) | bus_assignment);
+}
 
-
+static inline void setCpuGbaBusAccessPrio(u16 bus_assignment){
+	EXMEMCNT	= (u16)((EXMEMCNT & ~(GBASLOTBUS_ACCESS_PRIO)) | bus_assignment);
+}
