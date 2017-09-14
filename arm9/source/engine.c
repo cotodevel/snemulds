@@ -15,67 +15,68 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <nds.h>
-#include <string.h>
-#include <time.h>
+#include "engine.h"
 
 #ifdef WIN32
 	#include <allegro.h>
 #endif
-
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+#include "cfg.h"
+#include "gfx.h"
+#include "core.h"
+#include "engine.h"
+#include "apu.h"
+#include "ppu.h"
+#include "main.h"
+#include "conf.h"
+#include "fs.h"
+#include "memmap.h"
+#include "crc32.h"
+#include "gui.h"
 #include "opcodes.h"
 #include "common.h"
-#include "fs.h"
-#include "snes.h"
-#include "gfx.h"
-#include "apu.h"
-#include "cfg.h"
-#include "gui.h"
-#include "common_shared.h"
+#include "specific_shared.h"
+#include "nds_cp15_misc.h"
+#include "fsfat_layer.h"
+#include "about.h"
 
 void writeSRAM(int offset, uint8* src, int size) {
-        REG_EXMEMCNT &= ~0x0880;
+        EXMEMCNT &= ~0x0880;
         uint8* dest = DS_SRAM+offset;
         while (size--)
         {
                 *dest++ = *src++; 
         }
-        REG_EXMEMCNT |= 0x0880;
+        EXMEMCNT |= 0x0880;
 }
 
 void readSRAM(int offset, uint8* dest, int size) {
-        REG_EXMEMCNT &= ~0x0880;
+        EXMEMCNT &= ~0x0880;
         uint8* src = DS_SRAM+offset;
         while (size--)
         {
                 *dest++ = *src++;
         }
-        REG_EXMEMCNT |= 0x0880;
+        EXMEMCNT |= 0x0880;
 } 
 
 
 int loadSRAM()
 {
-  char sramFile[100];
-  	
+  sint8 sramTemp[100];
+  sint8 sramFile[100];
+  
   if (SNESC.SRAMMask)
     {
-#ifdef USE_GBFS
-/*		char header[16];
-		
-		readSRAM(0, (uint8 *)header, 16);
-		if (!strcmp(header, "SNEmulDS SRAM"))
-		{
-			iprintf("Found SRAM header!\n");
-			readSRAM(16, SNESC.SRAM, SNESC.SRAMMask+1);
-			return 0;
-		}*/ 
-#endif    	
-    	strcpy(sramFile, CFG.ROMFile);
-		strcpy(strrchr(sramFile, '.'), ".SRM");
-    	FS_loadFile(sramFile, (char *)SNESC.SRAM, SNESC.SRAMMask+1);
+    	strcpy(sramTemp, CFG.ROMFile);
+		strcpy(strrchr(sramTemp, '.'), ".SRM");
+		sprintf(sramFile,"%s/%s",getfatfsPath((sint8*)READ_GAME_DIR[0]),sramTemp);
+		//printf("sramfile:%s",sramFile);
+		//while(1);
+    	FS_loadFile(sramFile, (sint8 *)SNESC.SRAM, SNESC.SRAMMask+1);
     }	
 	return 0;    
 }
@@ -83,71 +84,31 @@ int loadSRAM()
 
 int saveSRAM()
 {
-  char sramFile[100];
+  sint8 sramTemp[100];
+  sint8 sramFile[100];
   	
   if (SNESC.SRAMMask)
     {
-#ifndef USE_GBFS    	
-    	strcpy(sramFile, CFG.ROMFile);
-		strcpy(strrchr(sramFile, '.'), ".SRM");
-    	FS_saveFile(sramFile, (char *)SNESC.SRAM, SNESC.SRAMMask+1);
-#else
-/*		char header[16];
+    	strcpy(sramTemp, CFG.ROMFile);
+		strcpy(strrchr(sramTemp, '.'), ".SRM");
+		sprintf(sramFile,"%s/%s",getfatfsPath((sint8*)READ_GAME_DIR[0]),sramTemp);
 		
-		memset(header, 0, 16);
-		strcpy(header, "SNEmulDS SRAM");
-		writeSRAM(0, (uint8 *)header, 16);
-		writeSRAM(16, SNESC.SRAM, SNESC.SRAMMask+1);*/
-#endif    	    	
+    	FS_saveFile(sramFile, (sint8 *)SNESC.SRAM, SNESC.SRAMMask+1,false);	//force_file_creation == false here (we could destroy or corrupt saves..)
     }	
 	return 0;
 }
 
-IN_DTCM
-unsigned char interrupted;
+__attribute__((section(".dtcm")))
+uint8 interrupted;
 
-IN_DTCM
-extern long Cycles;
+//__attribute__((section(".dtcm")))	//could cause issues if disabled
+//extern long Cycles;
 
-int	changeROM(char *ROM, int size)
-{
-  CFG.frame_rate = 1;
-  CFG.DSP1 = CFG.SuperFX = 0;
-  CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
-  CFG.MouseXAddr = CFG.MouseYAddr = CFG.MouseMode = 0;
-  CFG.SoundPortSync = 0;
-  
-  CFG.TilePriorityBG = -1; CFG.Debug2 = 0;
-  
-  CFG.SpritePr[0] = 3;
-  CFG.SpritePr[1] = 2;
-  CFG.SpritePr[2] = 1;
-  CFG.SpritePr[3] = 1;
-  
-#ifdef IN_EMULATOR
-  CFG.Sound_output = 0;
-#endif
-
-	// Write SRAM
-    load_ROM(ROM, size);
-    SNES.ROM_info.title[20] = '\0';
-    int i = 20;
-    while (i >= 0 && SNES.ROM_info.title[i] == ' ')
-    	SNES.ROM_info.title[i--] = '\0';
-
-    GUI_showROMInfos(size);
-    
-    reset_SNES();	
-	// Clear screen
-	// Read SRAM
-    loadSRAM();	
-	return 0;
-}
 
 int initSNESEmpty()
 {
     CFG.BG3Squish = 0;
-    CFG.WaitVBlank = 0;
+    CFG.WaitVBlank = 0;	//coto: wait for vblank must be reimplemented so actual 60 frames are render instead faster frames (without slowdown)
     CFG.YScroll = 0;
     CFG.CPU_speedhack = 1;
     //CFG.TileMode = 1;
@@ -162,15 +123,12 @@ int initSNESEmpty()
     CFG.FastDMA = 1;
     CFG.Transparency = 1;
 
-    memset((u32*)&SNES, 0, sizeof(SNES));
-    memset((u32*)&SNESC, 0, sizeof(SNESC));
+    memset((uint32*)&SNES, 0, sizeof(SNES));
+    memset((uint32*)&SNESC, 0, sizeof(SNESC));
 	
 	//Prevent Cache problems.
-	DC_FlushRange((u32*)rom_buffer, (int)ROM_MAX_SIZE);
-	memset((u32*)rom_buffer, 0, (int)ROM_MAX_SIZE);
-	
-    //  SNES.flog = fopen("snemul.log", "w");
-    //	SNES.flog = stdout;
+	coherent_user_range_by_size((uint32)rom_buffer,(int)ROM_MAX_SIZE);
+	memset((uint32*)rom_buffer, 0, (int)ROM_MAX_SIZE);
 
     SNESC.ROM = NULL;  // Should be a fixed allocation 
     SNESC.RAM = (uchar *)&snes_ram_bsram[0x6000];
@@ -180,12 +138,12 @@ int initSNESEmpty()
     init_GFX();
 
     GFX.Graph_enabled = 1;
-
-    //  iprintf("Init OK...\n");
+	
+    //  printf("Init OK...\n");
     return 0;
 }
 
-IN_DTCM
+__attribute__((section(".dtcm")))
 int OldPC;
 
 int go()
@@ -196,9 +154,9 @@ int go()
 
     while (1)
     {			
-        if (GFX.v_blank)
+        if ((GFX.v_blank) && (SNES.v_blank ==1))
         {
-            if (!CFG.WaitVBlank && GFX.need_update)
+            if (GFX.need_update)
             {
                 draw_screen();
                 GFX.need_update = 0;
@@ -288,7 +246,7 @@ int go()
             if (CFG.Scaled)
                 PPU_line_render_scaled();
             else
-                PPU_line_render();
+                PPU_line_render();	//generates GFX.lineInfo[index] (populates SNES IO -> DS PPU IO background) + refill sprites from SNES -> DS PPU format
         }
         if (
             (CPU.DMA_PORT[0x00]&HV_IRQ_VV_H_0) && !(CPU.DMA_PORT[0x00]&HV_IRQ_HH_V_ANY) 
@@ -332,15 +290,14 @@ int go()
             }
             
             SNES.HIRQ_ok = 1;
-            //      GFX.was_not_blanked = 0; 
             GFX.nb_frames++;
 
             if (GFX.nb_frames >= 100 && !GUI.log && !CFG.Debug)
             {
-                scanKeys();
+                //scanKeys();
                 GFX.speed = GFX.nb_frames * 100 / (GFX.DSFrame - GFX.DSLastFrame);
                 GFX.DSLastFrame = GFX.DSFrame;  
-                GUI_console_printf(0, 23, "% 3d%%             ",  GFX.speed);
+                //GUI_console_printf(0, 23, "% 3d%%             ",  GFX.speed);
                 //        GUI_console_printf(20, 23, "DBG=%d", CFG.Debug2),
 
                 //time_t unixTime = time(NULL);
@@ -352,7 +309,7 @@ int go()
                 if (CFG.AutoSRAM && SNES.SRAMWritten)
                 {
                     saveSRAM();
-                    GUI_console_printf(0, 23, "Auto SRAM written");
+                    //GUI_console_printf(0, 23, "Auto SRAM written");
                     SNES.SRAMWritten = 0;
                 }
             }
@@ -368,7 +325,7 @@ int go()
     return 0;
 }
 
-void show_opcode(char *buf, unsigned char opcode, int pc, int pb, unsigned short flags)
+void show_opcode(sint8 *buf, uint8 opcode, int pc, int pb, unsigned short flags)
 {
   switch(opcode) {
     case 0xEA : sprintf(buf, "NOP"); break;
@@ -377,8 +334,13 @@ void show_opcode(char *buf, unsigned char opcode, int pc, int pb, unsigned short
     case 0x04 : sprintf(buf, "TSB $%02X",mem_getbyte(pc+1,pb)); break;
     case 0x0C : sprintf(buf, "TSB $%04X", mem_getword(pc+1,pb)); break;
     case 0x29 :
-if (flags&P_M)  sprintf(buf, "AND #%02X", mem_getbyte(pc+1,pb));
-           else sprintf(buf, "AND #%04X", mem_getword(pc+1,pb)); break;
+	if (flags&P_M)  {
+		sprintf(buf, "AND #%02X", mem_getbyte(pc+1,pb));
+	}
+	else {
+		sprintf(buf, "AND #%04X", mem_getword(pc+1,pb));
+	}
+	break;
     case 0x21 : sprintf(buf, "AND ($%02X,X)", mem_getbyte(pc+1,pb)); break;
     case 0x31 : sprintf(buf, "AND ($%02X),Y", mem_getbyte(pc+1,pb)); break;
     case 0x32 : sprintf(buf, "AND ($%02X)", mem_getbyte(pc+1,pb)); break;
@@ -394,8 +356,13 @@ if (flags&P_M)  sprintf(buf, "AND #%02X", mem_getbyte(pc+1,pb));
     case 0x2F : sprintf(buf, "AND $%02X:%04X", mem_getbyte(pc+1+2,pb), mem_getword(pc+1,pb)); break;
     case 0x3F : sprintf(buf, "AND $%02X:%04X,X", mem_getbyte(pc+1+2,pb), mem_getword(pc+1,pb)); break;
     case 0x09 :
-if (flags&P_M)  sprintf(buf, "ORA #%02X", mem_getbyte(pc+1,pb));
-           else sprintf(buf, "ORA #%04X", mem_getword(pc+1,pb)); break;
+	if (flags&P_M){
+		sprintf(buf, "ORA #%02X", mem_getbyte(pc+1,pb));
+	}
+	else {
+		sprintf(buf, "ORA #%04X", mem_getword(pc+1,pb)); 
+	}
+	break;
     case 0x01 : sprintf(buf, "ORA ($%02X,X)", mem_getbyte(pc+1,pb)); break;
     case 0x13 : sprintf(buf, "ORA ($%02X,S),Y", mem_getbyte(pc+1,pb)); break;
     case 0x07 : sprintf(buf, "ORA [$%02X]", mem_getbyte(pc+1,pb)); break;
@@ -409,8 +376,13 @@ if (flags&P_M)  sprintf(buf, "ORA #%02X", mem_getbyte(pc+1,pb));
     case 0x0F : sprintf(buf, "ORA $%02X:%04X", mem_getbyte(pc+1+2,pb), mem_getword(pc+1,pb)); break;
     case 0x1F : sprintf(buf, "ORA $%02X:%04X,X", mem_getbyte(pc+1+2,pb), mem_getword(pc+1,pb)); break;
     case 0x49 :
-if (flags&P_M)  sprintf(buf, "EOR #%02X", mem_getbyte(pc+1,pb));
-           else sprintf(buf, "EOR #%04X", mem_getword(pc+1,pb)); break;
+	if (flags&P_M){
+		sprintf(buf, "EOR #%02X", mem_getbyte(pc+1,pb));
+	}
+	else {
+		sprintf(buf, "EOR #%04X", mem_getword(pc+1,pb)); 
+	}	
+	break;
     case 0x41 : sprintf(buf, "EOR ($%02X,X)", mem_getbyte(pc+1,pb)); break;
     case 0x53 : sprintf(buf, "EOR ($%02X,S),Y", mem_getbyte(pc+1,pb)); break;
     case 0x45 : sprintf(buf, "EOR $%02X", mem_getbyte(pc+1,pb)); break;
@@ -447,8 +419,13 @@ if (flags&P_M)  sprintf(buf, "EOR #%02X", mem_getbyte(pc+1,pb));
     case 0xCA : sprintf(buf, "DEX"); break;
     case 0x88 : sprintf(buf, "DEY"); break;
     case 0x89 :
-if (flags&P_M)  sprintf(buf, "BIT #%02X", mem_getbyte(pc+1,pb));
-           else sprintf(buf, "BIT #%04X", mem_getword(pc+1,pb)); break;
+	if (flags&P_M){
+		sprintf(buf, "BIT #%02X", mem_getbyte(pc+1,pb));
+	}
+	else{ 
+		sprintf(buf, "BIT #%04X", mem_getword(pc+1,pb)); 
+	}	
+	break;
     case 0x24 : sprintf(buf, "BIT $%02X", mem_getbyte(pc+1,pb)); break;
     case 0x34 : sprintf(buf, "BIT $%02X,X", mem_getbyte(pc+1,pb)); break;
     case 0x2C : sprintf(buf, "BIT $%04X", mem_getword(pc+1,pb)); break;
@@ -468,8 +445,13 @@ if (flags&P_M)  sprintf(buf, "BIT #%02X", mem_getbyte(pc+1,pb));
     case 0x9C : sprintf(buf, "STZ $%04X", mem_getword(pc+1, pb)); break;
     case 0x9E : sprintf(buf, "STZ $%04X,X", mem_getword(pc+1, pb)); break;
     case 0x69 :
-if (flags&P_M)  sprintf(buf, "ADC #%02X", mem_getbyte(pc+1,pb));
-           else sprintf(buf, "ADC #%04X", mem_getword(pc+1,pb)); break;
+	if (flags&P_M){
+		sprintf(buf, "ADC #%02X", mem_getbyte(pc+1,pb));
+	}
+    else {
+		sprintf(buf, "ADC #%04X", mem_getword(pc+1,pb)); 
+	}	
+	break;
     case 0x61 : sprintf(buf, "ADC ($%02X,X)", mem_getbyte(pc+1,pb)); break;
     case 0x71 : sprintf(buf, "ADC ($%02X),Y", mem_getbyte(pc+1,pb)); break;
     case 0x72 : sprintf(buf, "ADC ($%02X)", mem_getbyte(pc+1,pb)); break;
@@ -485,8 +467,13 @@ if (flags&P_M)  sprintf(buf, "ADC #%02X", mem_getbyte(pc+1,pb));
     case 0x6F : sprintf(buf, "ADC $%02X:%04X", mem_getbyte(pc+1+2,pb), mem_getword(pc+1,pb)); break;
     case 0x7F : sprintf(buf, "ADC $%02X:%04X,X", mem_getbyte(pc+1+2,pb), mem_getword(pc+1,pb)); break;
     case 0xE9 :
-if (flags&P_M)  sprintf(buf, "SBC #%02X", mem_getbyte(pc+1,pb));
-           else sprintf(buf, "SBC #%04X", mem_getword(pc+1,pb)); break;
+	if (flags&P_M){
+		sprintf(buf, "SBC #%02X", mem_getbyte(pc+1,pb));
+	}
+	else {
+		sprintf(buf, "SBC #%04X", mem_getword(pc+1,pb)); 
+	}
+	break;
     case 0xE1 : sprintf(buf, "SBC ($%02X,X)", mem_getbyte(pc+1,pb)); break;
     case 0xF1 : sprintf(buf, "SBC ($%02X),Y", mem_getbyte(pc+1,pb)); break;
     case 0xF2 : sprintf(buf, "SBC ($%02X)", mem_getbyte(pc+1,pb)); break;
@@ -521,8 +508,13 @@ if (flags&P_M)  sprintf(buf, "SBC #%02X", mem_getbyte(pc+1,pb));
     case 0x96 : sprintf(buf, "STX $%02X,Y", mem_getbyte(pc+1,pb)); break;
     case 0x8E : sprintf(buf, "STX $%04X", mem_getword(pc+1,pb)); break;
     case 0xA9 :
-if (flags&P_M)  sprintf(buf, "LDA #%02X", mem_getbyte(pc+1,pb));
-           else sprintf(buf, "LDA #%04X", mem_getword(pc+1,pb)); break;
+	if (flags&P_M){
+		sprintf(buf, "LDA #%02X", mem_getbyte(pc+1,pb));
+	}
+    else {
+		sprintf(buf, "LDA #%04X", mem_getword(pc+1,pb)); 
+	}
+	break;
     case 0xA1 : sprintf(buf, "LDA ($%02X,X)", mem_getbyte(pc+1,pb)); break;
     case 0xB1 : sprintf(buf, "LDA ($%02X),Y", mem_getbyte(pc+1,pb)); break;
     case 0xB2 : sprintf(buf, "LDA ($%02X)", mem_getbyte(pc+1,pb)); break;
@@ -537,21 +529,36 @@ if (flags&P_M)  sprintf(buf, "LDA #%02X", mem_getbyte(pc+1,pb));
     case 0xAF : sprintf(buf, "LDA $%02X:%04X", mem_getbyte(pc+1+2,pb), mem_getword(pc+1,pb)); break;
     case 0xBF : sprintf(buf, "LDA $%02X:%04X,X", mem_getbyte(pc+1+2,pb), mem_getword(pc+1,pb)); break;
     case 0xA0 :
-if (flags&P_X)  sprintf(buf, "LDY #%02X", mem_getbyte(pc+1,pb));
-           else sprintf(buf, "LDY #%04X", mem_getword(pc+1,pb)); break;
+	if (flags&P_X){
+		sprintf(buf, "LDY #%02X", mem_getbyte(pc+1,pb));
+	}
+    else {
+		sprintf(buf, "LDY #%04X", mem_getword(pc+1,pb)); 
+	}
+	break;
     case 0xA4 : sprintf(buf, "LDY $%02X", mem_getbyte(pc+1,pb)); break;
     case 0xB4 : sprintf(buf, "LDY $%02X,X", mem_getbyte(pc+1,pb)); break;
     case 0xAC : sprintf(buf, "LDY $%04X", mem_getword(pc+1,pb)); break;
     case 0xBC : sprintf(buf, "LDY $%04X,X", mem_getword(pc+1,pb)); break;
     case 0xA2 :
-if (flags&P_X)  sprintf(buf, "LDX #%02X", mem_getbyte(pc+1,pb));
-           else sprintf(buf, "LDX #%04X", mem_getword(pc+1,pb)); break;
+	if (flags&P_X){
+		sprintf(buf, "LDX #%02X", mem_getbyte(pc+1,pb));
+	}
+	else {
+		sprintf(buf, "LDX #%04X", mem_getword(pc+1,pb)); 
+	}
+	break;
     case 0xA6 : sprintf(buf, "LDX $%02X", mem_getbyte(pc+1,pb)); break;
     case 0xB6 : sprintf(buf, "LDX $%02X,Y", mem_getbyte(pc+1,pb)); break;
     case 0xAE : sprintf(buf, "LDX $%04X", mem_getword(pc+1,pb)); break;
     case 0xC9 :
-if (flags&P_M)  sprintf(buf, "CMP #%02X", mem_getbyte(pc+1,pb));
-           else sprintf(buf, "CMP #%04X", mem_getword(pc+1,pb)); break;
+	if (flags&P_M){
+		sprintf(buf, "CMP #%02X", mem_getbyte(pc+1,pb));
+	}
+    else {
+		sprintf(buf, "CMP #%04X", mem_getword(pc+1,pb)); 
+	}	
+	break;
     case 0xC1 : sprintf(buf, "CMP ($%02X,X)", mem_getbyte(pc+1,pb)); break;
     case 0xD1 : sprintf(buf, "CMP ($%02X),Y", mem_getbyte(pc+1,pb)); break;
     case 0xD2 : sprintf(buf, "CMP ($%02X)", mem_getbyte(pc+1,pb)); break;
@@ -566,25 +573,35 @@ if (flags&P_M)  sprintf(buf, "CMP #%02X", mem_getbyte(pc+1,pb));
     case 0xCF : sprintf(buf, "CMP $%02X:%04X", mem_getbyte(pc+1+2,pb), mem_getword(pc+1,pb)); break;
     case 0xDF : sprintf(buf, "CMP $%02X:%04X,X", mem_getbyte(pc+1+2,pb), mem_getword(pc+1,pb)); break;
     case 0xC0 :
-if (flags&P_X)  sprintf(buf, "CPY #%02X", mem_getbyte(pc+1,pb));
-           else sprintf(buf, "CPY #%04X", mem_getword(pc+1,pb)); break;
+	if (flags&P_X){
+		sprintf(buf, "CPY #%02X", mem_getbyte(pc+1,pb));
+	}
+    else{
+		sprintf(buf, "CPY #%04X", mem_getword(pc+1,pb)); 
+	}	
+	break;
     case 0xC4 : sprintf(buf, "CPY $%02X", mem_getbyte(pc+1,pb)); break;
     case 0xCC : sprintf(buf, "CPY $%04X", mem_getword(pc+1,pb)); break;
     case 0xE0 :
-if (flags&P_X)  sprintf(buf, "CPX #%02X", mem_getbyte(pc+1,pb));
-           else sprintf(buf, "CPX #%04X", mem_getword(pc+1,pb)); break;
+	if (flags&P_X){
+		sprintf(buf, "CPX #%02X", mem_getbyte(pc+1,pb));
+	}
+    else{
+		sprintf(buf, "CPX #%04X", mem_getword(pc+1,pb)); 
+	}
+	break;
     case 0xE4 : sprintf(buf, "CPX $%02X", mem_getbyte(pc+1,pb)); break;
     case 0xEC : sprintf(buf, "CPX $%04X", mem_getword(pc+1,pb)); break;
     case 0xC2 : sprintf(buf, "REP #%02X", mem_getbyte(pc+1,pb)); break;
     case 0xE2 : sprintf(buf, "SEP #%02X", mem_getbyte(pc+1,pb)); break;
-    case 0xD0 : sprintf(buf, "BNE %04X", pc+1+(char)mem_getbyte(pc+1, pb)+1); break;
-    case 0xF0 : sprintf(buf, "BEQ %04X", pc+1+(char)mem_getbyte(pc+1, pb)+1); break;
-    case 0x10 : sprintf(buf, "BPL %04X", pc+1+(char)mem_getbyte(pc+1, pb)+1); break;
-    case 0x30 : sprintf(buf, "BMI %04X", pc+1+(char)mem_getbyte(pc+1, pb)+1); break;
-    case 0x90 : sprintf(buf, "BCC %04X", pc+1+(char)mem_getbyte(pc+1, pb)+1); break;
-    case 0xB0 : sprintf(buf, "BCS %04X", pc+1+(char)mem_getbyte(pc+1, pb)+1); break;
-    case 0x80 : sprintf(buf, "BRA %04X", pc+1+(char)mem_getbyte(pc+1, pb)+1); break;
-    case 0x70 : sprintf(buf, "BVS %04X", pc+1+(char)mem_getbyte(pc+1, pb)+1); break;
+    case 0xD0 : sprintf(buf, "BNE %04X", pc+1+(sint8)mem_getbyte(pc+1, pb)+1); break;
+    case 0xF0 : sprintf(buf, "BEQ %04X", pc+1+(sint8)mem_getbyte(pc+1, pb)+1); break;
+    case 0x10 : sprintf(buf, "BPL %04X", pc+1+(sint8)mem_getbyte(pc+1, pb)+1); break;
+    case 0x30 : sprintf(buf, "BMI %04X", pc+1+(sint8)mem_getbyte(pc+1, pb)+1); break;
+    case 0x90 : sprintf(buf, "BCC %04X", pc+1+(sint8)mem_getbyte(pc+1, pb)+1); break;
+    case 0xB0 : sprintf(buf, "BCS %04X", pc+1+(sint8)mem_getbyte(pc+1, pb)+1); break;
+    case 0x80 : sprintf(buf, "BRA %04X", pc+1+(sint8)mem_getbyte(pc+1, pb)+1); break;
+    case 0x70 : sprintf(buf, "BVS %04X", pc+1+(sint8)mem_getbyte(pc+1, pb)+1); break;
     case 0x82 : sprintf(buf, "BRL %04X", pc+1+(short)mem_getword(pc+1, pb)+2); break;
     case 0x08 : sprintf(buf, "PHP"); break;
     case 0x48 : sprintf(buf, "PHA"); break;
@@ -637,37 +654,24 @@ if (flags&P_X)  sprintf(buf, "CPX #%02X", mem_getbyte(pc+1,pb));
                           CPU.X, mem_getbyte(pc+1, pb), CPU.Y, CPU.A); break;
     case 0x00 : sprintf(buf, "BRK $%04X", CPU.BRK); break;
     case 0x02 : sprintf(buf, "COP $%04X", CPU.COP); break;
-	case 0x50 : sprintf(buf, "BVC %04X", pc+1+(char)mem_getbyte(pc+1, pb)+1); break;
+	case 0x50 : sprintf(buf, "BVC %04X", pc+1+(sint8)mem_getbyte(pc+1, pb)+1); break;
     case 0xCB : sprintf(buf, "WAI"); break;
     default :   sprintf(buf, "\?\?(%02X)",opcode);
   }
 }
 
 #if 0
-IN_DTCM
+__attribute__((section(".dtcm")))
 uint32	addrbuf[100025];
 
-IN_DTCM
+__attribute__((section(".dtcm")))
 uint32	addri = 0;
 #endif
 
 int trace_CPU()
 {
-  char	buf[64];
-  char	buf2[256];
-
-/*
-#if 0
-	if (addri != 0)
-	{
-		addrbuf[addri++] = 0xFFFFFFFF;
-		FILE *f = fopen("addr.log", "w");
-		fwrite(addrbuf, 1, 100025*4, f);
-		fclose(f);
-		addri = 0;
-	}
-#endif
-*/
+	sint8	buf[64];
+	sint8	buf2[256];
 
 #ifdef ASM_OPCODES
   Cycles = -((sint32)SaveR8 >> 14);
@@ -700,7 +704,7 @@ int trace_CPU()
 			//&BRKaddress, BRKaddress, CPU.BRK,
 			(unsigned int)((P>>7)&1),(unsigned int)((P>>6)&1),(int)((P>>5)&1),(int)((P>>4)&1),
 			(int)((P/8)&1),(int)((P/4)&1),(int)((P/2)&1),(int)(P&1),
-			(int)CPU.PB,(int)CPU.PC,(const char*)buf
+			(int)CPU.PB,(int)CPU.PC,(const sint8*)buf
 		);
   FS_printlog(buf2);
   
@@ -719,7 +723,7 @@ int trace_CPU()
   
 //#else
   sprintf(buf2,"%02X:%04X ; ", CPU.PB, CPU.PC);
-  iprintf("%s", buf2);
+  printf("%s", buf2);
   //swiDelay(10000000);
 #endif          
 
@@ -748,7 +752,7 @@ void trace_CPUFast()
 	if (addri == 100024)
 		addri = 1;
 #endif		
-  /*char	buf2[256];	
+  /*sint8	buf2[256];	
 	sprintf(buf2,"%02X:%04X ",
 		S&0xFFFF, 
 		(uint32)((sint32)PCptr+(sint32)SnesPCOffset)

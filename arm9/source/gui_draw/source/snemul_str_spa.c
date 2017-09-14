@@ -1,4 +1,8 @@
-char*  g_snemulds_str_spa[] = 
+#include "typedefs.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+sint8*  g_snemulds_str_spa[] = 
 {
 		"Inicializando FS...\n",			/* 0 */
 		"Fallo en FS, continúa igualmente...\n",				/* 1 */
@@ -34,8 +38,8 @@ char*  g_snemulds_str_spa[] =
 		"Sonido Habilitado",				/* 30 */
 		"Sonido Deshabilitado",				/* 31 */
 		"Velocidad:",						/* 32 */
-		"velocidad Normal",					/* 33 */
-		"velocidad Rápida",					/* 34 */
+		"VBlank enabled (ignored)",					/* 33 */
+		"VBlank disabled (ignored)",					/* 34 */
 		"",								/* 35 */
 		"Opciones de pantalla",		/* 36 */
 		"Opciones de Fondos y Sprites",	/* 37 */

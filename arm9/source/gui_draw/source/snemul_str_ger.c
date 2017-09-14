@@ -1,4 +1,8 @@
-char*  g_snemulds_str_ger[] = 
+#include "typedefs.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+sint8*  g_snemulds_str_ger[] = 
 {
 		"FS Initialisierung...\n",			/* 0 */
 		"FS Fehler, trotzdem fortfahren...\n",				/* 1 */
@@ -34,8 +38,8 @@ char*  g_snemulds_str_ger[] =
 		"Sound an",				/* 30 */
 		"Sound aus",				/* 31 */
 		"Geschwindigkeit:",						/* 32 */
-		"Normale Geschwindigkeit",					/* 33 */
-		"Turbo Geschwindigkeit",					/* 34 */
+		"VBlank enabled (ignored)",					/* 33 */
+		"VBlank disabled (ignored)",					/* 34 */
 		"",								/* 35 */
 		"Bildschirm Optionen",		/* 36 */
 		"Hintergrund & Sprites Optionen",	/* 37 */

@@ -1,4 +1,6 @@
+
 #ifdef ARM9
+
 //=============================================================================//
 //  Copyright 2007 Rick "Lick" Wong											//
 //  This library is licensed as described in the included readme (MIT License) //
@@ -6,6 +8,9 @@
 
 #include "ram.h"
 #include "ram_m3.h"
+
+#include <stdio.h>
+#include "bus.h"
 
 //SuperCard
 static vu16 *_sc_unlock(){
@@ -26,7 +31,7 @@ static void _sc_lock(){
 
 //M3
 static vu16 *_m3_unlock(){
-	u32 mode = 0x00400006; // RAM_RW
+	uint32 mode = 0x00400006; // RAM_RW
 	vu16 tmp;
 	tmp = *(vu16*)0x08E00002;
 	tmp = *(vu16*)0x0800000E;
@@ -48,7 +53,7 @@ static vu16 *_m3_unlock(){
 }
 
 static void _m3_lock(){
-	u32 mode = 0x00400003; // MEDIA
+	uint32 mode = 0x00400003; // MEDIA
 	vu16 tmp;
 	tmp = *(vu16*)0x08E00002;
 	tmp = *(vu16*)0x0800000E;
@@ -79,7 +84,7 @@ static void _opera_lock(){
 
 //G6
 static vu16 *_g6_unlock(){
-	u32 mode = 6; // RAM_RW
+	uint32 mode = 6; // RAM_RW
 	vu16 tmp;
 	tmp = *(vu16*)0x09000000;
 	tmp = *(vu16*)0x09FFFFE0;
@@ -101,7 +106,7 @@ static vu16 *_g6_unlock(){
 }
 
 static void _g6_lock(){
-	u32 mode = 3; // MEDIA
+	uint32 mode = 3; // MEDIA
 	vu16 tmp;
 	tmp = *(vu16*)0x09000000;
 	tmp = *(vu16*)0x09FFFFE0;
@@ -221,12 +226,12 @@ static void _raw_lock(){}
 //			  Ram API !			//
 //===================================//
 typedef enum                {DETECT_RAM=0, RAW_RAM, DSi_RAM, SC_RAM,      M3_RAM, OPERA_RAM, G6_RAM, EZ4_RAM, EZ3in1_RAM, EZnew_RAM,     EZplus_RAM,     M3Ext_RAM} RAM_TYPE;
-static const char *_types[]={"Unknown",    "Raw",   "DSi",   "Supercard", "M3",   "DSBM",    "G6",   "EZ3/4", "EZ 3in1",  "EZ 3in1 new", "EZ 3in1 plus", "M3Ext"};
+static const sint8 *_types[]={"Unknown",    "Raw",   "DSi",   "Supercard", "M3",   "DSBM",    "G6",   "EZ3/4", "EZ 3in1",  "EZ 3in1 new", "EZ 3in1 plus", "M3Ext"};
 
 static vu16* (*_unlock)() = 0;
 static void (*_lock)() = 0;
-static u32 _size = 0;
-static u32 _type = DETECT_RAM;
+static uint32 _size = 0;
+static uint32 _type = DETECT_RAM;
 vu16 *extmem;
 
 static bool _ram_test(){
@@ -292,9 +297,12 @@ vu16* ram_init(){
 		return NULL; //DS Mode, but we need to guard access to 0x08000000.
 	}
 #endif
-	sysSetBusOwners(BUS_OWNER_ARM9, BUS_OWNER_ARM9);
 
-	u32 type=DETECT_RAM;
+	setCpuNdsBusAccessPrio(NDSSLOT_ARM9BUS);
+	setCpuGbaBusAccessPrio(GBASLOT_ARM9BUS);
+	
+	
+	uint32 type=DETECT_RAM;
 	switch(type)
 	{
 #if 0
@@ -456,19 +464,22 @@ vu16* ram_init(){
 }
 
 
-u32 ram_type(){return _type;}
-const char* ram_type_string(){return _types[_type];}
-u32 ram_size(){return _size;}
+uint32 ram_type(){return _type;}
+const sint8* ram_type_string(){return _types[_type];}
+uint32 ram_size(){return _size;}
 
 vu16* ram_unlock(){
-	sysSetBusOwners(BUS_OWNER_ARM9, BUS_OWNER_ARM9);
-
+	
+	setCpuNdsBusAccessPrio(NDSSLOT_ARM9BUS);
+	setCpuGbaBusAccessPrio(GBASLOT_ARM9BUS);
+	
 	if(_unlock)return (extmem=_unlock());
 	return 0;
 }
 
 void ram_lock(){
-	sysSetBusOwners(BUS_OWNER_ARM9, BUS_OWNER_ARM9);
+	setCpuNdsBusAccessPrio(NDSSLOT_ARM9BUS);
+	setCpuGbaBusAccessPrio(GBASLOT_ARM9BUS);
 
 	if(_lock)_lock();
 	extmem=NULL;
@@ -477,9 +488,9 @@ void ram_lock(){
 #if 0
 /// MoonShell extmem wrapper API ///
 typedef struct {
-  u32 StartAdr,EndAdr,CurAdr;
-  u32 *pSlot;
-  u32 SlotCount;
+  uint32 StartAdr,EndAdr,CurAdr;
+  uint32 *pSlot;
+  uint32 SlotCount;
 } TBODY;
 
 static TBODY tBody;
@@ -488,7 +499,7 @@ void extmem_Init(){
 	if(!init){memset(&tBody,0,sizeof(tBody));ram_init();init=1;}
 	if(_type==DETECT_RAM)return;
 
-	tBody.StartAdr=(u32)extmem;
+	tBody.StartAdr=(uint32)extmem;
 	tBody.EndAdr=tBody.StartAdr+_size;
 	tBody.CurAdr=tBody.StartAdr;
 	tBody.pSlot=NULL;
@@ -512,11 +523,11 @@ bool extmem_ExistMemory(){
 	return true;
 }
 
-u32 extmem_GetMemSize(){
+uint32 extmem_GetMemSize(){
 	return ram_size();
 }
 
-void extmem_SetCount(u32 Count){
+void extmem_SetCount(uint32 Count){
 	if(_type==DETECT_RAM)return;
 
 	if(tBody.pSlot!=NULL){
@@ -524,36 +535,36 @@ void extmem_SetCount(u32 Count){
 		die();
 	}
 	  
-	tBody.pSlot=(u32*)safemalloc(sizeof(u32)*Count);
-	MemSet32DMA3(0,tBody.pSlot,sizeof(u32)*Count);
+	tBody.pSlot=(uint32*)safemalloc(sizeof(uint32)*Count);
+	MemSet32DMA3(0,tBody.pSlot,sizeof(uint32)*Count);
 	tBody.SlotCount=Count;
 }
 
-bool extmem_Exists(u32 SlotIndex){
+bool extmem_Exists(uint32 SlotIndex){
 	if(_type==DETECT_RAM)return false;
 
 	if(tBody.SlotCount<=SlotIndex){
-		_consolePrintf("extmem_Exists(u32 SlotIndex=%d); SlotCount==%d limit error.\n",SlotIndex,tBody.SlotCount);
+		_consolePrintf("extmem_Exists(uint32 SlotIndex=%d); SlotCount==%d limit error.\n",SlotIndex,tBody.SlotCount);
 		return false;
 	}
 	if(tBody.pSlot[SlotIndex]==0)return false;
 	return(true);
 }
 
-bool extmem_Alloc(u32 SlotIndex,u32 Size){
+bool extmem_Alloc(uint32 SlotIndex,uint32 Size){
 	if(_type==DETECT_RAM)return false;
 
 	if(tBody.SlotCount<=SlotIndex){
-		_consolePrintf("extmem_Alloc(u32 SlotIndex=%d,u32 Size=%d); SlotCount==%d limit error.\n",SlotIndex,Size,tBody.SlotCount);
+		_consolePrintf("extmem_Alloc(uint32 SlotIndex=%d,uint32 Size=%d); SlotCount==%d limit error.\n",SlotIndex,Size,tBody.SlotCount);
 		return false;
 	}
 	  
 	Size=align2(Size);
 	  
-	u32 TermAdr=tBody.CurAdr+Size;
+	uint32 TermAdr=tBody.CurAdr+Size;
 	  
 	if(tBody.EndAdr<TermAdr){
-// 		_consolePrintf("extmem_Alloc(u32 SlotIndex=%d,u32 Size=%d); MemAlloc limit error.\n",SlotIndex,Size);
+// 		_consolePrintf("extmem_Alloc(uint32 SlotIndex=%d,uint32 Size=%d); MemAlloc limit error.\n",SlotIndex,Size);
 		return false;
 	}
 	  
@@ -563,21 +574,21 @@ bool extmem_Alloc(u32 SlotIndex,u32 Size){
 	return true;
 }
 
-bool extmem_Write(u32 SlotIndex,void *pData,u32 DataSize){
+bool extmem_Write(uint32 SlotIndex,void *pData,uint32 DataSize){
 	if(_type==DETECT_RAM)return false;
 
 	if(tBody.SlotCount<=SlotIndex){
-		_consolePrintf("extmem_Write(u32 SlotIndex=%d,...); SlotCount==%d limit error.\n",SlotIndex,tBody.SlotCount);
+		_consolePrintf("extmem_Write(uint32 SlotIndex=%d,...); SlotCount==%d limit error.\n",SlotIndex,tBody.SlotCount);
 		return false;
 	}
 	  
 	u16 *pSrcData=(u16*)pData;
-	u32 SrcSize=DataSize;
+	uint32 SrcSize=DataSize;
 	u16 *pDstData=(u16*)tBody.pSlot[SlotIndex];
-	u32 DstSize=align2(SrcSize);
+	uint32 DstSize=align2(SrcSize);
 	  
 	if(pDstData==NULL){
-		_consolePrintf("extmem_Write(u32 SlotIndex=%d,...); pSlot[SlotIndex]==NULL not allocated error.\n",SlotIndex);
+		_consolePrintf("extmem_Write(uint32 SlotIndex=%d,...); pSlot[SlotIndex]==NULL not allocated error.\n",SlotIndex);
 		return false;
 	}
 
@@ -585,21 +596,21 @@ bool extmem_Write(u32 SlotIndex,void *pData,u32 DataSize){
 	return true;
 }
 
-bool extmem_Read(u32 SlotIndex,void *pData,u32 DataSize){
+bool extmem_Read(uint32 SlotIndex,void *pData,uint32 DataSize){
 	if(_type==DETECT_RAM)return false;
 
 	if(tBody.SlotCount<=SlotIndex){
-		_consolePrintf("extmem_Read(u32 SlotIndex=%d,...); SlotCount==%d limit error.\n",SlotIndex,tBody.SlotCount);
+		_consolePrintf("extmem_Read(uint32 SlotIndex=%d,...); SlotCount==%d limit error.\n",SlotIndex,tBody.SlotCount);
 		return false;
 	}
 
 	u16 *pSrcData=(u16*)tBody.pSlot[SlotIndex];
-//	u32 SrcSize=align2(Size);
+//	uint32 SrcSize=align2(Size);
 	u16 *pDstData=(u16*)pData;
-	u32 DstSize=DataSize;
+	uint32 DstSize=DataSize;
 
 	if(pSrcData==NULL){
-		_consolePrintf("extmem_Read(u32 SlotIndex=%d,...); pSlot[SlotIndex]==NULL not allocated error.\n",SlotIndex);
+		_consolePrintf("extmem_Read(uint32 SlotIndex=%d,...); pSlot[SlotIndex]==NULL not allocated error.\n",SlotIndex);
 		return(false);
 	}
 

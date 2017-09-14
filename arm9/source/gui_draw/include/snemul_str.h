@@ -73,40 +73,30 @@
 extern "C" {
 #endif
 
-extern int _offsetY_tab[4];
+extern sint8*  g_snemulds_str_jpn[];
+extern sint8*  g_snemulds_str_eng[];
+extern sint8*  g_snemulds_str_fr[];
+extern sint8*  g_snemulds_str_ger[];
+extern sint8*  g_snemulds_str_ita[];
+extern sint8*  g_snemulds_str_spa[];
+extern sint8*  g_snemulds_str_pt[];
+extern sint8*  g_snemulds_str_cat[];
+extern sint8*  g_snemulds_str_pol[];
+extern sint8*  g_snemulds_str_nl[];
+extern sint8*  g_snemulds_str_dan[];
 
-extern t_GUIFont trebuchet_9_font;
-extern t_GUIFont smallfont_7_font;
-
-//extern char*  g_snemulds_str_jap[];
-extern char*  g_snemulds_str_jpn[];
-extern char*  g_snemulds_str_eng[];
-extern char*  g_snemulds_str_fr[];
-extern char*  g_snemulds_str_ger[];
-extern char*  g_snemulds_str_ita[];
-extern char*  g_snemulds_str_spa[];
-extern char*  g_snemulds_str_pt[];
-extern char*  g_snemulds_str_cat[];
-extern char*  g_snemulds_str_pol[];
-extern char*  g_snemulds_str_nl[];
-extern char*  g_snemulds_str_dan[];
-
-int loadROM(char *name, int confirm);
-void	APU_pause();
-int selectSong(char *name);
-int	read_snapshot(char *file, uchar nb);
-void	CPU_unpack();
-void	SNES_update();
-void	PPU_update();
-void	CPU_pack();
-int write_snapshot(char *file, unsigned char nb, const char *name);
-int loadSRAM();
-int saveSRAM();
-void PPU_ChangeLayerConf(int i);
-void saveOptionsToConfig(char *section);
-void	APU_clear();
-int		get_snapshot_name(char *file, uchar nb, char *name);
-void GUI_setLanguage(int lang);
+extern int loadROM(sint8 *name, int confirm);
+extern int selectSong(sint8 *name);
+extern void	CPU_unpack();
+extern void	SNES_update();
+extern void	PPU_update();
+extern void	CPU_pack();
+extern int loadSRAM();
+extern int saveSRAM();
+extern void PPU_ChangeLayerConf(int i);
+extern void saveOptionsToConfig(sint8 *section);
+extern void	APU_clear();
+extern void GUI_setLanguage(int lang);
 
 
 #ifdef __cplusplus

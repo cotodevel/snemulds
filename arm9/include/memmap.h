@@ -18,9 +18,10 @@ GNU General Public License for more details.
 #ifndef MEMMAP_H_
 #define MEMMAP_H_
 
+#include "typedefs.h"
+
 #define NOT_LARGE	0
 #define USE_PAGING	1
-#define USE_EXTMEM	2
 
 #ifdef ASM_OPCODES
 #define SPECIAL_MAP(p) ((int)(p) & 0x80000000)
@@ -30,8 +31,6 @@ GNU General Public License for more details.
 #define REGULAR_MAP(p) ((int)(p) >= MAP_LAST)  	
 #endif
 
-#define	PAGE_SIZE		65536
-#define PAGE_OFFSET		3
 
 
 #endif /*MEMMAP_H_*/
@@ -40,11 +39,33 @@ GNU General Public License for more details.
 extern "C" {
 #endif
 
-extern int OldPC;
-extern char *ROM_Image;
-extern void fillMemory( void * addr, u32 count, u32 value );
-extern void zeroMemory( void * addr, u32 count );
-extern int	FS_loadROMPage(char *buf, unsigned int pos, int size);
+extern void WriteProtectROM();
+extern void FixMap();
+extern void MapRAM();
+extern void InitLoROMMap(int mode);
+extern void InitHiROMMap(int mode);
+
+extern uchar *ROM_paging;
+extern uint16 *ROM_paging_offs;
+extern int ROM_paging_cur;
+
+extern void mem_clear_paging();
+extern void mem_init_paging();
+extern void mem_setCacheBlock(int block, uchar *ptr);
+extern void mem_removeCacheBlock(int block);
+extern uint8 *mem_checkReload(int block);
+extern void InitMap();
+extern uint8 IO_getbyte(int addr, uint32 address);
+extern void IO_setbyte(int addr, uint32 address, uint8 byte);
+extern uint16 IO_getword(int addr, uint32 address);
+extern void IO_setword(int addr, uint32 address, uint16 word);
+extern uchar mem_getbyte(uint32 offset,uchar bank);
+extern void mem_setbyte(uint32 offset, uchar bank, uchar byte);
+extern ushort mem_getword(uint32 offset,uchar bank);
+extern void mem_setword(uint32 offset, uchar bank, ushort word);
+extern void *mem_getbaseaddress(uint16 offset, uchar bank);
+
+extern void *map_memory(uint16 offset, uchar bank);
 
 #ifdef __cplusplus
 }

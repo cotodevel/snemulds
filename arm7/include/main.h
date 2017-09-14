@@ -10,22 +10,22 @@ typedef void (*type_void)();
 extern "C" {
 #endif
 
-// Play buffer, left buffer is first MIXBUFSIZE * 2 u16's, right buffer is next
-extern u16 *playBuffer;
+// Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
+extern uint16 *playBuffer;
 extern volatile int soundCursor;
 extern int apuMixPosition;
 extern int pseudoCnt;
 extern int frame;
 extern int scanlineCount;
-extern u32 interrupts_to_wait_arm7;
+extern uint32 interrupts_to_wait_arm7;
 extern bool paused;
 extern bool SPC_disable;
 extern bool SPC_freedom;
 
 extern void SetupSound();
 extern void StopSound();
-extern void LoadSpc(const u8 *spc);
-extern void SaveSpc(u8 *spc);
+extern void LoadSpc(const uint8 *spc);
+extern void SaveSpc(uint8 *spc);
 
 #ifdef __cplusplus
 }

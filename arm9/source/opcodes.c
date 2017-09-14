@@ -15,27 +15,30 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include <nds/timers.h>
 #include "common.h"
+#include "typedefs.h"
+#include "dsregs.h"
 #include "opcodes.h"
-#include "snes.h"
 #include "cfg.h"
 #include "apu.h"
-
+#include "core.h"
+#include "memmap.h"
+//
 #ifdef WIN32
 #define OPCODE _inline
 #else
 #define OPCODE static inline
 #endif
 
+//Non Assembler snezzi core 
 #ifndef ASM_OPCODES
 
-u32 PCptr=0;
-u32 SnesPCOffset=0;
-u32	BRKaddress = 0;
-u32	COPaddress = 0;
+uint32 PCptr=0;
+uint32 SnesPCOffset=0;
+uint32	BRKaddress = 0;
+uint32	COPaddress = 0;
 	
-IN_DTCM
+__attribute__((section(".dtcm")))
 uint8 OpCycles_MX[256] = {
 	8, 6, 8, 4, 5, 3, 5, 6, 3, 2, 2, 4, 6, 4, 6, 5,		/* e=0, m=1, x=1 */
 	2, 5, 5, 7, 5, 4, 6, 6, 2, 4, 2, 2, 6, 4, 7, 5,
@@ -55,7 +58,7 @@ uint8 OpCycles_MX[256] = {
 	2, 5, 5, 7, 5, 4, 6, 6, 2, 4, 4, 2, 6, 4, 7, 5
 };
 
-IN_DTCM
+__attribute__((section(".dtcm")))
 uint8 OpCycles_mX[256] = {
 	8, 7, 8, 5, 7, 4, 7, 7, 3, 3, 2, 4, 8, 5, 8, 6,		/* e=0, m=0, x=1 */
 	2, 6, 6, 8, 7, 5, 8, 7, 2, 5, 2, 2, 8, 5, 9, 6,
@@ -75,7 +78,7 @@ uint8 OpCycles_mX[256] = {
 	2, 6, 6, 8, 5, 5, 8, 7, 2, 5, 4, 2, 6, 5, 9, 6
 };
 
-IN_DTCM
+__attribute__((section(".dtcm")))
 uint8 OpCycles_Mx[256] = {
 	8, 6, 8, 4, 5, 3, 5, 6, 3, 2, 2, 4, 6, 4, 6, 5,		/* e=0, m=1, x=0 */
 	2, 6, 5, 7, 5, 4, 6, 6, 2, 5, 2, 2, 6, 5, 7, 5,
@@ -95,7 +98,7 @@ uint8 OpCycles_Mx[256] = {
 	2, 6, 5, 7, 5, 4, 8, 6, 2, 5, 5, 2, 6, 5, 7, 5
 };
 
-IN_DTCM 
+__attribute__((section(".dtcm"))) 
 uint8 OpCycles_mx[256] = {
 	8, 7, 8, 5, 7, 4, 7, 7, 3, 3, 2, 4, 8, 5, 8, 6,		/* e=0, m=0, x=0 */
 	2, 7, 6, 8, 7, 5, 8, 7, 2, 6, 2, 2, 8, 6, 9, 6,
@@ -116,15 +119,16 @@ uint8 OpCycles_mx[256] = {
 };
 
 
-IN_DTCM
+__attribute__((section(".dtcm")))
 uint32	F_C;
-IN_DTCM
+__attribute__((section(".dtcm")))
 uint32	F_Z;
-IN_DTCM
+__attribute__((section(".dtcm")))
 uint32	F_N;
-IN_DTCM
+__attribute__((section(".dtcm")))
 uint32	F_V;
 
+//todo: move this to headers and check compatibility.
 #define UPDATE_FLAGS \
 { \
 	F_C = (P & P_C); \
@@ -150,26 +154,26 @@ uint32	F_V;
 	P |= (F_V != 0) << 6; \
 }
 
-IN_DTCM
+__attribute__((section(".dtcm")))
 unsigned short P;
-IN_DTCM
+__attribute__((section(".dtcm")))
 unsigned short PC;
-IN_DTCM
-unsigned char  PB, DB, t;
-IN_DTCM
+__attribute__((section(".dtcm")))
+uint8  PB, DB, t;
+__attribute__((section(".dtcm")))
 unsigned short A, X, Y, D, S;
-IN_DTCM
+__attribute__((section(".dtcm")))
 long Cycles;
 
 
-IN_ITCM
+__attribute__((section(".itcm")))
 void	pushb(uint8 b)
 {
 	SNESC.RAM[S] = b;
 	S--;
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 void pushw(uint16 w)
 {
 	S--;
@@ -177,14 +181,14 @@ void pushw(uint16 w)
 	S--;
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uint8	pullb()
 {
 	S++;
 	return SNESC.RAM[S];
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uint16	pullw()
 {
 	uint16 w;
@@ -195,31 +199,31 @@ uint16	pullw()
 	return w;
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uchar   stack_getbyte(uint8 offset)
 {
   return SNESC.RAM[S+offset];
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 void	stack_setbyte(uint8 offset, uchar byte)
 {
   SNESC.RAM[S+offset] = byte;
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 ushort  stack_getword(uint8 offset)
 {
   return GET_WORD16(SNESC.RAM+S+offset);	
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 void  stack_setword(uint8 offset, uint16 word)
 {
   SET_WORD16(SNESC.RAM+S+offset, word);
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uchar   direct_getbyte(uint32 offset)
 {
   uint16 _offset = (uint16)(D+offset);	 
@@ -231,7 +235,7 @@ uchar   direct_getbyte(uint32 offset)
   	return mem_getbyte(_offset, 0);	
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uchar   direct_getbyte2(uint32 offset)
 {
   uint16 _offset = (uint16)(D+offset);	
@@ -243,7 +247,7 @@ uchar   direct_getbyte2(uint32 offset)
   	return mem_getbyte(_offset+2, 0);	
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 void	direct_setbyte(uint32 offset, uchar byte)
 {
   uint16 _offset = (uint16)(D+offset);	
@@ -253,7 +257,7 @@ void	direct_setbyte(uint32 offset, uchar byte)
   	mem_setbyte(_offset, 0, byte);	
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 ushort  direct_getword(uint32 offset)
 {
   uint16 _offset = (uint16)(D+offset);	
@@ -265,7 +269,7 @@ ushort  direct_getword(uint32 offset)
   	return mem_getword(_offset, 0);	
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 void  direct_setword(uint32 offset, uint16 word)
 {
   uint16 _offset = (uint16)(D+offset);
@@ -275,7 +279,7 @@ void  direct_setword(uint32 offset, uint16 word)
   	mem_setword(_offset, 0, word);	
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uint8 rol_b(uint8 a)
 {
 	uint16 t = a;
@@ -285,7 +289,7 @@ uint8 rol_b(uint8 a)
 	return (uint8)t;
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uint16 rol_w(uint16 a)
 {
 	uint32 t = a;
@@ -295,7 +299,7 @@ uint16 rol_w(uint16 a)
 	return (uint16)t;
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uint8 ror_b(uint8 a)
 {
 	uint16 t = a;
@@ -305,7 +309,7 @@ uint8 ror_b(uint8 a)
 	return (uint8)t;
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uint16 ror_w(uint16 a)
 {
 	uint32 t = a;
@@ -315,8 +319,9 @@ uint16 ror_w(uint16 a)
 	return (uint16)t;
 }
 
-// addressing mode A ( rA )
+//todo: move to headers
 
+// addressing mode A ( rA )
 #define GETBYTE_rA       (rA&0xFF)
 #define GETWORD_rA       rA
 #define SETBYTE_rA(var)  rA = (rA&0xff00)|((var)&0xff)
@@ -523,7 +528,7 @@ uint16 ror_w(uint16 a)
 #define OPEND(x) /*Cycles += (x);*/ goto loop_back; }
 #define rA A
 
-IN_DTCM
+__attribute__((section(".dtcm")))
 uint8			*OpCycles;
 
 void ADC16(uint16 Work16)
@@ -695,7 +700,7 @@ void	XCE()
   UPDATE_FLAGS;
 }
 
-void	MVN(unsigned char SB)
+void	MVN(uint8 SB)
 {
   Cycles+=7*rA;
   do {
@@ -704,7 +709,7 @@ void	MVN(unsigned char SB)
   } while (rA != 0xffff);
 }
 
-void	MVP(unsigned char SB)
+void	MVP(uint8 SB)
 {
   Cycles+=7*rA;
   do {
@@ -744,7 +749,7 @@ void CPU_goto(int cycles)
 /* Internal sub functions */
 void do_branch()
 {
-  char move = (char)FETCHBA; 
+  sint8 move = (sint8)FETCHBA; 
 #if 0
   if (move < 0)
   {
@@ -795,13 +800,16 @@ loop_back:
 		Cycles += 3;
 #endif		
 				
-//		START_PROFILE(OPC[OpCode], 3);
-
+#ifdef SNEMUL_LOGGING
+START_PROFILE(OPC[OpCode], 3);
+#endif
 		goto *OpCodes[OpCode];		
 /*loop_back:		
+		#ifdef SNEMUL_LOGGING
 		END_PROFILE(OPC[OpCode], 3);
+		#endif
 		SNES.stat_OPC_cnt[OpCode]++;*/
-//    	if (CPU_break) return;
+//    	if (CPU_break) return;	//CPU_break a variable breakpoint (prevents execution in emu context)
 	}
 	PC = REAL_PC;
 	UPDATE_P;
@@ -822,8 +830,8 @@ loop_back:
     return;
 
 illegal:
-	iprintf("\n%02x:%04x Invalid opcode : %x\n", PB, CPU.LastAddress, OpCode);
-	iprintf("Try this: Disable speed hack + reset\n");
+	printf("\n%02x:%04x Invalid opcode : %x\n", PB, CPU.LastAddress, OpCode);
+	printf("Try this: Disable speed hack + reset\n");
 	CPU.IsBreak = 1;
 //	while (1);
 	return;
@@ -2082,7 +2090,7 @@ I_JMP_a: T("I_JMP_a"); {
 
 // 22 : JSL al 4/8
 I_JSL_al: T("I_JSL_al"); {
-//  unsigned char tmp;
+//  uint8 tmp;
   pushb(PB);
   pushw(REAL_PC+2);
   PB = FETCHB2;
@@ -2109,7 +2117,7 @@ I_TCD: T("I_TCD"); {
 
 // 5C : JMP al 4/4
 I_JMP_al: T("I_JMP_al"); {
-  unsigned char tmp;
+  uint8 tmp;
   tmp = FETCHB2;
   PC = FETCHW;
   PB = tmp;
@@ -2119,7 +2127,7 @@ I_JMP_al: T("I_JMP_al"); {
 
 // DC : JML (a) 3/6
 I_JML_a_i: T("I_JML_a_i"); {
-  unsigned char tmp;
+  uint8 tmp;
   tmp = mem_getbyte(FETCHW+2, 0);
   PC  = mem_getword(FETCHW, 0);
   PB  = tmp;
@@ -2365,7 +2373,7 @@ I_PHY: T("I_PHY"); {
 
 // 54 : MVN xya 3/7
 I_MVN: T("I_MVN"); {
-  unsigned char SB;
+  uint8 SB;
   SB = FETCHB1;
   DB = FETCHB;
 #if 1  
@@ -2382,7 +2390,7 @@ I_MVN: T("I_MVN"); {
 
 // ?? : MVP xya ?
 I_MVP: T("I_MVP"); {
-  unsigned char SB;
+  uint8 SB;
   SB = FETCHB1;
   DB = FETCHB;
 #if 1  
@@ -2417,7 +2425,7 @@ void CPU_pack()
 
 void CPU_unpack()
 {
-	char buf[200];
+	sint8 buf[200];
   A = CPU.A;  X = CPU.X;  Y = CPU.Y;
   S = CPU.S;  P = CPU.P;  D = CPU.D;
   PB = CPU.PB; DB = CPU.DB; PC = CPU.PC;	
@@ -2428,7 +2436,7 @@ void CPU_unpack()
           CPU.A, CPU.X, CPU.Y, CPU.S, CPU.DB, CPU.D, SNES.V_Count, Cycles,
           (P>>7)&1,(P>>6)&1,(P>>5)&1,(P>>4)&1,(P/8)&1,(P/4)&1,(P/2)&1,P&1,
           CPU.PB, CPU.PC);
-          iprintf("%s\n", buf);
+          printf("%s\n", buf);
 }
 #endif
 
@@ -2465,7 +2473,7 @@ void IOWrite16(uint32 addr, uint16 word)
 #ifdef ASM_OPCODES
 
 #include "opc_asm.h"
-IN_ITCM
+__attribute__((section(".itcm")))
 void CPU_pack()
 {
   if (CPU.packed)
@@ -2494,7 +2502,7 @@ void CPU_pack()
   CPU.packed = 1;
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 void CPU_unpack()
 {
   if (CPU.unpacked)
@@ -2534,14 +2542,14 @@ void CPU_unpack()
   CPU_update();
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 void	pushb(uint8 b)
 {
 	SNESC.RAM[CPU.S] = b;
 	CPU.S--;
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 void pushw(uint16 w)
 {
 	CPU.S--;
@@ -2549,14 +2557,14 @@ void pushw(uint16 w)
 	CPU.S--;
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uint8	pullb()
 {
 	CPU.S++;
 	return SNESC.RAM[CPU.S];
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uint16	pullw()
 {
 	uint16 w;
@@ -2568,14 +2576,14 @@ uint16	pullw()
 }
 
 
-IN_ITCM
+__attribute__((section(".itcm")))
 void CPU_goto(int cycles)
 {	
 	if (CFG.CPU_speedhack & 1)
 		cycles -= cycles / 4; // Speed hack: 25 % speed up
 	CPU_LoopSpeedHacks = (CFG.CPU_speedhack >= 2);
 	CPU.Cycles = cycles;
-		
+	
 	CPU_unpack();
 	
 //ori removed:	*APU_ADDR_BLK = 0;

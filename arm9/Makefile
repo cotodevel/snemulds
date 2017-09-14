@@ -1,142 +1,110 @@
-#---------------------------------------------------------------------------------
-.SUFFIXES:
-#---------------------------------------------------------------------------------
-ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
-endif
+#
+#			Copyright (C) 2017  Coto
+#This program is free software; you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation; either version 2 of the License, or
+#(at your option) any later version.
 
-include $(DEVKITARM)/ds_rules
+#This program is distributed in the hope that it will be useful, but
+#WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+#General Public License for more details.
 
-#---------------------------------------------------------------------------------
-# BUILD is the directory where object files & intermediate files will be placed
-# SOURCES is a list of directories containing source code
-# INCLUDES is a list of directories containing extra header files
-# DATA is a list of directories containing binary files
-# all directories are relative to this makefile
-#---------------------------------------------------------------------------------
-BUILD		:=	build
-SOURCES		:=	source \
-				source/fatfs/	\
-				source/fatfs/dldi/	\
-				source/fatfs/option/	\
-				source/interrupts/source \
-				source/gui_draw/source \
-				source/dswifi_arm9/	\
-				../common
-				
-INCLUDES		:=	include/ \
-				../include/	\
-				source/fatfs/	\
-				source/fatfs/dldi/	\
-				source/fatfs/option/	\
-				source/interrupts/include \
-				source/gui_draw/include \
-				source/dswifi_arm9/	\
-				../common
-
-DATA		:=
+#You should have received a copy of the GNU General Public License
+#along with this program; if not, write to the Free Software
+#Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+#USA
+#
 
 
-#---------------------------------------------------------------------------------
-# options for code generation
-#---------------------------------------------------------------------------------
-ARCH	:=	-mthumb-interwork -march=armv5te -mtune=arm946e-s -marm	-mfloat-abi=soft
+# relative path (if you are outside arm9 folder then $(DIR_ARM9), arm7 is $(DIR_ARM7))
+RELATIVE_PATH =	
 
-CFLAGS	:=	-Wall -O3 -DNO_VIZ\
- 			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
-			-ffast-math \
-			$(ARCH)
+#Prepare ARM9 dirs
+DIRLIBS_HDR = $(foreach dirres,$(DIRS_ARM9_HEADER),-I "$(CURDIR)/$(RELATIVE_PATH)/$(dirres)/" )	$(DIRLIBS_SHARED)	$(TARGET_LIBRARY_HEADERS_9_INC)
+DIRLIBS_SRC = $(foreach dirres,$(DIRS_ARM9_SRC),-I "$(CURDIR)/$(RELATIVE_PATH)/$(dirres)/" )	$(DIRLIBS_SHARED)
 
-CFLAGS	+=	$(INCLUDE) -DARM9	-DASM_OPCODES
-ASFLAGS	:=	$(ARCH) -march=armv5te -mtune=arm946e-s $(INCLUDE) -Ddebug=0	-DNDS	$(CFLAGS)
-CXXFLAGS	:=	$(CFLAGS) 	-fno-rtti -fno-exceptions
+file_arm9_src_c=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.c))  )
+file_arm9_src_s=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.s))  )
+file_arm9_src_SUPP=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.S))  )
 
-LDFLAGS	=	-specs=../ds_arm9_nds.specs $(ARCH) -Wl,-Map,$(notdir $*.map)
+# Object Target
+objs_arm9:=	${file_arm9_src_c:.c=.o}	${file_arm9_src_s:.s=.o}	${file_arm9_src_SUPP:.S=.o}
+d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_SUPP:.S=.d}
 
-#---------------------------------------------------------------------------------
-# any extra libraries we wish to link with the project
-#---------------------------------------------------------------------------------
-LIBS	:= -lnds9
- 
-#---------------------------------------------------------------------------------
-# list of directories containing libraries, this must be the top level containing
-# include and lib
-#---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) $(CURDIR) $(LIBWIFI) $(LIBFAT)
- 
-#---------------------------------------------------------------------------------
-# no real need to edit anything past this point unless you need to add additional
-# rules for different file extensions
-#---------------------------------------------------------------------------------
-ifneq ($(BUILD),$(notdir $(CURDIR)))
-#---------------------------------------------------------------------------------
- 
-export ARM9ELF	:=	$(CURDIR)/$(TARGET).elf
-export DEPSDIR	:=	$(CURDIR)/$(BUILD)
+#ARM9 specific definitions.
+MAPFILE = $(DIR_ARM9).map
+SHARED_FLAGS	=	-mcpu=arm946e-s	-mthumb-interwork
+AS_ASFLAGS		=	$(SHARED_FLAGS)	-defsym debug=0	-defsym	appver='$(EXECUTABLE_VERSION)'	-defsym ASM_OPCODES='1'	-defsym	ARM9='1'
+CC_ASFLAGS		=	$(SHARED_FLAGS)	-Wall	-DNDS -DASM_OPCODES -DARM9	-marm	-mtune=arm946e-s	-O2 -ffast-math -fomit-frame-pointer	-Ddebug=0	-Dappver='$(EXECUTABLE_VERSION)'
+BUILD			= 	$(BUILD_ARM9)
+DIR_SRC			=	$(DIRS_ARM9_SRC)
 
-export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-			$(foreach dir,$(DATA),$(CURDIR)/$(dir))
- 
-CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
-CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
-SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
- 
-#---------------------------------------------------------------------------------
-# use CXX for linking C++ projects, CC for standard C
-#---------------------------------------------------------------------------------
-ifeq ($(strip $(CPPFILES)),)
-#---------------------------------------------------------------------------------
-	export LD	:=	$(CC)
-#---------------------------------------------------------------------------------
-else
-#---------------------------------------------------------------------------------
-	export LD	:=	$(CXX)
-#---------------------------------------------------------------------------------
-endif
-#---------------------------------------------------------------------------------
-export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
-					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
- 
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(BUILD)
- 
-export LIBPATHS	:=	-L$(TOPDIR)/nifi $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
- 
-.PHONY: $(BUILD) clean
-  
-#---------------------------------------------------------------------------------
-$(BUILD):
-	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
- 
-#---------------------------------------------------------------------------------
+#--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
+#check arm9.map "Discarded input sections" to see --gc-sections in action.
+LDFLAGS	=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm9_ld.specs	-Wl,--gc-sections,-Map,$(MAPFILE)
+LIBRARIES =	-$(TARGET_LIBRARY_LIBNAME_9)	-lc_nano
+
+
+################################################################################################
+
+#Dont modify anything else if not necessary ..
+OBJECTS = 	$(objs_arm9)
+OBJDIR 	=	./$(BUILD)
+VPATH 	=	$(DIR_SRC)
+OBJPROG = 	$(addprefix $(OBJDIR)/, $(ELF_ARM9))
+
+
+all: $(OBJDIR)|	nds_arm9_ld_crt0.o	$(BINSTRIP_RULE_9)
+#all: debug
+
+#Check $(OBJDIR) if not exists: create it
+$(OBJDIR):
+	@echo "Folder $(OBJDIR) does not exist. Creating"
+	mkdir -p $@
+
+#Do C Compile now!
+$(OBJDIR)/%.o : %.c
+	-@echo 'C Compile start: $@'
+	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o $@ -c $<
+	-@echo 'C Compile End: $@'
+
+#Coto: Special "exception" rule. Fixes tricky projects such as SnemulDS's opcodes2.s where GCC AS is used, while compatibility with .S is required for newer projects.
+#.S is GCC CC/CPP for compiling assembler with cpp headers
+#.s is GCC AS Assembler for compiling assembler the usual way
+
+#Do s (GCC AS) Compile now!
+$(OBJDIR)/%.o : %.s
+	-@echo 's Compile start: $@'
+	$(AS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(AS_ASFLAGS)	-o $@ -c $<
+	-@echo 's Compile end: $@'
+
+#Do S (GCC CC) Compile now!
+$(OBJDIR)/%.o : %.S
+	-@echo 'S Compile start: $@'
+	$(CC)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $@ -c $<
+	-@echo 'S Compile end: $@'
+
+#Special rule: compile crt0 for arm9 entrypoint
+nds_arm9_ld_crt0.o:	$(TARGET_LIBRARY_LINKER_FILE_9)
+	-@echo 'S Compile start: crt0s'
+	$(CC)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $(OBJDIR)/$@ -c $<
+	-@echo 'S Compile end: crt0s'
+
+#Linkage. 
+$(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
+	-@echo 'Entering Linking phase'
+	$(CC) $^ $(LDFLAGS)  $(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(LIBPATH)	-L	$(TARGET_LIBRARY_PATH)/	$(LIBRARIES)	-o $@
+	-@echo 'Leaving Linking phase. Output: $@'
+
+#keep only binary sections from elf. --only-section
+$(BINSTRIP_RULE_9): $(OBJPROG)
+	-@echo 'Binary-only strip start'
+	$(OBJCOPY) 	-O binary	$<	$@
+	-@echo 'Binary-only strip finish: $<	->	$@'
+
+################################################################################################
+
 clean:
-	@echo clean ...
-	@rm -fr $(BUILD) *.elf *.nds* *.bin 
- 
- 
-#---------------------------------------------------------------------------------
-else
- 
-#---------------------------------------------------------------------------------
-# main targets
-#---------------------------------------------------------------------------------
-$(ARM9ELF)	:	$(OFILES)
-	@echo linking $(notdir $@)
-	@$(LD)  $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
-
-#---------------------------------------------------------------------------------
-# you need a rule like this for each extension you use as binary data 
-#---------------------------------------------------------------------------------
-%.bin.o	:	%.bin
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	@$(bin2o)
-
--include $(DEPSDIR)/*.d
- 
-#---------------------------------------------------------------------------------------
-endif
-#---------------------------------------------------------------------------------------
+	-@echo 'cleanup $(DIR_ARM9)'
+	-@rm -fr $(OBJDIR)	$(BINSTRIP_RULE_9)	$(MAPFILE)

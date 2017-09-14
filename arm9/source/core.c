@@ -1,4 +1,4 @@
-/***********************************************************/
+//***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
 /* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
@@ -15,8 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include <nds.h>
-#include <nds/memory.h>
+#include "core.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,21 +29,81 @@ GNU General Public License for more details.
 #include <allegro.h>
 #endif
 
-#include "apu.h"
-#include "snes.h"
-#include "gfx.h"
+#include <string.h>
+#include <stdlib.h>
 #include "cfg.h"
+#include "gfx.h"
+#include "core.h"
+#include "engine.h"
+#include "apu.h"
 #include "ppu.h"
-#include "common_shared.h"
+#include "main.h"
+#include "conf.h"
+#include "fs.h"
+#include "memmap.h"
+#include "crc32.h"
+#include "gui.h"
+#include "apu_jukebox.h"
+#include "specific_shared.h"
 
 //#include "superfx.h"
 //#include "sfxinst.h"
 
-IN_DTCM
+#include "dma.h"
+#include "bios.h"
+#include "console.h"
+
+//wnifilib: multiplayer
+#include "http_utils.h"
+#include "client_http_handler.h"
+#include "nifi.h"
+#include "multi.h"
+
+//Snes Hardware
+struct s_snes	SNES;
+struct s_cpu	CPU;
+struct s_snescore	SNESC;
+struct s_gfx	GFX;
+struct s_cfg	CFG;
+volatile uint8 snes_ram_bsram[0x20000+0x6000];    //128K SNES RAM + 8K (Big) SNES SRAM
+volatile uint8 snes_vram[0x010000];
+
+__attribute__((section(".dtcm")))
+uint8 * rom_page = (uint8*)&rom_buffer[ROM_STATIC_SIZE*1];        //second slot of rombuffer
+
+volatile uint8 rom_buffer[ROM_MAX_SIZE];
+
+
+
+
+__attribute__((section(".dtcm")))
+int _offsetY_tab[4] = { 16, 0, 32, 24 };
+__attribute__((section(".dtcm")))
+uint32 screen_mode;
+__attribute__((section(".dtcm")))
+int APU_MAX = 262;
+__attribute__((section(".dtcm")))
+uint32 keys = 0;
+
+__attribute__((section(".dtcm")))
 int	SPC700_emu;
 
+
+//proper calls to write to vram from ARM9
+void fillMemory( void * addr, uint32 count, uint32 value )
+{
+	swiFastCopy( (uint32*)(&value), (uint32*)addr, (count>>2) | COPY_FIXED_SOURCE);
+}
+
+void zeroMemory( void * addr, uint32 count ) 
+{
+	fillMemory( addr, count, 0 );
+}
+
+
+
 // A OPTIMISER
-IN_ITCM
+__attribute__((section(".itcm")))
 int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 {
 	int i;
@@ -112,6 +171,7 @@ int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 	return offs+len;
 }
 
+__attribute__((section(".itcm")))
 void DMA_transfert(uchar port)
 {
   uint		tmp;
@@ -120,7 +180,10 @@ void DMA_transfert(uchar port)
   uint		DMA_len;
   uchar		DMA_bank, DMA_info;
 
-  START_PROFILE(DMA, 4);
+#ifdef SNEMUL_LOGGING
+START_PROFILE(DMA, 4);
+#endif
+  
   DMA_address = CPU.DMA_PORT[0x102+port*0x10]+(CPU.DMA_PORT[0x103+port*0x10]<<8);
   DMA_bank = CPU.DMA_PORT[0x104+port*0x10];
   DMA_len = CPU.DMA_PORT[0x105+port*0x10]+(CPU.DMA_PORT[0x106+port*0x10]<<8);
@@ -189,23 +252,27 @@ void DMA_transfert(uchar port)
   CPU.DMA_PORT[0x106+port*0x10] = CPU.DMA_PORT[0x105+port*0x10] = 0;
   CPU.DMA_PORT[0x102+port*0x10] = DMA_address&0xff;
   CPU.DMA_PORT[0x103+port*0x10] = DMA_address>>8;
+  #ifdef SNEMUL_LOGGING
   END_PROFILE(DMA, 4);
+  #endif
 }
 
-
-void		HDMA_transfert(unsigned char port)
+__attribute__((section(".itcm")))
+void		HDMA_transfert(uint8 port)
 {
   uint		len;
   uchar		*ptr, *ptr2, repeat;
   ushort	tmp=0;
 
+#ifdef SNEMUL_LOGGING
   START_PROFILE(DMA, 4);
+#endif
   SNES.HDMA_nblines[port] = 0;
   ptr = map_memory((CPU.DMA_PORT[0x102+port*0x10])+(CPU.DMA_PORT[0x103+port*0x10]<<8),
                     CPU.DMA_PORT[0x104+port*0x10]);
 
   if (!ptr) {
-/*    iprintf(" (invalid memory access during a H-DMA transfert : %06X)",
+/*    printf(" (invalid memory access during a H-DMA transfert : %06X)",
       CPU.DMA_PORT[0x102+port*0x10]+(CPU.DMA_PORT[0x103+port*0x10]<<8)+
       (CPU.DMA_PORT[0x104+port*0x10]<<16));*/
       return;
@@ -276,7 +343,9 @@ void		HDMA_transfert(unsigned char port)
 
   SNES.HDMA_nblines[port] = MIN(GFX.ScreenHeight, tmp);
   SNES.HDMA_line = 0;
+  #ifdef SNEMUL_LOGGING
   END_PROFILE(DMA, 4);
+  #endif
 }
 
 /* ============================ I/O registers ========================== */
@@ -306,9 +375,9 @@ void	IONOP_DMA_WRITE(uint32 addr, uint32 byte)
 
 void	W4016(uint32 addr, uint32 value)
 {
-    			 if ((value&1) && !(SNES.JOY_PORT16&1))
+    			 if ((value&1) && !(SNES.JOY_PORT16&1))	//dummy value:
     			   {
-                     SNES.Joy1_cnt = 0;
+                     SNES.Joy1_cnt = 0;	//start writing joypad dma port
                    }
                  SNES.JOY_PORT16 = value;
 }
@@ -386,25 +455,35 @@ void	W420C(uint32 addr, uint32 value)
 }                 
                  
 
+//JOY1
 uint32	R4016(uint32 addr)
 {
-         uchar tmp;
 
-         if (SNES.JOY_PORT16&1)
-         {
-         	SNES.mouse_speed++;
-         	if (SNES.mouse_speed == 3)
-         		SNES.mouse_speed = 0;;
-           return 0;
-         }
-         tmp = SNES.joypads[0]>>(SNES.Joy1_cnt^15);
-         SNES.Joy1_cnt++;
-         return (tmp&1);
+	if (SNES.JOY_PORT16&1)
+	{
+		SNES.mouse_speed++;
+		if (SNES.mouse_speed == 3)
+			SNES.mouse_speed = 0;;
+		return 0;
+	}
+
+	//get current joypad 1 bit. backwards
+	/*	
+	//ori
+	uchar tmp = SNES.joypads[0]>>(SNES.Joy1_cnt^15);
+	SNES.Joy1_cnt++;
+	*/
+	
+	uchar tmp = plykeys1 >> (SNES.Joy1_cnt^15);	//read either physical dma port joypads or acknowledge
+	SNES.Joy1_cnt++;
+	
+	return (tmp&1);
 }
 
+//JOY2 multi
 uint32	R4017(uint32 addr)
 {
-      return 0x00;
+	return 0x00;
 }
 
 uint32	R4210(uint32 addr)
@@ -592,7 +671,7 @@ uint32	R2140(uint32 addr)
 //	LOG("0 %02x (%04x, %04x)\n", PORT_SPC_TO_SNES[0], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
       if (!CFG.Sound_output)
       { /* APU Skipper */
-        switch ((MyIPC->skipper_cnt1++)%11) {
+        switch ((SpecificIPC->skipper_cnt1++)%11) {
           case 0: return CPU.PPU_PORT[0x40];
           case 1: return REAL_A;                                
           case 2: return X;
@@ -638,7 +717,7 @@ uint32	R2141(uint32 addr)
 	
       if (!CFG.Sound_output)
       { /* APU Skipper */
-        switch ((MyIPC->skipper_cnt2++)%13) {
+        switch ((SpecificIPC->skipper_cnt2++)%13) {
           case 0: return CPU.PPU_PORT[0x41];
           case 1: return REAL_A;
           case 2: return X;
@@ -661,7 +740,7 @@ uint32	R2142(uint32 addr)
 {
       if (!CFG.Sound_output)
 	  {
-        switch ((MyIPC->skipper_cnt3++)%7) {
+        switch ((SpecificIPC->skipper_cnt3++)%7) {
           case 0: return CPU.PPU_PORT[0x42];
           case 1: return REAL_A;
           case 2: return X;
@@ -678,7 +757,7 @@ uint32	R2143(uint32 addr)
 {     
       if (!CFG.Sound_output)
 	  {
-        switch((MyIPC->skipper_cnt4++) % 9) {
+        switch((SpecificIPC->skipper_cnt4++) % 9) {
           case 0: return CPU.PPU_PORT[0x43];
           case 1: return REAL_A;
           case 2: return X;
@@ -1140,8 +1219,8 @@ void	W2133(uint32 addr, uint32 value)
          CPU.PPU_PORT[0x33] = value;
 }
 
-
-static volatile uint32 dummy;	
+//cycle wasting sleep mode. todo: sleep between the DS frequency AND the SNES FREQ (
+volatile uint32 dummy;	
 void	pseudoSleep(int d)
 {
 	int i;
@@ -1158,22 +1237,24 @@ void	W2140(uint32 addr, uint32 value)
     if (CFG.Sound_output)
     {    	
 //   		LOG("0<-%02x\n", value); 
-    	if (CFG.SoundPortSync & 0x10)
+    	if (CFG.SoundPortSync & 0x10){
     		pseudoSleep(SYNC_TIME);
+		}
 		if (CFG.SoundPortSync & 1)
 		{
-			if (MyIPC->APU_ADDR_BLKP[0])
+			if (SpecificIPC->APU_ADDR_BLKP[0])
 			{
-				while (MyIPC->APU_ADDR_BLKP[0]);
+				while (SpecificIPC->APU_ADDR_BLKP[0]);
 			}
 		}    	
     	PORT_SNES_TO_SPC[0] = value;
     	
 		if ((CFG.SoundPortSync & 1) && value) 
-			MyIPC->APU_ADDR_BLKP[0] = 1;    	
+			SpecificIPC->APU_ADDR_BLKP[0] = 1;    	
     }
-    else
-        CPU.PPU_PORT[0x40] = value; 
+    else{
+        CPU.PPU_PORT[0x40] = value;
+	}
 }
 
 //
@@ -1182,22 +1263,25 @@ void	W2141(uint32 addr, uint32 value)
     if (CFG.Sound_output)
     {
     	//LOG("1<-%02x\n", value);    	
-    	if (CFG.SoundPortSync & 0x20)
+    	if (CFG.SoundPortSync & 0x20){
     		pseudoSleep(SYNC_TIME);
+		}
 		if (CFG.SoundPortSync & 2)
 		{
-			if (MyIPC->APU_ADDR_BLKP[1])
+			if (SpecificIPC->APU_ADDR_BLKP[1])
 			{
-				while (MyIPC->APU_ADDR_BLKP[1]);
+				while (SpecificIPC->APU_ADDR_BLKP[1]);
 			}
 		}
     	PORT_SNES_TO_SPC[1] = value;
     	
-		if ((CFG.SoundPortSync & 2) && value) 
-			MyIPC->APU_ADDR_BLKP[1] = 1;			    	
+		if ((CFG.SoundPortSync & 2) && value){
+			SpecificIPC->APU_ADDR_BLKP[1] = 1;
+		}
     }
-    else
+    else{
         CPU.PPU_PORT[0x41] = value;
+	}
 }
 
 //
@@ -1206,23 +1290,25 @@ void	W2142(uint32 addr, uint32 value)
     if (CFG.Sound_output)
     {    
 //    	LOG("2<-%02x\n", value);    	
-    	if (CFG.SoundPortSync & 0x40)
-    		pseudoSleep(SYNC_TIME);    	
+    	if (CFG.SoundPortSync & 0x40){
+    		pseudoSleep(SYNC_TIME);
+		}
 		if (CFG.SoundPortSync & 4)
 		{
-			if (MyIPC->APU_ADDR_BLKP[2])
+			if (SpecificIPC->APU_ADDR_BLKP[2])
 			{
-				while (MyIPC->APU_ADDR_BLKP[2]);
+				while (SpecificIPC->APU_ADDR_BLKP[2]);
 			}
 		}
 
     	PORT_SNES_TO_SPC[2] = value;
     	
 		if ((CFG.SoundPortSync & 4) && value) 
-			MyIPC->APU_ADDR_BLKP[2] = 1;			    	
+			SpecificIPC->APU_ADDR_BLKP[2] = 1;			    	
     }
-    else
-        CPU.PPU_PORT[0x42] = value;    	     
+    else{
+        CPU.PPU_PORT[0x42] = value;
+	}
 }
 
 //
@@ -1231,23 +1317,26 @@ void	W2143(uint32 addr, uint32 value)
     if (CFG.Sound_output)
     {  
 //    	LOG("3<-%02x\n", value);    	
-    	if (CFG.SoundPortSync & 0x80)
-    		pseudoSleep(SYNC_TIME);    	
+    	if (CFG.SoundPortSync & 0x80){
+    		pseudoSleep(SYNC_TIME);
+		}
 		if (CFG.SoundPortSync & 8)
 		{	
-			if (MyIPC->APU_ADDR_BLKP[3])
+			if (SpecificIPC->APU_ADDR_BLKP[3])
 			{
-				while (MyIPC->APU_ADDR_BLKP[3]);
+				while (SpecificIPC->APU_ADDR_BLKP[3]);
 			}
 		}
 
     	PORT_SNES_TO_SPC[3] = value;
    	
-		if ((CFG.SoundPortSync & 8) && value) 
-			MyIPC->APU_ADDR_BLKP[3] = 1;			    	
+		if ((CFG.SoundPortSync & 8) && value){
+			SpecificIPC->APU_ADDR_BLKP[3] = 1;
+		}
     }
-    else
+    else{
         CPU.PPU_PORT[0x43] = value; 
+	}
 }
 
 
@@ -1257,7 +1346,9 @@ void	W2180(uint32 addr, uint32 value)
       CPU.PPU_PORT[0x81] = (CPU.PPU_PORT[0x81]+1)&0xff;
       if (!CPU.PPU_PORT[0x81]) {
         CPU.PPU_PORT[0x82] = (CPU.PPU_PORT[0x82]+1)&0xff;
-        if (!CPU.PPU_PORT[0x82]) CPU.PPU_PORT[0x83]++;
+        if (!CPU.PPU_PORT[0x82]){
+			CPU.PPU_PORT[0x83]++;
+		}
       }
 }
 
@@ -1300,28 +1391,29 @@ void	WW2114(uint32 addr, uint32 value) {
 //         GFX.tiles_ry[3] = 8; return;
 }
 void	WW2122(uint32 addr, uint32 value) {
-     if (CPU.PPU_PORT[0x21] == 0x200) CPU.PPU_PORT[0x21]=0;
-     uint16	p;
-     GFX.CG_RAM_mem_temp = value;
-     p = GFX.CG_RAM_mem_temp & 0x7FFF;
-     if (p != GFX.SNESPal[CPU.PPU_PORT[0x21]/2]) {
-       GFX.SNESPal[CPU.PPU_PORT[0x21]/2] = p;
-       GFX.new_color |= 1; GFX.new_colors[CPU.PPU_PORT[0x21]/2] = 1;
-       if ((CPU.PPU_PORT[0x21] >> 1) != 0)
-	   		PPU_setPalette(CPU.PPU_PORT[0x21] >> 1, p);
-     }
-     CPU.PPU_PORT[0x21]+=2;
+	if (CPU.PPU_PORT[0x21] == 0x200){
+		CPU.PPU_PORT[0x21]=0;
+	}
+	uint16	p;
+	GFX.CG_RAM_mem_temp = value;
+	p = GFX.CG_RAM_mem_temp & 0x7FFF;
+	if (p != GFX.SNESPal[CPU.PPU_PORT[0x21]/2]) {
+		GFX.SNESPal[CPU.PPU_PORT[0x21]/2] = p;
+		GFX.new_color |= 1; GFX.new_colors[CPU.PPU_PORT[0x21]/2] = 1;
+		if ((CPU.PPU_PORT[0x21] >> 1) != 0){
+			PPU_setPalette(CPU.PPU_PORT[0x21] >> 1, p);
+		}
+	}
+	CPU.PPU_PORT[0x21]+=2;
 }
 
-typedef void (*IOWriteFunc)(uint32 addr, uint32 byte);
-typedef uint32 (*IOReadFunc)(uint32 addr);
-
+//ReadWrite mapped table
 /*
 	00		01		02		03		04		05		06		07
 	08		09		0A		0B		0C		0D		0E		0F */
 
 #define NOP IONOP_PPU_WRITE
-IN_DTCM
+__attribute__((section(".dtcm")))
 IOWriteFunc	IOWrite_PPU[0x90] =
 { 
   W2100,  W2101,  W2102,  W2103,  W2104,  W2105,    NOP,  W2107,	/* 2100 */		
@@ -1347,7 +1439,7 @@ IOWriteFunc	IOWrite_PPU[0x90] =
 /*
 	00		01		02		03		04		05		06		07
 	08		09		0A		0B		0C		0D		0E		0F */
-IN_DTCM
+__attribute__((section(".dtcm")))
 IOWriteFunc	IOWriteWord_PPU[0x90] =
 { 
   W2100,  W2101,  W2102,  W2103,  W2104,  W2105,    NOP,  W2107,	/* 2100 */		
@@ -1376,7 +1468,7 @@ IOWriteFunc	IOWriteWord_PPU[0x90] =
 	08		09		0A		0B		0C		0D		0E		0F */
 
 #define NOP IONOP_PPU_READ
-IN_DTCM
+__attribute__((section(".dtcm")))
 IOReadFunc	IORead_PPU[0x90] =
 { 
   	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	/* 2100 */		
@@ -1405,7 +1497,7 @@ IOReadFunc	IORead_PPU[0x90] =
 	08		09		0A		0B		0C		0D		0E		0F */
 
 #define NOP IONOP_DMA_WRITE
-IN_DTCM
+__attribute__((section(".dtcm")))
 IOWriteFunc	IOWrite_DMA[0x20] =
 { 
   W4200,    NOP,    NOP,  W4203,    NOP,    NOP,  W4206,  W4207,	/* 4200 */		
@@ -1416,7 +1508,7 @@ IOWriteFunc	IOWrite_DMA[0x20] =
 #undef NOP
 
 #define NOP IONOP_DMA_READ
-IN_DTCM
+__attribute__((section(".dtcm")))
 IOReadFunc	IORead_DMA[0x20] =
 { 
     NOP,    NOP,    NOP,    NOP,    NOP,    NOP,    NOP,    NOP,	/* 4200 */		
@@ -1426,14 +1518,14 @@ IOReadFunc	IORead_DMA[0x20] =
 };
 #undef NOP
 
-IN_ITCM
+__attribute__((section(".itcm")))
 void	PPU_port_write(uint32 address, uint8 byte)
 {
 	if (address >= 0x2100 && address < 0x2190)
 		IOWrite_PPU[address-0x2100](address-0x2100, byte);
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uint8	PPU_port_read(uint32 address)
 {
 	if (address >= 0x2100 && address < 0x2190)
@@ -1441,6 +1533,7 @@ uint8	PPU_port_read(uint32 address)
 	return 0;
 }
 
+__attribute__((section(".itcm")))
 void	DMA_port_write(uint32 address, uint8 byte)
 {
 	if (address >= 0x4200)
@@ -1460,7 +1553,7 @@ void	DMA_port_write(uint32 address, uint8 byte)
 				
 }
 
-IN_ITCM
+__attribute__((section(".itcm")))
 uint8	DMA_port_read(uint32 address)
 {
 	if (address >= 0x4200)
@@ -1535,7 +1628,7 @@ uint8	DMA_port_read(uint32 address)
 2105 : bg mode
  */ 
 
-IN_ITCM
+//__attribute__((section(".itcm")))	//at itcm causes segfaults or glitches
 void HDMA_write_port(uchar port, uint8 *data)
 {
   uint32 	PPUport = SNES.HDMA_port[port];
@@ -1571,6 +1664,7 @@ void HDMA_write_port(uchar port, uint8 *data)
   }
 }
 
+__attribute__((section(".itcm")))
 void	HDMA_write()
 {
 	int		HDMASel = CPU.DMA_PORT[0x0C];
@@ -1621,78 +1715,73 @@ void	HDMA_write()
     }
 }*/
 
-void	read_joypads()
-{
-  SNES.joypads[0] = 0;
-  if (CFG.joypad_disabled)
-    return;
-
-  SNES.joypads[0] = get_joypad();
-  SNES.joypads[0] |= 0x80000000;
-}
-
 void	read_mouse()
 {
   int	tmp;
     
 /*  if (SNES.Controller == SNES_MOUSE)
     {*/
-      int delta_x, delta_y;
+	int delta_x, delta_y;
 
-      tmp = 0x1|(SNES.mouse_speed<<4)|
-            ((SNES.mouse_b&1)<<6)|((SNES.mouse_b&2)<<6);
-      delta_x = SNES.mouse_x-SNES.prev_mouse_x;
-      delta_y = SNES.mouse_y-SNES.prev_mouse_y;
-      
-      if (delta_x || delta_y)
-            LOG("%x %x\n", delta_x, delta_y);   
+	tmp = 0x1|(SNES.mouse_speed<<4)| ((SNES.mouse_b&1)<<6)|((SNES.mouse_b&2)<<6);
+	delta_x = SNES.mouse_x-SNES.prev_mouse_x;
+	delta_y = SNES.mouse_y-SNES.prev_mouse_y;
 
-      if (delta_x > 63)
-	{
-	  delta_x = 63;
-          SNES.prev_mouse_x += 63;
+	if (delta_x || delta_y){
+		//LOG("%x %x\n", delta_x, delta_y);   
 	}
-      else
-	if (delta_x < -63)
-	  {
-	    delta_x = -63;
-	    SNES.prev_mouse_x -= 63;
-  	  }
-	else
-	    SNES.prev_mouse_x = SNES.mouse_x;
-
+	if (delta_x > 63)
+	{
+		delta_x = 63;
+		SNES.prev_mouse_x += 63;
+	}
+	else{
+		if (delta_x < -63)
+		{
+			delta_x = -63;
+			SNES.prev_mouse_x -= 63;
+		}
+		else{
+			SNES.prev_mouse_x = SNES.mouse_x;
+		}
+	}
 	if (delta_y > 63)
-	  {
-	    delta_y = 63;
-	    SNES.prev_mouse_y += 63;
-	  }
+	{
+		delta_y = 63;
+		SNES.prev_mouse_y += 63;
+	}
 	else
-	if (delta_y < -63)
-	  {
-	    delta_y = -63;
-	    SNES.prev_mouse_y -= 63;
-	  }
-	else
-	  SNES.prev_mouse_y = SNES.mouse_y;
+	{
+		if (delta_y < -63)
+		{
+			delta_y = -63;
+			SNES.prev_mouse_y -= 63;
+		}
+		else{
+			SNES.prev_mouse_y = SNES.mouse_y;
+		}
+	}
 
 	if (delta_x < 0)
-	  {
-	    delta_x = -delta_x;
-	    tmp |= (delta_x | 0x80) << 16;
-	  }
-	else
-	  tmp |= delta_x << 16;
+	{
+		delta_x = -delta_x;
+		tmp |= (delta_x | 0x80) << 16;
+	}
+	else{
+		tmp |= delta_x << 16;
+	}
 
 	if (delta_y < 0)
-	  {
-	    delta_y = -delta_y;
-	    tmp |= (delta_y | 0x80) << 24;
-	  }
-	else
-	  tmp |= delta_y << 24;
-
-	SNES.joypads[0] = tmp;
-/*    }*/
+	{
+		delta_y = -delta_y;
+		tmp |= (delta_y | 0x80) << 24;
+	}
+	else{
+		tmp |= delta_y << 24;
+	}
+	//ori
+	//SNES.joypads[0] = tmp;
+	write_joypad1(tmp);	//could break mouse emulation
 }
 
 void read_scope()
@@ -1702,52 +1791,36 @@ void read_scope()
     uint scope;
 
     if ((buttons = SNES.mouse_b))
-      {
+    {
         x = SNES.mouse_x;
         y = SNES.mouse_y;
 
-	scope = 0x00FF | ((buttons & 1) << (7 + 8)) |
-		((buttons & 2) << (5 + 8)) | ((buttons & 4) << (3 + 8)) |
-		((buttons & 8) << (1 + 8));
-	if (x > 255)
-	    x = 255;
-	if (x < 0)
-	    x = 0;
-	if (y > GFX.ScreenHeight - 1)
-	    y = GFX.ScreenHeight - 1;
-	if (y < 0)
-	    y = 0;
+		scope = 0x00FF | ((buttons & 1) << (7 + 8)) |	((buttons & 2) << (5 + 8)) | ((buttons & 4) << (3 + 8)) | ((buttons & 8) << (1 + 8));
+		if (x > 255)
+			x = 255;
+		if (x < 0)
+			x = 0;
+		if (y > GFX.ScreenHeight - 1)
+			y = GFX.ScreenHeight - 1;
+		if (y < 0)
+			y = 0;
 
         CPU.PPU_PORT[0x3C] = x;
         CPU.PPU_PORT[0x3C] = (CPU.PPU_PORT[0x3C]>>8) | (CPU.PPU_PORT[0x3C]<<8);
         CPU.PPU_PORT[0x3D] = y+1;
         CPU.PPU_PORT[0x3D] = (CPU.PPU_PORT[0x3D]>>8) | (CPU.PPU_PORT[0x3D]<<8);
 
-	CPU.PPU_PORT[0x3F] |= 0x40;
-	SNES.joypads[1] = scope;
-    }
+		CPU.PPU_PORT[0x3F] |= 0x40;
+	
+		//ori: SNES.joypads[1] = scope;
+		write_joypad2(scope);	//could break scope emulation
+	}
 }
 
 void	update_joypads()
 {
-//  read_joypads();	
-  int joypad = get_joypad();
-//      read_joypads();
-  SNES.joypads[0] = joypad;
-  SNES.joypads[0] |= 0x80000000;
-  if (CFG.mouse)
-    read_mouse();
-  if (CFG.scope)
-  	read_scope();
-
-  if (CPU.DMA_PORT[0x00]&1)
-    {
-  	  SNES.Joy1_cnt = 16;    	
-      CPU.DMA_PORT[0x18] = SNES.joypads[0];
-      CPU.DMA_PORT[0x19] = SNES.joypads[0]>>8;
-      CPU.DMA_PORT[0x1A] = SNES.joypads[1];
-      CPU.DMA_PORT[0x1B] = SNES.joypads[1]>>8;
-    }
+	//Coto: new single/multiplayer code
+	do_multi();
 }
 
 void SNES_update()
@@ -1772,7 +1845,7 @@ void SNES_update()
   GFX.map_slot[3] = (CPU.PPU_PORT[0x0A]&0x7C)>>2;
 }
 
-
+//at itcm causes segfaults or glitches
 void GoNMI()
 {
 #ifndef ASM_OPCODES	
@@ -1805,6 +1878,7 @@ void GoNMI()
 
 }
 
+//at itcm causes segfaults or glitches
 void GoIRQ()
 {
 #ifndef ASM_OPCODES	
@@ -1847,6 +1921,7 @@ void GoIRQ()
 //what does irqactive?
 //this: if( irqactive >0 -> S9xOpcode_IRQ)
 
+//at itcm causes segfaults or glitches
 //Raise SNES IRQs
 void setirq(uint32 irqs_to_set){
     
@@ -1856,6 +1931,7 @@ void setirq(uint32 irqs_to_set){
     CHECK_FOR_IRQ();
 }
 
+//at itcm causes segfaults or glitches
 //Continues to clear (acknowledge) irqs until IRQ_PENDING_FLAG is unset
 void clear_irq_source (uint32 M)
 {
@@ -1865,7 +1941,8 @@ void clear_irq_source (uint32 M)
         CPU.cpuflags &= ~IRQ_PENDING_FLAG;
 }
 
-//should be called instead goIRQ directly for NDS HBLANK periods, AND timed sync events. also clears interrupts
+//at itcm causes segfaults or glitches
+//should be called instead goIRQ directly for NDS HBLANK periods, AND timed sync events. also clears interrupts__attribute__((section(".itcm")))
 void CHECK_FOR_IRQ(){
 
     if(CPU.irqactive & PPU_H_BEAM_IRQ_SOURCE){

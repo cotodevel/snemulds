@@ -186,9 +186,8 @@ GNU General Public License for more details.
 
 .macro CacheMemoryMap
 /*
-	@ori: stmfd sp!, {r3}
-	stmfd sp!, {r3,r4,r5,r6,r7}
-	
+	stmfd sp!, {r3}
+
     and     r0, SnesDBR, #0xff
     add     r1, SnesMemMap, r0, lsl #5		@ Source address
     ldr     r2, =MapCache			@ Dest address
@@ -198,26 +197,15 @@ GNU General Public License for more details.
     str     r3, [r0]
 
 	mov r3, #8						@ Copy 16 words
-
-@ ori:
-@1:
-@	ldr r0, [r1], #4
-@	str r0, [r2], #4
-@	ldr r0, [r1], #4
-@	str r0, [r2], #4
-@	subs r3, r3, #1
-@	bne 1b
-
-@	ldmfd sp!, {r3}
-
-@coto
 1:
-	ldmia r1!,{r4,r5,r6,r7}
-	stmia r2!,{r4,r5,r6,r7}
-	subs r3, r3, #2
+	ldr r0, [r1], #4
+	str r0, [r2], #4
+	ldr r0, [r1], #4
+	str r0, [r2], #4
+	subs r3, r3, #1
 	bne 1b
 
-	ldmfd sp!, {r3,r4,r5,r6,r7}
+	ldmfd sp!, {r3}
 */	
 .endm
 
@@ -2764,4 +2752,3 @@ SBCD_m1:
 .macro EndExecute
     b       Fetch
 .endm
-

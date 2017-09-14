@@ -1,27 +1,25 @@
-#include <nds/memory.h>
-#include <nds.h>
 #include <string.h>
 #include "pocketspc.h"
 #include "apu.h"
 #include "apumisc.h"
-#include "common_shared.h"
+#include "specific_shared.h"
 
 // archeide: shared structure with SNEmul
 
-u8 apuShowRom;
+uint8 apuShowRom;
 
-void ApuWriteControlByte(u8 byte) {
-    u8 orig = APU_MEM[APU_CONTROL_REG];
+void ApuWriteControlByte(uint8 byte) {
+    uint8 orig = APU_MEM[APU_CONTROL_REG];
     if ((orig & 0x1) == 0 && (byte & 0x1) != 0) {
-        MyIPC->TIM0 = 0;
+        SpecificIPC->TIM0 = 0;
         APU_MEM[APU_COUNTER0] = 0;
 	}
     if ((orig & 0x2) == 0 && (byte & 0x2) != 0) {
-        MyIPC->TIM1 = 0;    	
+        SpecificIPC->TIM1 = 0;    	
         APU_MEM[APU_COUNTER1] = 0;
 	}
     if ((orig & 0x4) == 0 && (byte & 0x4) != 0) {
-        MyIPC->TIM2 = 0;    	
+        SpecificIPC->TIM2 = 0;    	
         APU_MEM[APU_COUNTER2] = 0;
 	}
 
@@ -70,9 +68,9 @@ void ApuPrepareStateAfterReload() {
     for (i = 0; i < 4; i++) PORT_SNES_TO_SPC[i] = APU_MEM[0xF4 + i];
 
 	// archeide
-	MyIPC->TIM0 = 0;
-	MyIPC->TIM1 = 0;
-	MyIPC->TIM2 = 0;	
+	SpecificIPC->TIM0 = 0;
+	SpecificIPC->TIM1 = 0;
+	SpecificIPC->TIM2 = 0;	
 
 	apuShowRom = APU_MEM[APU_CONTROL_REG] >> 7;
     if (apuShowRom) {
@@ -86,7 +84,7 @@ void ApuPrepareStateAfterReload() {
 }
 
 
-void ApuWriteUpperByte(u8 byte, u32 address) {
+void ApuWriteUpperByte(uint8 byte, uint32 address) {
     APU_EXTRA_MEM[address - 0xFFC0] = byte;
 
     if (apuShowRom)

@@ -1,4 +1,8 @@
-char*  g_snemulds_str_pol[] =
+#include "typedefs.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+sint8*  g_snemulds_str_pol[] =
 {
       "Inicjowanie FS...\n",         /* 0 */
       "Blad FS, kontynuuj mimo to...\n",            /* 1 */
@@ -34,8 +38,8 @@ char*  g_snemulds_str_pol[] =
       "Dzwiek wlaczony",            /* 30 */
       "Dzwiek wylaczony",            /* 31 */
       "Predkosc:",                  /* 32 */
-      "Normalna predkosc",               /* 33 */
-      "Szybka predkosc",               /* 34 */
+      "VBlank enabled (ignored)",					/* 33 */
+	  "VBlank disabled (ignored)",					/* 34 */
       "",                        /* 35 */
       "Opcje wyswietlania",      /* 36 */
       "Opcje tla i sprite'ow",   /* 37 */

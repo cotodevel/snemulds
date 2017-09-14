@@ -18,38 +18,33 @@ GNU General Public License for more details.
 #ifndef FS_H_
 #define FS_H_
 
-#include "diskio.h"
-#include "ff.h"
-
-#endif /*FS_H_*/
+#include "typedefs.h"
+#include "dsregs.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int		FS_init();
-void	FS_printlog(char *buf);
-void	FS_flog(char *fmt, ...);
-int		FS_getFileSize(char *filename);
-int		FS_loadROM(char *ROM, char *filename);
-int		FS_loadROMForPaging(char *ROM, char *filename, int size);
-int		FS_loadROMPage(char *buf, unsigned int pos, int size);
-int	    FS_loadFile(char *filename, char *buf, int size);
-int		FS_loadAllFile(char *filename, char *buf, int *size);
-int		FS_shouldFreeROM();
-int		FS_chdir(const char *path);
+extern int		FS_init();
+extern void	FS_printlog(sint8 *buf);
+extern void	FS_flog(sint8 *fmt, ...);
+extern int		FS_getFileSize(sint8 *filename);
+extern int		FS_loadROM(sint8 *ROM, sint8 *filename);
+extern int		FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size);
+extern int		FS_loadROMPage(sint8 *buf, unsigned int pos, int size);
+extern int		FS_loadAllFile(sint8 *filename, sint8 *buf, int *size);
+extern int		FS_shouldFreeROM();
+extern int		FS_chdir(const sint8 *path);
+extern int		FS_extram_init();
+extern void	FS_lock();
+extern void	FS_unlock();
+extern sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt);
+extern sint8 	*FS_getFileName(sint8 *filename);
 
-int		FS_extram_init();
 
-void	FS_lock();
-void	FS_unlock();
-
-char	**FS_getDirectoryList(char *path, char *mask, int *cnt);
-
-char 	*FS_getFileName(char *filename);
-
-extern FIL GLOBAL_FHANDLER;
 #ifdef __cplusplus
 }
 #endif
 
+
+#endif /*FS_H_*/

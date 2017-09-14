@@ -1,7 +1,11 @@
-#include <nds.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
+
+#include "typedefs.h"
+#include "dsregs.h"
+#include "gui_widgets.h"
+
 #include "common.h"
 #include "gui.h"
 #include "gui_widgets.h"
@@ -145,7 +149,7 @@ int	GUIScrollBar_handler(t_GUIZone *zone, int message, int param, void *arg)
 				if (this->value != value)
 				{
 					this->value = value;					
-					//GUI_printf2(0, 20, "%d %d | %d", value, this->pos); 
+					//printf2(0, 20, "%d %d | %d", value, this->pos); 
 					zone->handler(zone, GUI_DRAW, 0, 0);				
 					GUI_dispatchMessage(GUI.screen, GUI_SCROLLED, this->value, this);
 				}
@@ -163,7 +167,7 @@ int	GUIScrollBar_handler(t_GUIZone *zone, int message, int param, void *arg)
 				value = (pos - this->drag_pos) * this->max / (zone->y2 - zone->y1);
 				if (value < 0 || value > this->max - this->range)
 					return 0;
-//				GUI_printf2(0, 21, "%d %d %d | %d %d", value, this->pos, pos, this->max, this->range);				
+//				printf2(0, 21, "%d %d %d | %d %d", value, this->pos, pos, this->max, this->range);				
 				this->pos = pos;
 				if (this->value != value)
 				{
@@ -263,7 +267,7 @@ int	GUIButton_handler(t_GUIZone *zone, int message, int param, void *arg)
 
 int	GUIStatic_handler(t_GUIZone *zone, int message, int param, void *arg)
 {
-	char *str;
+	sint8 *str;
 	
 	switch (message)
 	{
@@ -288,7 +292,7 @@ int	GUIStaticEx_handler(t_GUIZone *zone, int message, int param, void *arg)
 		int str_arg = ((int)zone->data >> 16) & 0xFF;
 		int flags = ((int)zone->data >> 24) & 0xFF;
 		
-		char buf[64];
+		sint8 buf[64];
 		snprintf(buf, 64, GUI.string[str], str_arg); // FIXME
 		GUI_drawAlignText(zone, flags, (zone->y2-zone->y1)/2, GUI_WHITE, buf);
 		return 1;
@@ -299,7 +303,7 @@ int	GUIStaticEx_handler(t_GUIZone *zone, int message, int param, void *arg)
 
 int	GUIStrButton_handler(t_GUIZone *zone, int message, int param, void *arg)
 {
-	char *str;
+	sint8 *str;
 	
 	switch (message)
 	{
@@ -326,14 +330,14 @@ void GUI_linkStrButton(t_GUIScreen *scr, int nb, int str, int keymask)
 int	GUIChoiceButton_handler(t_GUIZone *zone, int message, int param, void *arg)
 {
 	t_GUIChoiceButton *cb = (t_GUIChoiceButton *)&zone->data;
-	char	*str;
+	sint8	*str;
 
 	switch (message)
 	{
 	case GUI_DRAW:
 		GUIButton_handler(zone, GUI_DRAW, param, arg);
 		
-		//GUI_printf2(0, 5, "%d %d %d", cb->str_index, cb->nb_state, cb->cur_state);
+		//printf2(0, 5, "%d %d %d", cb->str_index, cb->nb_state, cb->cur_state);
 		
 		str = GUI.string[cb->str_index+cb->cur_state];
 
@@ -399,7 +403,7 @@ int	GUIImage_handler(t_GUIZone *zone, int message, int param, void *arg)
 	return 0;
 }
 
-t_GUIScreen	*GUI_newSelector(int nb_items, char **items, int title, t_GUIFont *font)
+t_GUIScreen	*GUI_newSelector(int nb_items, sint8 **items, int title, t_GUIFont *font)
 {
 	t_GUIScreen	*scr_select;
 	
@@ -439,7 +443,7 @@ t_GUIScreen	*GUI_newSelector(int nb_items, char **items, int title, t_GUIFont *f
 	return scr_select;
 }
 
-char *GUISelector_getSelected(t_GUIScreen *scr, int *index) 
+sint8 *GUISelector_getSelected(t_GUIScreen *scr, int *index) 
 {
 	t_GUIList *list = scr->zones[0].data;
 
@@ -475,10 +479,10 @@ t_GUIScreen	*GUI_newList(int nb_items, int max_size, int title, t_GUIFont *font)
 	for (i = 0; i < 5; i++)
 		scr_select->zones[i].font = font;
 	  
-	char **items = malloc(nb_items*sizeof(char *) + nb_items*max_size);
+	sint8 **items = malloc(nb_items*sizeof(sint8 *) + nb_items*max_size);
 	
 	for (i = 0; i < nb_items; i++)
-		items[i] = (char *)items + nb_items*sizeof(char *) + i*max_size;
+		items[i] = (sint8 *)items + nb_items*sizeof(sint8 *) + i*max_size;
 	
 	// List
     t_GUIList *list = malloc(sizeof(t_GUIList));
@@ -497,7 +501,7 @@ t_GUIScreen	*GUI_newList(int nb_items, int max_size, int title, t_GUIFont *font)
 	return scr_select;
 }
 
-void	GUI_setItem(t_GUIScreen *scr, int i, char *s, int max_size)
+void	GUI_setItem(t_GUIScreen *scr, int i, sint8 *s, int max_size)
 {
 	t_GUIList *list = scr->zones[0].data;
 	strncpy(list->items[i], s, max_size);

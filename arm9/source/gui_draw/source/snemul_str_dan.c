@@ -1,4 +1,8 @@
-char*  g_snemulds_str_dan[] = 
+#include "typedefs.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+sint8*  g_snemulds_str_dan[] = 
 {
 		"FS installerer...\n",			/* 0 */
 		"FS fejl, Fortsætter aligevel...\n",				/* 1 */
@@ -34,8 +38,8 @@ char*  g_snemulds_str_dan[] =
 		"Lyd på",				/* 30 */
 		"Lyd fra",				/* 31 */
 		"Hastighed:",						/* 32 */
-		"Normal",					/* 33 */
-		"Hurtigt",					/* 34 */
+		"VBlank enabled (ignored)",					/* 33 */
+		"VBlank disabled (ignored)",					/* 34 */
 		"",								/* 35 */
 		"Skærm indstillinger",		/* 36 */
 		"Baggrunde & Sprites instillinger",	/* 37 */

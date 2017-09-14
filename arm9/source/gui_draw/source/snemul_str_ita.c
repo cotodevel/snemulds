@@ -1,4 +1,8 @@
-char*  g_snemulds_str_ita[] =
+#include "typedefs.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+sint8*  g_snemulds_str_ita[] =
 {
         "Inizializzazione FS...\n",            /* 0 */
         "Fallito, continuo lo stesso...\n",                /* 1 */
@@ -34,8 +38,8 @@ char*  g_snemulds_str_ita[] =
         "Suoni abilitati",                /* 30 */
         "Suoni disabilitati",                /* 31 */
         "Velocita':",                        /* 32 */
-        "Velocita' normale",                    /* 33 */
-        "Maggiore velocita'",                    /* 34 */
+        "VBlank enabled (ignored)",					/* 33 */
+		"VBlank disabled (ignored)",					/* 34 */
         "",                                /* 35 */
         "Opzioni del Layout Schermo",        /* 36 */
         "Opzioni Backgrounds & Sprites",    /* 37 */

@@ -15,50 +15,8 @@
  GNU General Public License for more details.
  */
 
-#include <nds.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <nds/ndstypes.h>
-#include <nds/memory.h>
-#include <fcntl.h>
-
-#include "gui.h"
-
-#include "fs.h"
-#include "snes.h"
-#include "gfx.h"
-#include "cfg.h"
-#include "apu.h"
-
-#include "ram.h"
-
-#include "conf.h"
-#include "snemul_str.h"
-#include "frontend.h"
-#include "main.h"
-
-#include "dldi.h"
-
-
-#include "ppu.h"
-
-#include <string.h>
-#include <nds/dma.h>
-#include <nds/ndstypes.h>
-#include <nds/arm9/sassert.h>
-#include <nds/arm9/video.h>
-#include <nds/arm9/cache.h>
-#include <nds/arm9/trig_lut.h>
-#include <nds/arm9/math.h>
-#include <nds/arm9/dynamicArray.h>
-#include "interrupts.h"
-#include "common_shared.h"
-
-#include <nds.h>
-#include "sys/socket.h"
-#include "netinet/in.h"
+#include "socket.h"
+#include "in.h"
 #include <netdb.h>
 #include <ctype.h>
 #include <stdarg.h>
@@ -69,506 +27,66 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <dirent.h>
+#include <fcntl.h>
+
+#include "gui.h"
+#include "fs.h"
+#include "gfx.h"
+#include "cfg.h"
+#include "apu.h"
+#include "ram.h"
+#include "conf.h"
+#include "snemul_str.h"
+#include "frontend.h"
+#include "main.h"
+#include "dldi.h"
+#include "ppu.h"
+#include "InterruptsARMCores_h.h"
+#include "specific_shared.h"
 #include "ff.h"
-#include <nds/memory.h>
-#include <nds/ndstypes.h>
-#include <nds/memory.h>
-#include <nds/bios.h>
-#include <nds/system.h>
-#include <nds/arm9/math.h>
-#include <nds/arm9/video.h>
-#include <nds/arm9/videoGL.h>
-#include <nds/arm9/trig_lut.h>
-#include <nds/arm9/sassert.h>
+#include "mem_handler_shared.h"
+#include "reent.h"
+#include "sys/types.h"
+#include "engine.h"
+#include "core.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+#include "typedefs.h"
+#include "console.h"
+#include "api_wrapper.h"
+#include "apu_jukebox.h"
+#include "toolchain_utils.h"
+#include "about.h"
 
-#include "touch_ipc.h"
+//wnifilib: multiplayer
+#include "http_utils.h"
+#include "client_http_handler.h"
+#include "nifi.h"
 
+#include "devoptab_devices.h"
+#include "fsfat_layer.h"
+#include "usrsettings.h"
 
-IN_DTCM
-int _offsetY_tab[4] = { 16, 0, 32, 24 };
-
-IN_DTCM
-uint32 screen_mode;
-
-IN_DTCM
-int APU_MAX = 262;
-
-IN_DTCM
-u32 keys = 0;
-
-
-void applyOptions()
-{
-	if (!CFG.Sound_output)
-		APU_clear();
-
-	if (CFG.LayersConf < 10)
-		PPU_ChangeLayerConf(CFG.LayersConf);
-
-	GFX.YScroll = _offsetY_tab[CFG.YScroll];
-}
-
-// FIXME: Move me...
-IN_DTCM
-uint8 LayersConf[10][4] =
-{
-{ 0, 1, 2, 3 },
-{ 1, 2, 0, 3 },
-{ 3, 3, 2, 3 },
-{ 3, 3, 3, 3 },
-{ 2, 2, 2, 2 },
-{ 1, 1, 1, 1 },
-{ 0, 0, 0, 0 },
-{ 2, 3, 0, 1 },
-{ 2, 0, 3, 1 },
-{ 2, 1, 0, 3 }, 
-};
-
-void PPU_ChangeLayerConf(int i)
-{
-	CFG.LayersConf = i % 10;
-	CFG.LayerPr[0] = LayersConf[CFG.LayersConf][0];
-	CFG.LayerPr[1] = LayersConf[CFG.LayersConf][1];
-	CFG.LayerPr[2] = LayersConf[CFG.LayersConf][2];
-	CFG.LayerPr[3] = LayersConf[CFG.LayersConf][3];
-}
-
-void readOptionsFromConfig(char *section)
-{
-	CFG.BG3Squish = get_config_int(section, "BG3Squish", CFG.BG3Squish) & 3;
-	// FIXME 
-	GFX.YScroll = get_config_int(section, "YScroll", GFX.YScroll);
-	if (GFX.YScroll == 16)
-		CFG.YScroll = 0;
-	if (GFX.YScroll == 0)
-		CFG.YScroll = 1;
-	if (GFX.YScroll == 32)
-		CFG.YScroll = 2;
-	if (GFX.YScroll == 24)
-		CFG.YScroll = 3;	
-	
-	CFG.Scaled = get_config_int(section, "Scaled", CFG.Scaled);
-	CFG.Sound_output = get_config_int(section, "Sound", CFG.Sound_output) & 1;
-	CFG.BG_Layer = (get_config_int(section, "HDMA", 1)&1) << 7;
-
-	int BG_Layer = get_config_oct(section, "BGLayers", 010111);
-	if ((BG_Layer & 7) == 1)
-		CFG.BG_Layer |= 1;
-	if (((BG_Layer>>3) & 7) == 1)
-		CFG.BG_Layer |= 2;
-	if (((BG_Layer>>6) & 7) == 1)
-		CFG.BG_Layer |= 4;
-	if (((BG_Layer>>9) & 7) == 1)
-		CFG.BG_Layer |= 8;
-	if (((BG_Layer>>12) & 7) == 1)
-		CFG.BG_Layer |= 0x10;
-
-	CFG.LayersConf = get_config_int(section, "BGPriorities", CFG.LayersConf);
-	if (CFG.LayersConf == 10)
-	{
-		int BGManualPriority = get_config_oct(section, "BGManualPriority",
-				00123);
-		CFG.LayerPr[0] = (BGManualPriority) & 3;
-		CFG.LayerPr[1] = (BGManualPriority>>3) & 3;
-		CFG.LayerPr[2] = (BGManualPriority>>6) & 3;
-		CFG.LayerPr[3] = (BGManualPriority>>9) & 3;
-
-		CFG.LayerPr[0] = get_config_int(section, "BG1Pr", CFG.LayerPr[0]) & 3;
-		CFG.LayerPr[1] = get_config_int(section, "BG2Pr", CFG.LayerPr[1]) & 3;
-		CFG.LayerPr[2] = get_config_int(section, "BG3Pr", CFG.LayerPr[2]) & 3;
-		CFG.LayerPr[3] = get_config_int(section, "BG4Pr", CFG.LayerPr[3]) & 3;
-
-	}
-	else
-		PPU_ChangeLayerConf(CFG.LayersConf);
-
-	CFG.Transparency
-			= get_config_int(section, "Transparency", CFG.Transparency);
-	CFG.WaitVBlank = get_config_int(section, "Vblank", CFG.WaitVBlank);
-	CFG.CPU_speedhack
-			= get_config_int(section, "SpeedHacks", CFG.CPU_speedhack);
-	CFG.FastDMA = get_config_int(section, "FastDMA", CFG.FastDMA);
-
-	CFG.MouseXAddr = get_config_hex(section, "MouseXAddr", 0);
-	CFG.MouseYAddr = get_config_hex(section, "MouseYAddr", 0);
-	CFG.MouseMode = get_config_int(section, "MouseMode", 0);
-	CFG.MouseXOffset = get_config_int(section, "MouseXOffset", 0);
-	CFG.MouseYOffset = get_config_int(section, "MouseYOffset", 0);
-
-	CFG.SoundPortSync = 0;
-
-	int SoundPortSync = get_config_oct(section, "SoundPortSync",
-			CFG.SoundPortSync);
-	if ((SoundPortSync & 7) == 1)
-		CFG.SoundPortSync |= 8;
-	if (((SoundPortSync>>3) & 7) == 1)
-		CFG.SoundPortSync |= 4;
-	if (((SoundPortSync>>6) & 7) == 1)
-		CFG.SoundPortSync |= 2;
-	if (((SoundPortSync>>9) & 7) == 1)
-		CFG.SoundPortSync |= 1;
-	if (((SoundPortSync>>12) & 7) == 1)
-		CFG.SoundPortSync |= 0x80;
-	if (((SoundPortSync>>15) & 7) == 1)
-		CFG.SoundPortSync |= 0x40;
-	if (((SoundPortSync>>18) & 7) == 1)
-		CFG.SoundPortSync |= 0x20;
-	if (((SoundPortSync>>21) & 7) == 1)
-		CFG.SoundPortSync |= 0x10;
-
-	CFG.TilePriorityBG = get_config_int(section, "TilePriorityBG",
-			CFG.TilePriorityBG);
-	CFG.BG3TilePriority = get_config_int(section, "BG3TilePriority",
-			CFG.BG3TilePriority);
-	CFG.Debug2 = get_config_int(section, "BlankTileNumber", CFG.Debug2);
-	int SpritePriority = get_config_oct(section, "SpritePriority", 01123);
-	CFG.SpritePr[0] = (SpritePriority) & 3;
-	CFG.SpritePr[1] = (SpritePriority>>3) & 3;
-	CFG.SpritePr[2] = (SpritePriority>>6) & 3;
-	CFG.SpritePr[3] = (SpritePriority>>9) & 3;
-	
-	CFG.MapExtMem = get_config_int(section, "MapExtMem", CFG.MapExtMem);
-	
-	CFG.AutoSRAM = get_config_int(section, "AutoSRAM", CFG.AutoSRAM);
-}
-
-void saveOptionsToConfig(char *section)
-{
-	set_config_int(section, "BG3Squish", CFG.BG3Squish);
-	// FIXME 
-	set_config_int(section, "YScroll", GFX.YScroll);
-	set_config_int(section, "Sound", CFG.Sound_output);
-	
-	set_config_int(section, "Scaled", CFG.Scaled);
-	//	set_config_int(section, "GFXEngine", CFG.TileMode);
-	//	set_config_int(section, "HDMA", CFG.BG_Layer>>7);
-
-	set_config_oct(section, "BGLayers", 5, (CFG.BG_Layer & 1)|((CFG.BG_Layer
-			& 2)<<2)|((CFG.BG_Layer & 4)<<4)|((CFG.BG_Layer & 8)<<6)
-			|((CFG.BG_Layer & 0x10)<<8));
-
-	set_config_int(section, "BGPriorities", CFG.LayersConf);
-
-	//	set_config_int(section, "Transparency", CFG.Transparency);
-	set_config_int(section, "Vblank", CFG.WaitVBlank);
-	set_config_int(section, "SpeedHacks", CFG.CPU_speedhack);
-	//	set_config_int(section, "FastDMA", CFG.FastDMA);
-
-	/*	set_config_hex(section, "MouseXAddr", 0);
-	 set_config_hex(section, "MouseYAddr", 0);
-	 set_config_int(section, "MouseMode", 0);
-	 set_config_int(section, "MouseXOffset", 0);
-	 set_config_int(section, "MouseYOffset", 0);*/
-
-	//	set_config_oct(section, "SoundPortSync", CFG.SoundPortSync);
-
-	/*	set_config_int(section, "TilePriorityBG", CFG.TilePriorityBG);
-	 set_config_int(section, "BG3TilePriority", CFG.BG3TilePriority);
-	 set_config_int(section, "BlankTileNumber", CFG.Debug2);
-	 set_config_oct(section, "SpritePriority", 01123);*/
-	
-	set_config_int(section, "AutoSRAM", CFG.AutoSRAM);
-	save_config_file();
-}
-
-// FIXME : fix layersconf
-
-void packOptions(uint8 *ptr)
-{
-	t_Options *opt = (t_Options *)ptr;
-
-	opt->BG3Squish = CFG.BG3Squish;
-	opt->SoundOutput = CFG.Sound_output;
-	if (CFG.LayersConf == 0)
-		opt->LayersConf = 0x24; // 0/1/2
-	else
-		opt->LayersConf = CFG.LayerPr[0] | (CFG.LayerPr[1] << 2)
-				| (CFG.LayerPr[2] << 4);
-//	opt->TileMode = CFG.TileMode;
-	opt->BG_Layer = CFG.BG_Layer;
-	opt->YScroll = CFG.YScroll;
-	opt->WaitVBlank = CFG.WaitVBlank;
-	opt->SpeedHack = CFG.CPU_speedhack;
-}
-
-void unpackOptions(int version, uint8 *ptr)
-{
-	t_Options *opt = (t_Options *)ptr;
-
-	if (version == 1)
-		CFG.BG3Squish = 2-opt->BG3Squish;
-	else
-		CFG.BG3Squish = opt->BG3Squish;
-	CFG.Sound_output = opt->SoundOutput;
-	if (version == 1)
-		CFG.LayersConf = opt->LayersConf;
-	else
-	{
-		if (opt->LayersConf == 0x24) // 0/1/2 == automatic layer
-		{
-			CFG.LayersConf = 0;
-		}
-		else
-		{
-			CFG.LayersConf = 10;
-			CFG.LayerPr[0] = opt->LayersConf&3;
-			CFG.LayerPr[1] = (opt->LayersConf>>2)&3;
-			CFG.LayerPr[2] = (opt->LayersConf>>4)&3;
-			CFG.LayerPr[3] = 3;
-		}
-	}
-/*	if (version == 1)
-		CFG.TileMode = 0; // Force line by line mode
-	else
-		CFG.TileMode = opt->TileMode;*/
-	CFG.BG_Layer = opt->BG_Layer;
-	CFG.YScroll = opt->YScroll;
-	CFG.WaitVBlank = opt->WaitVBlank;
-	CFG.CPU_speedhack = opt->SpeedHack;
-
-	applyOptions();
-}
-
-int checkConfiguration(char *name, int crc)
-{
-	// Check configuration file
-	readOptionsFromConfig("Global");
-
-	char *section= NULL;
-	if (is_section_exists(SNES.ROM_info.title))
-	{
-		section = SNES.ROM_info.title;
-	}
-	else if (is_section_exists(FS_getFileName(name)))
-	{
-		section = FS_getFileName(name);
-	}
-	else if ((section = find_config_section_with_hex("crc", crc)))
-	{
-	}
-	else if ((section = find_config_section_with_string("title2", SNES.ROM_info.title)))
-	{
-	}
-	else if ((section = find_config_section_with_hex("crc2", crc)))
-	{
-	}
-	else if ((section = find_config_section_with_string("title3", SNES.ROM_info.title)))
-	{
-	}
-	else if ((section = find_config_section_with_hex("crc3", crc)))
-	{
-	}
-	else if ((section = find_config_section_with_string("title4", SNES.ROM_info.title)))
-	{
-	}
-	else if ((section = find_config_section_with_hex("crc4", crc)))
-	{
-	}
-
-	if (section != NULL)
-	{
-		GUI_printf("Section : %s\n", section);
-		readOptionsFromConfig(section);
-	}
-	
-	return 0;
-}
-
-int loadROM(char *name, int confirm)
-{
-	int size;
-	char romname[100];
-	int ROMheader;
-	char *ROM;
-	int crc;
-
-	// Save SRAM of previous game first
-	saveSRAM();
-
-	GUI_clear();
-	/*	if (ROM && FS_shouldFreeROM())
-	 free(ROM);*/
-	CFG.LargeROM = 0;
-	strcpy(romname, CFG.ROMPath);
-	if (CFG.ROMPath[strlen(CFG.ROMPath)-1] != '/')
-		strcat(romname, "/");
-	strcat(romname, name);
-	strcpy(CFG.ROMFile, romname);
-
-	GUI_printf("Loading %s...\n", romname);
-
-	mem_clear_paging(); // FIXME: move me...
-
-	ROM = (char *)&rom_buffer[0];
-	size = FS_getFileSize(romname);
-
-	
-	ROMheader = size & 8191;
-	if (ROMheader != 0&& ROMheader != 512)
-		ROMheader = 512;
-
-#ifndef USE_GBFS	
-	if (size-ROMheader > ROM_MAX_SIZE)
-	{
-	/*
-		// Large ROM, memory pagging enabled
-		if (size <= CFG.ExtRAMSize)
-		{
-			GUI_printf("Use External RAM\n");
-			if (CFG.MapExtMem) // Use External RAM for mapping high addresses of Large ROM
-				FS_loadROMInExtRAM(ROM-ROMheader, romname, ROM_MAX_SIZE+ROMheader, size);
-			else // Use External RAM to load pages
-				FS_loadROMInExtRAM(ROM-ROMheader, romname, ROM_STATIC_SIZE+ROMheader, size);
-		}
-		else
-			FS_loadROMForPaging(ROM-ROMheader, romname, ROM_STATIC_SIZE+ROMheader);
-	*/
-		FS_loadROMForPaging(ROM-ROMheader, romname, ROM_STATIC_SIZE+ROMheader);
-		CFG.LargeROM = 1;
-		crc = crc32(0, ROM, ROM_STATIC_SIZE);
-		GUI_printf("Large ROM detected. CRC(1Mb) = %08x\n", crc);
-	}
-	else
-#endif	
-	{
-		FS_loadROM(ROM-ROMheader, romname);
-		CFG.LargeROM = 0;
-		crc = crc32(0, ROM, size-ROMheader);
-		GUI_printf("CRC = %08x\n", crc);
-	}
-
-	changeROM(ROM-ROMheader, size);
-
-	checkConfiguration(name, crc);
-	
-    if(SNES.HiROM == 0){
-        printf("SNESROM is LoROM.Press A");
-    }
-    else if(SNES.HiROM == 1)
-        printf("SNESROM is SNES2.HiROM.Press A");
-    else{
-        printf("An error as ocurred SNES2.HiROM: %d.Press A",SNES.HiROM);
-    }
-    while(1==1){
-        scanKeys();
-        
-        if (keysDown()&KEY_A){
-            break;
-        }
-    }
-    
-	return 0;
-}
-
-
-int selectSong(char *name)
-{
-	char spcname[100];
-
-	strcpy(spcname, CFG.ROMPath);
-	if (CFG.ROMPath[strlen(CFG.ROMPath)-1] != '/')
-		strcat(spcname, "/");
-	strcat(spcname, "/");
-	strcat(spcname, name);
-	strcpy(CFG.Playlist, spcname);
-	CFG.Jukebox = 1;
-	CFG.Sound_output = 0;
-	APU_stop();
-	if (FS_loadFile(spcname, (char *)APU_RAM_ADDRESS, 0x10200) < 0)
-		return -1;
-	APU_playSpc();
-	// Wait APU init
-	
-	return 0;
-}
-
-/*
-#ifdef ARM9
-void exception_handler()
-{
-	
-	u32 currentMode = getCPSR() & 0x1f;
-	u32 thumbState = ((*(u32*)0x02CFFD90) & 0x20);
-	u32 savedPC = *(u32*)0x02CFFD98;
-	u32 exceptionAddress=0;
-
-	exceptionRegisters[15] = savedPC;
-
-	if (currentMode == 0x17)
-	{
-		// Data abort- actual faulting instruction was 8 bytes earlier 
-		exceptionAddress = savedPC - 8;
-	}
-	else
-	{
-		
-		// XXX: Assuming invalid instruction error?
-		// Place the fault at the previous instruction.
-		//
-		exceptionAddress = savedPC - (thumbState ? 2 : 4);
-	}
-
-	iprintf(
-		"r0=%08x r1=%08x r2=%08x r3=%08x\n",
-		(unsigned int)AsmDebug[0],(unsigned int)AsmDebug[1],(unsigned int)AsmDebug[2],(unsigned int)AsmDebug[3] );
-
-	iprintf("\nException %02x @ %08x (%s)\n",
-		(unsigned int)currentMode, (unsigned int)exceptionAddress,
-		(const char*)thumbState ? "Thumb" : "ARM");
-
-    for (i = 0; i < 8; i++) {
-		LOG(" %-03s %08x ", registerNames[i], exceptionRegisters[i]);
-		LOG(" %-03s %08x \n", registerNames[i+8], exceptionRegisters[i+8]);
-	}
-
-}
-#endif
-*/
+#include "video.h"
+#include "keypad.h"
 
 int argc;
-char **argv;
-int main(int _argc, char **_argv) {
+sint8 **argv;
+int main(int _argc, sint8 **_argv) {
 	
-	argc=_argc, argv=_argv;
-	defaultExceptionHandler();
-	MyIPC->APU_ADDR_CNT = 0;
-	MyIPC->APU_ADDR_CMD = 0;
+	IRQInit();
 	
-	resetMemory2_ARM9();
+	//argc=_argc, argv=_argv;
 	
-	powerOn(POWER_ALL_2D | POWER_SWAP_LCDS);
+	SpecificIPC->APU_ADDR_CNT = 0;
+	SpecificIPC->APU_ADDR_CMD = 0;
 	
-	//fifo setups
-    irqInitExt(IntrMainExt);
-	
-	irqSet(IRQ_VBLANK, Vblank);
-	irqSet(IRQ_HBLANK,Hblank);
-	irqSet(IRQ_VCOUNT,vcounter);
-	irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifoNotEmpty);
-    //irqSet(IRQ_FIFO_EMPTY,HandleFifoEmpty);
-	
-	interrupts_to_wait_arm9 = IRQ_HBLANK|IRQ_VBLANK|IRQ_VCOUNT| IRQ_FIFO_NOT_EMPTY; //| IRQ_FIFO_EMPTY;
-	irqEnable(interrupts_to_wait_arm9);
-	
-	REG_IPC_SYNC = 0;
-    REG_IPC_FIFO_CR = IPC_FIFO_RECV_IRQ | IPC_FIFO_SEND_IRQ | IPC_FIFO_ENABLE;
-    
-    //set up ppu: do irq on hblank/vblank/vcount/and vcount line is 159
-    REG_DISPSTAT = REG_DISPSTAT | DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ | (VCOUNT_LINE_INTERRUPT << 15);
-	
-#ifndef TIMER_Y	
-	TIMER3_CR &= ~TIMER_ENABLE; // not strictly necessary if the timer hasn't been enabled before
-	TIMER3_DATA = 0;
-	TIMER3_CR = TIMER_ENABLE | TIMER_DIV_1;
-#endif
-
 	screen_mode = 0;
-	videoSetMode(0); //not using the main screen
-	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE); //sub bg 0 will be used to print text
+	SETDISPCNT_MAIN(0); //not using the main screen
+	SETDISPCNT_SUB(MODE_0_2D | DISPLAY_BG0_ACTIVE); //sub bg 0 will be used to print text
 	REG_BG0CNT = REG_BG1CNT = REG_BG2CNT = REG_BG3CNT = 0;
-
-
+	
+	/*
 	// 256Ko for Tiles (SNES: 32-64Ko) 
 	vramSetBankA(VRAM_A_MAIN_BG_0x06020000);
 	vramSetBankB(VRAM_B_MAIN_BG_0x06040000);
@@ -590,17 +108,24 @@ int main(int _argc, char **_argv) {
 
 	vramSetBankH(VRAM_H_LCD);
 	vramSetBankI(VRAM_I_LCD);
-
-	/* 32 first kilobytes for MAP */
-	/* remaning memory for tiles */
 	
-	GUI_init();		
+	// 32 first kilobytes for MAP 
+	// remaning memory for tiles 
+	*/
+	VRAM_SETUP(SNEMULDS_2DVRAM_SETUP());
+	GUI_init();
 	
-	GUI_setLanguage(PersonalData->language);
+	//Init DS Firmware Settings
+	while(getFWSettingsstatus() == false){
+		//TODO: add swidelay here
+	}
+	sint32 fwlanguage = (sint32)getLanguage();
+	GUI_setLanguage(fwlanguage);
 	
+	//These are internal printf just use printf / iprintf if unsure
 	GUI.printfy = 32;
-	GUI_align_printf(GUI_TEXT_ALIGN_CENTER, SNEMULDS_TITLE);
-	GUI_align_printf(GUI_TEXT_ALIGN_CENTER, SNEMULDS_SUBTITLE);
+	GUI_align_printf(GUI_TEXT_ALIGN_CENTER, RetTitleCompiledVersion());
+	GUI_align_printf(GUI_TEXT_ALIGN_CENTER, (sint8*)SNEMULDS_SUBTITLE[0]);
     GUI.printfy += 32; // FIXME
 	GUI_align_printf(GUI_TEXT_ALIGN_CENTER, _STR(4));
 	
@@ -614,90 +139,399 @@ int main(int _argc, char **_argv) {
 		GFX.lineInfo[i].mode = -1;
 	}
 	
-    
-	//later
+	// generate an exception
+	//*(unsigned int*)0x02000004 = 0x64;
+  
+	//while(1==1){
+	//}
+	
+	//cache test
+	/*
+	printf("vartest ori:%x",(sint32)(uint32)vartest);
+	uint32 * ptruncached = (uint32*)EWRAMUncached((uint32)&vartest);
+	
+	uint32 * ptrcached = (uint32*)EWRAMCached((uint32)&vartest);
+	*ptrcached = 0xabcdefed;
+	printf("vartest:cachedwr:%x",*ptrcached);
+	
+	*ptruncached = 0x10111213;
+	printf("vartest:uncachedwr:%x",*ptruncached);
+	
+	printf("vartest new:%x",(uint32)vartest);
+	
+	while(1==1){}
+	*/
+	
+	//wifi test. nifi test will be later
+	/*
+	if(Wifi_InitDefault(true) == true)
+	{
+		printf("WIFI OK");
+	}
+	else{
+		printf("WIFI FAIL");
+	}
+	while (1)
+	{
+		if ((keys & KEY_A))
+		break;
+	}
+	*/
+	
+	
+	
+	//single player: (todo: player1 bugged dkc1)
+	switch_dswnifi_mode((u8)dswifi_idlemode);
 	//nifi: 
 	//switch_dswnifi_mode((u8)dswifi_nifimode);
 	//wifi: 
 	//switch_dswnifi_mode((u8)dswifi_wifimode);
 	
+	
 	int ret=FS_init();
 	if (ret == 0)
 	{
-		GUI_printf(_STR(IDS_FS_SUCCESS));
+		printf(_STR(IDS_FS_SUCCESS));
 		//FRESULT res = FS_chdir("0:/");
 	}
 	else if(ret == -1)
 	{
-		GUI_printf(_STR(IDS_FS_FAILED));
+		printf(_STR(IDS_FS_FAILED));
 	}
 	
-	CFG.ExtRAMSize = 0;
+	//ok
+	//printf("devoptab_stdin.name:%s",devoptab_stdin.name);
+	//printf("devoptab_stdout.name:%s",devoptab_stdout.name);
+	//printf("devoptab_fatfs.name:%s",devoptab_fatfs.name);
 	
-    /*
-	{	char *p = malloc(10);
-		iprintf("RAM = %p last malloc = %p", SNESC.RAM, p);
+	//instead of hardcoded fatfs, you will use getfatfsPath(sint8 * filename); for user file access
+	//printf("%s",getfatfsPath("snes/smw.smc"));
+	
+	//test open/read:
+	//rewrite ok
+	/*
+	int ret2 = FS_loadROMForPaging((sint8 *)&rom_buffer[0], getfatfsPath("snes/smw.smc"), ROM_STATIC_SIZE);
+	printf("open %s ret: %d",getfatfsPath("snes/smw.smc"),ret2);	//ok
+	printf("smw.smc: %x",(uint32)*(uint32*)&rom_buffer[0]);	//ok
+	while(1);
+	*/
+	
+	//test write/close
+	//rewrite ok
+	/*
+	sint8 * testvar = "all right this save function (write close) appears to work fine";
+	FS_printlog(testvar);
+	while(1);
+	*/
+	
+	/*
+	//posix test case must succeed: status OK
+	clrscr();
+	int SIZE = 1;
+	int NUMELEM = 5;
+
+	FILE* fd = NULL;
+    sint8 * buff = malloc(ROM_STATIC_SIZE);
+
+    fd = fopen_fs(getfatfsPath("test.txt"),"r+");
+
+	if(NULL == fd)
+    {
+        printf("fopen()(fd) Error!!!. Create file named:%s",getfatfsPath("test.txt"));
+		while(1);
+    }
+
+    printf("File(fd) opened successfully through fopen()");
+	
+	FILE * fd2 = fopen_fs(getfatfsPath("tst.txt"),"w+");
+	if(NULL == fd2)
+    {
+        printf("fopen() Error!!!. Create file named:%s",getfatfsPath("tst.txt"));
+		while(1);
+    }
+	
+	
+	printf("File2(fd2) opened successfully through fopen()");
+	
+    if(SIZE*NUMELEM != fread_fs(buff,SIZE,NUMELEM,fd))
+    {
+        printf("fread() failed");
+		while(1);
 	}
-	//TOUCH SCREEN TEST
-	while (1)
-	{
-		int i;
 
-		scanKeys();
-		keys = keysHeld();
-
-		//GUI_printf2(0, 2, "keys = %x %d\n", keys, SNES.h_blank);
-		if (MyIPC->touched >0)
-		{
-			GUI_printf2(0, 3, "x = %d y = %d       ", MyIPC->touchX, MyIPC->touchY);  //touchXY.px replace with MyIPC
-			//		waitReleaseTouch();	
-		}
-
-		if ((keys & KEY_START))
-		break;
+    printf("Some bytes successfully read through fread()");
+    printf("The bytes read are [%s] ",buff);
+    if(0 != fseek_fs(fd,11,SEEK_CUR))
+    {
+        printf(" fseek()(fd) failed ");
+		while(1);
 	}
-    */
-
-	for (i = 0; i < 100; i++)	GUI_clear();
+    printf(" fseek()(fd) successful");
+	
+	
+	int ret3 = fwrite_fs(buff,SIZE,strlen(buff),fd);
+    if(SIZE*NUMELEM != ret3)
+    {
+        printf(" fwrite()(fd) failed:%x",ret3);
+		while(1);
+	}
+    
+	
+	
+	int ret4 = fwrite_fs(buff,SIZE,strlen(buff),fd2);
+    if(SIZE*NUMELEM != ret4)
+    {
+        printf(" fwrite()(fd2) failed:%x",ret4);
+		while(1);
+	}
+    
+	printf("filehandlesindex:%d:%d",fileno(fd),fileno(fd2));
+	
+	printf(" fwrite() successful (fd), data written to text file");
+	fclose_fs(fd);
+    
+	printf(" fwrite() successful (fd2), data written to text file");
+    fclose_fs(fd2);
+    
+	printf("File stream closed through fclose() (fd2)");
+	printf("File stream closed through fclose() (fd)");
+	
+	while(1);
+	*/
+	
+	
+	//dldi new
+	//printf("getdldifrommagic: %x",(uint32)getdldifrommagic());
+	//minimaldldiDrvInst = getdldifrommagic();	//should work
+	
+	GUI_clear();
+  
+	
+	//coto sbrk init
+	//alloc/dealloc ok
+	/*
+	u8 buf[256];
+	sprintf((sint8*)buf,"linearalloc_end:%x",(int)(uint32*)this_heap_ptr);
+	printf((sint8*)buf);
+	
+	u8 buf2[256];
+	sprintf((sint8*)buf2,"alloc:sbrk_ret:%x",(int)(uint32*)_sbrk(0x100));
+	printf((sint8*)buf2);
+	
+	u8 buf3[256];
+	sprintf((sint8*)buf3,"free:sbrk_ret:%x",(int)(uint32*)_sbrk(-0x100));
+	printf((sint8*)buf3);
+	*/
+	
+	//alloc / realloc
+	/*
+	int freemem = get_available_mem();
+	u8 buf1[256];
+	sprintf((sint8*)buf1,"freemem:%x",(int)freemem);
+	printf((sint8*)buf1);
+	
+	uint32 * buf =(uint32*)_sbrk (freemem);
+	
+	u8 buf3[256];
+	sprintf((sint8*)buf3,"thisshouldbeok:%x", (int)buf);
+	printf((sint8*)buf3);
+	
+	u8 buf2[256];
+	sprintf((sint8*)buf2,"thisshouldfail:%x", _sbrk (freemem));
+	printf((sint8*)buf2);
+	
+	u8 buf4[16];
+	sprintf((sint8*)buf4,"allok");
+	printf((sint8*)buf4);
+	*/
+	
+	/*
+	sint8 *p = sbrk(10);
+	printf("last malloc = %p / %x", p, (int)p);
+	
+	sint8 *p2 = sbrk(-10);
+	printf("last free = %p / %x", p2, (int)p2);
+	*/
+	
+	/*
+	//top / bottom memory tests
+	int freesize = get_available_mem();
+	//printf((sint8*)"freemem: %x / this should fail:%x",(int)freesize,sbrk(-1));	//ok
+	printf((sint8*)"shouldbeok:%x",sbrk(freesize));
+	printf((sint8*)"this should fail:%x / libc top:%x",sbrk(1),((uint32*)&__end__));
+	printf((sint8*)"free:shouldbeok:%x",sbrk(-freesize));
+	*/
+	
+	
+	//coto sbrk end
+	/* // DESCRIPTOR ok
+	METHOD_DESCRIPTOR * method_signature = callback_append_signature((uint32*)&cback_build, (uint32*)&cback_build_end, (METHOD_DESCRIPTOR *)&Methods[0]);
+	printf((sint8*)"address: %x , size: %d     ",method_signature->cback_address,method_signature->cback_size);
+	
+	volatile uint8 buf[1024*2];	//2K function buffer
+	int retwrite = callback_export_file("armcallback.bin",method_signature);
+	
+	if(retwrite == -1){
+		printf((sint8*)"export Error");
+	}
+	else{
+		printf((sint8*)"export OK");
+	}
+	*/
+	
+	/*
+	//VERSION //ok
+	printf((sint8*)"EmuCoreVersion:%s",appver);
+	*/
 	
 	// Load SNEMUL.CFG
-	set_config_file("snemul.cfg");
+	set_config_file(getfatfsPath("snemul.cfg"));	//correct: getfatfsPath("snemul.cfg")
 	
-	GUI_printf("test!!\n");
+	//printf((sint8*)"ReadSettingOldVal:%s",GUI_getConfigStr((sint8*)"GUI", (sint8*)"FileChooserOrder", NULL));
+	//GUI_setConfigStr((sint8*)"GUI", (sint8*)"FileChooserOrder", "2");	//does not update
+	//GUI_setConfigStrUpdateFile((sint8*)"GUI", (sint8*)"FileChooserOrder", "2");	//does update
+	//printf((sint8*)"ReadSettingNewVal:%s",GUI_getConfigStr((sint8*)"GUI", (sint8*)"FileChooserOrder", NULL));	
+	//printf((sint8*)"updateAssemblyParamsConfig:%d",updateAssemblyParamsConfig());	//ok
 	
-	char *ROMfile;
-	if(readFrontend(&ROMfile,&CFG.ROMPath)){
+	//ok
+	/*
+	METHOD_DESCRIPTOR * method_signature = callback_append_signature((uint32*)&cback_build, (uint32*)&cback_build_end, (sint8*)"ARMHandlerWidget1",(METHOD_DESCRIPTOR *)&Methods[0]);
+	printf((sint8*)"glueARMHandlerConfig:%d",glueARMHandlerConfig(&Version[0],method_signature));
+	
+	while (1)
+	{
+		
+		if ((keys & KEY_A))
+		break;
+	}
+	*/
+	
+	//standard sbrk 
+	/*
+	printf((sint8*)"ewrambase:%x",(int)&__ewram_base);
+	printf((sint8*)"ewramend:%x",(int)&__eheap_end);
+	
+	sint8 *p = sbrk(10);
+	printf("last malloc = %p / %x", p, (int)p);
+	*/
+	
+	//Coto: newlib malloc test. PTR returned should NOT be 0 otherwise sbrk implementation is wrong.
+	/*
+	sint8 *p = malloc(10);
+	printf("last malloc = %p / %x", p, (int)p);
+	while(1==1){}	//so far ok
+	*/
+	
+	
+	
+	
+	for (i = 0; i < 100; i++)	GUI_clear();
+	
+	sint8 *ROMfile;
+	if(readFrontend(&ROMfile,(sint8**)&CFG.ROMPath[0])){
 		readOptionsFromConfig("Global");
 		GUI_getConfig();
 	}else{
-		CFG.ROMPath = get_config_string(NULL, "ROMPath", GAMES_DIR);
+		
+		//old: CFG.ROMPath = get_config_string(NULL, "ROMPath", (sint8*)READ_GAME_DIR[0]);	//put 3rd arg into 2nd of CFG."Name"
+		sprintf(CFG.ROMPath,"%s",get_config_string(NULL, "ROMPath", (sint8*)READ_GAME_DIR[0]));
+		
 		readOptionsFromConfig("Global");
-		GUI_getConfig();	
-		ROMfile = GUI_getROM(CFG.ROMPath);
+		GUI_getConfig();
+		
+		//printf("readFrontend phail!");	//here
+		//while(1);
+		
+		//parse init dir correctly (dir format)
+		sprintf(CFG.ROMPath,"%s",getfatfsPath(CFG.ROMPath));
+		//printf("Loading:%s",CFG.ROMPath);
+		//while(1);
+	
+		
+		//touchscreen new
+		/*
+		while (1)
+		{
+			if ((keysPressed() & KEY_A)){
+				break;
+			}
+			
+			if ((keysPressed() & KEY_B)){
+				GUI_clear();
+				//printf("test %d",0x00000001);
+				//iprintf("also a test %x",0xc1c2c3c4);
+				//iprintf("openfddevices %d, realsize: %d",(sint32)open_posix_filedescriptor_devices(),sizeof(struct devoptab_t));
+				//printf("rompath:%s",CFG.ROMPath);
+				
+				//GUI_printf("test");
+				//GUI_printf("TSCPENIRQ:%d",(sint32)penIRQread());	//ok
+				//GUI_printf("X Tsc:%x",(uint16)SpecificIPC->touchX);	//OK
+				//GUI_printf("Y Tsc:%x",(sint32)SpecificIPC->touchY);	//OK
+				
+				//replace with printf
+				//printf("pxX Tsc:%d",(uint16)SpecificIPC->touchXpx);
+				//printf("pxY Tsc:%d",(uint16)SpecificIPC->touchYpx);
+				//printf("debugvar :%x",(uint32)SpecificIPC->debugvar);
+				//printf("debugvar2 :%x",(uint32)SpecificIPC->debugvar2);
+				
+				//printf("nickname:%s",(char*)&SpecificIPC->nickname_schar8[0]);
+				//printf("bdaymonth:%d",(sint32)SpecificIPC->DSFWSETTINGSInst.birthday_month);
+				//printf("bdayday:%d",(sint32)SpecificIPC->DSFWSETTINGSInst.birthday_day);
+				//printf("consoletype:%d",(sint32)SpecificIPC->consoletype);
+				
+				//printf("lang:%d",(unsigned int)fwlanguage);
+				
+				
+				struct tm * tmInst = getTime();
+				
+				printf("0:%d",(unsigned int)tmInst->tm_sec);
+				printf("1:%d",(unsigned int)tmInst->tm_min);
+				printf("2:%d",(unsigned int)tmInst->tm_hour);
+				printf("3:%d",(unsigned int)tmInst->tm_mday);
+				printf("4:%d",(unsigned int)tmInst->tm_mon);
+				printf("5:%d",(unsigned int)tmInst->tm_year);
+				
+				
+				if(SpecificIPC->valid_dsfwsettings == true){
+					printf("DS User settings read OK");
+				}
+				else{
+					printf("DS User settings read ERROR");
+				}
+				
+			}
+			
+			IRQWait(1,IRQ_VBLANK);
+		}
+		*/
+		GUI_getROM(CFG.ROMPath);	//read rom from (path)touchscreen:output rom -> CFG.ROMFile
+		//CFG.ROMPath corrupted here
+		
+		
+		//printf("Loading:%s",CFG.Fullpath);
+		//while(1);
+		
 	}
 	
-	GUI_printf("2\n");
-
-	loadROM(ROMfile, 0);
+	//printf("Loading:%s",CFG.ROMPath);
+	//while(1);
+	//test implementation of SendMultipleWordACK: check if fifo was executed OK in other core
+	//bool retval = SendMultipleWordACK(WIFI_SYNC, 0, 0, 0);
+	//if(retval == true){
+	//	printf("reply:ok");
+	//}
+	//else{
+	//	printf("reply:false");
+	//}
+	//while(1);
 	
-	GUI_printf("3\n");
-
+	//printf("GUI_getROM():%s",ROMfile);	//rets filename	/rom.smc ALONE
+	loadROM(CFG.ROMFile, 0);	//loadROM reads name only CFG.ROMFile
 	GUI_deleteROMSelector(); // Should also free ROMFile
-
 	GUI_createMainMenu();
     
     //ok so far
-    
-	//wifi test
-	/*
-	if(Wifi_InitDefault(true) == true)
-	{
-		iprintf("WIFI OK");
-	}
-	else{
-		iprintf("WIFI FAIL");
-	}
-	*/
+	
 	while (1)
 	{
         if (REG_POWERCNT & POWER_SWAP_LCDS){
@@ -711,16 +545,15 @@ int main(int _argc, char **_argv) {
 			//			APU_stop();
 			// hinge is closed 
 			// power off everything not needed 
-			powerOff(POWER_ALL) ;
+			powerOFF(POWERMAN_ARM9 | POWER_LCD | POWER_2D_A | POWER_2D_B | POWER_SWAP_LCDS) ;
 			// set system into sleep 
 			while (keys & KEY_LID)
 			{
-				scanKeys();
-				keys = keysHeld();
+				keys = keysPressed();
 			}
 			// wait a bit until returning power 
 			// power on again 
-			powerOn(POWER_ALL_2D) ;
+			powerON(POWERMAN_ARM9 | POWER_LCD | POWER_2D_A | POWER_2D_B | POWER_SWAP_LCDS);
 			// set up old irqs again 
 			APU_pause();
 		}
@@ -730,8 +563,7 @@ int main(int _argc, char **_argv) {
             go();   //boots here
         }
         
-		//swiWaitForVBlank();
-		swiIntrWait(1,IRQ_VBLANK | IRQ_HBLANK | IRQ_VCOUNT | IRQ_FIFO_NOT_EMPTY);
+		
 	}
 
 }

@@ -1,4 +1,8 @@
-char*  g_snemulds_str_eng[] = 
+#include "typedefs.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+sint8*  g_snemulds_str_eng[] = 
 {
 		"FS initialization...\n",			/* 0 */
 		"FS failure, continue anyway...\n",				/* 1 */
@@ -34,8 +38,8 @@ char*  g_snemulds_str_eng[] =
 		"Sound enabled",				/* 30 */
 		"Sound disabled",				/* 31 */
 		"Speed:",						/* 32 */
-		"Normal Speed",					/* 33 */
-		"Fast Speed",					/* 34 */
+		"VBlank enabled (ignored)",					/* 33 */
+		"VBlank disabled (ignored)",					/* 34 */
 		"",								/* 35 */
 		"Screen Layout Options",		/* 36 */
 		"Backgrounds & Sprites Options",	/* 37 */

@@ -8,7 +8,7 @@
 #define GUI_SCROLLED		10000
 #define GUI_LIST_CHANGED	10001
 
-typedef char t_GUIString[96];
+typedef sint8 t_GUIString[96];
 
 typedef struct
 {
@@ -17,7 +17,7 @@ typedef struct
 	int		cur_item;
 	int		prev_item;
 	//t_GUIString	*items;
-	char	**items;
+	sint8	**items;
 } t_GUIList;
 
 int GUIList_handler(t_GUIZone *zone, int message, int param, void *arg);
@@ -59,33 +59,21 @@ typedef struct
 extern "C" {
 #endif
 
-int GUIScrollBar_handler(t_GUIZone *zone, int message, int param, void *arg);
-
-int GUIButton_handler(t_GUIZone *zone, int message, int param, void *arg);
-
-int GUIImgButton_handler(t_GUIZone *zone, int message, int param, void *arg);
-
-int GUIStrButton_handler(t_GUIZone *zone, int message, int param, void *arg);
-void GUI_linkStrButton(t_GUIScreen *scr, int nb, int str, int keymask);
-
-int	GUIImage_handler(t_GUIZone *zone, int message, int param, void *arg);
-int GUIStatic_handler(t_GUIZone *zone, int message, int param, void *arg);
-
-int GUIStaticEx_handler(t_GUIZone *zone, int message, int param, void *arg);
-
-int GUIChoiceButton_handler(t_GUIZone *zone, int message, int param, void *arg);
-
-t_GUIScreen	*GUI_newSelector(int nb_items, 
-					char **items, int title, t_GUIFont *font);
-char *GUISelector_getSelected(t_GUIScreen *scr, int *index);
-void GUI_deleteSelector(t_GUIScreen *scr);
-
-
-t_GUIScreen	*GUI_newList(int nb_items, int max_size, int title, t_GUIFont *font);
-void	GUI_setItem(t_GUIScreen *scr, int i, char *s, int max_size);
-void GUI_deleteList(t_GUIScreen *scr);
-
-//gui_widgets.c
+extern int GUIScrollBar_handler(t_GUIZone *zone, int message, int param, void *arg);
+extern int GUIButton_handler(t_GUIZone *zone, int message, int param, void *arg);
+extern int GUIImgButton_handler(t_GUIZone *zone, int message, int param, void *arg);
+extern int GUIStrButton_handler(t_GUIZone *zone, int message, int param, void *arg);
+extern void GUI_linkStrButton(t_GUIScreen *scr, int nb, int str, int keymask);
+extern int	GUIImage_handler(t_GUIZone *zone, int message, int param, void *arg);
+extern int GUIStatic_handler(t_GUIZone *zone, int message, int param, void *arg);
+extern int GUIStaticEx_handler(t_GUIZone *zone, int message, int param, void *arg);
+extern int GUIChoiceButton_handler(t_GUIZone *zone, int message, int param, void *arg);
+extern t_GUIScreen	*GUI_newSelector(int nb_items, sint8 **items, int title, t_GUIFont *font);
+extern sint8 *GUISelector_getSelected(t_GUIScreen *scr, int *index);
+extern void GUI_deleteSelector(t_GUIScreen *scr);
+extern t_GUIScreen	*GUI_newList(int nb_items, int max_size, int title, t_GUIFont *font);
+extern void	GUI_setItem(t_GUIScreen *scr, int i, sint8 *s, int max_size);
+extern void GUI_deleteList(t_GUIScreen *scr);
 extern t_GUIMessage	PendingMessage;
 
 #ifdef __cplusplus

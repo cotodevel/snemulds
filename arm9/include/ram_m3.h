@@ -1,6 +1,5 @@
 #ifdef ARM9
-#include <nds.h>
-
+#include <stdbool.h>
 ///// From MoonShell2.00b5 / M3Sakura /////
 
 // for M3 extention pack.
@@ -14,7 +13,7 @@
 //0x400003: CF read only
 //0x400007: CF read/write
 
-static u16 M3_SetChipReg(u32 Data)
+static u16 M3_SetChipReg(uint32 Data)
 {
 	vu16 i,j;
 
@@ -71,7 +70,7 @@ static u16 G6_SetChipReg(u16 Data)
 
 
 
-static u16 GetExtWData(u32 Address)
+static u16 GetExtWData(uint32 Address)
 {
 	return *(volatile u16*)Address;
 }
@@ -122,9 +121,9 @@ static bool SelectRAM(void)
   	i=GetExtWData(0xFFFFF8*2+0x8000000)&0x07;
   	
   	if(i==0x06)
-  		return TRUE;
+  		return true;
 	else
-  		return FALSE;
+  		return false;
 }
 #endif
 //-------
@@ -144,7 +143,7 @@ static bool DisableRAM(void)
 
 
 /*********************SDRAM FUNCTION******************/
-static void sdram_setcmd(u32 command)
+static void sdram_setcmd(uint32 command)
 {
 
 	vu32 i;	

@@ -15,31 +15,57 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include <nds.h>
 #include <stdio.h>
 #include <string.h>
-#include <nds/memory.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include "common_shared.h"
+#include <stdlib.h>
+
+#include "specific_shared.h"
+#include "devoptab_devices.h"
+#include "posix_hook_shared.h"
+#include "toolchain_utils.h"
 
 #include "fs.h"
 #include "gui.h"
-#include "ram.h"
-
-#include "diskio.h"
-#include "ff.h"
+#include "nds_cp15_misc.h"
 
 #include <unistd.h>
-//#include <sys/dir.h>
+#include <sys/dir.h>
 #include <fcntl.h>
+#include "fsfat_layer.h"
 
-//fatfs
-static FATFS dldiFs;
+
+#include "gfx.h"
+#include "cfg.h"
+#include "apu.h"
+#include "ram.h"
+#include "conf.h"
+#include "snemul_str.h"
+#include "frontend.h"
+#include "main.h"
+#include "dldi.h"
+#include "ppu.h"
+#include "InterruptsARMCores_h.h"
+#include "specific_shared.h"
+#include "ff.h"
+#include "mem_handler_shared.h"
+#include "reent.h"
+#include "sys/types.h"
+#include "engine.h"
+#include "core.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+#include "typedefs.h"
+#include "console.h"
+#include "api_wrapper.h"
+#include "apu_jukebox.h"
+#include "toolchain_utils.h"
+#include "about.h"
+#include "file.h"
 
 uint16	*g_extRAM = NULL;
 int		g_UseExtRAM = 0;
-
 
 int		FS_extram_init()
 {
@@ -64,10 +90,10 @@ void	FS_unlock()
 		ram_unlock();
 }
 
-char *_FS_getFileExtension(char *filename)
+sint8 *_FS_getFileExtension(sint8 *filename)
 {
-	static char ext[4];
-	char	*ptr;
+	static sint8 ext[4];
+	sint8	*ptr;
 	int		i;
 	
 	ptr = filename;
@@ -86,10 +112,10 @@ char *_FS_getFileExtension(char *filename)
 	return ext;
 }
 
-char *FS_getFileName(char *filename)
+sint8 *FS_getFileName(sint8 *filename)
 {
-	static char name[100];
-	char	*ptr;
+	static sint8 name[100];
+	sint8	*ptr;
 	int		i;
 	
 	ptr = filename;
@@ -101,118 +127,136 @@ char *FS_getFileName(char *filename)
 	return name;
 }
 
-/* *********************** FSFAT ************************ */
+/* *********************** FAT ************************ */
 
-FIL GLOBAL_FHANDLER;
-static char currentFileName[100];
+//sint32	currentfd = -1;	//for hooks with FS
+//uint8 currentFileName[100];
 
 int		FS_init()
 {
-	return (f_mount(&dldiFs, "0:", 1));
+	return fatfs_init();
 }
 
-int		FS_chdir(const char *path)
+int		FS_chdir(const sint8 *path)
 {
 	FS_lock();
-	//int ret = chdir(path);
-	int ret =f_chdir (path);
+	int ret = fatfs_chdir(path);	//old: chdir(path);	//could cause issues
 	FS_unlock();
 	return ret;
 }
 
 
-char	**FS_getDirectoryList(char *path, char *mask, int *cnt)
+//ok so far. Rets OK dir listing
+sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt)
 {	
 	int			size;
 		
 	FS_lock();	
-	DIR dir;
+	DIR *dir = opendir (path); 
 	*cnt = size = 0;
-	
-	FRESULT res;
-	
-	res = f_opendir (&dir, path);
-	
-	if( res == FR_OK )
+	if( NULL != dir )
 	{
 		while (1)
 		{
-			FILINFO fno;
-			res = f_readdir (&dir, &fno);
+			struct dirent* pent = readdir(dir);	//if NULL already not a dir.
+			if(pent == NULL){
+				break;
+			}
 			
-			if(res != FR_OK || !(fno.fname[0])) break;
 			
-			if (!strcmp(fno.fname, "."))
-				continue;		
+			//if ( pent->d_type & DT_DIR ) continue;
+			//posix standard
+			struct fd * fdinst = fd_struct_get(pent->d_ino);
+			if (!S_ISDIR(fdinst->stat.st_mode)) { 
+				continue;
+			}
 			
-			if (!strcmp(fno.fname, ".."))
-				continue;		
+			if (!strcmp(pent->d_name, ".")){
+				continue;
+			}
 			
 			if (mask)
 			{
-				char *ext = _FS_getFileExtension(fno.fname);
+				sint8 *ext = _FS_getFileExtension(pent->d_name);
+				
+				//printf("fname:%s",pent->d_name);
+				//printf("fname:%s",fdinst->cur_entry.d_name);
+				//printf("ext:%s",ext);
+				//sint8 * found = strstr(mask, ext);
+				//printf("%s",found);
+				//while(1);
+				
 				if (ext && strstr(mask, ext))
 				{
+					//filecount Increase
 					(*cnt)++;
-					size += strlen(fno.fname)+1;
+					size += strlen(pent->d_name)+1;
 				}
-			} else
+			} 
+			else
 			{
-			  (*cnt)++;
-			  size += strlen(fno.fname)+1;
+				//filecount Increase
+				(*cnt)++;
+				size += strlen(pent->d_name)+1;
 			}
 		}
 	}
+	//printf("filecount:%d",*cnt);
+	//while(1);
+	rewinddir(dir);
 	
-	res = f_rewinddir(&dir);
-	
-	char	**list = malloc((*cnt)*sizeof(char *)+size);
-	char	*ptr = ((char *)list) + (*cnt)*sizeof(char *);
+	sint8	**list = malloc((*cnt)*sizeof(sint8 *)+size);
+	sint8	*ptr = ((sint8 *)list) + (*cnt)*sizeof(sint8 *);
 	
 	int i = 0; 
-	if( res == FR_OK )
+	if( NULL != dir )
 	{
 		while (1)
 		{
+			struct dirent* pent = readdir(dir);	//if NULL already not a dir
+			if(pent == NULL){
+				break;
+			}
 			
-			FILINFO fno;
-			res = f_readdir (&dir, &fno);
+			//if ( pent->d_type & DT_DIR ) continue;
+			//posix standard
 			
-			if(res != FR_OK || !fno.fname[0]) break;
+			struct fd * fdinst = fd_struct_get(pent->d_ino);
+			if (!S_ISDIR(fdinst->stat.st_mode)) {
+				continue;
+			}
 			
-			if (!strcmp(fno.fname, "."))
+			if (!strcmp(pent->d_name, ".")){
 				continue;		
-			
-			if (!strcmp(fno.fname, ".."))
-				continue;		
-			
+			}
 			
 			if (mask)
 			{
-				char *ext = _FS_getFileExtension(fno.fname);
+				sint8 *ext = _FS_getFileExtension(pent->d_name);
 				if (ext && strstr(mask, ext))
 				{
-					strcpy(ptr, fno.fname);
+					strcpy(ptr, pent->d_name);
 					list[i++] = ptr;
-					ptr += strlen(fno.fname)+1;  
+					ptr += strlen(pent->d_name)+1;  
 				}
 			} else
 			{
-				strcpy(ptr, fno.fname);
+				strcpy(ptr, pent->d_name);
 				list[i++] = ptr;
-				ptr += strlen(fno.fname)+1;
+				ptr += strlen(pent->d_name)+1;
 			}
 		}
 	}
-	f_closedir(&dir);
+	
+	closedir(dir);
 	FS_unlock();
 	return list;
 }
 
-char logbuf[32000];
+sint8 logbuf[32000];
 static int logcnt = 0;
 
-void	FS_printlogBufOnly(char *buf)
+void	FS_printlogBufOnly(sint8 *buf)
 {
 	if (logcnt == 0)
 	{
@@ -230,10 +274,10 @@ void	FS_printlogBufOnly(char *buf)
 		strcat(logbuf, buf);
 }
 
-void	FS_printlog(char *buf)
+void	FS_printlog(sint8 *buf)
 {
  
-	FIL f_log;
+	static FILE *f_log = NULL;
 	if (logcnt == 0)
 	{
 		// first call
@@ -244,170 +288,221 @@ void	FS_printlog(char *buf)
 	if( strlen(buf)+strlen(logbuf) >= 32000)
 	{
 		// Flush buffer
-		char name[30];
+		sint8 name[30];
 		sprintf(name,"snemul%d.log", logcnt%100);
 		
 		FS_lock();
-		f_open(&f_log,name,FA_WRITE | FA_OPEN_ALWAYS);
 		
-		unsigned int written;
-		f_write(&f_log, logbuf, strlen(logbuf), &written);
-		f_truncate(&f_log);
-		
-		f_close(&f_log);
+		f_log = fopen_fs(name, "w"); //fopen(getfatfsPath(name), "w");	//old: f_log = fopen(name, "w");
+		//printf("trying to fopen_fs:%s",name);
+		if(f_log){
+			//printf("FILE handle ok");
+		}
+		else{
+			//printf("FILE handle error");
+		}
+		fwrite_fs(logbuf, 1, strlen(logbuf), f_log); //old: fwrite(logbuf, 1, strlen(logbuf), f_log);
+		fclose_fs(f_log);	//old: fclose(f_log);
 		FS_unlock();
 		
 		strcpy(logbuf, buf);
 		logcnt++;
 	}
-	else
+	else{
 		strcat(logbuf, buf);
+	}
+	
 }
 
-extern char g_printfbuf[100];
-
-void	FS_flog(char *fmt, ...)
+//printf that instead stores on Filesystem
+void	FS_flog(sint8 *fmt, ...)
 {
 		
 	va_list ap;	
 
     va_start(ap, fmt);
-    vsnprintf(g_printfbuf, 100, fmt, ap);
+    vsnprintf((sint8*)g_printfbuf, 100, fmt, ap);
     va_end(ap);
 
-	FS_printlog(g_printfbuf);
+	FS_printlog((sint8*)g_printfbuf);
 }
 
-int	FS_loadROM(char *ROM, char *filename)
+//works fine
+int	FS_loadROM(sint8 *ROM, sint8 *filename)
 {
-	FIL	f;
-	
+	FILE	*f;
 	FS_lock();
-	
-	f_open(&f,filename,FA_READ);
-	
-	int size = FS_getFileSize(filename);
-	
+	f = fopen_fs(filename, "r"); //old: f = fopen(filename, "rb");
+	fseek_fs(f, 0, SEEK_END); //old: fseek(f, 0, SEEK_END);
+	int size = ftell_fs(f);	//old: int size = ftell(f);
+	fseek_fs(f, 0, SEEK_SET);	//old: fseek(f, 0, SEEK_SET);
+
 	//Prevent Cache problems.
-	DC_FlushRange((u32*)ROM, (int)size);
+	coherent_user_range_by_size((uint32)ROM, (int)size);
 	
-	unsigned int read_so_far;
-	f_read(&f, ROM, size, &read_so_far);
-	
+	fread_fs(ROM, 1, size, f);	//old: fread(ROM, 1, size, f);
 	GUI_printf("Read done\n");
-	f_close(&f);
-	
+	fclose_fs(f);	//old: fclose(f);
 	FS_unlock();
 
 	return 1;
 }
 
-
-int	FS_getFileSize(char *filename)
+//works
+int	FS_getFileSize(sint8 *filename)
 {	
-	FIL FHANDLER;
-	FS_lock();	
-	
-	int retval = 0;
-	if(f_open(&FHANDLER, filename, FA_READ) != FR_OK){
-		retval = -1;
-	}
-	
-	retval = (int)f_size(&FHANDLER);
-	f_close(&FHANDLER);
-	return retval;
-}
-
-//tried size == file_size (rom size)
-int	FS_loadFile(char *filename, char *buf, int size)
-{
-	FIL f;
-	int file_size;
-	
-	FS_lock();	
-	if(!(f_open(&f,filename,FA_READ) == FR_OK))
-	{
-		FS_unlock();
-		return -1;
-	}
-	
-	file_size = FS_getFileSize(filename);
-	
-	if (file_size < size)
-	{
-		f_close(&f);
-		FS_unlock();
-		return -1;
-	}
-	
-	unsigned int read_so_far;
-	f_read(&f, buf, size, &read_so_far);
-	
-    f_close(&f);
-	FS_unlock();
-	return 0;
-}
-
-
-int	FS_saveFile(char *filename, char *buf, int size)
-{
-	FIL f;
-	
+	/* //implemented working... POSIX way (lower level calls)
+	struct stat	st;	
 	FS_lock();
-  	if(!(f_open(&f,filename,FA_WRITE ) == FR_OK))
-	{
-  		FS_unlock();
-  		return 0;
-  	}
-	
-	unsigned int written;
-	f_write(&f, buf, size, &written);
-	f_truncate(&f);
-	
-	f_close(&f);
+	stat(filename, &st);
 	FS_unlock();
-	return 0;
+	return st.st_size;
+	*/
+	
+	//implemented working... POSIX way (high level calls)
+	FILE * f = fopen_fs(filename, "r");	//old: f = fopen(filename, "rb");
+	if (f == NULL)
+	{
+		FS_unlock();
+		return -1;
+	}
+	fseek_fs(f, 0, SEEK_END); //old: fseek(f, 0, SEEK_END);
+	int size = ftell_fs(f);	//old: int size = ftell(f);
+	fseek_fs(f, 0, SEEK_SET);	//old: fseek(f, 0, SEEK_SET);
+	fclose_fs(f);	//old:	fclose(f);	
+	
+	return size;
 }
 
 
-int	FS_loadROMForPaging(char *ROM, char *filename, int size)
+
+
+/*
+int	FS_saveFile(sint8 *filename, sint8 *buf, int size)
+{
+	FILE *f;
+	FS_lock();
+  	if ((f = fopen_fs(filename, "w")) == NULL)	//old: if ((f = fopen(filename, "wb")) == NULL)
+  	{
+  		FS_unlock();
+  		return -1;
+  	}
+	fwrite_fs(buf, 1, size, f);	//old: fwrite(buf, 1, size, f);
+	fclose_fs(f);	//old: fclose(f);	
+	FS_unlock();
+	return 0;
+}
+*/
+
+
+
+//ret 0 success, ret -1 on open problem
+/*
+int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
 {
 	g_UseExtRAM = 0;
-	FS_lock();
 	
-	if (f_open(&GLOBAL_FHANDLER, filename, FA_READ)!= FR_OK)
+	FS_lock();
+	if (currentfd != -1)
+		close(currentfd);
+	
+	currentfd = open(filename, O_RDONLY);
+	if (currentfd < 0)
 	{
 		FS_unlock();
 		return -1;
 	}
-	strcpy(currentFileName, filename);
-	unsigned int read_so_far;
-	f_read(&GLOBAL_FHANDLER, ROM, size, &read_so_far);
+	strcpy((sint8*)currentFileName, filename);
 
+	int ret = read(currentfd, ROM, size);	//returns read size into buffer
+	
 	FS_unlock();
+	
+	if(ret != size){
+		return -1;
+	}
+	
+	return 0;
+}
+*/
+
+FILE * fPaging ;
+
+//use posix...
+int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
+{
+	g_UseExtRAM = 0;
+	
+	FS_lock();
+	
+	if (fPaging){
+		fclose_fs(fPaging);
+	}
+	fPaging = fopen_fs(filename, "r"); //old: f = fopen(filename, "rb");
+	sint32 fd = fileno(fPaging);
+	if(fd < 0){
+		FS_unlock();
+		return -1;
+	}
+	//Prevent Cache problems.
+	coherent_user_range_by_size((uint32)ROM, (int)size);
+	
+	int ret = fread_fs(ROM, 1, size, fPaging);
+	FS_unlock();
+	
+	if(ret != size){
+		return -1;
+	}
 	
 	return 0;
 }
 
-//Deprecated. 4MB support only
-int	FS_loadROMInExtRAM(char *ROM, char *filename, int size, int total_size)
-{
-	return -1;
-}
 
-int	FS_loadROMPage(char *buf, unsigned int pos, int size)
-{	
-
+//use posix..
+int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
+	
+	int ret;	
 	FS_lock();
 	
-	f_lseek (&GLOBAL_FHANDLER, pos);
+	if(!fPaging){
+		return -1;
+	}
 	
-	unsigned int read_so_far;
-	f_read(&GLOBAL_FHANDLER, buf, size, &read_so_far);
+	//Prevent Cache problems.
+	coherent_user_range_by_size((uint32)buf, (int)size);
+	
+	//ret = lseek(currentfd, pos, SEEK_SET);
+	ret = fseek_fs(fPaging, pos, SEEK_SET);
+	
+	if (ret < 0)
+	{
+		FS_unlock();
+		return -1;
+	}
+	
+	
+	return fread_fs(buf, 1, size, fPaging);
+}
+
+/*
+int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size)
+{	
+	int ret;	
+	FS_lock();
+	
+	ret = lseek(currentfd, pos, SEEK_SET);
+	if (ret < 0)
+	{
+		FS_unlock();
+		return -1;
+	}
+		
+	read(currentfd, buf, size);
 	
 	FS_unlock();	
-	return (int)read_so_far;	
+	return ret;	
 }
+*/
 
 int	FS_shouldFreeROM()
 {

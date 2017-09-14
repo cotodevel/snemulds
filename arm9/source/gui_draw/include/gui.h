@@ -18,222 +18,9 @@ GNU General Public License for more details.
 #ifndef GUI_H_
 #define GUI_H_
 
-#define GUI_EVENT			1
-#define GUI_DRAW			2
-#define GUI_COMMAND			3
+#include "typedefs.h"
+#include "console.h"
 
-#define GUI_EVENT_STYLUS	100
-#define GUI_EVENT_BUTTON	101
-
-#define GUI_EVENT_ENTERZONE	110
-#define GUI_EVENT_LEAVEZONE	111
-#define	GUI_EVENT_FOCUS		112
-#define	GUI_EVENT_UNFOCUS	113
-
-#define	EVENT_STYLUS_PRESSED 	1000
-#define	EVENT_STYLUS_RELEASED	1001
-#define	EVENT_STYLUS_DRAGGED 	1002
-
-#define	EVENT_BUTTON_ANY	 	2000
-#define	EVENT_BUTTON_PRESSED	2001
-#define	EVENT_BUTTON_RELEASED	2002
-#define	EVENT_BUTTON_HELD	 	2003
-
-#define IMG_IN_MEMORY	0
-#define IMG_IN_VRAM		1
-#define IMG_NOLOAD		2
-
-#define GUI_TEXT_ALIGN_CENTER	0
-#define GUI_TEXT_ALIGN_LEFT		1
-#define GUI_TEXT_ALIGN_RIGHT	2
-
-#define GUI_ST_PRESSED			1
-#define GUI_ST_SELECTED			2
-#define GUI_ST_FOCUSED			4
-#define GUI_ST_HIDDEN			8
-#define GUI_ST_DISABLED			16
-
-#define GUI_HANDLE_JOYPAD		1
-
-#define GUI_PARAM(a) (void *)(a)
-#define GUI_PARAM2(a, b) (void *)((((uint16)(a)) << 16) | ((uint16)(b)))
-#define GUI_PARAM3(s, n, c) (void *)((s) | ((n) << 16) | ((c) << 24))
-
-// GUI Colors
-
-#define GUI_PAL			216
-//#define GUI_BLACK		0
-#define GUI_BLACK		(GUI_PAL+0)
-#define GUI_DARKGREY2	(GUI_PAL+1)
-#define GUI_DARKGREY	(GUI_PAL+2)
-#define GUI_GREY		(GUI_PAL+3)
-
-#define GUI_DARKRED		(GUI_PAL+4)
-#define GUI_RED			(GUI_PAL+5)
-#define GUI_LIGHTRED	(GUI_PAL+6)
-
-#define GUI_DARKGREEN	(GUI_PAL+12)
-#define GUI_GREEN		(GUI_PAL+13)
-#define GUI_LIGHTGREEN	(GUI_PAL+14)
-
-#define GUI_DARKBLUE	(GUI_PAL+8)
-#define GUI_BLUE		(GUI_PAL+9)
-#define GUI_LIGHTBLUE	(GUI_PAL+10)
-
-#define GUI_DARKYELLOW	(GUI_PAL+17)
-#define GUI_YELLOW		(GUI_PAL+18)
-#define GUI_LIGHTYELLOW	(GUI_PAL+19)
-
-#define GUI_LIGHTGREY	(GUI_WHITE-2)
-#define GUI_LIGHTGREY2	(GUI_WHITE-1)
-#define GUI_WHITE		255
-
-#define _STR(x) GUI.string[x]
-
-typedef struct
-{
-	int x;
-	int y;
-	
-	int	dx;
-	int dy;
-} t_GUIStylusEvent;
-
-typedef struct
-{
-	uint32	buttons;
-	uint32  pressed;
-	uint32	repeated;
-	uint32	released;
-} t_GUIJoypadEvent;
-
-typedef struct
-{
-	int	event;
-	union
-	{
-		t_GUIStylusEvent stl;
-		t_GUIJoypadEvent joy;
-	};
-		
-} t_GUIEvent;
-
-
-typedef struct s_GUIZone t_GUIZone;
-
-typedef int (*t_GUIHandler)(t_GUIZone *zone, int message, int param, void *arg);
-
-typedef struct
-{
-    int		width;
-    int		height;
-    int		bpp;
-    uint8	*palette;   
-    uint8   data[];
-} t_GUIGlyph;
-
-typedef struct
-{
-    int		width;
-    int		height;
-    int		bpp;
-    uint8	*palette;   
-    uint16   data[];
-} t_GUIGlyph16;
-
-
-typedef struct
-{
-    int height;
-    int	offset;
-    
-    int space;
-    int interline;
-
-    t_GUIGlyph **glyphs;
-} t_GUIFont;
-
-struct s_GUIZone
-{
-	int				x1;
-	int 			y1;
-	int 			x2;
-	int				y2;
-
-	uint8			id;	
-	uint8			state;	
-	uint16			keymask;
-
-	t_GUIHandler	handler;
-	void			*data;
-	
-	t_GUIFont		*font;
-};
-
-typedef struct
-{
-	uint16	width;
-	uint8	height;
-	uint8	flags;
-	
-	void	*data;
-} t_GUIImage;
-
-typedef struct
-{
-	int			nb;
-	int			cnt;
-	t_GUIImage	*img[];
-} t_GUIImgList;
-
-typedef struct
-{
-	int			nb_zones;
-	int			curs;
-	int			stylus_zone;
-	int			flags;
-	t_GUIHandler	handler;
-	t_GUIImgList	*img_list;
-	
-	uint16		last_focus; // Number of focusable zones 
-	uint16		incr_focus; // Increment factor for joypad focus
-	
-	t_GUIZone	zones[];
-} t_GUIScreen;
-
-
-
-typedef struct
-{
-// TODO : put in one flag field
-	int	log;
-	int exit;
-	int hide;	
-	int ScanJoypad; 
-	
-	u16	*DSFrameBuffer; // Frame Buffer Layer
-	u16	*DSText; // Text Layer
-	u16	*DSBack; // Back Text Layer;
-	u16	*DSTileMemory;
-	
-	u16	*Palette;
-	
-	t_GUIScreen	*screen;
-	
-	char	**string;
-	
-	t_GUIImgList	*img_list;
-	
-	uint16	printfy;
-} t_GUI;
-
-typedef struct
-{
-	t_GUIScreen	*scr;
-	int			msg;
-	int 		param;
-	void		*arg;
-} t_GUIMessage;
 
 /* --------------------------------------------------------------------------- */
 
@@ -244,55 +31,74 @@ typedef struct
 extern "C" {
 #endif
 
-extern t_GUI GUI;
-t_GUIScreen	*GUI_newScreen(int nb_elems);
-void	GUI_setZone(t_GUIScreen *scr, int i, int x1, int y1, int x2, int y2);
-void	GUI_linkObject(t_GUIScreen *scr, int i, void *data, t_GUIHandler handler);
 
-int			GUI_loadPalette(char *path);
+extern	void	LOG(sint8 *fmt, ...);
+extern t_GUIScreen	*GUI_newScreen(int nb_elems);
+extern void	GUI_setZone(t_GUIScreen *scr, int i,int x1, int y1, int x2, int y2);
+extern void	GUI_linkObject(t_GUIScreen *scr, int i, void *data, t_GUIHandler handler);
+extern int GUI_loadPalette(sint8 *path);
+extern t_GUIImage	*GUI_loadImage(sint8 *path, int width, int height, int flags);
+extern int GUI_addImage(sint8 *path, int w, int h, int flags);
+extern void		GUI_deleteImage(t_GUIImage *image);
+extern void		GUI_drawHLine(t_GUIZone *zone, int color, int x1, int y1, int x2);
+extern void		GUI_drawVLine(t_GUIZone *zone, int color, int x1, int y1, int y2);
+extern void		GUI_drawRect(t_GUIZone *zone, int color, int x1, int y1, int x2, int y2);
+extern void		GUI_drawBar(t_GUIZone *zone, int color, int x1, int y1, int x2, int y2);
+extern void		GUI_drawImage(t_GUIZone *zone, t_GUIImage *image, int x, int y);
+extern int		GUI_sendMessage(t_GUIScreen *scr, int i, int msg, int param, void *arg);
+extern t_GUIMessage	PendingMessage;
+extern int			GUI_dispatchMessageNow(t_GUIScreen *scr, int msg, int param, void *arg);
+extern int			GUI_dispatchMessage(t_GUIScreen *scr, int msg, int param, void *arg);
+extern int		GUI_setFocus(t_GUIScreen *scr, int id);
+extern void	GUI_clearFocus(t_GUIScreen *scr);
+extern int		GUI_dispatchEvent(t_GUIScreen *scr, int event, void *param);
+extern void		GUI_drawScreen(t_GUIScreen *scr, void *param);
+extern t_GUIEvent	g_event;
+extern int GUI_update();
+extern int		GUI_start();
+extern void	GUI_init();
+extern t_GUIImgList	*GUI_newImageList(int nb);
+extern int		GUI_switchScreen(t_GUIScreen *scr);
+extern int sort_strcmp(const void *a, const void *b);
+extern t_GUIScreen	*scr_main;
+extern void GUI_buildCStatic(t_GUIScreen *scr, int nb, int x, int y, int sx, int str);
+extern void GUI_buildLStatic(t_GUIScreen *scr, int nb, int x, int y, int sx, int str, int arg);
+extern void GUI_buildRStatic(t_GUIScreen *scr, int nb, int x, int y, int sx, int str, int arg);
+extern void GUI_buildChoice(t_GUIScreen *scr, int nb, int x, int y, int sx, int str, int cnt, int val);
+extern t_GUIScreen *buildGFXConfigMenu();
+extern t_GUIScreen *buildMenu(int nb_elems, int flags, t_GUIFont *font, t_GUIFont *font_2);
+extern int GUI_getConfigInt(sint8 *objname, sint8 *field, int val);
+extern sint8 *GUI_getConfigStr(sint8 *objname, sint8 *field, sint8 *str);
 
-t_GUIImage	*GUI_loadImage(char *path, int width, int height, int flags);
-void		GUI_deleteImage(t_GUIImage *image);
+//simple hook for writing values to volatile config file loaded earlier from setting file. Does not update config file.
+extern void GUI_setConfigStr(sint8 *objname, sint8 *field, sint8 *value);	
 
-t_GUIImgList	*GUI_newImageList(int nb);
+//simple hook for writing values to volatile config file loaded earlier from setting file. Updates config file.
+extern void GUI_setConfigStrUpdateFile(sint8 *objname, sint8 *field, sint8 *value);
 
-int 		GUI_addImage(char *path, int w, int h, int flags);
-
-int			GUI_getFontHeight(t_GUIZone *zone);
-
-void		GUI_drawHLine(t_GUIZone *zone, int color, int x1, int y1, int x2);
-void		GUI_drawVLine(t_GUIZone *zone, int color, int x1, int y1, int y2);
-void		GUI_drawRect(t_GUIZone *zone, int color, int x1, int y1, int x2, int y2);
-
-void		GUI_drawBar(t_GUIZone *zone, int color, int x1, int y1, int x2, int y2);
-void		GUI_console_printf(int cx, int cy, char *fmt, ...);
-void		GUI_printf(char *fmt, ...);
-void		GUI_printf2(int cx, int cy, char *fmt, ...);
-int		    GUI_drawText(t_GUIZone *zone, uint16 x, uint16 y, int col, char *text);
-void		GUI_drawImage(t_GUIZone *zone, t_GUIImage *image, int x, int y);
-
-int 		GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, char *text);
-
-int			GUI_sendMessage(t_GUIScreen *scr, int i, int msg, int param, void *arg);
-int			GUI_dispatchEvent(t_GUIScreen *scr, int event, void *param);
-int			GUI_dispatchMessage(t_GUIScreen *scr, int msg, int param, void *arg);
-
-void		GUI_drawScreen(t_GUIScreen *screen, void *param);
-
-int			GUI_getStrWidth(t_GUIZone *zone, char *text);
-
-int			GUI_setFocus(t_GUIScreen *scr, int id);
-void		GUI_clearFocus(t_GUIScreen *scr);
-
-void		GUI_init();
-
-void		GUI_clearScreen(int color);
-int 		GUI_update();
-int			GUI_start();
-
-int			GUI_switchScreen(t_GUIScreen *scr);
-
-int			GUI_getZoneTextHeight(t_GUIZone *zone);
+extern void GUI_setObjFromConfig(t_GUIScreen *scr, int nb, sint8 *objname);
+extern t_GUIScreen *buildMainMenu();
+extern int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg);
+extern int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg);
+extern int LoadStateHandler(t_GUIZone *zone, int msg, int param, void *arg);
+extern int SaveStateHandler(t_GUIZone *zone, int msg, int param, void *arg);
+extern int GFXConfigHandler(t_GUIZone *zone, int msg, int param, void *arg);
+extern int AdvancedHandler(t_GUIZone *zone, int msg, int param, void *arg);
+extern void LayerOptionsUpdate();
+extern int LayersOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg);
+extern t_GUIScreen *buildLayersMenu();
+extern int ScreenOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg);
+extern t_GUIScreen *buildScreenMenu();
+extern int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg);
+extern t_GUIScreen *buildOptionsMenu();
+extern int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg);
+extern int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg);
+extern void GUI_getROM(sint8 *rompath);	//read rom from (path)touchscreen:output rom -> CFG.ROMFile
+extern void GUI_deleteROMSelector();
+extern void GUI_createMainMenu();
+extern void GUI_getConfig();
+extern void GUI_setLanguage(int lang);
+extern void	GUI_showROMInfos(int size);
 
 #ifdef __cplusplus
 }

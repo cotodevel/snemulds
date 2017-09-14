@@ -1,21 +1,23 @@
-#include <nds.h>
 #include <string.h>
 #include "pocketspc.h"
 #include "apu.h"
 #include "dsp.h"
 #include "main.h"
-#include "interrupts.h"
-#include "common_shared.h"
-#include "wifi_arm7.h"
+#include "InterruptsARMCores_h.h"	//new
+#include "interrupts.h"	//ori
 
-// Play buffer, left buffer is first MIXBUFSIZE * 2 u16's, right buffer is next
-u16 *playBuffer;
+#include "specific_shared.h"
+#include "wifi_arm7.h"
+#include "usrsettings.h"
+#include "timer.h"
+
+// Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
+uint16 *playBuffer;
 volatile int soundCursor;
 int apuMixPosition;
 int pseudoCnt;
 int frame = 0;
 int scanlineCount = 0;
-u32 interrupts_to_wait_arm7 = 0;
 bool paused = true;
 bool SPC_disable = true;
 bool SPC_freedom = false;
@@ -24,33 +26,33 @@ void SetupSound() {
     soundCursor = 0;
 	apuMixPosition = 0;
 
-    powerOn((PM_Bits)POWER_SOUND);
+    powerON(POWER_SOUND);
     REG_SOUNDCNT = SOUND_ENABLE | SOUND_VOL(0x7F);
 
-    TIMER0_DATA = TIMER_FREQ(MIXRATE);
-    TIMER0_CR = TIMER_DIV_1 | TIMER_ENABLE;
+    TIMERXDATA(0) = TIMER_FREQ(MIXRATE);
+    TIMERXCNT(0) = TIMER_DIV_1 | TIMER_ENABLE;
 
-    TIMER1_DATA = 0x10000 - MIXBUFSIZE;
-    TIMER1_CR = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
+    TIMERXDATA(1) = 0x10000 - MIXBUFSIZE;
+    TIMERXCNT(1) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
 
     // Debug
 	#if PROFILING_ON  
-		TIMER2_DATA = 0;
-		TIMER2_CR = TIMER_DIV_64 | TIMER_ENABLE;
+		TIMERXDATA(2) = 0;
+		TIMERXCNT(2) = TIMER_DIV_64 | TIMER_ENABLE;
 
-		TIMER3_DATA = 0;
-		TIMER3_CR = TIMER_CASCADE | TIMER_ENABLE;
+		TIMERXDATA(3) = 0;
+		TIMERXCNT(3) = TIMER_CASCADE | TIMER_ENABLE;
 	#endif    
 }
  
 void StopSound() {
-    powerOff((PM_Bits)POWER_SOUND);
+    powerOFF(POWER_SOUND);
     REG_SOUNDCNT = 0;
-    TIMER0_CR = 0;
-    TIMER1_CR = 0;
+    TIMERXCNT(0) = 0;
+    TIMERXCNT(1) = 0;
 }
 
-void LoadSpc(const u8 *spc) {
+void LoadSpc(const uint8 *spc) {
 // 0 - A, 1 - X, 2 - Y, 3 - RAMBASE, 4 - DP, 5 - PC (Adjusted into rambase)
 // 6 - Cycles (bit 0 - C, bit 1 - v, bit 2 - h, bits 3+ cycles left)
 // 7 - Optable
@@ -78,7 +80,7 @@ void LoadSpc(const u8 *spc) {
     DspPrepareStateAfterReload();    
 }
 
-void SaveSpc(u8 *spc) {
+void SaveSpc(uint8 *spc) {
 // 0 - A, 1 - X, 2 - Y, 3 - RAMBASE, 4 - DP, 5 - PC (Adjusted into rambase)
 // 6 - Cycles (bit 0 - C, bit 1 - v, bit 2 - h, bits 3+ cycles left)
 // 7 - Optable
@@ -108,9 +110,11 @@ void SaveSpc(u8 *spc) {
 }
 
 //---------------------------------------------------------------------------------
-int main() {
+int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------
 	
+	//ori
+	/*
 	interrupts_to_wait_arm7 = IRQ_TIMER1 | IRQ_HBLANK | IRQ_VBLANK | IRQ_VCOUNT | IRQ_FIFO_NOT_EMPTY;  //| IRQ_FIFO_EMPTY;    
 	
     //fifo setups
@@ -119,32 +123,33 @@ int main() {
     
 	installWifiFIFO();
 	
-    irqSet(IRQ_HBLANK,hblank);
-	irqSet(IRQ_VBLANK, vblank);
-	irqSet(IRQ_VCOUNT,vcounter);
-    irqSet(IRQ_TIMER1, timer1);
+    irqSet(IRQ_HBLANK,Hblank);
+	irqSet(IRQ_VBLANK, Vblank);
+	irqSet(IRQ_VCOUNT,Vcounter);
+    irqSet(IRQ_TIMER1, Timer1handler);
 	irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifoNotEmpty);
     //irqSet(IRQ_FIFO_EMPTY,HandleFifoEmpty);
     
 	irqEnable(interrupts_to_wait_arm7);
     
-    REG_IPC_SYNC = 0;
+	REG_IPC_SYNC = 0;
     REG_IPC_FIFO_CR = IPC_FIFO_RECV_IRQ | IPC_FIFO_SEND_IRQ | IPC_FIFO_ENABLE;
     
     //set up ppu: do irq on hblank/vblank/vcount/and vcount line is 159
     REG_DISPSTAT = REG_DISPSTAT | DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ | (VCOUNT_LINE_INTERRUPT << 15);
+	*/
+	
+	IRQInit();
 	
 	// Block execution until we get control of vram D
 	while (!(*((vu8*)0x04000240) & 0x2));
 	
-	int i   = 0;
-	readUserSettings();
+	//Read DHCP settings (in order)
+	LoadFirmwareSettingsFromFlash();
+	installWifiFIFO();
 	
-	// Reset the clock if needed
-    rtcReset();
-	
-    playBuffer = (u16*)0x6000000;
-    
+    playBuffer = (uint16*)0x6000000;
+    int i   = 0;
     for (i = 0; i < MIXBUFSIZE * 4; i++) {
         playBuffer[i] = 0;
     }
@@ -186,8 +191,12 @@ int main() {
 
             
         }
-		else
-			swiWaitForVBlank();
+		//ori
+		//else
+			//swiWaitForVBlank();
+		
+		
+		IRQVBlankWait();	//required for sound playback sync with vblank
 	}
    
 	return 0;

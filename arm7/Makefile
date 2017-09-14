@@ -1,134 +1,109 @@
-#---------------------------------------------------------------------------------
-.SUFFIXES:
-#---------------------------------------------------------------------------------
-ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
-endif
+#
+#			Copyright (C) 2017  Coto
+#This program is free software; you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation; either version 2 of the License, or
+#(at your option) any later version.
 
-include $(DEVKITARM)/ds_rules
+#This program is distributed in the hope that it will be useful, but
+#WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+#General Public License for more details.
 
-#---------------------------------------------------------------------------------
-# BUILD is the directory where object files & intermediate files will be placed
-# SOURCES is a list of directories containing source code
-# INCLUDES is a list of directories containing extra header files
-# DATA is a list of directories containing binary files
-# all directories are relative to this makefile
-#---------------------------------------------------------------------------------
-BUILD		:=	build
-SOURCES		:=	source  \
-                source/interrupts/source/	\
-				source/wireless/	\
-                ../common/	\
-                ../common/dswifi
-INCLUDES	:=	include/  \
-				../include/  \
-                source/interrupts/include/	\
-				source/wireless/	\
-                ../common/	\
-                ../common/dswifi
-DATA		:=
- 
-#---------------------------------------------------------------------------------
-# options for code generation
-#---------------------------------------------------------------------------------
-ARCH	:=	#-mthumb-interwork
-
-CFLAGS	:=	-Wall -O2 \
-		-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer\
-		-ffast-math \
-		$(ARCH)
-
-CFLAGS	+=	$(INCLUDE) -DARM7
-CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions -fno-rtti
+#You should have received a copy of the GNU General Public License
+#along with this program; if not, write to the Free Software
+#Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+#USA
+#
 
 
-ASFLAGS	:=	$(ARCH)	$(CFLAGS)
-LDFLAGS	=	-specs=../ds_arm7_nds.specs $(ARCH) -Wl,-Map,$(notdir $*).map
+# relative path (if you are outside arm9 folder then $(DIR_ARM9), arm7 is $(DIR_ARM7))
+RELATIVE_PATH =	
 
-LIBS	:= -lnds7
-#---------------------------------------------------------------------------------
-# list of directories containing libraries, this must be the top level containing
-# include and lib
-#---------------------------------------------------------------------------------
-LIBDIRS	:=	$(CURDIR) $(LIBNDS) $(LIBWIFI)
- 
-  
-#---------------------------------------------------------------------------------
-# no real need to edit anything past this point unless you need to add additional
-# rules for different file extensions
-#---------------------------------------------------------------------------------
-ifneq ($(BUILD),$(notdir $(CURDIR)))
-#---------------------------------------------------------------------------------
- 
-export ARM7ELF	:=	$(CURDIR)/$(TARGET).elf
-export DEPSDIR	:=	$(CURDIR)/$(BUILD)
+#Prepare ARM7 dirs
+DIRLIBS_HDR = $(foreach dirres,$(DIRS_ARM7_HEADER),-I "$(CURDIR)/$(RELATIVE_PATH)/$(dirres)/" )	$(DIRLIBS_SHARED)	$(TARGET_LIBRARY_HEADERS_7_INC)
+DIRLIBS_SRC = $(foreach dirres,$(DIRS_ARM7_SRC),-I "$(CURDIR)/$(RELATIVE_PATH)/$(dirres)/" )	$(DIRLIBS_SHARED)
 
-export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
- 
-CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
-CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
-SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
- 
-export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
-			$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
- 
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(BUILD)
- 
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+file_arm7_src_c=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.c))  )
+file_arm7_src_s=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.s))  )
+file_arm7_src_SUPP=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.S))  )
 
-#---------------------------------------------------------------------------------
-# use CXX for linking C++ projects, CC for standard C
-#---------------------------------------------------------------------------------
-ifeq ($(strip $(CPPFILES)),)
-#---------------------------------------------------------------------------------
-	export LD	:=	$(CC)
-#---------------------------------------------------------------------------------
-else
-#---------------------------------------------------------------------------------
-	export LD	:=	$(CXX)
-#---------------------------------------------------------------------------------
-endif
-#---------------------------------------------------------------------------------
+# Object Target
+objs_arm7:=	${file_arm7_src_c:.c=.o}	${file_arm7_src_s:.s=.o}	${file_arm7_src_SUPP:.S=.o}
+d_objs_arm7:=	${file_arm7_src_c:.c=.d}	${file_arm7_src_s:.s=.d}	${file_arm7_src_SUPP:.S=.d}
 
-.PHONY: $(BUILD) clean
- 
-#---------------------------------------------------------------------------------
-$(BUILD):
-	@[ -d $@ ] || mkdir -p $@
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
- 
-#---------------------------------------------------------------------------------
+#ARM7 specific definitions.
+MAPFILE = $(DIR_ARM7).map
+SHARED_FLAGS	=	-mcpu=arm7tdmi
+AS_ASFLAGS		=	$(SHARED_FLAGS)	-defsym debug=0	-defsym	appver='$(EXECUTABLE_VERSION)'
+CC_ASFLAGS		=	$(SHARED_FLAGS)	-Wall	-O2	-DASM_OPCODES -DARM7 -mtune=arm7tdmi	-marm -fomit-frame-pointer	-ffast-math	-Ddebug=0	-Dappver='$(EXECUTABLE_VERSION)'
+BUILD			= 	$(BUILD_ARM7)
+DIR_SRC			= 	$(DIRS_ARM7_SRC)
+
+#--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
+#check arm9.map "Discarded input sections" to see --gc-sections in action.
+LDFLAGS	=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm7_ld.specs	-Wl,-rpath,/path/to/foo,--gc-sections,-Map,$(MAPFILE)
+LIBRARIES =	-$(TARGET_LIBRARY_LIBNAME_7)	-lc_nano
+
+
+################################################################################################
+
+#Dont modify anything else if not necessary ..
+OBJECTS:=	$(objs_arm7)	
+OBJDIR 	=	./$(BUILD)
+VPATH 	=	$(DIR_SRC)
+OBJPROG =	$(addprefix $(OBJDIR)/, $(ELF_ARM7))
+
+all: $(OBJDIR)|	nds_arm7_ld_crt0.o	$(BINSTRIP_RULE_7)
+#all: debug
+
+#Check $(OBJDIR) if not exists: create it
+$(OBJDIR):
+	@echo "Folder $(OBJDIR) does not exist. Creating"
+	mkdir -p $@
+
+#Do C Compile now!
+$(OBJDIR)/%.o : %.c
+	-@echo 'C Compile start: $@'
+	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o $@ -c $<
+	-@echo 'C Compile End: $@'
+
+#Coto: Special "exception" rule. Fixes tricky projects such as SnemulDS's opcodes2.s where GCC AS is used, while compatibility with .S is required for newer projects.
+#.S is GCC CC/CPP for compiling assembler with cpp headers
+#.s is GCC AS Assembler for compiling assembler the usual way
+
+#Do s (GCC AS) Compile now!
+$(OBJDIR)/%.o : %.s
+	-@echo 's Compile start: $@'
+	$(AS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(AS_ASFLAGS)	-o $@ -c $<
+	-@echo 's Compile end: $@'
+
+#Do S (GCC CC) Compile now!
+$(OBJDIR)/%.o : %.S
+	-@echo 'S Compile start: $@'
+	$(CC)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $@ -c $<
+	-@echo 'S Compile end: $@'
+
+#Special rule: compile crt0 for arm7 entrypoint
+nds_arm7_ld_crt0.o:	$(TARGET_LIBRARY_LINKER_FILE_7)
+	-@echo 'S Compile start: crt0s'
+	$(CC)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $(OBJDIR)/$@ -c $<
+	-@echo 'S Compile end: crt0s'
+
+#Linkage.
+$(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
+	-@echo 'Entering Linking phase'
+	$(CC) $^ $(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(LIBPATH)	-L	$(TARGET_LIBRARY_PATH)/	$(LIBRARIES)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
+	-@echo 'Leaving Linking phase. Output: $@'
+
+#keep only binary sections from elf. --only-section
+$(BINSTRIP_RULE_7): $(OBJPROG)
+	-@echo 'Binary-only strip start'
+	$(OBJCOPY) 	-O binary		$<	$@
+	-@echo 'Binary-only strip finish: $<	->	$@'
+	
+################################################################################################
+	
 clean:
-	@echo clean ...
-	@rm -fr $(BUILD) *.elf
- 
- 
-#---------------------------------------------------------------------------------
-else
- 
-DEPENDS	:=	$(OFILES:.o=.d)
- 
-#---------------------------------------------------------------------------------
-# main targets
-#---------------------------------------------------------------------------------
-$(ARM7ELF)	:	$(OFILES)
-	@echo linking $(notdir $@)
-	@$(LD)  $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
-
-
-#---------------------------------------------------------------------------------
-# you need a rule like this for each extension you use as binary data 
-#---------------------------------------------------------------------------------
-%.bin.o	:	%.bin
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	@$(bin2o)
-
--include $(DEPENDS)
- 
-#---------------------------------------------------------------------------------------
-endif
-#---------------------------------------------------------------------------------------
+	-@echo 'cleanup $(DIR_ARM7)'
+	-@rm -fr $(OBJDIR)	$(BINSTRIP_RULE_7)	$(MAPFILE)

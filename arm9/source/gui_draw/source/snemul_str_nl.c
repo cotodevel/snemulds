@@ -1,4 +1,8 @@
-char*  g_snemulds_str_nl[] = 
+#include "typedefs.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+sint8*  g_snemulds_str_nl[] = 
 {
     "FS initialisatie...\n",      /* 0 */
     "FS fout, toch doorgaan...\n",        /* 1 */
@@ -34,8 +38,8 @@ char*  g_snemulds_str_nl[] =
     "Geluid aan",        /* 30 */
     "Geluid uit",       /* 31 */
     "Snelheid:",           /* 32 */
-    "Normale snelheid",         /* 33 */
-    "Turbo snelheid",         /* 34 */
+    "VBlank enabled (ignored)",					/* 33 */
+	"VBlank disabled (ignored)",					/* 34 */
     "",               /* 35 */
     "Schermindeling opties",    /* 36 */
     "Achtergronden & sprite opties",  /* 37 */

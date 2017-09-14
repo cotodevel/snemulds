@@ -1,11 +1,8 @@
 #ifndef OPC_ASM_H_
 #define OPC_ASM_H_
 
-//opc_asm.h
-
 /* Optimise short loop going to those instruction */
 
-IN_DTCM
 uint8	OpcShortLoop[] = { 
 0, //&&I_BRK,
 0, //&&I_ORA_d_x_i,
@@ -527,4 +524,3 @@ uint8	OpcShortLoop[] = {
 */	
 
 #endif /*OPC_ASM_H_*/
-

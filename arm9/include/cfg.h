@@ -18,7 +18,7 @@ GNU General Public License for more details.
 #ifndef __cfg_h__
 #define __cfg_h__
 
-#include "common.h"
+#include "typedefs.h"
 
 struct s_cfg
 {
@@ -42,9 +42,6 @@ struct s_cfg
 
   int	Debug, Debug2;
 
-  int	ExtRAMSize;
-  int	MapExtMem;
-  
   int	AutoSRAM;
 
   int	InterleavedROM;
@@ -77,12 +74,13 @@ struct s_cfg
   int		BG3TilePriority;
   int		BG3PaletteFix;
 
-  char		ROMFile[100];
+  sint8		ROMFile[100]; 
+  sint8		ROMPath[100];
   
-  char		*ROMPath;
+  sint8 		Fullpath[100];	//each time loadRom is loaded this is rewritten
   
   int		Jukebox;  
-  char		Playlist[100];
+  sint8		Playlist[100];
 
 // GUI  
   sint8		GUISort;

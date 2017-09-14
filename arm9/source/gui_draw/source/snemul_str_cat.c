@@ -1,4 +1,8 @@
-char*  g_snemulds_str_cat[] = 
+#include "typedefs.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+sint8*  g_snemulds_str_cat[] = 
 {
 		"FS Iniciant el sistema...\n",			/* 0 */
 		"FS Error, continuar igualment...\n",				/* 1 */
@@ -34,8 +38,8 @@ char*  g_snemulds_str_cat[] =
 		"Sò activat",				/* 30 */
 		"Sò desactivat",				/* 31 */
 		"Velocitat:",						/* 32 */
-		"Velocitat normal",					/* 33 */
-		"Velocitat ràpida",					/* 34 */
+		"VBlank enabled (ignored)",					/* 33 */
+		"VBlank disabled (ignored)",					/* 34 */
 		"",								/* 35 */
 		"Opcions del Screen Layout",		/* 36 */
 		"Opcions de Backgrounds i Sprites",	/* 37 */

@@ -15,18 +15,18 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include <nds.h>
-#include <nds/memory.h>
 #include <string.h>
+#include <stdlib.h>
 
-#include "snes.h"
 #include "apu.h"
 #include "gfx.h"
 #include "cfg.h"
 //#include "superfx.h"
 #include "opcodes.h"
-
-#include "common_shared.h"
+#include "core.h"
+#include "ppu.h"
+#include "memmap.h"
+#include "specific_shared.h"
 
 //GSU Memory Map (at SNES Side)
 /*
@@ -85,7 +85,7 @@ may be mixed-up with ROM-MSBs).
 #if 0
 struct s_SuperFX	SuperFX;
 
-char    _use_lfn(const char *path)
+sint8    _use_lfn(const sint8 *path)
 {
   return (1);
 }
@@ -170,7 +170,7 @@ void	reset_CPU()
   CPU_init();	
   PCptr = map_memory(CPU.PC, CPU.PB);
   SnesPCOffset = -((sint32)mem_getbaseaddress(CPU.PC, CPU.PB));
-  //iprintf("PCptr = %08x\n", PCptr);
+  //printf("PCptr = %08x\n", PCptr);
 #endif  
   CPU.IsBreak = 0;
   CPU.packed = CPU.unpacked = 0;
@@ -213,19 +213,19 @@ if (CFG.DSP1)
 		memset(SNESC.SRAM, 0xAA, 0x8000);
     }
     
-	//GUI_printf("test\n");
+	//printf("test\n");
 	
-	MyIPC->counter = 0;
+	SpecificIPC->counter = 0;
 	//  if (CFG.Sound_output) 
   	APU_nice_reset();
-	//GUI_printf("test1\n");
+	//printf("test1\n");
 
 	InitMap();
   
-	//GUI_printf("test2\n");
+	//printf("test2\n");
 	//mem_reset_paging(); 
 	reset_CPU();
-	//GUI_printf("test3\n");
+	//printf("test3\n");
 
 	if (!CFG.Timing)
 		SNES.NTSC = (SNES.ROM_info.countrycode < 2);
@@ -237,16 +237,16 @@ if (CFG.DSP1)
 
 	CFG.BG_Layer = 0xd7; //FIXME: BG3 is not used (MODE 0 broken)
 
-	MyIPC->skipper_cnt1 = 0;  
-	MyIPC->skipper_cnt2 = 0;  
-	MyIPC->skipper_cnt3 = 0;  
-	MyIPC->skipper_cnt4 = 0;
+	SpecificIPC->skipper_cnt1 = 0;  
+	SpecificIPC->skipper_cnt2 = 0;  
+	SpecificIPC->skipper_cnt3 = 0;  
+	SpecificIPC->skipper_cnt4 = 0;
 	SNES.V_Count = 0;
   
-	//GUI_printf("test4\n");
+	//printf("test4\n");
 	PPU_reset();  
   
-	//GUI_printf("test5\n");
+	//printf("test5\n");
   
 	SNES.mouse_x = 128;
 	SNES.mouse_y = 112;
@@ -256,7 +256,7 @@ if (CFG.DSP1)
 	SNES.SRAMWritten = 0;
 }
 
-int cnt_alphachar(const char str_buf[])
+int cnt_alphachar(const sint8 str_buf[])
 {
 	int i = 0, cnt = 0;
 
@@ -318,11 +318,11 @@ void	UnInterleaveROM()
 	free(tmp);
 }
 
-void	load_ROM(char *ROM, int ROM_size)
+void	load_ROM(sint8 *ROM, int ROM_size)
 {
   int       fileheader, filesize;
   int		cnt1, cnt2;
-  char		jap;
+  sint8		jap;
   ROM_Info	LoROM_info;
   ROM_Info	HiROM_info;
 

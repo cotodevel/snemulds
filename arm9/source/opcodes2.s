@@ -16,15 +16,25 @@ GNU General Public License for more details.
 -------------------------------------------------------------------
 */
 
-.equ    memoryMapBase,      0x06898000              @ 8k in VRAM Bank H
-.equ    MemoryMap,          memoryMapBase           @ for code compatibility
-.equ	MemoryWriteMap,		0x0689A000
+    .equ    memoryMapBase,      0x06898000              @ 8k in VRAM Bank H
+@  	.equ    memoryMapBase,      0x023E0000
+    .equ    MemoryMap,          memoryMapBase           @ for code compatibility
+    .equ	MemoryWriteMap,		0x0689A000
+    
 
-#ifdef ASM_OPCODES
+.align 4
 
-#include "opc_macros.s"
+@link against snes cpu macros
+.include    "opc_macros.s"
+.ltorg
 
 @*************************************************************************
+@ All code here in IWRAM
+@*************************************************************************
+
+
+.align 4
+@.section    .dtcm, "aw", %progbits
 
 @=========================================================================
 @ memory mapping table
@@ -167,12 +177,15 @@ m1x1Decoder:
     .long INX_m1x1,INX_m1x1,  SBC_m1x1I,SBC_m1x1I,NOP_m1x1,NOP_m1x1,  XBA_m1x1,XBA_m1x1,  CPX_m1x1,A_34,      SBC_m1x1,A_34,      INC_m1x1,A_36,      SBC_m1x1,AL_45      
     .long BEQ_m1x1,BEQ_m1x1,  SBC_m1x1,DIY_25,    SBC_m1x1,DI_25,     SBC_m1x1,DSIY_27,   PEA_m1x1,PEA_m1x1,  SBC_m1x1,DX_24,     INC_m1x1,DX_26,     SBC_m1x1,DILY_26    
     .long SED_m1x1,SED_m1x1,  SBC_m1x1,AY_34,     PLX_m1x1,PLX_m1x1,  XCE_m1x1,XCE_m1x1,  JSR_m1x1I,JSR_m1x1I,SBC_m1x1,AX_34,     INC_m1x1,AX_37,     SBC_m1x1,ALX_45     
-@ version 0.27DS fix end 
-
+@ version 0.27DS fix end
 .pool
 
-.section    .itcm, "aw", %progbits
-   
+.align 4
+.section    .itcm, "awx", %progbits
+
+/*    .ascii  ".IWRAMSTART"
+    .align 4*/
+    
 @-------------------------------------------------------------------
 @ First bank for DP addressing
 @-------------------------------------------------------------------
@@ -521,6 +534,8 @@ MVN_m0x0:   OpMVN   M0X0, 0, 0
 MVN_m0x1:   OpMVN   M0X1, 0, 0
 MVN_m1x0:   OpMVN   M1X0, 0, 0
 MVN_m1x1:   OpMVN   M1X1, 0, 0
+
+.pool
 
 @------------------------------------------------------
 @ MVP/MVN
@@ -1120,7 +1135,7 @@ DB:	.word	0
 P:	.word 	0
 .GLOBAL Cycles
 Cycles:	.word	0
-/*
+
 .GLOBAL AsmDebug
 AsmDebug:	
 AsmDebug1:
@@ -1143,7 +1158,5 @@ AsmDebug4:
 		.word	0
 		.word	0
 		.word	0
-*/
-
-
-#endif
+	
+.ltorg

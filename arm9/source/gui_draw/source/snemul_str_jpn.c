@@ -1,4 +1,8 @@
-char*  g_snemulds_str_jpn[] = 
+#include "typedefs.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+sint8*  g_snemulds_str_jpn[] = 
 {
 		"L'2Y<=CQ <.76A-3 !!!\n",			/* 0 */
 		"<.76 </J_2$?IOOB^/:3 !!!\n",				/* 1 */
@@ -34,8 +38,8 @@ char*  g_snemulds_str_jpn[] =
 		";3]D^5]",						/* 30 */
 		";3]D^5L",					/* 31 */
 		"=K_0D^:",						/* 32 */
-		"K.3<^-]",					/* 33 */
-		":3?8",					/* 34 */
+		"VBlank enabled (ignored)",					/* 33 */
+		"VBlank disabled (ignored)",					/* 34 */
 		"",								/* 35 */
 		"C^(=L_ Z25L_<.]",					/* 36 */
 		"J292 & =L_W2D 5L_<.]",					/* 37 */

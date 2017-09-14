@@ -22,11 +22,11 @@ GNU General Public License for more details.
 
 typedef
        struct {
-              unsigned char   *ptr;
-              unsigned char   pos_x;
-              unsigned char   pf:2;
-              unsigned char   first_x:3;
-              unsigned char   trans:1;
+              uint8   *ptr;
+              uint8   pos_x;
+              uint8   pf:2;
+              uint8   first_x:3;
+              uint8   trans:1;
        } line_sprite_Info;
 
 typedef
@@ -103,7 +103,7 @@ struct s_gfx
 /*  short     tiles_x[8][33];
   uchar		tiles_ry[4];
   uchar		tiles_cnt[8];*/
-  char		HighestSprite;
+  sint8		HighestSprite;
   int		old_scrollx[4], old_scrolly[4];
   int		tile_address[4];
   
@@ -168,21 +168,6 @@ extern "C" {
 #endif
 
 extern struct s_gfx	GFX;
-
-void	init_GFX();
-void	PPU_setScreen(int screen);
-void	check_sprite_addr();
-void	update_scrollx();
-void	update_scrolly();
-void	check_tile();
-void    check_tile_addr();
-void	PPU_setPalette(int c, uint16 rgb);
-int		get_joypad();
-void	update_joypads();
-void	PPU_reset();
-void	draw_screen();
-
-void	PPU_add_tile_address(int bg);
 
 #ifdef __cplusplus
 }

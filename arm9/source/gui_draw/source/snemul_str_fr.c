@@ -1,4 +1,8 @@
-char*  g_snemulds_str_fr[] = 
+#include "typedefs.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+sint8*  g_snemulds_str_fr[] = 
 {
 		"Initialisation du système...\n",			/* 0 */
 		"Echec, continue malgré tout...\n",				/* 1 */
@@ -34,8 +38,8 @@ char*  g_snemulds_str_fr[] =
 		"Son activé",						/* 30 */
 		"Son désactivé",					/* 31 */
 		"Vitesse:",						/* 32 */
-		"Vitesse normale",					/* 33 */
-		"Vitesse rapide",					/* 34 */
+		"VBlank enabled (ignored)",					/* 33 */
+		"VBlank disabled (ignored)",					/* 34 */
 		"",								/* 35 */
 		"Options écran",					/* 36 */
 		"Options décors et sprites",					/* 37 */

@@ -18,18 +18,16 @@ GNU General Public License for more details.
 #ifndef __common_h__
 #define __common_h__
 
-#define SNEMULDS_TITLE "-= SNEmulDS 0.6 by archeide =-\n"
-#define SNEMULDS_SUBTITLE "CPU: bubble2k Sound: gladius\n"
-#define GAMES_DIR "/SNES/"
 
 //count/time VCOUNT
-#define TIMER_Y
-#define IN_DTCM __attribute__((section(".dtcm")))
-#define IN_ITCM __attribute__((section(".itcm")))
+//#define SNEMUL_LOGGING
 
+//#define TIMER_Y	//isnt TIMER3 used for wifi? NO cant enable this here
+//#define IN_DTCM __attribute__((section(".dtcm")))
+//#define IN_ITCM __attribute__((section(".itcm")))
 
-#include <nds/timers.h>
-
+#include "typedefs.h"
+/*
 #ifndef TIMER_Y
 #define START_PROFILE(name, cnt) \
 	SNES.stat_before##cnt = TIMER3_DATA;
@@ -46,6 +44,7 @@ GNU General Public License for more details.
 	#define START_PROFILE(name, cnt)
 	#define END_PROFILE(name, cnt) 
 #endif
+*/
 
 #ifdef VRAM
 	#undef VRAM
@@ -55,10 +54,8 @@ GNU General Public License for more details.
 	#undef SRAM
 #endif
 
-#ifdef LIBNDS
-#define PM_BACKLIGHT_BOTTOM  BIT(2)    // Enable the top backlight if set
-#define PM_BACKLIGHT_TOP     BIT(3)    // Enable the bottom backlight if set
-#endif
+#define PM_BACKLIGHT_BOTTOM  (1<<2)    // Enable the top backlight if set
+#define PM_BACKLIGHT_TOP     (1<<3)    // Enable the bottom backlight if set
 
 #ifdef WIN32
 #define STATIC_INLINE static _inline
@@ -66,6 +63,8 @@ GNU General Public License for more details.
 #define STATIC_INLINE static inline
 #endif
 
+//handled by stdbool.h
+/*
 #if (TRUE != 1)
 #undef TRUE
 #define TRUE    1
@@ -75,20 +74,8 @@ GNU General Public License for more details.
 #undef FALSE
 #define FALSE   0
 #endif
+*/
 
-typedef unsigned short	ushort;
-typedef unsigned char	uchar;
-
-#ifndef _NDSTYPES_INCLUDE
-typedef	unsigned int	uint32;
-typedef	unsigned short	uint16;
-typedef	uchar			uint8;
-#endif
-
-typedef	int				sint32;
-typedef	short			sint16;
-typedef	char			sint8;
-typedef	char			bool8;
 
 #define GET_WORD16(a) (*((uint8 *)(a)) | (*(((uint8 *)(a))+1) << 8)) 
 #define SET_WORD16(a, v) { *((uint8 *)(a)) = (v) & 0xFF; *(((uint8 *)(a))+1) = (v) >> 8; } 

@@ -1,16 +1,20 @@
-#include <nds.h>
-#include <nds/memory.h>
 #include <string.h>
 
 #include "common.h"                 //snes common
-#include "common_shared.h"
+#include "specific_shared.h"
 
 #include "gfx.h"
-#include "snes.h"
 #include "cfg.h"
 #include "apu.h"
+#include "core.h"
 #include "opcodes.h"
 #include "gui.h"
+#include "dsregs.h"
+#include "ppu.h"
+#include "api_wrapper.h"
+#include "multi.h"
+#include "video.h"
+#include "keypad.h"
 
 
 uint32	joypad_conf_mode = 0;
@@ -18,13 +22,15 @@ uint32	mouse_cur_b;
 
 int	setBacklight(int flags)
 {
-	SendArm7Command(0x00000008,(flags << 16),0x00000000,0x00000000);
+	//SendArm7Command(0x00000008,(flags << 16),0x00000000,0x00000000);
+	SendMultipleWordACK(0x00000008, (flags << 16), 0, 0);
+	
 	return 0;
 }
 
 int myLCDSwap()
 {
-	lcdSwap();
+	SWAP_LCDS();
 	if (GUI.hide)
 	{
 		if (REG_POWERCNT & POWER_SWAP_LCDS)
@@ -35,19 +41,20 @@ int myLCDSwap()
 	return 0;
 }
 
+
 int get_joypad()
 {
 	int res = 0;
     
+	//old libnds code
     /*
-    #define KEYS_CUR (( ((~REG_KEYINPUT)&0x3ff) | (((~MyIPC->buttons_xy_folding)&3)<<10) | (((~MyIPC->buttons_xy_folding)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID)	
+    #define KEYS_CUR (( ((~KEYINPUT)&0x3ff) | (((~MyIPC->buttons_xy_folding)&3)<<10) | (((~MyIPC->buttons_xy_folding)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID)	
 	keys = KEYS_CUR;
     */
     
-	keys = (( ((~REG_KEYINPUT)&0x3ff) | (((~MyIPC->buttons_xy_folding)&3)<<10) | (((~MyIPC->buttons_xy_folding)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID);
-    //scanKeys();	
-	//keys = keysCurrent();
-
+	//new
+	keys = keysPressed();
+	
 #if 0
 		if( (keys & KEY_L))
 		{
@@ -166,8 +173,6 @@ int get_joypad()
 	}
 #endif	 	 
 	 
-//	scanKeys();	
-//	keys = keysHeld();
 	if( keys & KEY_B ) res |= 0x8000;
 	if( keys & KEY_Y ) res |= 0x4000;
 	if( keys & KEY_SELECT ) res |= 0x2000;
@@ -206,8 +211,8 @@ int get_joypad()
 		}
 
         
-		if (MyIPC->touched)
-		{		
+		if(keysHeld() & KEY_TOUCH)	// much better
+		{
 			int tx=0, ty=0;
 
 			tx = MyIPC->touchXpx;
@@ -250,4 +255,26 @@ int get_joypad()
 	}
 		
 	return res;
+}
+
+
+
+
+//new
+uint16 read_joypad1() {
+	return (uint16)(CPU.DMA_PORT[0x18] | (CPU.DMA_PORT[0x19] << 8));
+}
+
+uint16 read_joypad2() {
+	return (uint16)(CPU.DMA_PORT[0x1a] | (CPU.DMA_PORT[0x1b] << 8));
+}
+
+void write_joypad1(uint16 bits){
+	CPU.DMA_PORT[0x18] = (bits&0xff);
+	CPU.DMA_PORT[0x19] = ((bits>>8)&0xff);
+}
+
+void write_joypad2(uint16 bits){
+	CPU.DMA_PORT[0x1a] = (bits&0xff);
+	CPU.DMA_PORT[0x1b] = ((bits>>8)&0xff);
 }

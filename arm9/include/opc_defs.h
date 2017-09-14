@@ -18,8 +18,7 @@ GNU General Public License for more details.
 #ifndef OPC_DEFS_H_
 #define OPC_DEFS_H_
 
-IN_DTCM __attribute__ ((align(4))) /*dtcm data must be aligned*/
-static void *OpCodes[] = { 
+    static void *OpCodes[] = { 
 &&I_BRK,
 &&I_ORA_d_x_i,
 &&I_COP,
@@ -275,5 +274,8 @@ static void *OpCodes[] = {
 &&I_INC_a_x,
 &&I_SBC_al_x
 };		
+
+
+
    
 #endif /*OPC_DEFS_H_*/
