@@ -42,7 +42,7 @@ DIR_SRC			= 	$(DIRS_ARM7_SRC)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm7_ld.specs	-Wl,-rpath,/path/to/foo,--gc-sections,-Map,$(MAPFILE)
+LDFLAGS	=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm7_ld.specs	-Wl,--gc-sections,-Map,$(MAPFILE)
 LIBRARIES =	-$(TARGET_LIBRARY_LIBNAME_7)	-lc_nano
 
 
@@ -84,10 +84,12 @@ $(OBJDIR)/%.o : %.S
 	$(CC)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $@ -c $<
 	-@echo 'S Compile end: $@'
 
-#Special rule: compile crt0 for arm7 entrypoint
+#Special rule: compile crt0 for arm7 entrypoint, bring linkers here
 nds_arm7_ld_crt0.o:	$(TARGET_LIBRARY_LINKER_FILE_7)
 	-@echo 'S Compile start: crt0s'
 	$(CC)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $(OBJDIR)/$@ -c $<
+	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm7_ld.ld $(CURDIR)
+	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm7_ld.specs $(CURDIR)
 	-@echo 'S Compile end: crt0s'
 
 #Linkage.
@@ -106,4 +108,4 @@ $(BINSTRIP_RULE_7): $(OBJPROG)
 	
 clean:
 	-@echo 'cleanup $(DIR_ARM7)'
-	-@rm -fr $(OBJDIR)	$(BINSTRIP_RULE_7)	$(MAPFILE)
+	-@rm -fr $(OBJDIR)	$(BINSTRIP_RULE_7)	$(MAPFILE)	$(CURDIR)/nds_arm7_ld.specs	$(CURDIR)/nds_arm7_ld.ld
