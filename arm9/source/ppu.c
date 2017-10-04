@@ -1864,7 +1864,7 @@ void	PPU_updateGFX(int line)
 		"str 	r2, [%0, #4];"
 		: :	"r"(0x04000008), "r"(&l->lBG0_CR) : "r2");	
 	// BLEND
-	(*(vu32*)0x04000050) = l->lBLEND; 
+	(*(vuint32*)0x04000050) = l->lBLEND; 
 		
 
 //	BRIGHTNESS = l->lBRIGHTNESS;

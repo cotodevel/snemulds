@@ -26,7 +26,7 @@ extern "C" {
 //typedef enum { DETECT_RAM=0, SC_RAM, M3_RAM, OPERA_RAM, G6_RAM, EZ_RAM } RAM_TYPE;
 
 //  Call this before the others
-vu16*  ram_init ();
+vuint16*  ram_init ();
 
 //  Returns the type of the RAM device
 uint32   ram_type ();
@@ -39,7 +39,7 @@ uint32   ram_size ();
 
 
 //  Unlocks the RAM and returns a pointer to the begin
-vu16* ram_unlock ();
+vuint16* ram_unlock ();
 
 //  Locks the RAM
 void  ram_lock ();

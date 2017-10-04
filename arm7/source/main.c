@@ -142,7 +142,7 @@ int main(int _argc, sint8 **_argv) {
 	IRQInit();
 	
 	// Block execution until we get control of vram D
-	while (!(*((vu8*)0x04000240) & 0x2));
+	while (!(*((vuint8*)0x04000240) & 0x2));
 	
 	//Read DHCP settings (in order)
 	LoadFirmwareSettingsFromFlash();

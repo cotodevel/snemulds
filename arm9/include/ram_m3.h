@@ -13,72 +13,72 @@
 //0x400003: CF read only
 //0x400007: CF read/write
 
-static u16 M3_SetChipReg(uint32 Data)
+static uint16 M3_SetChipReg(uint32 Data)
 {
-	vu16 i,j;
+	vuint16 i,j;
 
-	i = *(volatile u16*)(0x700001*2+0x8000000);
+	i = *(volatile uint16*)(0x700001*2+0x8000000);
 	
-	i = *(volatile u16*)(0x000007*2+0x8000000);
-	i = *(volatile u16*)(0x400ffe*2+0x8000000);
-	i = *(volatile u16*)(0x000825*2+0x8000000);
+	i = *(volatile uint16*)(0x000007*2+0x8000000);
+	i = *(volatile uint16*)(0x400ffe*2+0x8000000);
+	i = *(volatile uint16*)(0x000825*2+0x8000000);
 	
-	i = *(volatile u16*)(0x400309*2+0x8000000);
-	i = *(volatile u16*)(0x000000*2+0x8000000);
-	i = *(volatile u16*)(0x400db3*2+0x8000000);
+	i = *(volatile uint16*)(0x400309*2+0x8000000);
+	i = *(volatile uint16*)(0x000000*2+0x8000000);
+	i = *(volatile uint16*)(0x400db3*2+0x8000000);
 	
-	i = *(volatile u16*)((Data*2)+0x8000000);
+	i = *(volatile uint16*)((Data*2)+0x8000000);
 		
-	j = *(volatile u16*)(0x000407*2+0x8000000);
-	i = *(volatile u16*)(0x000000*2+0x8000000);	
+	j = *(volatile uint16*)(0x000407*2+0x8000000);
+	i = *(volatile uint16*)(0x000000*2+0x8000000);	
 
 	if(i){}
 	return j;
 }
 
-static bool SelectOpration(u16 Data)
+static bool SelectOpration(uint16 Data)
 {
-	vu16 i,j;
-	i = *(volatile u16*)(0x000000*2+0x9000000);
+	vuint16 i,j;
+	i = *(volatile uint16*)(0x000000*2+0x9000000);
 	
-	i = *(volatile u16*)(0xFFFFF0*2+0x8000000);
+	i = *(volatile uint16*)(0xFFFFF0*2+0x8000000);
 	
-	i = *(volatile u16*)(0xFFFFF6*2+0x8000000);
-	i = *(volatile u16*)(0xFFFFF6*2+0x8000000);
-	i = *(volatile u16*)(0xFFFFF6*2+0x8000000);
+	i = *(volatile uint16*)(0xFFFFF6*2+0x8000000);
+	i = *(volatile uint16*)(0xFFFFF6*2+0x8000000);
+	i = *(volatile uint16*)(0xFFFFF6*2+0x8000000);
 	
-	i = *(volatile u16*)(0xFFFFFE*2+0x8000000);
-	i = *(volatile u16*)(0xFFFFFE*2+0x8000000);
-	i = *(volatile u16*)(0xFFFFFE*2+0x8000000);
+	i = *(volatile uint16*)(0xFFFFFE*2+0x8000000);
+	i = *(volatile uint16*)(0xFFFFFE*2+0x8000000);
+	i = *(volatile uint16*)(0xFFFFFE*2+0x8000000);
 	
-	i = *(volatile u16*)(0xFFFFA5*2+0x8000000);
-	i = *(volatile u16*)(0xFFFFA5*2+0x8000000);
-	i = *(volatile u16*)(0xFFFFA5*2+0x8000000);
+	i = *(volatile uint16*)(0xFFFFA5*2+0x8000000);
+	i = *(volatile uint16*)(0xFFFFA5*2+0x8000000);
+	i = *(volatile uint16*)(0xFFFFA5*2+0x8000000);
 
-	i = *(volatile u16*)((0x900000+Data)*2+0x8000000);
+	i = *(volatile uint16*)((0x900000+Data)*2+0x8000000);
 	
-	i = *(volatile u16*)(0xFFFFF8*2+0x8000000);
-	j = *(volatile u16*)(0xFFFFF4*2+0x8000000);
+	i = *(volatile uint16*)(0xFFFFF8*2+0x8000000);
+	j = *(volatile uint16*)(0xFFFFF4*2+0x8000000);
 
 	if(i||j){}
 	return true;
 }
-static u16 G6_SetChipReg(u16 Data) 
+static uint16 G6_SetChipReg(uint16 Data) 
 {
 	return SelectOpration(Data);
 }
 
 
 
-static u16 GetExtWData(uint32 Address)
+static uint16 GetExtWData(uint32 Address)
 {
-	return *(volatile u16*)Address;
+	return *(volatile uint16*)Address;
 }
 //==================================================
 #if 0
 static void ResetCPLD(void)
 {
-	vu16 i;
+	vuint16 i;
   
   	i=GetExtWData(0x000009*2+0x8000000);
    	i=GetExtWData(0x400a3c*2+0x8000000);
@@ -93,7 +93,7 @@ static void ResetCPLD(void)
 #endif
 static void InitCPLD(void)
 {
-	vu16 i;
+	vuint16 i;
 
   	i=GetExtWData(0xFFFFF0*2+0x8000000);
   
@@ -114,7 +114,7 @@ static void InitCPLD(void)
 #if 0
 static bool SelectRAM(void)
 {
-  	u16 i;
+  	uint16 i;
 
   	InitCPLD();
   	i=GetExtWData(0x900006*2+0x8000000);  
@@ -129,7 +129,7 @@ static bool SelectRAM(void)
 //-------
 static bool DisableRAM(void)
 {
-  	vu16 i,j;
+  	vuint16 i,j;
   	
   	
   	InitCPLD();
@@ -146,16 +146,16 @@ static bool DisableRAM(void)
 static void sdram_setcmd(uint32 command)
 {
 
-	vu32 i;	
+	vuint32 i;	
 	
-	i = *(volatile u8*)(0x0000+0xa000000);
+	i = *(volatile uint8*)(0x0000+0xa000000);
 	//-----------------------------------------
-	i = *(volatile u8*)(0x9999+0xa000000);
-	i = *(volatile u8*)(0x9999+0xa000000);
-	i = *(volatile u8*)(0x6666+0xa000000);
-	i = *(volatile u8*)(0x6666+0xa000000);
+	i = *(volatile uint8*)(0x9999+0xa000000);
+	i = *(volatile uint8*)(0x9999+0xa000000);
+	i = *(volatile uint8*)(0x6666+0xa000000);
+	i = *(volatile uint8*)(0x6666+0xa000000);
 	//-----------------------------------------
-	i = *(volatile u8*)(command+0xa000000);	
+	i = *(volatile uint8*)(command+0xa000000);	
 	//-----------------------------------------
 	if(i){}
 }
@@ -163,47 +163,47 @@ static void sdram_setcmd(uint32 command)
 
 static void sdram_NOP(void)
 {
-	vu32 i;	
+	vuint32 i;	
 
 	sdram_setcmd(0x1);
-	i = *(volatile u16*)(0x000000*2+0x8000000);
+	i = *(volatile uint16*)(0x000000*2+0x8000000);
 	if(i){}
 }
 
 static void sdram_PRECHARGE(void)
 {
-	vu32 i;	
+	vuint32 i;	
 
 	sdram_setcmd(0x6);
-	i = *(volatile u16*)(0x000400*2+0x8000000);
+	i = *(volatile uint16*)(0x000400*2+0x8000000);
 	if(i){}
 }
 
 static void sdram_LOAD_MR(void)
 {
-	vu32 i;	
+	vuint32 i;	
 
 	sdram_setcmd(0x8);
-	i = *(volatile u16*)(0x800020*2+0x8000000);
+	i = *(volatile uint16*)(0x800020*2+0x8000000);
 	
 	sdram_setcmd(0x8);
-	i = *(volatile u16*)(0x000030*2+0x8000000);
+	i = *(volatile uint16*)(0x000030*2+0x8000000);
 	if(i){}
 }
 
 static void sdram_REFRESH(void)
 {
-	vu32 i;	
+	vuint32 i;	
 
 	sdram_setcmd(0x7);
-	i = *(volatile u16*)(0x000000*2+0x8000000);
+	i = *(volatile uint16*)(0x000000*2+0x8000000);
 	if(i){}
 }
 
 static void sdram_init(void)
 {
 	
-	vu32 i, tmpdata=0;	
+	vuint32 i, tmpdata=0;	
 
 	for(i=0;i<0xf;i++)			//delay 
     {tmpdata = tmpdata>>8;}
@@ -219,23 +219,23 @@ static void sdram_init(void)
 
 static void sdram_PowerDown(void)
 {
-	vu32	i;
+	vuint32	i;
 	
 	sdram_setcmd(0x5);
-	i = *(volatile u16*)(0x000000*2+0x8000000);
+	i = *(volatile uint16*)(0x000000*2+0x8000000);
 	if(i){}
 }
 
 static void sdram_Wakeup(void)
 {
-	vu32	i;
+	vuint32	i;
 	sdram_setcmd(0xa);
-	i = *(volatile u16*)(0x000000*2+0x8000000);
+	i = *(volatile uint16*)(0x000000*2+0x8000000);
 	sdram_setcmd(0x3);
 	if(i){}
 }
 
-static vu16* M3ExtPack_Start(){
+static vuint16* M3ExtPack_Start(){
   M3_SetChipReg(0x400006);	// enable write 0x8000000 
   G6_SetChipReg(0x6);
 
@@ -243,7 +243,7 @@ static vu16* M3ExtPack_Start(){
   sdram_PowerDown();
   sdram_Wakeup();
   
-  return (vu16*)0x08000000;
+  return (vuint16*)0x08000000;
 }
 
 static void M3ExtPack_InitReadOnly(){

@@ -14,9 +14,9 @@
 
 
 
-static u8 buf[768]; //lol
+static uint8 buf[768]; //lol
 
-typedef u16 UnicodeChar;
+typedef uint16 UnicodeChar;
 #define ExtLinkBody_MaxLength (256)
 #define ExtLinkBody_ID (0x30545845) // EXT0
 typedef struct {

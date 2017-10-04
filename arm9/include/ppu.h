@@ -25,13 +25,13 @@ GNU General Public License for more details.
 #include "gfx.h"
 
 //Map base for each VRAM allocated region
-#define BG_MAP_RAM_0x06020000(base) (u16*)((u16*)(((base)*0x800) + 0x06020000))
-#define BG_MAP_RAM_0x06040000(base) (u16*)((u16*)(((base)*0x800) + 0x06040000))
-#define BG_MAP_RAM_0x06060000(base) (u16*)((u16*)(((base)*0x800) + 0x06060000))
+#define BG_MAP_RAM_0x06020000(base) (uint16*)((uint16*)(((base)*0x800) + 0x06020000))
+#define BG_MAP_RAM_0x06040000(base) (uint16*)((uint16*)(((base)*0x800) + 0x06040000))
+#define BG_MAP_RAM_0x06060000(base) (uint16*)((uint16*)(((base)*0x800) + 0x06060000))
 
-#define BG_TILE_RAM_0x06020000(base)   (u16*)((u16*)(((base)*0x4000) + 0x06020000))    
-#define BG_TILE_RAM_0x06040000(base)   (u16*)((u16*)(((base)*0x4000) + 0x06040000))    
-#define BG_TILE_RAM_0x06060000(base)   (u16*)((u16*)(((base)*0x4000) + 0x06060000))
+#define BG_TILE_RAM_0x06020000(base)   (uint16*)((uint16*)(((base)*0x4000) + 0x06020000))    
+#define BG_TILE_RAM_0x06040000(base)   (uint16*)((uint16*)(((base)*0x4000) + 0x06040000))    
+#define BG_TILE_RAM_0x06060000(base)   (uint16*)((uint16*)(((base)*0x4000) + 0x06060000))
 
 #endif
 

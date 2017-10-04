@@ -181,11 +181,11 @@ int main(int _argc, sint8 **_argv) {
 	
 	
 	//single player: (todo: player1 bugged dkc1)
-	switch_dswnifi_mode((u8)dswifi_idlemode);
+	switch_dswnifi_mode((uint8)dswifi_idlemode);
 	//nifi: 
-	//switch_dswnifi_mode((u8)dswifi_nifimode);
+	//switch_dswnifi_mode((uint8)dswifi_nifimode);
 	//wifi: 
-	//switch_dswnifi_mode((u8)dswifi_wifimode);
+	//switch_dswnifi_mode((uint8)dswifi_wifimode);
 	
 	
 	int ret=FS_init();
@@ -310,15 +310,15 @@ int main(int _argc, sint8 **_argv) {
 	//coto sbrk init
 	//alloc/dealloc ok
 	/*
-	u8 buf[256];
+	uint8 buf[256];
 	sprintf((sint8*)buf,"linearalloc_end:%x",(int)(uint32*)this_heap_ptr);
 	printf((sint8*)buf);
 	
-	u8 buf2[256];
+	uint8 buf2[256];
 	sprintf((sint8*)buf2,"alloc:sbrk_ret:%x",(int)(uint32*)_sbrk(0x100));
 	printf((sint8*)buf2);
 	
-	u8 buf3[256];
+	uint8 buf3[256];
 	sprintf((sint8*)buf3,"free:sbrk_ret:%x",(int)(uint32*)_sbrk(-0x100));
 	printf((sint8*)buf3);
 	*/
@@ -326,21 +326,21 @@ int main(int _argc, sint8 **_argv) {
 	//alloc / realloc
 	/*
 	int freemem = get_available_mem();
-	u8 buf1[256];
+	uint8 buf1[256];
 	sprintf((sint8*)buf1,"freemem:%x",(int)freemem);
 	printf((sint8*)buf1);
 	
 	uint32 * buf =(uint32*)_sbrk (freemem);
 	
-	u8 buf3[256];
+	uint8 buf3[256];
 	sprintf((sint8*)buf3,"thisshouldbeok:%x", (int)buf);
 	printf((sint8*)buf3);
 	
-	u8 buf2[256];
+	uint8 buf2[256];
 	sprintf((sint8*)buf2,"thisshouldfail:%x", _sbrk (freemem));
 	printf((sint8*)buf2);
 	
-	u8 buf4[16];
+	uint8 buf4[16];
 	sprintf((sint8*)buf4,"allok");
 	printf((sint8*)buf4);
 	*/

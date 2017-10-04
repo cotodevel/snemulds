@@ -69,7 +69,7 @@ int		g_UseExtRAM = 0;
 
 int		FS_extram_init()
 {
-	g_extRAM = (u16*) ram_init();
+	g_extRAM = (uint16*) ram_init();
 	if (g_extRAM)
 	{
 		//g_extRAM = (uint16 *)ram_unlock();

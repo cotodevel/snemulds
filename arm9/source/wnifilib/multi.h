@@ -45,8 +45,8 @@ extern int topvalue(int a,int b);
 extern int bottomvalue(int a,int b);
 extern int getintdiff(int a,int b);
 
-extern void sendcmd(u8 * databuf_src);	//framesize is calculated inside
-extern void getcmd(u8 * databuf_src);	//framesize is calculated inside (crc over udp requires framesize previously to here calculated anyway)
+extern void sendcmd(uint8 * databuf_src);	//framesize is calculated inside
+extern void getcmd(uint8 * databuf_src);	//framesize is calculated inside (crc over udp requires framesize previously to here calculated anyway)
 extern bool do_multi();
 
 #ifdef __cplusplus

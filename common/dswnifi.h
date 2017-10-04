@@ -66,7 +66,7 @@ extern TdsnwifisrvStr dswifiSrv;
 extern "C"{
 #endif
 
-extern void switch_dswnifi_mode(u8 mode);
+extern void switch_dswnifi_mode(uint8 mode);
 
 #ifdef __cplusplus
 }

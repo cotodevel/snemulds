@@ -675,7 +675,7 @@ bool do_multi()
 			case 5:				//host should refresh the global keys.
 			{	
 				plykeys1 = (uint16)get_joypad();
-				sendcmd((u8*)&nfdata[0]);
+				sendcmd((uint8*)&nfdata[0]);
 			}	
 				break;
 			case 6:				//guest...
@@ -685,7 +685,7 @@ bool do_multi()
 				
 				//todo: when nifi_keys_sync is acknowledged (written to IO map), set each plugged bit (0x80000000) as well.
 				
-				sendcmd((u8*)&nfdata[0]);
+				sendcmd((uint8*)&nfdata[0]);
 			}	break;
 			
 			default:

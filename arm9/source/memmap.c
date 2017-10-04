@@ -299,7 +299,7 @@ void mem_init_paging()
 	 printf("Not enough memory for ROM paging.\n");
 	 while(1);
 	 }*/
-	ROM_paging = (u8*)rom_page;
+	ROM_paging = (uint8*)rom_page;
 	memset(ROM_paging, 0, ROM_PAGING_SIZE);
 	ROM_paging_offs = malloc((ROM_PAGING_SIZE/ROM_STATIC_SIZE)*2);
 	if (!ROM_paging_offs)

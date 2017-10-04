@@ -13,213 +13,213 @@
 #include "bus.h"
 
 //SuperCard
-static vu16 *_sc_unlock(){
-	*(vu16*)0x9FFFFFE = 0xA55A;
-	*(vu16*)0x9FFFFFE = 0xA55A;
-	*(vu16*)0x9FFFFFE = 0x5; // RAM_RW
-	*(vu16*)0x9FFFFFE = 0x5;
+static vuint16 *_sc_unlock(){
+	*(vuint16*)0x9FFFFFE = 0xA55A;
+	*(vuint16*)0x9FFFFFE = 0xA55A;
+	*(vuint16*)0x9FFFFFE = 0x5; // RAM_RW
+	*(vuint16*)0x9FFFFFE = 0x5;
 
-	return (vu16*)0x8000000;
+	return (vuint16*)0x8000000;
 }
 
 static void _sc_lock(){
-	*(vu16*)0x9FFFFFE = 0xA55A;
-	*(vu16*)0x9FFFFFE = 0xA55A;
-	*(vu16*)0x9FFFFFE = 0x3; // MEDIA
-	*(vu16*)0x9FFFFFE = 0x3;
+	*(vuint16*)0x9FFFFFE = 0xA55A;
+	*(vuint16*)0x9FFFFFE = 0xA55A;
+	*(vuint16*)0x9FFFFFE = 0x3; // MEDIA
+	*(vuint16*)0x9FFFFFE = 0x3;
 }
 
 //M3
-static vu16 *_m3_unlock(){
+static vuint16 *_m3_unlock(){
 	uint32 mode = 0x00400006; // RAM_RW
-	vu16 tmp;
-	tmp = *(vu16*)0x08E00002;
-	tmp = *(vu16*)0x0800000E;
-	tmp = *(vu16*)0x08801FFC;
-	tmp = *(vu16*)0x0800104A;
-	tmp = *(vu16*)0x08800612;
-	tmp = *(vu16*)0x08000000;
-	tmp = *(vu16*)0x08801B66;
-	tmp = *(vu16*)(0x08000000 + (mode << 1));
-	tmp = *(vu16*)0x0800080E;
-	tmp = *(vu16*)0x08000000;
-	tmp = *(vu16*)0x080001E4;
-	tmp = *(vu16*)0x080001E4;
-	tmp = *(vu16*)0x08000188;
-	tmp = *(vu16*)0x08000188;
+	vuint16 tmp;
+	tmp = *(vuint16*)0x08E00002;
+	tmp = *(vuint16*)0x0800000E;
+	tmp = *(vuint16*)0x08801FFC;
+	tmp = *(vuint16*)0x0800104A;
+	tmp = *(vuint16*)0x08800612;
+	tmp = *(vuint16*)0x08000000;
+	tmp = *(vuint16*)0x08801B66;
+	tmp = *(vuint16*)(0x08000000 + (mode << 1));
+	tmp = *(vuint16*)0x0800080E;
+	tmp = *(vuint16*)0x08000000;
+	tmp = *(vuint16*)0x080001E4;
+	tmp = *(vuint16*)0x080001E4;
+	tmp = *(vuint16*)0x08000188;
+	tmp = *(vuint16*)0x08000188;
 
 	if(tmp){}
-	return (vu16*)0x8000000;
+	return (vuint16*)0x8000000;
 }
 
 static void _m3_lock(){
 	uint32 mode = 0x00400003; // MEDIA
-	vu16 tmp;
-	tmp = *(vu16*)0x08E00002;
-	tmp = *(vu16*)0x0800000E;
-	tmp = *(vu16*)0x08801FFC;
-	tmp = *(vu16*)0x0800104A;
-	tmp = *(vu16*)0x08800612;
-	tmp = *(vu16*)0x08000000;
-	tmp = *(vu16*)0x08801B66;
-	tmp = *(vu16*)(0x08000000 + (mode << 1));
-	tmp = *(vu16*)0x0800080E;
-	tmp = *(vu16*)0x08000000;
-	tmp = *(vu16*)0x080001E4;
-	tmp = *(vu16*)0x080001E4;
-	tmp = *(vu16*)0x08000188;
-	tmp = *(vu16*)0x08000188;
+	vuint16 tmp;
+	tmp = *(vuint16*)0x08E00002;
+	tmp = *(vuint16*)0x0800000E;
+	tmp = *(vuint16*)0x08801FFC;
+	tmp = *(vuint16*)0x0800104A;
+	tmp = *(vuint16*)0x08800612;
+	tmp = *(vuint16*)0x08000000;
+	tmp = *(vuint16*)0x08801B66;
+	tmp = *(vuint16*)(0x08000000 + (mode << 1));
+	tmp = *(vuint16*)0x0800080E;
+	tmp = *(vuint16*)0x08000000;
+	tmp = *(vuint16*)0x080001E4;
+	tmp = *(vuint16*)0x080001E4;
+	tmp = *(vuint16*)0x08000188;
+	tmp = *(vuint16*)0x08000188;
 	if(tmp){}
 }
 
 //Opera DSBM
-static vu16 *_opera_unlock (){
-	*(vu16*)0x8240000 = 1;
-	return (vu16*)0x9000000;
+static vuint16 *_opera_unlock (){
+	*(vuint16*)0x8240000 = 1;
+	return (vuint16*)0x9000000;
 }
 
 static void _opera_lock(){
-	*(vu16*)0x8240000 = 0;
+	*(vuint16*)0x8240000 = 0;
 }
 
 //G6
-static vu16 *_g6_unlock(){
+static vuint16 *_g6_unlock(){
 	uint32 mode = 6; // RAM_RW
-	vu16 tmp;
-	tmp = *(vu16*)0x09000000;
-	tmp = *(vu16*)0x09FFFFE0;
-	tmp = *(vu16*)0x09FFFFEC;
-	tmp = *(vu16*)0x09FFFFEC;
-	tmp = *(vu16*)0x09FFFFEC;
-	tmp = *(vu16*)0x09FFFFFC;
-	tmp = *(vu16*)0x09FFFFFC;
-	tmp = *(vu16*)0x09FFFFFC;
-	tmp = *(vu16*)0x09FFFF4A;
-	tmp = *(vu16*)0x09FFFF4A;
-	tmp = *(vu16*)0x09FFFF4A;
-	tmp = *(vu16*)(0x09200000 + (mode << 1));
-	tmp = *(vu16*)0x09FFFFF0;
-	tmp = *(vu16*)0x09FFFFE8;
+	vuint16 tmp;
+	tmp = *(vuint16*)0x09000000;
+	tmp = *(vuint16*)0x09FFFFE0;
+	tmp = *(vuint16*)0x09FFFFEC;
+	tmp = *(vuint16*)0x09FFFFEC;
+	tmp = *(vuint16*)0x09FFFFEC;
+	tmp = *(vuint16*)0x09FFFFFC;
+	tmp = *(vuint16*)0x09FFFFFC;
+	tmp = *(vuint16*)0x09FFFFFC;
+	tmp = *(vuint16*)0x09FFFF4A;
+	tmp = *(vuint16*)0x09FFFF4A;
+	tmp = *(vuint16*)0x09FFFF4A;
+	tmp = *(vuint16*)(0x09200000 + (mode << 1));
+	tmp = *(vuint16*)0x09FFFFF0;
+	tmp = *(vuint16*)0x09FFFFE8;
 
 	if(tmp){}
-	return (vu16*)0x8000000;
+	return (vuint16*)0x8000000;
 }
 
 static void _g6_lock(){
 	uint32 mode = 3; // MEDIA
-	vu16 tmp;
-	tmp = *(vu16*)0x09000000;
-	tmp = *(vu16*)0x09FFFFE0;
-	tmp = *(vu16*)0x09FFFFEC;
-	tmp = *(vu16*)0x09FFFFEC;
-	tmp = *(vu16*)0x09FFFFEC;
-	tmp = *(vu16*)0x09FFFFFC;
-	tmp = *(vu16*)0x09FFFFFC;
-	tmp = *(vu16*)0x09FFFFFC;
-	tmp = *(vu16*)0x09FFFF4A;
-	tmp = *(vu16*)0x09FFFF4A;
-	tmp = *(vu16*)0x09FFFF4A;
-	tmp = *(vu16*)(0x09200000 + (mode << 1));
-	tmp = *(vu16*)0x09FFFFF0;
-	tmp = *(vu16*)0x09FFFFE8;
+	vuint16 tmp;
+	tmp = *(vuint16*)0x09000000;
+	tmp = *(vuint16*)0x09FFFFE0;
+	tmp = *(vuint16*)0x09FFFFEC;
+	tmp = *(vuint16*)0x09FFFFEC;
+	tmp = *(vuint16*)0x09FFFFEC;
+	tmp = *(vuint16*)0x09FFFFFC;
+	tmp = *(vuint16*)0x09FFFFFC;
+	tmp = *(vuint16*)0x09FFFFFC;
+	tmp = *(vuint16*)0x09FFFF4A;
+	tmp = *(vuint16*)0x09FFFF4A;
+	tmp = *(vuint16*)0x09FFFF4A;
+	tmp = *(vuint16*)(0x09200000 + (mode << 1));
+	tmp = *(vuint16*)0x09FFFFF0;
+	tmp = *(vuint16*)0x09FFFFE8;
 	if(tmp){}
 }
 
 //EZ
-static vu16 *_ez4_unlock(){
-	*(vu16*)0x9FE0000 = 0xD200; // SetRompage (OS mode)
-	*(vu16*)0x8000000 = 0x1500;
-	*(vu16*)0x8020000 = 0xD200;
-	*(vu16*)0x8040000 = 0x1500;
-	*(vu16*)0x9880000 = 0x8000;
-	*(vu16*)0x9FC0000 = 0x1500;
+static vuint16 *_ez4_unlock(){
+	*(vuint16*)0x9FE0000 = 0xD200; // SetRompage (OS mode)
+	*(vuint16*)0x8000000 = 0x1500;
+	*(vuint16*)0x8020000 = 0xD200;
+	*(vuint16*)0x8040000 = 0x1500;
+	*(vuint16*)0x9880000 = 0x8000;
+	*(vuint16*)0x9FC0000 = 0x1500;
 
-	*(vu16*)0x9FE0000 = 0xD200; // OpenNorWrite
-	*(vu16*)0x8000000 = 0x1500;
-	*(vu16*)0x8020000 = 0xD200;
-	*(vu16*)0x8040000 = 0x1500;
-	*(vu16*)0x9C40000 = 0x1500;
-	*(vu16*)0x9FC0000 = 0x1500;
+	*(vuint16*)0x9FE0000 = 0xD200; // OpenNorWrite
+	*(vuint16*)0x8000000 = 0x1500;
+	*(vuint16*)0x8020000 = 0xD200;
+	*(vuint16*)0x8040000 = 0x1500;
+	*(vuint16*)0x9C40000 = 0x1500;
+	*(vuint16*)0x9FC0000 = 0x1500;
 
-	return (vu16*)0x8400000;
+	return (vuint16*)0x8400000;
 }
 
 static void _ez_lock(){
-	*(vu16*)0x9FE0000 = 0xD200; // CloseNorWrite
-	*(vu16*)0x8000000 = 0x1500;
-	*(vu16*)0x8020000 = 0xD200;
-	*(vu16*)0x8040000 = 0x1500;
-	*(vu16*)0x9C40000 = 0xD200;
-	*(vu16*)0x9FC0000 = 0x1500;
+	*(vuint16*)0x9FE0000 = 0xD200; // CloseNorWrite
+	*(vuint16*)0x8000000 = 0x1500;
+	*(vuint16*)0x8020000 = 0xD200;
+	*(vuint16*)0x8040000 = 0x1500;
+	*(vuint16*)0x9C40000 = 0xD200;
+	*(vuint16*)0x9FC0000 = 0x1500;
 
-	*(vu16*)0x9FE0000 = 0xD200; // SetRompage(0)
-	*(vu16*)0x8000000 = 0x1500;
-	*(vu16*)0x8020000 = 0xD200;
-	*(vu16*)0x8040000 = 0x1500;
-	*(vu16*)0x9880000 = 0;
-	*(vu16*)0x9FC0000 = 0x1500;
+	*(vuint16*)0x9FE0000 = 0xD200; // SetRompage(0)
+	*(vuint16*)0x8000000 = 0x1500;
+	*(vuint16*)0x8020000 = 0xD200;
+	*(vuint16*)0x8040000 = 0x1500;
+	*(vuint16*)0x9880000 = 0;
+	*(vuint16*)0x9FC0000 = 0x1500;
 }
 
-static vu16 *_ez3in1_unlock(){
-	*(vu16*)0x9FE0000 = 0xD200; // SetRompage(352)
-	*(vu16*)0x8000000 = 0x1500;
-	*(vu16*)0x8020000 = 0xD200;
-	*(vu16*)0x8040000 = 0x1500;
-	*(vu16*)0x9880000 = 352;
-	*(vu16*)0x9FC0000 = 0x1500;
+static vuint16 *_ez3in1_unlock(){
+	*(vuint16*)0x9FE0000 = 0xD200; // SetRompage(352)
+	*(vuint16*)0x8000000 = 0x1500;
+	*(vuint16*)0x8020000 = 0xD200;
+	*(vuint16*)0x8040000 = 0x1500;
+	*(vuint16*)0x9880000 = 352;
+	*(vuint16*)0x9FC0000 = 0x1500;
 
-	*(vu16*)0x9FE0000 = 0xD200; // OpenNorWrite
-	*(vu16*)0x8000000 = 0x1500;
-	*(vu16*)0x8020000 = 0xD200;
-	*(vu16*)0x8040000 = 0x1500;
-	*(vu16*)0x9C40000 = 0x1500;
-	*(vu16*)0x9FC0000 = 0x1500;
+	*(vuint16*)0x9FE0000 = 0xD200; // OpenNorWrite
+	*(vuint16*)0x8000000 = 0x1500;
+	*(vuint16*)0x8020000 = 0xD200;
+	*(vuint16*)0x8040000 = 0x1500;
+	*(vuint16*)0x9C40000 = 0x1500;
+	*(vuint16*)0x9FC0000 = 0x1500;
 
-	return (vu16*)0x8000000;
+	return (vuint16*)0x8000000;
 }
 #if 0
-static vu16 *_eznew_unlock(){
-	*(vu16*)0x9FE0000 = 0xD200; // SetRompage (384) //352?
-	*(vu16*)0x8000000 = 0x1500;
-	*(vu16*)0x8020000 = 0xD200;
-	*(vu16*)0x8040000 = 0x1500;
-	*(vu16*)0x9880000 = 384;
-	*(vu16*)0x9FC0000 = 0x1500;
+static vuint16 *_eznew_unlock(){
+	*(vuint16*)0x9FE0000 = 0xD200; // SetRompage (384) //352?
+	*(vuint16*)0x8000000 = 0x1500;
+	*(vuint16*)0x8020000 = 0xD200;
+	*(vuint16*)0x8040000 = 0x1500;
+	*(vuint16*)0x9880000 = 384;
+	*(vuint16*)0x9FC0000 = 0x1500;
 
-	*(vu16*)0x9FE0000 = 0xD200; // OpenNorWrite
-	*(vu16*)0x8000000 = 0x1500;
-	*(vu16*)0x8020000 = 0xD200;
-	*(vu16*)0x8040000 = 0x1500;
-	*(vu16*)0x9C40000 = 0x1500;
-	*(vu16*)0x9FC0000 = 0x1500;
+	*(vuint16*)0x9FE0000 = 0xD200; // OpenNorWrite
+	*(vuint16*)0x8000000 = 0x1500;
+	*(vuint16*)0x8020000 = 0xD200;
+	*(vuint16*)0x8040000 = 0x1500;
+	*(vuint16*)0x9C40000 = 0x1500;
+	*(vuint16*)0x9FC0000 = 0x1500;
 
-	return (vu16*)0x8000000;
+	return (vuint16*)0x8000000;
 }
 
-static vu16 *_ezplus_unlock(){
-	*(vu16*)0x9FE0000 = 0xD200; // SetRompage (192)
-	*(vu16*)0x8000000 = 0x1500;
-	*(vu16*)0x8020000 = 0xD200;
-	*(vu16*)0x8040000 = 0x1500;
-	*(vu16*)0x9880000 = 192;
-	*(vu16*)0x9FC0000 = 0x1500;
+static vuint16 *_ezplus_unlock(){
+	*(vuint16*)0x9FE0000 = 0xD200; // SetRompage (192)
+	*(vuint16*)0x8000000 = 0x1500;
+	*(vuint16*)0x8020000 = 0xD200;
+	*(vuint16*)0x8040000 = 0x1500;
+	*(vuint16*)0x9880000 = 192;
+	*(vuint16*)0x9FC0000 = 0x1500;
 
-	*(vu16*)0x9FE0000 = 0xD200; // OpenNorWrite
-	*(vu16*)0x8000000 = 0x1500;
-	*(vu16*)0x8020000 = 0xD200;
-	*(vu16*)0x8040000 = 0x1500;
-	*(vu16*)0x9C40000 = 0x1500;
-	*(vu16*)0x9FC0000 = 0x1500;
+	*(vuint16*)0x9FE0000 = 0xD200; // OpenNorWrite
+	*(vuint16*)0x8000000 = 0x1500;
+	*(vuint16*)0x8020000 = 0xD200;
+	*(vuint16*)0x8040000 = 0x1500;
+	*(vuint16*)0x9C40000 = 0x1500;
+	*(vuint16*)0x9FC0000 = 0x1500;
 
-	return (vu16*)0x8000000;
+	return (vuint16*)0x8000000;
 }
 #endif
 //RawMem
-static vu16 *_raw_unlock(){return (vu16*)0x08000000;}
+static vuint16 *_raw_unlock(){return (vuint16*)0x08000000;}
 static void _raw_lock(){}
 
 //DSi
-//static vu16 *_dsi_unlock(){return (vu16*)0x02380000;}
+//static vuint16 *_dsi_unlock(){return (vuint16*)0x02380000;}
 //static void _dsi_lock(){}
 
 //===================================//
@@ -228,11 +228,11 @@ static void _raw_lock(){}
 typedef enum                {DETECT_RAM=0, RAW_RAM, DSi_RAM, SC_RAM,      M3_RAM, OPERA_RAM, G6_RAM, EZ4_RAM, EZ3in1_RAM, EZnew_RAM,     EZplus_RAM,     M3Ext_RAM} RAM_TYPE;
 static const sint8 *_types[]={"Unknown",    "Raw",   "DSi",   "Supercard", "M3",   "DSBM",    "G6",   "EZ3/4", "EZ 3in1",  "EZ 3in1 new", "EZ 3in1 plus", "M3Ext"};
 
-static vu16* (*_unlock)() = 0;
+static vuint16* (*_unlock)() = 0;
 static void (*_lock)() = 0;
 static uint32 _size = 0;
 static uint32 _type = DETECT_RAM;
-vu16 *extmem;
+vuint16 *extmem;
 
 static bool _ram_test(){
 	extmem = _unlock();
@@ -284,10 +284,10 @@ static void _ram_precalc_size(){
 	//if(_type!=RAW_RAM)_lock();
 }
 
-vu16* ram_init(){
+vuint16* ram_init(){
 #if 0
 	if(IPCZ->NDSType>=NDSi){
-		if(*(vu32*)0x04004000){
+		if(*(vuint32*)0x04004000){
 			_unlock = _dsi_unlock;
 			_lock   = _dsi_lock;
 			_type   = DSi_RAM;
@@ -468,7 +468,7 @@ uint32 ram_type(){return _type;}
 const sint8* ram_type_string(){return _types[_type];}
 uint32 ram_size(){return _size;}
 
-vu16* ram_unlock(){
+vuint16* ram_unlock(){
 	
 	setCpuNdsBusAccessPrio(NDSSLOT_ARM9BUS);
 	setCpuGbaBusAccessPrio(GBASLOT_ARM9BUS);
@@ -582,9 +582,9 @@ bool extmem_Write(uint32 SlotIndex,void *pData,uint32 DataSize){
 		return false;
 	}
 	  
-	u16 *pSrcData=(u16*)pData;
+	uint16 *pSrcData=(uint16*)pData;
 	uint32 SrcSize=DataSize;
-	u16 *pDstData=(u16*)tBody.pSlot[SlotIndex];
+	uint16 *pDstData=(uint16*)tBody.pSlot[SlotIndex];
 	uint32 DstSize=align2(SrcSize);
 	  
 	if(pDstData==NULL){
@@ -604,9 +604,9 @@ bool extmem_Read(uint32 SlotIndex,void *pData,uint32 DataSize){
 		return false;
 	}
 
-	u16 *pSrcData=(u16*)tBody.pSlot[SlotIndex];
+	uint16 *pSrcData=(uint16*)tBody.pSlot[SlotIndex];
 //	uint32 SrcSize=align2(Size);
-	u16 *pDstData=(u16*)pData;
+	uint16 *pDstData=(uint16*)pData;
 	uint32 DstSize=DataSize;
 
 	if(pSrcData==NULL){
