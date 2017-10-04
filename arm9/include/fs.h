@@ -25,7 +25,6 @@ GNU General Public License for more details.
 extern "C" {
 #endif
 
-extern int		FS_init();
 extern void	FS_printlog(sint8 *buf);
 extern void	FS_flog(sint8 *fmt, ...);
 extern int		FS_loadROM(sint8 *ROM, sint8 *filename);

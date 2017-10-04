@@ -103,14 +103,6 @@ sint8 *FS_getFileName(sint8 *filename)
 
 /* *********************** FAT ************************ */
 
-//sint32	currentfd = -1;	//for hooks with FS
-//uint8 currentFileName[100];
-
-int		FS_init()
-{
-	return fatfs_init();
-}
-
 int		FS_chdir(const sint8 *path)
 {
 	FS_lock();
@@ -120,7 +112,6 @@ int		FS_chdir(const sint8 *path)
 }
 
 
-//ok so far. Rets OK dir listing
 sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt)
 {	
 	int			size;
@@ -132,14 +123,11 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt)
 	{
 		while (1)
 		{
-			struct dirent* pent = readdir(dir);	//if NULL already not a dir.
+			struct dirent* pent = readdir(dir);
 			if(pent == NULL){
 				break;
 			}
 			
-			
-			//if ( pent->d_type & DT_DIR ) continue;
-			//posix standard
 			struct fd * fdinst = fd_struct_get(pent->d_ino);
 			if (!S_ISDIR(fdinst->stat.st_mode)) { 
 				continue;
@@ -152,13 +140,6 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt)
 			if (mask)
 			{
 				sint8 *ext = _FS_getFileExtension(pent->d_name);
-				
-				//printf("fname:%s",pent->d_name);
-				//printf("fname:%s",fdinst->cur_entry.d_name);
-				//printf("ext:%s",ext);
-				//sint8 * found = strstr(mask, ext);
-				//printf("%s",found);
-				//while(1);
 				
 				if (ext && strstr(mask, ext))
 				{
@@ -175,8 +156,6 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt)
 			}
 		}
 	}
-	//printf("filecount:%d",*cnt);
-	//while(1);
 	rewinddir(dir);
 	
 	sint8	**list = malloc((*cnt)*sizeof(sint8 *)+size);
@@ -191,9 +170,6 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt)
 			if(pent == NULL){
 				break;
 			}
-			
-			//if ( pent->d_type & DT_DIR ) continue;
-			//posix standard
 			
 			struct fd * fdinst = fd_struct_get(pent->d_ino);
 			if (!S_ISDIR(fdinst->stat.st_mode)) {
@@ -267,16 +243,15 @@ void	FS_printlog(sint8 *buf)
 		
 		FS_lock();
 		
-		f_log = fopen_fs(name, "w"); //fopen(getfatfsPath(name), "w");	//old: f_log = fopen(name, "w");
-		//printf("trying to fopen_fs:%s",name);
+		f_log = fopen_fs(name, "w");
 		if(f_log){
-			//printf("FILE handle ok");
+			//FILE handle ok
 		}
 		else{
-			//printf("FILE handle error");
+			//FILE handle error
 		}
-		fwrite_fs(logbuf, 1, strlen(logbuf), f_log); //old: fwrite(logbuf, 1, strlen(logbuf), f_log);
-		fclose_fs(f_log);	//old: fclose(f_log);
+		fwrite_fs(logbuf, 1, strlen(logbuf), f_log);
+		fclose_fs(f_log);
 		FS_unlock();
 		
 		strcpy(logbuf, buf);
@@ -301,82 +276,29 @@ void	FS_flog(sint8 *fmt, ...)
 	FS_printlog((sint8*)g_printfbuf);
 }
 
-//works fine
 int	FS_loadROM(sint8 *ROM, sint8 *filename)
 {
 	FILE	*f;
 	FS_lock();
-	f = fopen_fs(filename, "r"); //old: f = fopen(filename, "rb");
-	fseek_fs(f, 0, SEEK_END); //old: fseek(f, 0, SEEK_END);
-	int size = ftell_fs(f);	//old: int size = ftell(f);
-	fseek_fs(f, 0, SEEK_SET);	//old: fseek(f, 0, SEEK_SET);
+	f = fopen_fs(filename, "r");
+	fseek_fs(f, 0, SEEK_END);
+	int size = ftell_fs(f);
+	fseek_fs(f, 0, SEEK_SET);
 
 	//Prevent Cache problems.
 	coherent_user_range_by_size((uint32)ROM, (int)size);
 	
-	fread_fs(ROM, 1, size, f);	//old: fread(ROM, 1, size, f);
+	fread_fs(ROM, 1, size, f);
 	GUI_printf("Read done\n");
-	fclose_fs(f);	//old: fclose(f);
+	fclose_fs(f);
 	FS_unlock();
 
 	return 1;
 }
 
 
-
-
-/*
-int	FS_saveFile(sint8 *filename, sint8 *buf, int size)
-{
-	FILE *f;
-	FS_lock();
-  	if ((f = fopen_fs(filename, "w")) == NULL)	//old: if ((f = fopen(filename, "wb")) == NULL)
-  	{
-  		FS_unlock();
-  		return -1;
-  	}
-	fwrite_fs(buf, 1, size, f);	//old: fwrite(buf, 1, size, f);
-	fclose_fs(f);	//old: fclose(f);	
-	FS_unlock();
-	return 0;
-}
-*/
-
-
-
-//ret 0 success, ret -1 on open problem
-/*
-int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
-{
-	g_UseExtRAM = 0;
-	
-	FS_lock();
-	if (currentfd != -1)
-		close(currentfd);
-	
-	currentfd = open(filename, O_RDONLY);
-	if (currentfd < 0)
-	{
-		FS_unlock();
-		return -1;
-	}
-	strcpy((sint8*)currentFileName, filename);
-
-	int ret = read(currentfd, ROM, size);	//returns read size into buffer
-	
-	FS_unlock();
-	
-	if(ret != size){
-		return -1;
-	}
-	
-	return 0;
-}
-*/
-
 FILE * fPaging ;
 
-//use posix...
 int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
 {
 	g_UseExtRAM = 0;
@@ -386,7 +308,7 @@ int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
 	if (fPaging){
 		fclose_fs(fPaging);
 	}
-	fPaging = fopen_fs(filename, "r"); //old: f = fopen(filename, "rb");
+	fPaging = fopen_fs(filename, "r");
 	sint32 fd = fileno(fPaging);
 	if(fd < 0){
 		FS_unlock();
@@ -406,7 +328,6 @@ int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
 }
 
 
-//use posix..
 int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
 	
 	int ret;	
@@ -419,7 +340,6 @@ int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
 	//Prevent Cache problems.
 	coherent_user_range_by_size((uint32)buf, (int)size);
 	
-	//ret = lseek(currentfd, pos, SEEK_SET);
 	ret = fseek_fs(fPaging, pos, SEEK_SET);
 	
 	if (ret < 0)
@@ -431,26 +351,6 @@ int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
 	
 	return fread_fs(buf, 1, size, fPaging);
 }
-
-/*
-int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size)
-{	
-	int ret;	
-	FS_lock();
-	
-	ret = lseek(currentfd, pos, SEEK_SET);
-	if (ret < 0)
-	{
-		FS_unlock();
-		return -1;
-	}
-		
-	read(currentfd, buf, size);
-	
-	FS_unlock();	
-	return ret;	
-}
-*/
 
 int	FS_shouldFreeROM()
 {
