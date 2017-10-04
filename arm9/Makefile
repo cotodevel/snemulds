@@ -55,7 +55,7 @@ VPATH 	=	$(DIR_SRC)
 OBJPROG = 	$(addprefix $(OBJDIR)/, $(ELF_ARM9))
 
 
-all: $(OBJDIR)|	nds_arm9_ld_crt0.o	$(BINSTRIP_RULE_9)
+all: $(OBJDIR)|	$(TARGET_LIBRARY_CRT0_FILE_9).o	$(BINSTRIP_RULE_9)
 #all: debug
 
 #Check $(OBJDIR) if not exists: create it
@@ -86,7 +86,7 @@ $(OBJDIR)/%.o : %.S
 	-@echo 'S Compile end: $@'
 
 #Special rule: compile crt0 for arm9 entrypoint
-nds_arm9_ld_crt0.o:	$(TARGET_LIBRARY_LINKER_FILE_9)
+$(TARGET_LIBRARY_CRT0_FILE_9).o:	$(TARGET_LIBRARY_LINKER_FILE_9)
 	-@echo 'S Compile start: crt0s'
 	$(CC)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $(OBJDIR)/$@ -c $<
 	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm9_ld.ld $(CURDIR)

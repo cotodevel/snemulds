@@ -35,7 +35,7 @@ d_objs_arm7:=	${file_arm7_src_c:.c=.d}	${file_arm7_src_s:.s=.d}	${file_arm7_src_
 #ARM7 specific definitions.
 MAPFILE = $(DIR_ARM7).map
 SHARED_FLAGS	=	-mcpu=arm7tdmi
-AS_ASFLAGS		=	$(SHARED_FLAGS)	-defsym debug=0	-defsym	appver='$(EXECUTABLE_VERSION)'
+AS_ASFLAGS		=	$(SHARED_FLAGS)	-defsym debug=0	-defsym	appver='$(EXECUTABLE_VERSION)'		-defsym	ARM7='1'
 CC_ASFLAGS		=	$(SHARED_FLAGS)	-Wall	-O2	-DASM_OPCODES -DARM7 -mtune=arm7tdmi	-marm -fomit-frame-pointer	-ffast-math	-Ddebug=0	-Dappver='$(EXECUTABLE_VERSION)'
 BUILD			= 	$(BUILD_ARM7)
 DIR_SRC			= 	$(DIRS_ARM7_SRC)
@@ -54,7 +54,7 @@ OBJDIR 	=	./$(BUILD)
 VPATH 	=	$(DIR_SRC)
 OBJPROG =	$(addprefix $(OBJDIR)/, $(ELF_ARM7))
 
-all: $(OBJDIR)|	nds_arm7_ld_crt0.o	$(BINSTRIP_RULE_7)
+all: $(OBJDIR)|	$(TARGET_LIBRARY_CRT0_FILE_7).o	$(BINSTRIP_RULE_7)
 #all: debug
 
 #Check $(OBJDIR) if not exists: create it
@@ -85,7 +85,7 @@ $(OBJDIR)/%.o : %.S
 	-@echo 'S Compile end: $@'
 
 #Special rule: compile crt0 for arm7 entrypoint, bring linkers here
-nds_arm7_ld_crt0.o:	$(TARGET_LIBRARY_LINKER_FILE_7)
+$(TARGET_LIBRARY_CRT0_FILE_7).o:	$(TARGET_LIBRARY_LINKER_FILE_7)
 	-@echo 'S Compile start: crt0s'
 	$(CC)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $(OBJDIR)/$@ -c $<
 	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm7_ld.ld $(CURDIR)
