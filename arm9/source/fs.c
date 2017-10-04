@@ -62,6 +62,7 @@ GNU General Public License for more details.
 #include "toolchain_utils.h"
 #include "about.h"
 #include "file.h"
+#include "xenofunzip.h"
 
 
 sint8 *_FS_getFileExtension(sint8 *filename)
@@ -355,4 +356,13 @@ int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
 int	FS_shouldFreeROM()
 {
 	return 1;
+}
+
+char * tmpFile = "TempFile.smc";
+bool zipFileLoaded;	//zip / gz support
+int load_gz(char *fname, char *newtempfname)	//fname,newtempfname must use getfatfsPath() outside!
+{
+	int ret;
+	ret = do_decompression(fname, newtempfname);
+	return ret;
 }

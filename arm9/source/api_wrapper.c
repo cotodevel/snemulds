@@ -33,10 +33,13 @@ USA
 #include "memmap.h"
 #include "crc32.h"
 #include "gui.h"
+#include "gui_console_connector.h"
 #include "devoptab_devices.h"
 #include "dsregs_asm.h"
 #include "InterruptsARMCores_h.h"
 #include "keypad.h"
+#include "toolchain_utils.h"
+#include "nds_cp15_misc.h"
 
 //Preset BG Layering Config
 __attribute__((section(".dtcm")))
@@ -322,11 +325,10 @@ int checkConfiguration(sint8 *name, int crc)
 
 //
 //requires sint8 * name to be romname.ext
-inline int loadROM(sint8 *name, int confirm)
+int loadROM(sint8 *name, int confirm)
 {
 	// Save SRAM of previous game first
 	saveSRAM();
-	
 	
 	//update name to ROMFile so current RomFile is used as global 
 	sprintf(CFG.ROMFile,"%s",name);
@@ -334,24 +336,53 @@ inline int loadROM(sint8 *name, int confirm)
 	//Build full path to load (new file)
 	sprintf(CFG.Fullpath,"%s/%s",CFG.ROMPath,CFG.ROMFile);	//rets path+rom.smc	/ok
 	
-	if(rom_buffer){
-		memset((uint32*)rom_buffer, 0, (int)ROM_MAX_SIZE);
-		free(rom_buffer);
+	if(strstr (_FS_getFileExtension(name),"ZIP")){	
+		zipFileLoaded = true;
 	}
-	rom_buffer = (uint8*)malloc(ROM_MAX_SIZE);
-	rom_page = rom_buffer + (ROM_STATIC_SIZE*1);
+	else{
+		zipFileLoaded = false;
+	}
+	
+	if(zipFileLoaded == true){
+		sprintf(CFG.ZipFullpath,"%s/%s",CFG.ROMPath,tmpFile);	//rets path+rom.smc	/ok
+		
+		//Decompress File for reload later
+		char buftemp[0x200];
+		sprintf(buftemp,"%s%s",getfatfsPath("snes/"),tmpFile);
+		
+		char bufzip[0x200];
+		sprintf(bufzip,"%s%s",getfatfsPath("snes/"),CFG.ROMFile);
+		int stat = load_gz((char*)bufzip, (char*)buftemp);
+		
+		sprintf(buftemp,"%s",CFG.Fullpath);
+		char * result = str_replace(buftemp, (char *)".zip", (char *)".smc");
+		sprintf(CFG.ZipFullpathRealName,"%s",result);
+		//clrscr();
+		//printf("1:%s",(char*)CFG.ZipFullpath);			//tempfile load/streamed
+		//printf("2:%s",(char*)CFG.Fullpath);				//fullpath .zip
+		//printf("3:%s",(char*)CFG.ZipFullpathRealName);	//fullpath .smc
+	}
 	
 	int size;
 	int ROMheader;
-	sint8 *ROM = rom_buffer;
+	sint8 *ROM = (sint8 *)&rom_buffer[0];
 	int crc;
 	
 	
 	GUI_clear();
 	CFG.LargeROM = 0;
 	
-	mem_clear_paging(); // FIXME: move me...	
-	size = FS_getFileSize(CFG.Fullpath);	//ok ret filesize OK
+	mem_clear_paging();
+	coherent_user_range_by_size((uint32)SNESC.ROM,(int)ROM_MAX_SIZE);
+	memset((uint32*)SNESC.ROM, 0, (int)ROM_MAX_SIZE);
+	
+	if(zipFileLoaded == true){
+		size = FS_getFileSize(CFG.ZipFullpath);
+	}
+	else{
+		size = FS_getFileSize(CFG.Fullpath);
+	}
+	
 	
 	ROMheader = size & 8191;
 	if (ROMheader != 0&& ROMheader != 512)
@@ -360,7 +391,12 @@ inline int loadROM(sint8 *name, int confirm)
 	//fit EWRAM? if not use ROM_STATIC_SIZE page size
 	if (size-ROMheader > ROM_MAX_SIZE)
 	{
-		FS_loadROMForPaging(ROM-ROMheader, CFG.Fullpath, ROM_STATIC_SIZE+ROMheader);
+		if(zipFileLoaded == true){
+			FS_loadROMForPaging(ROM-ROMheader, CFG.ZipFullpath, ROM_STATIC_SIZE+ROMheader);
+		}
+		else{
+			FS_loadROMForPaging(ROM-ROMheader, CFG.Fullpath, ROM_STATIC_SIZE+ROMheader);
+		}
 		CFG.LargeROM = 1;
 		crc = crc32(0, ROM, ROM_STATIC_SIZE);
 		printf("Large ROM detected. CRC(1Mb) = %08x\n", crc);
@@ -368,7 +404,12 @@ inline int loadROM(sint8 *name, int confirm)
 	//ewram size is enough here so read data entirely
 	else
 	{
-		FS_loadROM(ROM-ROMheader, CFG.Fullpath);
+		if(zipFileLoaded == true){
+			FS_loadROM(ROM-ROMheader, CFG.ZipFullpath);
+		}
+		else{
+			FS_loadROM(ROM-ROMheader, CFG.Fullpath);
+		}
 		CFG.LargeROM = 0;
 		crc = crc32(0, ROM, size-ROMheader);
 		printf("CRC = %08x\n", crc);

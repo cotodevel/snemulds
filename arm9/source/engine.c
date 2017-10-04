@@ -42,6 +42,7 @@ GNU General Public License for more details.
 #include "nds_cp15_misc.h"
 #include "fsfat_layer.h"
 #include "about.h"
+#include "toolchain_utils.h"
 
 void writeSRAM(int offset, uint8* src, int size) {
         EXMEMCNT &= ~0x0880;
@@ -108,7 +109,7 @@ uint8 interrupted;
 int initSNESEmpty()
 {
     CFG.BG3Squish = 0;
-    CFG.WaitVBlank = 0;	//coto: wait for vblank must be reimplemented so actual 60 frames are render instead faster frames (without slowdown)
+    CFG.WaitVBlank = 0;
     CFG.YScroll = 0;
     CFG.CPU_speedhack = 1;
     //CFG.TileMode = 1;
@@ -126,19 +127,18 @@ int initSNESEmpty()
     memset((uint32*)&SNES, 0, sizeof(SNES));
     memset((uint32*)&SNESC, 0, sizeof(SNESC));
 	
-	//Prevent Cache problems.
-	//coherent_user_range_by_size((uint32)rom_buffer,(int)ROM_MAX_SIZE);
-	//memset((uint32*)rom_buffer, 0, (int)ROM_MAX_SIZE);
-	
-	rom_buffer = NULL;
-	rom_page = NULL;
-	
-	
-    SNESC.ROM = NULL;  // Rom is re-allocated on rom load
+	SNESC.ROM = (uchar *)rom_buffer;
     SNESC.RAM = (uchar *)&snes_ram_bsram[0x6000];
     SNESC.VRAM = (uchar *)&snes_vram[0];
     SNESC.BSRAM = (uchar *)&snes_ram_bsram[0x0];
-
+	
+	coherent_user_range_by_size((uint32)SNESC.RAM,(int)sizeof(snes_ram_bsram));
+	memset((uint32*)SNESC.RAM, 0, (int)sizeof(snes_ram_bsram));
+	coherent_user_range_by_size((uint32)SNESC.VRAM,(int)sizeof(snes_vram));
+	memset((uint32*)SNESC.VRAM, 0, (int)sizeof(snes_vram));
+	coherent_user_range_by_size((uint32)SNESC.BSRAM,(int)sizeof(snes_ram_bsram));
+	memset((uint32*)SNESC.BSRAM, 0, (int)sizeof(snes_ram_bsram));
+	
     init_GFX();
 
     GFX.Graph_enabled = 1;

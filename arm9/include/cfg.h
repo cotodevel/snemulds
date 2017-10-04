@@ -77,7 +77,9 @@ struct s_cfg
   sint8		ROMFile[100]; 
   sint8		ROMPath[100];
   
-  sint8 		Fullpath[100];	//each time loadRom is loaded this is rewritten
+  sint8 		Fullpath[100];	//each time loadRom is loaded this is rewritten (used for load/saving while zip file)
+  sint8 		ZipFullpath[100];	//zip / gz support (used only for loadrom loadpage)
+  sint8 		ZipFullpathRealName[100];	//zip / gz support (used for load/save)
   
   int		Jukebox;  
   sint8		Playlist[100];

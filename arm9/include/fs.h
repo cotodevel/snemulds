@@ -21,9 +21,26 @@ GNU General Public License for more details.
 #include "typedefs.h"
 #include "dsregs.h"
 
+#include <sys/reent.h>
+#include <sys/select.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdio.h>
+#include <_ansi.h>
+#include <reent.h>
+#include <sys/lock.h>
+#include <fcntl.h>
+#include <stdlib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+extern sint8 *_FS_getFileExtension(sint8 *filename);
 
 extern void	FS_printlog(sint8 *buf);
 extern void	FS_flog(sint8 *fmt, ...);
@@ -36,7 +53,9 @@ extern int		FS_chdir(const sint8 *path);
 extern sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt);
 extern sint8 	*FS_getFileName(sint8 *filename);
 
-
+extern int load_gz(char *fname, char *newtempfname);
+extern char * tmpFile;
+extern bool zipFileLoaded;	//zip / gz support
 #ifdef __cplusplus
 }
 #endif

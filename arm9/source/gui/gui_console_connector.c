@@ -39,6 +39,7 @@ GNU General Public License for more details.
 
 
 #include "gui_console_connector.h"
+#include "fs.h"
 
 ////////[For custom Console implementation]:////////
 //You need to override :
@@ -409,8 +410,9 @@ int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		if (param == 3)
 		{
 			sint8 *sel = GUISelector_getSelected(GUI.screen, NULL);
+			//clrscr();
 			//printf("ROMSelectorHandler:");
-			//printf("romfile:%s",CFG.ROMFile);
+			//printf("romfile:%s",sel);
 			//while(1);
 			loadROM(sel, 0);
 			consoleClear(DefaultSessionConsole);
@@ -996,7 +998,7 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			
 			// Get ROMs list
   		    int		cnt;
-  		    sint8 **dir_list = FS_getDirectoryList(CFG.ROMPath, "SMC|SFC|SWC|FIG", &cnt);
+  		    sint8 **dir_list = FS_getDirectoryList(CFG.ROMPath, "SMC|SFC|SWC|FIG|ZIP|GZ", &cnt);
   		    
   		    // Alphabetical sort
   		    if (CFG.GUISort){
@@ -1114,7 +1116,7 @@ void GUI_getROM(sint8 *rompath){
 
 		// Get ROMs list
 	int		cnt;
-    sint8 **dir_list = FS_getDirectoryList(rompath, "SMC|SFC|SWC|FIG", &cnt);
+    sint8 **dir_list = FS_getDirectoryList(rompath, "SMC|SFC|SWC|FIG|ZIP|GZ", &cnt);
 	
 	// Alphabetical sort
 	if (CFG.GUISort){
@@ -1135,7 +1137,10 @@ void GUI_getROM(sint8 *rompath){
     GUI.ScanJoypad = 0;
 	
 	//sprintf(CFG.ROMPath,"%s/%s",buf,sel);	//rets path+rom.smc	/ok
-	sprintf(CFG.ROMFile,"%s",sel);	//filename.tst
+	//printf("rom:%s",sel);
+	
+	//while(1){}
+	sprintf(CFG.ROMFile,"%s",sel);	//filename.tst;
 }
 
 void GUI_deleteROMSelector(){

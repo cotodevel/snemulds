@@ -1,5 +1,18 @@
 # SnemulDS
-SnemulDS 0.6 [Revival]
+SnemulDS 0.6b [Revival]
+
+
+10/03/2017
+
+Coto: SnemulDS 0.6b - added ZIP support:
+	The code was taken from NesDS, and changed some stuff so it could work with Toolchain Generic DS.
+	The requisites are:
+	a) Every .zip file must be within root:/snes/ folder, where root is your sd letter
+	b) The file extension must be renamed to .smc before compression
+	c) The compressed file must use  .zip (deflate) or .gz, and the compressed .zip must have 1 only file
+
+
+
 
 1)
 You will need the NintendoDS toolchain "toolchain generic" to build these sources.

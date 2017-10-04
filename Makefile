@@ -18,7 +18,7 @@
 
 # Project Specific
 export EXECUTABLE_FNAME = SNEmulDS.nds
-export EXECUTABLE_VERSION_HEADER =	0.6a
+export EXECUTABLE_VERSION_HEADER =	0.6b
 export EXECUTABLE_VERSION =	"$(EXECUTABLE_VERSION_HEADER)"
 
 # MISC/Dir Definitions
@@ -94,11 +94,13 @@ export DIRS_ARM9_SRC = source/	\
 			source/interrupts/	\
 			source/gui/	\
 			source/wnifilib/	\
+			source/zip/	\
 			../common/
 			
 export DIRS_ARM9_HEADER = include/	\
 			source/gui/	\
 			source/wnifilib/	\
+			source/zip/	\
 			../common/
 
 #cleanup default C/C++/ASM flags
