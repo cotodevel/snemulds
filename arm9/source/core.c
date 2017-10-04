@@ -73,7 +73,6 @@ uint8 * rom_buffer;		//must be set at initSNESEmpty (first free ewram area)
 
 __attribute__((section(".dtcm")))
 uint8 * rom_page;		//second slot of rombuffer, must be set up at initSNESEmpty
-//uint8 * rom_page = (uint8*)&rom_buffer[ROM_STATIC_SIZE*1];        //second slot of rombuffer
 
 
 

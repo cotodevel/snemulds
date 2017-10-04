@@ -366,17 +366,22 @@ int loadROM(sint8 *name, int confirm)
 		//printf("3:%s",(char*)CFG.ZipFullpathRealName);	//fullpath .smc
 	}
 	
+	if(rom_buffer){
+		memset((uint32*)rom_buffer, 0, (int)ROM_MAX_SIZE);
+		free(rom_buffer);
+	}
+	rom_buffer = (uint8*)malloc(ROM_MAX_SIZE);
+	rom_page = rom_buffer + (ROM_STATIC_SIZE*1);
+	
 	int size;
 	int ROMheader;
-	SNESC.ROM = (sint8 *)&rom_buffer[0];
-	sint8 *ROM = (sint8 *)SNESC.ROM;
+	sint8 *ROM = SNESC.ROM = rom_buffer;
 	int crc;
 	
 	GUI_clear();
 	CFG.LargeROM = 0;
 	
 	mem_clear_paging();
-	memset((uint32*)ROM, 0, (int)sizeof(rom_buffer));
 	
 	if(zipFileLoaded == true){
 		size = FS_getFileSize(CFG.ZipFullpath);
@@ -384,7 +389,6 @@ int loadROM(sint8 *name, int confirm)
 	else{
 		size = FS_getFileSize(CFG.Fullpath);
 	}
-	
 	
 	ROMheader = size & 8191;
 	if (ROMheader != 0&& ROMheader != 512)
