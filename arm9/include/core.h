@@ -226,7 +226,7 @@ extern struct s_cfg	CFG;
 extern volatile uint8 snes_ram_bsram[0x20000+0x6000];    //128K SNES RAM + 8K (Big) SNES SRAM
 extern volatile uint8 snes_vram[0x010000];
 extern uint8 * rom_page;        //second slot of rombuffer
-extern volatile uint8 rom_buffer[ROM_MAX_SIZE];
+extern uint8 * rom_buffer;
 
 extern int _offsetY_tab[4];
 extern uint32 screen_mode;

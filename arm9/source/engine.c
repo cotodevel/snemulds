@@ -127,10 +127,14 @@ int initSNESEmpty()
     memset((uint32*)&SNESC, 0, sizeof(SNESC));
 	
 	//Prevent Cache problems.
-	coherent_user_range_by_size((uint32)rom_buffer,(int)ROM_MAX_SIZE);
-	memset((uint32*)rom_buffer, 0, (int)ROM_MAX_SIZE);
-
-    SNESC.ROM = NULL;  // Should be a fixed allocation 
+	//coherent_user_range_by_size((uint32)rom_buffer,(int)ROM_MAX_SIZE);
+	//memset((uint32*)rom_buffer, 0, (int)ROM_MAX_SIZE);
+	
+	rom_buffer = NULL;
+	rom_page = NULL;
+	
+	
+    SNESC.ROM = NULL;  // Rom is re-allocated on rom load
     SNESC.RAM = (uchar *)&snes_ram_bsram[0x6000];
     SNESC.VRAM = (uchar *)&snes_vram[0];
     SNESC.BSRAM = (uchar *)&snes_ram_bsram[0x0];

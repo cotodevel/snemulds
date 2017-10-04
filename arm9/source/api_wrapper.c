@@ -334,9 +334,16 @@ inline int loadROM(sint8 *name, int confirm)
 	//Build full path to load (new file)
 	sprintf(CFG.Fullpath,"%s/%s",CFG.ROMPath,CFG.ROMFile);	//rets path+rom.smc	/ok
 	
+	if(rom_buffer){
+		memset((uint32*)rom_buffer, 0, (int)ROM_MAX_SIZE);
+		free(rom_buffer);
+	}
+	rom_buffer = (uint8*)malloc(ROM_MAX_SIZE);
+	rom_page = rom_buffer + (ROM_STATIC_SIZE*1);
+	
 	int size;
 	int ROMheader;
-	sint8 *ROM = (sint8 *)&rom_buffer[0];
+	sint8 *ROM = rom_buffer;
 	int crc;
 	
 	

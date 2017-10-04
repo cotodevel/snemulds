@@ -69,10 +69,11 @@ volatile uint8 snes_ram_bsram[0x20000+0x6000];    //128K SNES RAM + 8K (Big) SNE
 volatile uint8 snes_vram[0x010000];
 
 __attribute__((section(".dtcm")))
-uint8 * rom_page = (uint8*)&rom_buffer[ROM_STATIC_SIZE*1];        //second slot of rombuffer
+uint8 * rom_buffer;		//must be set at initSNESEmpty (first free ewram area)
 
-volatile uint8 rom_buffer[ROM_MAX_SIZE];
-
+__attribute__((section(".dtcm")))
+uint8 * rom_page;		//second slot of rombuffer, must be set up at initSNESEmpty
+//uint8 * rom_page = (uint8*)&rom_buffer[ROM_STATIC_SIZE*1];        //second slot of rombuffer
 
 
 
