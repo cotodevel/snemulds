@@ -20,13 +20,6 @@
 uint32	joypad_conf_mode = 0;
 uint32	mouse_cur_b;
 
-int	setBacklight(int flags)
-{
-	//SendArm7Command(0x00000008,(flags << 16),0x00000000,0x00000000);
-	SendMultipleWordACK(0x00000008, (flags << 16), 0, 0);
-	
-	return 0;
-}
 
 int myLCDSwap()
 {
@@ -45,15 +38,7 @@ int myLCDSwap()
 int get_joypad()
 {
 	int res = 0;
-    
-	//old libnds code
-    /*
-    #define KEYS_CUR (( ((~KEYINPUT)&0x3ff) | (((~MyIPC->buttons_xy_folding)&3)<<10) | (((~MyIPC->buttons_xy_folding)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID)	
-	keys = KEYS_CUR;
-    */
-    
-	//new
-	keys = keysPressed();
+    keys = keysPressed();
 	
 #if 0
 		if( (keys & KEY_L))

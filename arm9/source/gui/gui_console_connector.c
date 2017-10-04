@@ -1,3 +1,23 @@
+/*
+
+			Copyright (C) 2017  Coto
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
+USA
+
+*/
+
 /***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
@@ -15,563 +35,115 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
-#include <stdarg.h>
-#include <malloc.h>
-#include <ctype.h>
-#include "common.h"
-#include "specific_shared.h"
+//This file abstracts specific SnemulDS console code that relies on core functionality.
 
-#include "typedefs.h"
-#include "dsregs.h"
-#include "console.h"
-#include "core.h"
-#include "opcodes.h"
-#include "snapshot.h"
-#include "ppu.h"
 
-#include "gui.h"
-#include "fs.h"
-#include "common.h"
+#include "gui_console_connector.h"
 
-#include "gfx.h"
-#include "cfg.h"
-#include "apu.h"
-#include "bios.h"
+////////[For custom Console implementation]:////////
+//You need to override :
+	//vramSetup * getProjectSpecificVRAMSetup()
+	//Which provides a proper custom 2D VRAM setup
 
-#include "conf.h"
-#include "gui_widgets.h"
-#include "snemul_str.h"
-#include "InterruptsARMCores_h.h"
-#include "about.h"
-#include "dma.h"
+//Then override :
+	//bool InitProjectSpecificConsole()
+	//Which provides the console init code, example below.
 
-#include "posix_hook_shared.h"
-#include "fsfat_layer.h"
-#include "keypad.h"
+//After that you can call :
+	//bool project_specific_console = true;
+	//GUI_init(project_specific_console);
+
+
+////////[For default Console implementation simply call]:////////
+	//bool project_specific_console = false;
+	//GUI_init(project_specific_console);
 
 
 
 
-/* //deprecated
-void	LOG(sint8 *fmt, ...)
-{
-	va_list ap;
-	sint8	buf[101];
 
-	if (!GUI.log)
-		return;
-	
-    va_start(ap, fmt);
-    vsnprintf(buf, 100, fmt, ap);
-    va_end(ap);
-    
-    printf(buf);
-}
-*/
+	////////[Custom Console implementation]////////
 
-t_GUIScreen	*GUI_newScreen(int nb_elems)
-{
-	t_GUIScreen *scr;
-	
-	scr = malloc(sizeof(t_GUIScreen)+nb_elems*sizeof(t_GUIZone));
-	memset(scr, 0, sizeof(t_GUIScreen)+nb_elems*sizeof(t_GUIZone));
-	scr->nb_zones = nb_elems;
-	scr->curs = -1;
-	scr->last_focus = scr->nb_zones-1;
-	scr->incr_focus = 3;
-	
-	return scr;
+
+
+
+//Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
+vramSetup * getProjectSpecificVRAMSetup(){
+	return SNEMULDS_2DVRAM_SETUP();
 }
 
-void	GUI_setZone(t_GUIScreen *scr, int i,int x1, int y1, int x2, int y2)
-{
-	memset(&scr->zones[i], 0, sizeof(scr->zones[i]));
-	scr->zones[i].x1 = x1;
-	scr->zones[i].y1 = y1;
-	scr->zones[i].x2 = x2;
-	scr->zones[i].y2 = y2;
-	scr->zones[i].id = i;
-//	scr->zones[i].data = NULL;
-}
-
-void	GUI_linkObject(t_GUIScreen *scr, int i, void *data, t_GUIHandler handler)
-{
-	scr->zones[i].data = data;
-	scr->zones[i].handler = handler;
-}
-
-int GUI_loadPalette(sint8 *path)
-{
-	uint8	*data;
-	int 	size;
-	int		i;
+//1) VRAM Layout
+vramSetup * SNEMULDS_2DVRAM_SETUP(){
 	
-	size = FS_getFileSize(path);
-	if (size <= 0)
-		return -1;	
+	vramSetup * vramSetupDefault = (vramSetup *)&vramSetupGlobal[0];
 	
-	data = malloc(size);
+	//vramSetBankA(VRAM_A_MAIN_BG_0x06020000);
+	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].vrambankCR = VRAM_A_0x06020000_ENGINE_A_BG;
+	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].enabled = true;
 	
-	FS_loadFile(path, (sint8 *)data, size);
+	//vramSetBankB(VRAM_B_MAIN_BG_0x06040000);
+	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].vrambankCR = VRAM_B_0x06040000_ENGINE_A_BG;
+	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].enabled = true;
 	
-    for (i = 0; i < MIN(size, GUI_PAL*3); i+=3) 
-	  	BG_PALETTE_SUB[i/3] = RGB8(data[i],data[i+1],data[i+2]);
-    
-    free(data);
-    return 0;
-}
-
-t_GUIImage	*GUI_loadImage(sint8 *path, int width, int height, int flags)
-{
-	t_GUIImage	*ptr = NULL;	
-	int 	size;
+	// 128Ko (+48kb) for sub screen / GUI / Console
+	//vramSetBankC(VRAM_C_SUB_BG_0x06200000);
+	vramSetupDefault->vramBankSetupInst[VRAM_C_INDEX].vrambankCR = VRAM_C_0x06200000_ENGINE_B_BG;
+	vramSetupDefault->vramBankSetupInst[VRAM_C_INDEX].enabled = true;
 	
-	size = FS_getFileSize(path);
-	if (size <= 0)
-		return NULL;
+	// Some memory for ARM7 (128 Ko!)
+	//vramSetBankD(VRAM_D_ARM7_0x06000000);
+	vramSetupDefault->vramBankSetupInst[VRAM_D_INDEX].vrambankCR = VRAM_D_0x06000000_ARM7;
+	vramSetupDefault->vramBankSetupInst[VRAM_D_INDEX].enabled = true;
 	
-	if (flags == IMG_IN_MEMORY)
-	{
-		ptr = malloc(sizeof(t_GUIImage)+size);
-		if (ptr == NULL)
-			return NULL;
-		
-		ptr->data = (uint8*)(ptr)+sizeof(t_GUIImage);   
-		FS_loadFile(path, ptr->data, size);             
-		
-	}
-	if (flags == IMG_NOLOAD)
-	{
-		ptr = malloc(sizeof(t_GUIImage)+strlen(path)+1);
-		if (ptr == NULL)
-			return NULL;
-		
-		ptr->data = (uint8*)(ptr)+sizeof(t_GUIImage);	
-		strcpy(ptr->data, path);
-	}
+	// 80Ko for Sprites (SNES : 32-64Ko)
+	//vramSetBankE(VRAM_E_MAIN_SPRITE); // 0x6400000
+	vramSetupDefault->vramBankSetupInst[VRAM_E_INDEX].vrambankCR = VRAM_E_0x06400000_ENGINE_A_BG;
+	vramSetupDefault->vramBankSetupInst[VRAM_E_INDEX].enabled = true;
 	
-	if (flags == IMG_IN_VRAM)
-	{
-		// TODO
-		if (ptr == NULL)
-			return NULL;
-		
-	}	
-
-	ptr->flags = flags;
-	ptr->width = width;
-	ptr->height = height;
+	//vramSetBankF(VRAM_F_MAIN_SPRITE);
+	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].vrambankCR = VRAM_F_0x064XXXXX_ENGINE_A_BG;
+	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].enabled = true;
 	
-	return ptr;
-}
-
-int GUI_addImage(sint8 *path, int w, int h, int flags)
-{
-	t_GUIImage *img = GUI_loadImage(path, w, h, flags);
+	//vramSetBankG(VRAM_G_BG_EXT_PALETTE);
+	vramSetupDefault->vramBankSetupInst[VRAM_G_INDEX].vrambankCR = VRAM_G_SLOT_ENGINE_A_BG_EXTENDED;
+	vramSetupDefault->vramBankSetupInst[VRAM_G_INDEX].enabled = true;
 	
-	GUI.img_list->img[GUI.img_list->cnt++] = img;
-	return GUI.img_list->cnt-1;
-}
-
-void		GUI_deleteImage(t_GUIImage *image)
-{
-	free(image);
-}
-
-void		GUI_drawHLine(t_GUIZone *zone, int color, int x1, int y1, int x2)
-{
-	uint16		*ptr;
+	// 48ko For CPU 
+	//vramSetBankH(VRAM_H_LCD);
+	vramSetupDefault->vramBankSetupInst[VRAM_H_INDEX].vrambankCR = VRAM_H_LCDC_MODE;
+	vramSetupDefault->vramBankSetupInst[VRAM_H_INDEX].enabled = true;
 	
-	ptr = GUI.DSFrameBuffer;
-	ptr += (zone->x1 + x1) / 2 + ((zone->y1 + y1) * 128);
-
-	uint32	c;
+	//vramSetBankI(VRAM_I_LCD);
+	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].vrambankCR = VRAM_I_LCDC_MODE;
+	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].enabled = true;
 	
-	c = color | (color << 8) | (color << 16) | (color << 24);
-
-	swiFastCopy((uint32*)&c, (uint32*)(uint16*)ptr, (x2-x1)/4 | COPY_FIXED_SOURCE);
+	
+	return vramSetupDefault;
 }
 
 
-void		GUI_drawVLine(t_GUIZone *zone, int color, int x1, int y1, int y2)
-{
-	uint16		*ptr;
-	int			y;
+//2) Uses subEngine: VRAM Layout -> Console Setup
+bool InitProjectSpecificConsole(){
+	DefaultSessionConsole = (ConsoleInstance *)(&CustomConsole);
 	
-	ptr = GUI.DSFrameBuffer;
-	ptr += (zone->x1 + x1) / 2 + ((zone->y1 + y1) * 128);
-
-	if ((x1 & 1) == 0)
-		for (y=0; y < y2-y1; y++, ptr+= 128) 
-			*ptr = (*ptr & 0xFF00) | color;
-	else
-		for (y=0; y < y2-y1; y++, ptr+= 128) 
-			*ptr = (*ptr & 0x00FF) | (color << 8);
-}
-
-void		GUI_drawRect(t_GUIZone *zone, int color, int x1, int y1, int x2, int y2)
-{
-	GUI_drawHLine(zone, color, x1, y1, x2);
-	GUI_drawVLine(zone, color, x2-1, y1, y2);
-	GUI_drawHLine(zone, color, x1, y2-1, x2);
-	GUI_drawVLine(zone, color, x1, y1, y2);
-}
-
-void		GUI_drawBar(t_GUIZone *zone, int color, int x1, int y1, int x2, int y2)
-{
-	uint16		*ptr;
-	int			y;
+	//Set subEngine
+	SetEngineConsole(subEngine,DefaultSessionConsole);
 	
-	ptr = GUI.DSFrameBuffer;
-	if (zone)
-		ptr += (zone->x1 + x1) / 2 + ((zone->y1 + y1) * 128);
-	else
-		ptr += x1 / 2 + y1 * 128;
-
-	uint32	c = color | (color << 8) | (color << 16) | (color << 24);
-	for (y=0; y < y2-y1; y++) 
-	{
-		swiFastCopy((uint32*)&c, (uint32*)(uint16*)ptr, (x2-x1)/4 | COPY_FIXED_SOURCE);
-		ptr += 128;		
-	}	
-}
-
-
-
-void		GUI_drawImage(t_GUIZone *zone, t_GUIImage *image, int x, int y)
-{
-	uint16		*ptr;
-	uint16		*img = NULL;
-	FILE		*f = NULL;
+	//Set subEngine properties
+	DefaultSessionConsole->ConsoleEngineStatus.ENGINE_DISPCNT	=	(uint32)(MODE_5_2D | DISPLAY_BG3_ACTIVE | DISPLAY_BG0_ACTIVE | DISPLAY_BG1_ACTIVE);
 	
-	//FIL fhandler;
-//	printf("XXX %p %d %d %d %p\n", image, image->width, image->height, image->flags, image->data);
-
-	ptr = GUI.DSFrameBuffer;
-	ptr += (zone->x1 + x) / 2 + ((zone->y1 + y) * 128);
-
-	if (image->flags == IMG_NOLOAD)
-	{		
-		FS_lock();
-		f = fopen_fs(image->data, "r");
-		//f_open(&fhandler,image->data,FA_READ);
-	}
-	else
-		img = image->data;
+	// BG0: Background layer :
+	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[0].BGNUM = 0;
+	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[0].REGBGCNT = BG_MAP_BASE(30) | BG_TILE_BASE(7) | BG_32x32 | BG_COLOR_16 | BG_PRIORITY_3;
+	// Available : 0 - 60 Ko
 	
-
-	for (y=0; y < image->height; y++) 
-	{
-		if (image->flags == IMG_NOLOAD)
-		{
-			fread_fs(ptr, 4, image->width/4, f);
-			//unsigned int read_so_far;
-			//f_read(&fhandler, ptr, image->width, &read_so_far);
+	// BG1: Text layer : 
+	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[1].BGNUM = 1;
+	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[1].REGBGCNT = BG_MAP_BASE(31) | BG_TILE_BASE(7) | BG_32x32 | BG_COLOR_16;
 	
-		}
-		else
-		{
-			swiFastCopy((uint32*)(uint16*)img, (uint32*)(uint16*)ptr, image->width/4);
-			img += (image->width)/2;
-		}
-		ptr += 128;
-	}
-	
-	if (image->flags == IMG_NOLOAD)
-	{
-		fclose_fs(f);
-		//f_close(&fhandler);
-		FS_unlock();
-	}
-}
-
-int			GUI_sendMessage(t_GUIScreen *scr, int i, int msg, int param, void *arg)
-{
-	if (i >= 0 && i < scr->nb_zones && scr->zones[i].handler)
-		return scr->zones[i].handler(&scr->zones[i], msg, param, arg);
-	else
-		return -1;
-}
-
-t_GUIMessage	PendingMessage;
-
-int			GUI_dispatchMessageNow(t_GUIScreen *scr, int msg, int param, void *arg)
-{
-	int	i;
-	
-	for (i = 0; i < scr->nb_zones; i++)
-	{
-		t_GUIZone	*zone = &scr->zones[i];
-
-		if (zone->handler &&
-			zone->handler(zone, msg, param, arg))
-			return i;
-	}
-	return -1;	
-}
-
-int			GUI_dispatchMessage(t_GUIScreen *scr, int msg, int param, void *arg)
-{
-#if 0	
-	GUI_dispatchMessageNow(scr, msg, param, arg);
-#else
-	PendingMessage.scr = scr;
-	PendingMessage.msg = msg;
-	PendingMessage.param = param;
-	PendingMessage.arg = arg;
-#endif
-	return 0;
-}
-
-int		GUI_setFocus(t_GUIScreen *scr, int id)
-{
-	if (scr->curs != id && id <= scr->last_focus)
-	{
-		GUI_sendMessage(scr, scr->curs, GUI_EVENT, GUI_EVENT_UNFOCUS, NULL);
-		scr->curs = id;
-		GUI_sendMessage(scr, scr->curs, GUI_EVENT, GUI_EVENT_FOCUS, NULL);
-	}
-	return 0;
-}
-
-void	GUI_clearFocus(t_GUIScreen *scr)
-{
-	if (scr->curs != -1)
-	{
-		GUI_sendMessage(scr, scr->curs, GUI_EVENT, GUI_EVENT_UNFOCUS, NULL);
-		scr->curs = -1;
-	}
-}
-
-int		GUI_dispatchEvent(t_GUIScreen *scr, int event, void *param)
-{
-	int i;
-	
-	if (event == GUI_EVENT_BUTTON)
-	{
-		// In handle joypad mode, intercept focus chage
-		if (scr->flags & GUI_HANDLE_JOYPAD)
-		{
-			t_GUIEvent	*e = (t_GUIEvent*)(param);
-						
-			if (e->joy.repeated & KEY_LEFT && scr->curs >= 1)
-				GUI_setFocus(scr, scr->curs-1);
-			if (e->joy.repeated & KEY_RIGHT && scr->curs < scr->last_focus)
-				GUI_setFocus(scr, scr->curs+1);
-
-			if (e->joy.repeated & KEY_UP)
-				GUI_setFocus(scr, MAX(scr->curs-scr->incr_focus, 0));			
-			if (e->joy.repeated & KEY_DOWN)
-				GUI_setFocus(scr, MIN(scr->curs+scr->incr_focus, scr->last_focus));
-			
-		}
-		// First send message to focused item
-		if (GUI_sendMessage(scr, scr->curs, GUI_EVENT, event, param) > 0)
-			return scr->curs;
-		
-		// Then to other items
-		//for (i = 0; i < scr->nb_zones; i++)
-		i = (scr->flags & GUI_HANDLE_JOYPAD) ? scr->last_focus+1 : 0;
-		for (; i < scr->nb_zones; i++)
-		{
-			if (i == scr->curs)
-				continue;
-			if (GUI_sendMessage(scr, i, GUI_EVENT, event, param) > 0)
-				return i;
-		}
-	}
-	
-	if (event == GUI_EVENT_STYLUS)
-	{
-		t_GUIEvent	*e = (t_GUIEvent*)(param);
-
-		if (scr->stylus_zone >= 0 && scr->stylus_zone < scr->nb_zones)
-		{
-			t_GUIZone	*czone = &scr->zones[scr->stylus_zone];
-		
-			if (!(e->stl.x >= czone->x1 && e->stl.x < czone->x2 &&
-				  e->stl.y >= czone->y1 && e->stl.y < czone->y2))
-			{
-				if (czone->handler)
-					czone->handler(czone, GUI_EVENT, GUI_EVENT_LEAVEZONE, param);
-				scr->stylus_zone = -1;
-			}
-		}
-		
-		for (i = 0; i < scr->nb_zones; i++)
-		{
-			t_GUIZone	*zone = &scr->zones[i];
-
-			if (e->stl.x >= zone->x1 && e->stl.x < zone->x2 &&
-				e->stl.y >= zone->y1 && e->stl.y < zone->y2)
-			{
-				if (scr->stylus_zone != i)
-				{
-					if (zone->handler)
-						zone->handler(zone, GUI_EVENT, GUI_EVENT_ENTERZONE, param);
-					scr->stylus_zone = i;
-				}
-				
-				if (zone->handler && zone->handler(zone, GUI_EVENT, event, param))
-					return i;
-			}
-		}
-	}
-	
-	return -1;
-}
-
-void		GUI_drawScreen(t_GUIScreen *scr, void *param)
-{
-	int i;
-	
-	GUI.screen = scr;
-	
-	if (scr->handler)
-		scr->handler(NULL, GUI_DRAW, 0, param);
-	
-	for (i = 0; i < scr->nb_zones; i++)
-	{
-		if (scr->zones[i].handler)
-		{
-			if ((scr->zones[i].state & GUI_ST_HIDDEN) == 0)
-				scr->zones[i].handler(&scr->zones[i], GUI_DRAW, 0, param);
-		}
-	}
-}
-
-t_GUIEvent	g_event;
-
-
-int GUI_update()
-{
-	int new_event = 0;
-	
-	//ori:
-	/*	
-	scanKeys();
-	
-	int pressed = keysDown(); 	// buttons pressed this loop
-	//int held = keysHeld(); 		// buttons currently held
-	int released = keysUp();	// buttons unpressed this loop, but pressed past loop
-	int repeated = keysDownRepeat();	//buttons both pressed past loop, and pressed this loop
-	*/
-	
-	//new
-	int pressed = keysPressed(); 	// buttons pressed this loop
-	int released = keysReleased();
-	int held = keysHeld();				//touch screen
-	int repeated = keysRepeated();
-	
-	//printf2(0, 20, "                \n");
-	//printf2(0, 20, "keys = %04x\n", keys);
-	
-	if (GUI.hide)
-	{
-		if (penIRQread() == false)	//(released & KEY_TOUCH)
-		{
-			// Show GUI
-			GUI.hide = 0;
-			powerON(POWER_2D_B);
-			setBacklight(PM_BACKLIGHT_TOP | PM_BACKLIGHT_BOTTOM); 
-		}
-	}
-	else{
-		if((pressed & KEY_TOUCH) && !(held & KEY_TOUCH))
-		{
-			g_event.event = EVENT_STYLUS_PRESSED;
-			g_event.stl.x = MyIPC->touchXpx;
-			g_event.stl.y = MyIPC->touchYpx;		
-			//printf2(15, 8, "          \n");					
-			//printf2(15, 8, "pressed\n");
-			new_event = GUI_EVENT_STYLUS;
-		}
-		
-		else if((held & KEY_TOUCH) && !(released & KEY_TOUCH))
-		{
-			if (penIRQread() == false){
-				return 0;
-			}
-			
-			g_event.event = EVENT_STYLUS_DRAGGED;
-
-			g_event.stl.dx = MyIPC->touchXpx - g_event.stl.x;
-			g_event.stl.dy = MyIPC->touchYpx - g_event.stl.y;
-			g_event.stl.x = MyIPC->touchXpx;
-			g_event.stl.y = MyIPC->touchYpx;
-			//printf2(15, 8, "          \n");											
-			//printf2(15, 8, "dragged\n");
-			new_event = GUI_EVENT_STYLUS;
-		
-		}
-		else if (!(held & KEY_TOUCH) && (released & KEY_TOUCH)) //too much fast: (penIRQread() == false)
-		{
-			g_event.event = EVENT_STYLUS_RELEASED;
-			//printf2(15, 8, "          \n");
-			//printf2(15, 8, "released\n");
-			new_event = GUI_EVENT_STYLUS;
-		}	
-
-		else if((MyIPC->buttons7 != 0) && GUI.ScanJoypad){
-			//if ((MyIPC->buttons != 0) && GUI.ScanJoypad)
-			//{
-				g_event.event = EVENT_BUTTON_ANY;
-				new_event = GUI_EVENT_BUTTON;
-				g_event.joy.buttons = MyIPC->buttons7;
-				g_event.joy.pressed = pressed;
-				g_event.joy.repeated = repeated;
-				g_event.joy.released = released;
-				//printf2(15, 8, "keys\n");
-			//}
-		}
-			
-		//serve & dispatch (destroys) events
-		if (new_event)
-		{
-			//printf2(60, 1, "event = %d\n", new_event);
-			//if (new_event == GUI_EVENT_STYLUS)
-			//	printf2(0, 3, "x = %d y = %d\n", g_event.stl.x, g_event.stl.y);
-			GUI_dispatchEvent(GUI.screen, new_event, &g_event);
-		}
-		
-		if (PendingMessage.msg != 0)
-		{
-			int ret = 0;
-			if (PendingMessage.scr->handler)
-				ret = PendingMessage.scr->handler(NULL, 
-						PendingMessage.msg, PendingMessage.param, PendingMessage.arg);
-			
-			if (ret == 0)
-			{
-				ret = GUI_dispatchMessageNow(PendingMessage.scr,
-						PendingMessage.msg, PendingMessage.param, PendingMessage.arg);
-			}
-			memset(&PendingMessage, 0, sizeof(PendingMessage));
-		}
-	}
-	return 0;
-}
-
-int		GUI_start()
-{
-	GUI.exit = 0;
-	g_event.event = 0;
-	while (!GUI.exit)
-	{
-		GUI_update();
-	}
-	return 0;
-}
-
-void	GUI_init()
-{
-	//keysSetRepeat( 60, 30 );	//no
-	
-	InitDefaultConsole();
+	// BG3: FrameBuffer : 64(TILE:4) - 128 Kb
+	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[3].BGNUM = 3;
+	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[3].REGBGCNT = BG_BMP_BASE(4) | BG_BMP8_256x256 | BG_PRIORITY_1;
 	
 	REG_BG3X_SUB = 0;
 	REG_BG3Y_SUB = 0;
@@ -585,8 +157,8 @@ void	GUI_init()
 	GUI.DSBack = (uint16 *)BG_MAP_RAM_SUB(30);
 	GUI.DSTileMemory = (uint16 *)BG_TILE_RAM_SUB(7);
 	
-	BG_PALETTE_SUB[0] = 0;
-	BG_PALETTE_SUB[255] = 0xFFFF;
+	BG_PALETTE_SUB[0] = RGB15(0,0,0);			//back-ground tile color
+	BG_PALETTE_SUB[255] = RGB15(26,26,26);		//tile color
 	
 	GUI.Palette = &BG_PALETTE_SUB[216];
 	GUI.ScanJoypad = 0;
@@ -645,65 +217,11 @@ void	GUI_init()
 	
 	GUI.Palette[39] = RGB8(255, 255, 255); // White
 	
-	GUI.printfy = 0;
-}
-
-t_GUIImgList	*GUI_newImageList(int nb)
-{
-	t_GUIImgList	*img_list;
+	InitializeConsole(DefaultSessionConsole);
 	
-	img_list = malloc(sizeof(t_GUIImgList)+nb*sizeof(t_GUIImage *));
-	img_list->nb = nb;
-	img_list->cnt = 0;
-	return img_list;
+	return true;
 }
 
-int		GUI_switchScreen(t_GUIScreen *scr)
-{
-/*	if (GUI.screen)
-		GUI_clearFocus(GUI.screen);*/
-	GUI.screen = scr;						
-	GUI_drawScreen(scr, NULL);
-	return 0;
-}
-
-// Needed by qsort
-/*
-int sort_strcmp(sint8 **a, sint8 **b)
-{
-	return strcasecmp(*a, *b);
-}*/
-
-int sort_strcmp(const void *a, const void *b)
-{
-	return strcasecmp(*(sint8 **)a, *(sint8 **)b);
-}	
-
-t_GUIScreen	*scr_main;
-
-void GUI_buildCStatic(t_GUIScreen *scr, int nb, int x, int y, int sx, int str)
-{
-	GUI_setZone   (scr, nb, x, y, x+sx, y+16); 
-	GUI_linkObject(scr, nb, (void *)str, GUIStatic_handler);	
-}
-
-void GUI_buildLStatic(t_GUIScreen *scr, int nb, int x, int y, int sx, int str, int arg)
-{
-	GUI_setZone   (scr, nb, x, y, x+sx, y+16); 
-	GUI_linkObject(scr, nb, GUI_STATIC_LEFT(str, arg), GUIStaticEx_handler);	
-}
-
-void GUI_buildRStatic(t_GUIScreen *scr, int nb, int x, int y, int sx, int str, int arg)
-{
-	GUI_setZone   (scr, nb, x, y, x+sx, y+16); 
-	GUI_linkObject(scr, nb, GUI_STATIC_RIGHT(str, arg), GUIStaticEx_handler);	
-}
-
-void GUI_buildChoice(t_GUIScreen *scr, int nb, int x, int y, int sx, int str, int cnt, int val)
-{
-	GUI_setZone   (scr, nb, x, y, x+sx, y+16); 
-	GUI_linkObject(scr, nb, GUI_CHOICE(str, cnt, val), GUIChoiceButton_handler);	
-}
 
 t_GUIScreen *buildGFXConfigMenu()
 {
@@ -781,55 +299,10 @@ t_GUIScreen *buildGFXConfigMenu()
 }
 
 
-t_GUIScreen *buildMenu(int nb_elems, int flags, t_GUIFont *font, t_GUIFont *font_2)
-{
-	t_GUIScreen *scr = GUI_newScreen(10);
-	scr->flags = GUI_HANDLE_JOYPAD;
-	scr->last_focus = nb_elems-1;
-	scr->incr_focus = 3;
 
-	// Button
-	GUI_setZone(scr, 0, 4, 16, 4+76, 16+76);
-	GUI_setZone(scr, 1, 88, 16, 88+76, 16+76);
-	GUI_setZone(scr, 2, 172, 16, 172+76, 16+76);
-	GUI_setZone(scr, 3, 4, 94, 4+76, 94+76);
-	GUI_setZone(scr, 4, 88, 94, 88+76, 94+76);
-	GUI_setZone(scr, 5, 172, 94, 172+76, 94+76);
 
-	GUI_setZone(scr, 9, 0, 0, 256, 14); // Title
-	
-	if ((flags&3) == 1)
-	{
-	  // One element
-	  GUI_setZone(scr, 6, 0, 172, 256, 192);
-	}	
-	if ((flags&3) == 2)
-	{
-		// Two elements
-		GUI_setZone(scr, 6, 0, 192-20, 128, 192);
-		GUI_setZone(scr, 7, 128, 192-20, 256, 192);
-	} 
-	if ((flags&3) == 3)
-	{
-		// Three elements
-		GUI_setZone(scr, 6, 0, 192-20, 0+88, 192);
-		GUI_setZone(scr, 7, 88, 192-20, 88+80, 192);
-		GUI_setZone(scr, 8, 88+80, 192-20, 256, 192);
-	} 
 
-	int i;
-	for (i = 0; i < 6; i++)
-	{
-		scr->zones[i].font = font;
-		scr->zones[i].keymask = KEY_A;					
-	}
-	for (; i < scr->nb_zones; i++)
-	{
-		scr->zones[i].font = font_2;					
-	}
-	
-	return scr;
-}
+
 
 int GUI_getConfigInt(sint8 *objname, sint8 *field, int val)
 {
@@ -851,8 +324,7 @@ int GUI_getConfigInt(sint8 *objname, sint8 *field, int val)
 #endif	
 }
 
-sint8 *GUI_getConfigStr(sint8 *objname, sint8 *field, sint8 *str)
-{
+sint8 *GUI_getConfigStr(sint8 *objname, sint8 *field, sint8 *str){
 	return get_config_string(objname, field, str);
 }
 
@@ -866,8 +338,7 @@ void GUI_setConfigStrUpdateFile(sint8 *objname, sint8 *field, sint8 *value){
 }
 
 
-void GUI_setObjFromConfig(t_GUIScreen *scr, int nb, sint8 *objname)
-{
+void GUI_setObjFromConfig(t_GUIScreen *scr, int nb, sint8 *objname){
 	int x = GUI_getConfigInt(objname, "x", 0);
 	int y = GUI_getConfigInt(objname, "y", 0);
 	int sx = GUI_getConfigInt(objname, "sx", 0);
@@ -928,8 +399,8 @@ t_GUIScreen *buildMainMenu()
 	return scr;
 }
 
-int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg)
-{
+
+int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	if (msg == GUI_DRAW)
 		consoleClear(DefaultSessionConsole);
 	if (msg == GUI_COMMAND && (param == 3|| param == 4)) // OK ou cancel
@@ -958,8 +429,8 @@ int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg)
 	return 0;
 }
 
-int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg)
-{
+
+int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	if (msg == GUI_DRAW)
 		consoleClear(DefaultSessionConsole);
 	if (msg == GUI_COMMAND && (param == 3|| param == 4)) // OK ou cancel
@@ -980,8 +451,7 @@ int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg)
 	return 0;
 }
 
-int LoadStateHandler(t_GUIZone *zone, int msg, int param, void *arg)
-{
+int LoadStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	if (msg == GUI_DRAW)
 		consoleClear(DefaultSessionConsole);
 	if (msg == GUI_COMMAND&& (param == 3|| param == 4)) // OK ou cancel
@@ -1011,8 +481,7 @@ int LoadStateHandler(t_GUIZone *zone, int msg, int param, void *arg)
 	return 0;	
 }
 
-int SaveStateHandler(t_GUIZone *zone, int msg, int param, void *arg)
-{
+int SaveStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	if (msg == GUI_DRAW)
 		consoleClear(DefaultSessionConsole);
 	if (msg == GUI_COMMAND && (param == 3 || param == 4)) // OK ou cancel
@@ -1048,8 +517,7 @@ int SaveStateHandler(t_GUIZone *zone, int msg, int param, void *arg)
 	return 0;	
 }
 
-int GFXConfigHandler(t_GUIZone *zone, int msg, int param, void *arg)
-{
+int GFXConfigHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
 	case GUI_DRAW:
@@ -1114,8 +582,7 @@ int GFXConfigHandler(t_GUIZone *zone, int msg, int param, void *arg)
 }
 
 
-int AdvancedHandler(t_GUIZone *zone, int msg, int param, void *arg)
-{
+int AdvancedHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
 	case GUI_DRAW:
@@ -1183,8 +650,7 @@ void LayerOptionsUpdate()
 	}
 }
 
-int LayersOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg)
-{	
+int LayersOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){	
 	switch (msg)
 	{
 	case GUI_DRAW:
@@ -1247,8 +713,7 @@ int LayersOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg)
 }
 
 
-t_GUIScreen *buildLayersMenu()
-{
+t_GUIScreen *buildLayersMenu(){
 	t_GUIScreen *scr = GUI_newScreen(19);
 	
 	GUI_setZone   (scr, 5, 0, 0, 256, 24); // Title zone
@@ -1303,8 +768,8 @@ t_GUIScreen *buildLayersMenu()
 	return scr;
 }
 
-int ScreenOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg)
-{
+
+int ScreenOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
 	case GUI_DRAW:
@@ -1339,8 +804,8 @@ int ScreenOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg)
 	return 0;
 }
 
-t_GUIScreen *buildScreenMenu()
-{
+
+t_GUIScreen *buildScreenMenu(){
 	t_GUIScreen *scr = GUI_newScreen(13);
 	
 	GUI_setZone   (scr, 3, 0, 0, 256, 24); // Title zone
@@ -1387,9 +852,8 @@ t_GUIScreen *buildScreenMenu()
 	return scr;
 }
 
-int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg)
-{
-	
+
+int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
 	case GUI_DRAW:
@@ -1444,8 +908,9 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg)
 	return 0;	
 }
 
-t_GUIScreen *buildOptionsMenu()
-{
+
+
+t_GUIScreen *buildOptionsMenu(){
 	t_GUIScreen *scr = GUI_newScreen(16);
 		
 	GUI_setZone   (scr, 7, 0, 0, 256, 24); // Title zone
@@ -1513,8 +978,8 @@ t_GUIScreen *buildOptionsMenu()
 }
 
 
-int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg)
-{
+
+int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	int i;
 	
 	if (msg == GUI_DRAW)
@@ -1622,8 +1087,8 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg)
 	return 0;
 }
 
-int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg)
-{
+
+int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
 	case GUI_DRAW:
@@ -1639,9 +1104,9 @@ int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg)
 	return 0;
 }
 
+
 //read rom from (path)touchscreen:output rom -> CFG.ROMFile
-void GUI_getROM(sint8 *rompath)
-{
+void GUI_getROM(sint8 *rompath){
 	//snprintf (CFG.ROMPath, strlen(rompath)+1, "%s/",rompath);	//path:/test/
 	
     GUI.ScanJoypad = 1;
@@ -1671,19 +1136,14 @@ void GUI_getROM(sint8 *rompath)
 	
 	//sprintf(CFG.ROMPath,"%s/%s",buf,sel);	//rets path+rom.smc	/ok
 	sprintf(CFG.ROMFile,"%s",sel);	//filename.tst
-	
-	//printf("romfiletoload:%s",CFG.ROMPath);
-	//while(1);
 }
 
-void GUI_deleteROMSelector()
-{
+void GUI_deleteROMSelector(){
 	GUI_deleteSelector(GUI.screen); // Should also delete dir_list
 	consoleClear(DefaultSessionConsole);
 }
 
-void GUI_createMainMenu()
-{
+void GUI_createMainMenu(){
 	consoleClear(DefaultSessionConsole);
 	
 #if 1
@@ -1720,9 +1180,9 @@ void GUI_createMainMenu()
 	GUI_drawScreen(scr_main, NULL);
 	GUI.screen = scr_main;
 }
-	
-void GUI_getConfig()
-{
+
+
+void GUI_getConfig(){
 	CFG.GUISort = get_config_int("GUI", "FileChooserSort", 1);
 	CFG.Language = get_config_int("GUI", "Language", -1);
 	
@@ -1730,52 +1190,7 @@ void GUI_getConfig()
 		GUI_setLanguage(CFG.Language);
 }
 
-void GUI_setLanguage(int lang)
-{
-	switch (lang)
-	{
-	case 0: 
-		GUI.string = (sint8 **)&g_snemulds_str_jpn; // JAPANESE
-		break;
-	case 1:
-		GUI.string = (sint8 **)&g_snemulds_str_eng; // ENGLISH
-		break;
-	case 2:
-		GUI.string = (sint8 **)&g_snemulds_str_fr; // FRENCH
-		break;
-	case 3:		
-		GUI.string = (sint8 **)&g_snemulds_str_ger; // GERMAN
-		break;		
-	case 4:		
-		GUI.string = (sint8 **)&g_snemulds_str_ita; // ITALIAN
-		break;		
-	case 5:		
-		GUI.string = (sint8 **)&g_snemulds_str_spa; // SPANISH
-		break;		
-	case 106:		
-		GUI.string = (sint8 **)&g_snemulds_str_pt; // PORTUGUESE
-		break;		
-	case 107:		
-		GUI.string = (sint8 **)&g_snemulds_str_cat; // CATALAN
-		break;
-	case 108:		
-		GUI.string = (sint8 **)&g_snemulds_str_pol; // POLISH
-		break;
-	case 109:		
-		GUI.string = (sint8 **)&g_snemulds_str_nl; // DUTCH
-		break;
-	case 110:		
-		GUI.string = (sint8 **)&g_snemulds_str_dan; // DANISH
-		break;		
-		
-	default:
-		GUI.string = (sint8 **)&g_snemulds_str_eng; // ENGLISH
-		break;		
-	}		
-}
-
-void	GUI_showROMInfos(int size)
-{
+void	GUI_showROMInfos(int size){
     printf("%s %s\n", _STR(IDS_TITLE), SNES.ROM_info.title);
     printf("%s %d bytes\n", _STR(IDS_SIZE), size);
     if (SNES.HiROM) 

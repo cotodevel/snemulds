@@ -34,14 +34,13 @@ GNU General Public License for more details.
 #include <sys/dir.h>
 #include <fcntl.h>
 #include "fsfat_layer.h"
-
+#include "file.h"
 
 #include "gfx.h"
 #include "cfg.h"
 #include "apu.h"
 #include "ram.h"
 #include "conf.h"
-#include "snemul_str.h"
 #include "frontend.h"
 #include "main.h"
 #include "dldi.h"
@@ -64,31 +63,6 @@ GNU General Public License for more details.
 #include "about.h"
 #include "file.h"
 
-uint16	*g_extRAM = NULL;
-int		g_UseExtRAM = 0;
-
-int		FS_extram_init()
-{
-	g_extRAM = (uint16*) ram_init();
-	if (g_extRAM)
-	{
-		//g_extRAM = (uint16 *)ram_unlock();
-		return ram_size();
-	}
-	return -1;
-}
-
-void	FS_lock()
-{
-	if (g_extRAM)
-		ram_lock();
-}
-
-void	FS_unlock()
-{
-	if (g_extRAM)
-		ram_unlock();
-}
 
 sint8 *_FS_getFileExtension(sint8 *filename)
 {
@@ -140,7 +114,7 @@ int		FS_init()
 int		FS_chdir(const sint8 *path)
 {
 	FS_lock();
-	int ret = fatfs_chdir(path);	//old: chdir(path);	//could cause issues
+	int ret = fatfs_chdir(path);
 	FS_unlock();
 	return ret;
 }
@@ -348,32 +322,6 @@ int	FS_loadROM(sint8 *ROM, sint8 *filename)
 	return 1;
 }
 
-//works
-int	FS_getFileSize(sint8 *filename)
-{	
-	/* //implemented working... POSIX way (lower level calls)
-	struct stat	st;	
-	FS_lock();
-	stat(filename, &st);
-	FS_unlock();
-	return st.st_size;
-	*/
-	
-	//implemented working... POSIX way (high level calls)
-	FILE * f = fopen_fs(filename, "r");	//old: f = fopen(filename, "rb");
-	if (f == NULL)
-	{
-		FS_unlock();
-		return -1;
-	}
-	fseek_fs(f, 0, SEEK_END); //old: fseek(f, 0, SEEK_END);
-	int size = ftell_fs(f);	//old: int size = ftell(f);
-	fseek_fs(f, 0, SEEK_SET);	//old: fseek(f, 0, SEEK_SET);
-	fclose_fs(f);	//old:	fclose(f);	
-	
-	return size;
-}
-
 
 
 
@@ -508,4 +456,3 @@ int	FS_shouldFreeROM()
 {
 	return 1;
 }
-

@@ -36,7 +36,7 @@
 #include "apu.h"
 #include "ram.h"
 #include "conf.h"
-#include "snemul_str.h"
+#include "console_str.h"
 #include "frontend.h"
 #include "main.h"
 #include "dldi.h"
@@ -69,6 +69,7 @@
 
 #include "video.h"
 #include "keypad.h"
+#include "gui_console_connector.h"
 
 int argc;
 sint8 **argv;
@@ -82,38 +83,9 @@ int main(int _argc, sint8 **_argv) {
 	SpecificIPC->APU_ADDR_CMD = 0;
 	
 	screen_mode = 0;
-	SETDISPCNT_MAIN(0); //not using the main screen
-	SETDISPCNT_SUB(MODE_0_2D | DISPLAY_BG0_ACTIVE); //sub bg 0 will be used to print text
-	REG_BG0CNT = REG_BG1CNT = REG_BG2CNT = REG_BG3CNT = 0;
 	
-	/*
-	// 256Ko for Tiles (SNES: 32-64Ko) 
-	vramSetBankA(VRAM_A_MAIN_BG_0x06020000);
-	vramSetBankB(VRAM_B_MAIN_BG_0x06040000);
-
-	// 128Ko (+48kb) for sub screen / GUI 
-	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-
-	// Some memory for ARM7 (128 Ko!)
-	vramSetBankD(VRAM_D_ARM7_0x06000000);
-
-	// 80Ko for Sprites (SNES : 32-64Ko) 
-	vramSetBankE(VRAM_E_MAIN_SPRITE); // 0x6400000
-
-	vramSetBankF(VRAM_F_MAIN_SPRITE);
-
-	vramSetBankG(VRAM_G_BG_EXT_PALETTE);
-
-	// 48ko For CPU 
-
-	vramSetBankH(VRAM_H_LCD);
-	vramSetBankI(VRAM_I_LCD);
-	
-	// 32 first kilobytes for MAP 
-	// remaning memory for tiles 
-	*/
-	VRAM_SETUP(SNEMULDS_2DVRAM_SETUP());
-	GUI_init();
+	bool project_specific_console = true;	//set default console or custom console: custom console
+	GUI_init(project_specific_console);
 	
 	//Init DS Firmware Settings
 	while(getFWSettingsstatus() == false){
@@ -141,9 +113,6 @@ int main(int _argc, sint8 **_argv) {
 	
 	// generate an exception
 	//*(unsigned int*)0x02000004 = 0x64;
-  
-	//while(1==1){
-	//}
 	
 	//cache test
 	/*
@@ -186,8 +155,11 @@ int main(int _argc, sint8 **_argv) {
 	//switch_dswnifi_mode((uint8)dswifi_nifimode);
 	//wifi: 
 	//switch_dswnifi_mode((uint8)dswifi_wifimode);
-	
-	
+	/*
+	if(Wifi_InitDefault(true) == true){
+		printf("connected: IP: %s",(char*)print_ip((uint32)Wifi_GetIP()));
+	}
+	*/
 	int ret=FS_init();
 	if (ret == 0)
 	{

@@ -9,7 +9,6 @@
 #include "ram.h"
 #include "core.h"
 #include "conf.h"
-#include "snemul_str.h"
 #include "frontend.h"
 #include "main.h"
 #include "font_8x8_uv.h"

@@ -28,16 +28,12 @@ extern "C" {
 extern int		FS_init();
 extern void	FS_printlog(sint8 *buf);
 extern void	FS_flog(sint8 *fmt, ...);
-extern int		FS_getFileSize(sint8 *filename);
 extern int		FS_loadROM(sint8 *ROM, sint8 *filename);
 extern int		FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size);
 extern int		FS_loadROMPage(sint8 *buf, unsigned int pos, int size);
 extern int		FS_loadAllFile(sint8 *filename, sint8 *buf, int *size);
 extern int		FS_shouldFreeROM();
 extern int		FS_chdir(const sint8 *path);
-extern int		FS_extram_init();
-extern void	FS_lock();
-extern void	FS_unlock();
 extern sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt);
 extern sint8 	*FS_getFileName(sint8 *filename);
 

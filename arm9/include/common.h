@@ -80,11 +80,6 @@ GNU General Public License for more details.
 #define GET_WORD16(a) (*((uint8 *)(a)) | (*(((uint8 *)(a))+1) << 8)) 
 #define SET_WORD16(a, v) { *((uint8 *)(a)) = (v) & 0xFF; *(((uint8 *)(a))+1) = (v) >> 8; } 
 
-#ifndef MIN
-#define MIN(a, b) (((a) < (b))?(a):(b))
-#define MAX(a, b) (((a) > (b))?(a):(b))
-#endif
-
 #endif
 
 #ifdef __cplusplus
@@ -96,4 +91,3 @@ int	setBacklight(int flags);
 #ifdef __cplusplus
 }
 #endif
-

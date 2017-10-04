@@ -91,13 +91,13 @@ export DIRS_ARM7_HEADER = source/	\
 #####################################################ARM9#####################################################
 
 export DIRS_ARM9_SRC = source/	\
-			source/gui_draw/source/	\
 			source/interrupts/	\
+			source/gui/	\
 			source/wnifilib/	\
 			../common/
 			
 export DIRS_ARM9_HEADER = include/	\
-			source/gui_draw/include/	\
+			source/gui/	\
 			source/wnifilib/	\
 			../common/
 
