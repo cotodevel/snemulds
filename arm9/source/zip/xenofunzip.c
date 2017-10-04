@@ -121,10 +121,15 @@ int funzipstdio(FILE *in, FILE *out){
 
 			result = inflate( &z, Z_SYNC_FLUSH ); //Z_NO_FLUSH? aww small buffer size...
 			if( result != Z_OK && result != Z_STREAM_END ) {
-				//free(ibuffer);free(obuffer);
 				inflateEnd( &z );
 				//char x[10];sprintf(x,"%d",result);
 				//consoletext(64,x,0);while(1);
+				if(ibuffer){
+					free(ibuffer);
+				}
+				if(obuffer){
+					free(obuffer);
+				}
 				err(result, z.msg );
 			}
  
@@ -134,8 +139,13 @@ int funzipstdio(FILE *in, FILE *out){
 
 			if(result==Z_STREAM_END)break;
 		}
-		//free(ibuffer);free(obuffer);
 		inflateEnd( &z );
+		if(ibuffer){
+			free(ibuffer);
+		}
+		if(obuffer){
+			free(obuffer);
+		}
 	}else{ //stored
 		while (size--) {
 			int c = fgetc_fs(in);fputc_fs(c,out);

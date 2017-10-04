@@ -357,6 +357,9 @@ int loadROM(sint8 *name, int confirm)
 		sprintf(buftemp,"%s",CFG.Fullpath);
 		char * result = str_replace(buftemp, (char *)".zip", (char *)".smc");
 		sprintf(CFG.ZipFullpathRealName,"%s",result);
+		if(result){
+			free(result);
+		}
 		//clrscr();
 		//printf("1:%s",(char*)CFG.ZipFullpath);			//tempfile load/streamed
 		//printf("2:%s",(char*)CFG.Fullpath);				//fullpath .zip
@@ -365,16 +368,15 @@ int loadROM(sint8 *name, int confirm)
 	
 	int size;
 	int ROMheader;
-	sint8 *ROM = (sint8 *)&rom_buffer[0];
+	SNESC.ROM = (sint8 *)&rom_buffer[0];
+	sint8 *ROM = (sint8 *)SNESC.ROM;
 	int crc;
-	
 	
 	GUI_clear();
 	CFG.LargeROM = 0;
 	
 	mem_clear_paging();
-	coherent_user_range_by_size((uint32)SNESC.ROM,(int)ROM_MAX_SIZE);
-	memset((uint32*)SNESC.ROM, 0, (int)ROM_MAX_SIZE);
+	memset((uint32*)ROM, 0, (int)sizeof(rom_buffer));
 	
 	if(zipFileLoaded == true){
 		size = FS_getFileSize(CFG.ZipFullpath);
@@ -416,7 +418,13 @@ int loadROM(sint8 *name, int confirm)
 	}
 
 	changeROM(ROM-ROMheader, size);
-	checkConfiguration(CFG.Fullpath, crc);	//could cause bugs
+	
+	if(zipFileLoaded == true){
+		checkConfiguration(CFG.ZipFullpath, crc);
+	}
+	else{
+		checkConfiguration(CFG.Fullpath, crc);
+	}
 	
     if(SNES.HiROM == 0){
         printf("SNESROM is LoROM.Press A");

@@ -127,17 +127,10 @@ int initSNESEmpty()
     memset((uint32*)&SNES, 0, sizeof(SNES));
     memset((uint32*)&SNESC, 0, sizeof(SNESC));
 	
-	SNESC.ROM = (uchar *)rom_buffer;
+	SNESC.ROM = (uchar *)NULL;
     SNESC.RAM = (uchar *)&snes_ram_bsram[0x6000];
     SNESC.VRAM = (uchar *)&snes_vram[0];
     SNESC.BSRAM = (uchar *)&snes_ram_bsram[0x0];
-	
-	coherent_user_range_by_size((uint32)SNESC.RAM,(int)sizeof(snes_ram_bsram));
-	memset((uint32*)SNESC.RAM, 0, (int)sizeof(snes_ram_bsram));
-	coherent_user_range_by_size((uint32)SNESC.VRAM,(int)sizeof(snes_vram));
-	memset((uint32*)SNESC.VRAM, 0, (int)sizeof(snes_vram));
-	coherent_user_range_by_size((uint32)SNESC.BSRAM,(int)sizeof(snes_ram_bsram));
-	memset((uint32*)SNESC.BSRAM, 0, (int)sizeof(snes_ram_bsram));
 	
     init_GFX();
 
