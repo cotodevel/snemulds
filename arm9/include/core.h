@@ -87,9 +87,9 @@ struct s_snescore
 #define WMAP ((uint8 **)(0x0689A000))
 
 //Rom Page variables
-#define ROM_MAX_SIZE	(2*1024*1024)
-#define ROM_STATIC_SIZE	(64*1024)
-#define ROM_PAGING_SIZE	(ROM_MAX_SIZE-ROM_STATIC_SIZE)
+#define ROM_MAX_SIZE	(sint32)(2*1024*1024)
+#define ROM_STATIC_SIZE	(sint32)(64*1024)
+#define ROM_PAGING_SIZE	(sint32)(ROM_MAX_SIZE-ROM_STATIC_SIZE)
 #define PAGE_OFFSET		3	//page offset in SNES regs
 
 #endif
