@@ -347,35 +347,62 @@ int loadROM(sint8 *name, int confirm)
 		sprintf(CFG.ZipFullpath,"%s/%s",CFG.ROMPath,tmpFile);	//rets path+rom.smc	/ok
 		
 		//Decompress File for reload later
-		char buftemp[0x200];
-		sprintf(buftemp,"%s%s",getfatfsPath("snes/"),tmpFile);
+		volatile char buftemp[0x200];
+		sprintf((char*)buftemp,"%s%s",getfatfsPath("snes/"),tmpFile);
 		
-		char bufzip[0x200];
-		sprintf(bufzip,"%s%s",getfatfsPath("snes/"),CFG.ROMFile);
+		volatile char bufzip[0x200];
+		sprintf((char*)bufzip,"%s%s",getfatfsPath("snes/"),CFG.ROMFile);
 		int stat = load_gz((char*)bufzip, (char*)buftemp);
 		
-		sprintf(buftemp,"%s",CFG.Fullpath);
-		char * result = str_replace(buftemp, (char *)".zip", (char *)".smc");
-		sprintf(CFG.ZipFullpathRealName,"%s",result);
+		sprintf((char*)buftemp,"%s",CFG.Fullpath);
+		char * result = str_replace((char*)buftemp, (char *)".zip", (char *)".smc");
+		
 		if(result){
+			snprintf (CFG.ZipFullpathRealName, strlen(result)+1,"%s",result);
 			free(result);
 		}
+		else{
+			clrscr();
+			printf("INVALID ZIP NAME");
+			while(1){}
+		}
+		
 		//clrscr();
 		//printf("1:%s",(char*)CFG.ZipFullpath);			//tempfile load/streamed
 		//printf("2:%s",(char*)CFG.Fullpath);				//fullpath .zip
 		//printf("3:%s",(char*)CFG.ZipFullpathRealName);	//fullpath .smc
+		
+		/*
+		clrscr();
+		printf("str_replace:%s",CFG.ZipFullpathRealName);	//so far ok
+		while (1)
+		{			
+			if (keysPressed() & KEY_A)
+			break;
+		}
+		*/
 	}
 	
+	//piece of code very stable/tested start
 	if(rom_buffer){
 		memset((uint32*)rom_buffer, 0, (int)ROM_MAX_SIZE);
 		free(rom_buffer);
 	}
 	rom_buffer = (uint8*)malloc(ROM_MAX_SIZE);
+	if(rom_buffer){
+	}
+	else{
+	
+		printf("CRITICAL COULDNT ALLOCATE MEM");
+		while(1){}
+	}
 	rom_page = rom_buffer + (ROM_STATIC_SIZE*1);
+	//piece of code very stable/tested end
 	
 	int size;
 	int ROMheader;
-	sint8 *ROM = SNESC.ROM = rom_buffer;
+	sint8 *ROM = (sint8*)(uint8*)rom_buffer;
+	SNESC.ROM = (uchar*)rom_buffer;
 	int crc;
 	
 	GUI_clear();

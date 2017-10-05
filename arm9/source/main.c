@@ -416,9 +416,6 @@ int main(int _argc, sint8 **_argv) {
 		
 		//parse init dir correctly (dir format)
 		sprintf(CFG.ROMPath,"%s",getfatfsPath(CFG.ROMPath));
-		//printf("Loading:%s",CFG.ROMPath);
-		//while(1);
-	
 		
 		//touchscreen new
 		/*
@@ -476,12 +473,14 @@ int main(int _argc, sint8 **_argv) {
 			IRQWait(1,IRQ_VBLANK);
 		}
 		*/
-		GUI_getROM(CFG.ROMPath);	//read rom from (path)touchscreen:output rom -> CFG.ROMFile
-		//CFG.ROMPath corrupted here
 		
-		
-		//printf("Loading:%s",CFG.Fullpath);
+		//printf("Loading:%s",CFG.ROMPath);
 		//while(1);
+		
+		GUI_getROM(CFG.ROMPath);	//read rom from (path)touchscreen:output rom -> CFG.ROMFile
+		
+		
+		
 		
 	}
 	

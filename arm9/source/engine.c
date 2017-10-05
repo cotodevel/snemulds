@@ -127,9 +127,6 @@ int initSNESEmpty()
     memset((uint32*)&SNES, 0, sizeof(SNES));
     memset((uint32*)&SNESC, 0, sizeof(SNESC));
 	
-	rom_buffer = NULL;
-	rom_page = NULL;
-	
 	SNESC.ROM = (uchar *)NULL;	//Rom is reallocated on file load
     SNESC.RAM = (uchar *)&snes_ram_bsram[0x6000];
     SNESC.VRAM = (uchar *)&snes_vram[0];
