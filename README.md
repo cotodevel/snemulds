@@ -1,6 +1,7 @@
 # SnemulDS
 SnemulDS 0.6b [Revival]
 
+newlib-nano-2 is currently in development.. so no public sources yet
 
 10/03/2017
 
