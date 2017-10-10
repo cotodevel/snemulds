@@ -39,7 +39,6 @@
 #include "console_str.h"
 #include "frontend.h"
 #include "main.h"
-#include "dldi.h"
 #include "ppu.h"
 #include "InterruptsARMCores_h.h"
 #include "specific_shared.h"
@@ -277,8 +276,7 @@ int main(int _argc, sint8 **_argv) {
 	//minimaldldiDrvInst = getdldifrommagic();	//should work
 	
 	GUI_clear();
-  
-	
+
 	//coto sbrk init
 	//alloc/dealloc ok
 	/*
@@ -393,7 +391,6 @@ int main(int _argc, sint8 **_argv) {
 	printf("last malloc = %p / %x", p, (int)p);
 	while(1==1){}	//so far ok
 	*/
-	
 	
 	
 	

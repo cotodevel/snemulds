@@ -383,21 +383,19 @@ int loadROM(sint8 *name, int confirm)
 		*/
 	}
 	
-	//piece of code very stable/tested start
 	if(rom_buffer){
 		memset((uint32*)rom_buffer, 0, (int)ROM_MAX_SIZE);
 		free(rom_buffer);
 	}
 	rom_buffer = (uint8*)malloc(ROM_MAX_SIZE);
 	if(rom_buffer){
+		//rom buffer allocated OK
 	}
 	else{
-	
-		printf("CRITICAL COULDNT ALLOCATE MEM");
+		printf("CRITICAL COULDNT ALLOCATE MEM");	//this should never happen
 		while(1){}
 	}
 	rom_page = rom_buffer + (ROM_STATIC_SIZE*1);
-	//piece of code very stable/tested end
 	
 	int size;
 	int ROMheader;

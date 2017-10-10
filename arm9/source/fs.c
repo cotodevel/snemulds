@@ -43,7 +43,6 @@ GNU General Public License for more details.
 #include "conf.h"
 #include "frontend.h"
 #include "main.h"
-#include "dldi.h"
 #include "ppu.h"
 #include "InterruptsARMCores_h.h"
 #include "specific_shared.h"
@@ -130,6 +129,14 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt)
 			}
 			
 			struct fd * fdinst = fd_struct_get(pent->d_ino);
+			if(fdinst){
+				//OK
+			}
+			else{
+				//NULL!. This should never happen.
+				continue;
+			}
+			
 			if (!S_ISDIR(fdinst->stat.st_mode)) { 
 				continue;
 			}
@@ -141,7 +148,6 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt)
 			if (mask)
 			{
 				sint8 *ext = _FS_getFileExtension(pent->d_name);
-				
 				if (ext && strstr(mask, ext))
 				{
 					//filecount Increase
@@ -302,8 +308,6 @@ FILE * fPaging ;
 
 int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
 {
-	g_UseExtRAM = 0;
-	
 	FS_lock();
 	
 	if (fPaging){

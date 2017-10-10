@@ -1271,7 +1271,6 @@ void PPU_set_sprites_bank(int bank)
 	}
 }
 
-__attribute__((section(".itcm")))
 void draw_sprites(/*uint8 pf*/)
 {
 	int i, x, y;
@@ -1478,7 +1477,6 @@ void draw_sprites(/*uint8 pf*/)
 	}
 }
 
-__attribute__((section(".itcm")))
 void renderMode1(int NB_BG, int MODE_1, int MODE_2, int MODE_3, int MODE_4)
 {
    uint32 SB;
@@ -1499,7 +1497,6 @@ void renderMode1(int NB_BG, int MODE_1, int MODE_2, int MODE_3, int MODE_4)
   }  	
 }
 
-__attribute__((section(".itcm")))
 void renderMode3(int MODE_1, int MODE_2)
 {
   uint32 SB = (CPU.PPU_PORT[0x2D]|CPU.PPU_PORT[0x2C])&CFG.BG_Layer&((1<<2)-1);
@@ -1674,7 +1671,6 @@ void PPU_RenderLineMode7(t_GFX_lineInfo *l)
 	l->CY = l->C*(-X0+HOffset)+l->D*(SNES.V_Count-Y0+VOffset)+(Y0<<8);
 }
 
-__attribute__((section(".itcm")))	//could cause bugs
 void renderMode7()
 {
 	static int Mode7FrameSkip = 0;
