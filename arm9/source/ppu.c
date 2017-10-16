@@ -81,7 +81,6 @@ void    init_render()
 
 }
 
-__attribute__((section(".itcm")))
 void check_sprite_addr()
 { 	
 	if (GFX.spr_addr_base+GFX.spr_addr_select == GFX.spr_addr[0])
@@ -240,7 +239,6 @@ int	PPU_allocate_tilezone2()
 	return less_used; 	
 }
 
-//__attribute__((section(".itcm")))	//segfaults at ITCM
 void	PPU_add_tile_address(int bg)
 {
   int 		tile_zone = (GFX.tile_address[bg]>>13);
@@ -339,8 +337,6 @@ void	PPU_add_tile_address(int bg)
   }
 }
 
-__attribute__ ((aligned (4)))
-__attribute__((section(".itcm")))
 void     add_tile_2(int tile_addr_base, uint16 *vram_addr, int tilenb)
 {
   int		k;
@@ -367,8 +363,6 @@ for (k=0;k<8;k++,tile_ptr+=2)
 GFX.tiles2b_def[tile_addr/16] = 2;
 }
 
-__attribute__ ((aligned (4)))
-__attribute__((section(".itcm")))
 void     add_tile_4(int tile_addr_base, uint16 *vram_addr, int tilenb)
 {
   int		k;
@@ -393,8 +387,6 @@ void     add_tile_4(int tile_addr_base, uint16 *vram_addr, int tilenb)
     GFX.tiles4b_def[tile_addr/32] = 4;
 }
 
-__attribute__ ((aligned (4)))
-__attribute__((section(".itcm")))
 void     add_tile_8(int tile_addr_base, uint16 *vram_addr, int tilenb)
 {
   int		a;
@@ -631,7 +623,6 @@ void	PPU_updateCache()
 	PPU_add_tile_address(2);
 }
 
-__attribute__((section(".itcm")))
 void     add_sprite_tile_4(uint16 tilenb, int pos)
 {
   int		k;
@@ -695,7 +686,6 @@ void	PPU_setMap(int i, int j, int tilenb, int bg, int p, int f)
 }
 
 
-//__attribute__((section(".itcm"))) //cant move to itcm because break games
 void update_scroll()
 {
    BG0HOFS = CPU.PPU_PORT[(0x0D)+(0<<1)];
@@ -708,7 +698,6 @@ void update_scroll()
    BG3VOFS = CPU.PPU_PORT[(0x0E)+(3<<1)]+GFX.BG3YScroll;
 }
 
-__attribute__((section(".itcm")))
 void	draw_plane(int bg, int bg_mode, int nb_tilex, int nb_tiley, int tile_size)
 {
   int		i, j, map_address;
@@ -1510,7 +1499,7 @@ void renderMode3(int MODE_1, int MODE_2)
 }
 
 // FIXME: mode 0 doesn't work anymore
-//__attribute__((section(".itcm")))	//segfaults @ ITCM
+//segfaults @ ITCM
 void PPU_RenderLineMode1(uint32 NB_BG, uint32 MODE_1, uint32 MODE_2, uint32 MODE_3, uint32 MODE_4, t_GFX_lineInfo *l)
 {
   uint32 	order[4] = { 3, 3, 3, 3 };
@@ -1622,7 +1611,7 @@ void PPU_RenderLineMode1(uint32 NB_BG, uint32 MODE_1, uint32 MODE_2, uint32 MODE
 
 }
 
-//__attribute__((section(".itcm")))//segfaults @ ITCM
+//segfaults @ ITCM
 void PPU_RenderLineMode3(uint32 MODE_1, uint32 MODE_2, t_GFX_lineInfo *l)
 {
    uint32 	order[2];
@@ -1645,7 +1634,7 @@ void PPU_RenderLineMode3(uint32 MODE_1, uint32 MODE_2, t_GFX_lineInfo *l)
   // FIXME
 }
 
-//__attribute__((section(".itcm")))	//cant move to itcm because break games (mode7)
+//cant move to itcm because break games (mode7)
 void PPU_RenderLineMode7(t_GFX_lineInfo *l)
 {
 	int SB = (CFG.BG_Layer&0x10)|((CFG.BG_Layer & 0x1) << 3);

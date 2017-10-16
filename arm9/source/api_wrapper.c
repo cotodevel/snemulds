@@ -316,25 +316,25 @@ int checkConfiguration(sint8 *name, int crc)
 
 	if (section != NULL)
 	{
-		printf("Section : %s\n", section);
+		printf("Section : %s", section);
 		readOptionsFromConfig(section);
 	}
 	
 	return 0;
 }
 
-//
+
 //requires sint8 * name to be romname.ext
 int loadROM(sint8 *name, int confirm)
 {
 	// Save SRAM of previous game first
 	saveSRAM();
 	
-	//update name to ROMFile so current RomFile is used as global 
-	sprintf(CFG.ROMFile,"%s",name);
+	//update name to ROMFile so current RomFile is used as global
+	sprintf(CFG.ROMFile,"%s",(char*)name);
 	
 	//Build full path to load (new file)
-	sprintf(CFG.Fullpath,"%s/%s",CFG.ROMPath,CFG.ROMFile);	//rets path+rom.smc	/ok
+	sprintf(CFG.Fullpath,"%s/%s",CFG.ROMPath,CFG.ROMFile);	//0:/snes + /rom.smc <--- this format!!
 	
 	if(strstr (_FS_getFileExtension(name),"ZIP")){	
 		zipFileLoaded = true;
@@ -354,44 +354,58 @@ int loadROM(sint8 *name, int confirm)
 		sprintf((char*)bufzip,"%s%s",getfatfsPath("snes/"),CFG.ROMFile);
 		int stat = load_gz((char*)bufzip, (char*)buftemp);
 		
-		sprintf((char*)buftemp,"%s",CFG.Fullpath);
-		char * result = str_replace((char*)buftemp, (char *)".zip", (char *)".smc");
-		
-		if(result){
-			snprintf (CFG.ZipFullpathRealName, strlen(result)+1,"%s",result);
-			free(result);
-		}
-		else{
-			clrscr();
-			printf("INVALID ZIP NAME");
-			while(1){}
-		}
+		sprintf(CFG.Fullpath,"%s",bufzip);	//fullpath .zip
+		//CFG.ZipFullpath	//tempfile load/streamed
 		
 		//clrscr();
-		//printf("1:%s",(char*)CFG.ZipFullpath);			//tempfile load/streamed
-		//printf("2:%s",(char*)CFG.Fullpath);				//fullpath .zip
+		//printf("zip file:");
+		//printf("%s",bufzip);
+		
+		//printf("%s",CFG.ZipFullpath);
+		//sprintf((char*)buftemp,"%s",CFG.Fullpath);
+		//char * result = str_replace((char*)buftemp, (char *)".zip", (char *)".smc");
+		
+		//if(result){
+		//	snprintf ((char*)&CFG.ZipFullpathRealName[0], strlen(result)+1,"%s ",result);
+		//	free(result);
+		//}
+		//else{
+		//	clrscr();
+		//	printf("INVALID ZIP NAME");
+		//	while(1){}
+		//}
+		
+		//clrscr();
+		//printf("1:%s",(char*)CFG.ZipFullpath);			
+		//printf("2:%s",(char*)CFG.Fullpath);				
 		//printf("3:%s",(char*)CFG.ZipFullpathRealName);	//fullpath .smc
 		
-		/*
-		clrscr();
-		printf("str_replace:%s",CFG.ZipFullpathRealName);	//so far ok
-		while (1)
-		{			
-			if (keysPressed() & KEY_A)
-			break;
-		}
-		*/
 	}
-	
-	if(rom_buffer){
-		memset((uint32*)rom_buffer, 0, (int)ROM_MAX_SIZE);
-		free(rom_buffer);
-	}
-	rom_buffer = (uint8*)malloc(ROM_MAX_SIZE);
-	if(rom_buffer){
-		//rom buffer allocated OK
+	/*
+	clrscr();
+	if(zipFileLoaded == true){
+		printf("ISZIP");
+		printf("file:%s",CFG.ZipFullpath);
 	}
 	else{
+		printf("NOTZIP");
+		printf("file:%s",CFG.Fullpath);
+	}
+	while (1)
+	{
+		if ((keysPressed() & KEY_A)){
+			break;
+		}
+		IRQWait(1,IRQ_VBLANK);
+	}
+	*/
+	if(rom_buffer){
+		free(rom_buffer);
+		mem_clear_paging();
+	}
+	rom_buffer = (uint8*)malloc(ROM_MAX_SIZE);
+	
+	if(!rom_buffer){
 		printf("CRITICAL COULDNT ALLOCATE MEM");	//this should never happen
 		while(1){}
 	}
@@ -405,8 +419,6 @@ int loadROM(sint8 *name, int confirm)
 	
 	GUI_clear();
 	CFG.LargeROM = 0;
-	
-	mem_clear_paging();
 	
 	if(zipFileLoaded == true){
 		size = FS_getFileSize(CFG.ZipFullpath);
@@ -430,7 +442,7 @@ int loadROM(sint8 *name, int confirm)
 		}
 		CFG.LargeROM = 1;
 		crc = crc32(0, ROM, ROM_STATIC_SIZE);
-		printf("Large ROM detected. CRC(1Mb) = %08x\n", crc);
+		printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
 	}
 	//ewram size is enough here so read data entirely
 	else
@@ -443,7 +455,7 @@ int loadROM(sint8 *name, int confirm)
 		}
 		CFG.LargeROM = 0;
 		crc = crc32(0, ROM, size-ROMheader);
-		printf("CRC = %08x\n", crc);
+		printf("CRC = %08x ", crc);
 	}
 
 	changeROM(ROM-ROMheader, size);
@@ -454,7 +466,6 @@ int loadROM(sint8 *name, int confirm)
 	else{
 		checkConfiguration(CFG.Fullpath, crc);
 	}
-	
     if(SNES.HiROM == 0){
         printf("SNESROM is LoROM.Press A");
     }

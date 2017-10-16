@@ -166,14 +166,12 @@ __attribute__((section(".dtcm")))
 long Cycles;
 
 
-__attribute__((section(".itcm")))
 void	pushb(uint8 b)
 {
 	SNESC.RAM[S] = b;
 	S--;
 }
 
-__attribute__((section(".itcm")))
 void pushw(uint16 w)
 {
 	S--;
@@ -181,14 +179,12 @@ void pushw(uint16 w)
 	S--;
 }
 
-__attribute__((section(".itcm")))
 uint8	pullb()
 {
 	S++;
 	return SNESC.RAM[S];
 }
 
-__attribute__((section(".itcm")))
 uint16	pullw()
 {
 	uint16 w;
@@ -199,31 +195,26 @@ uint16	pullw()
 	return w;
 }
 
-__attribute__((section(".itcm")))
 uchar   stack_getbyte(uint8 offset)
 {
   return SNESC.RAM[S+offset];
 }
 
-__attribute__((section(".itcm")))
 void	stack_setbyte(uint8 offset, uchar byte)
 {
   SNESC.RAM[S+offset] = byte;
 }
 
-__attribute__((section(".itcm")))
 ushort  stack_getword(uint8 offset)
 {
   return GET_WORD16(SNESC.RAM+S+offset);	
 }
 
-__attribute__((section(".itcm")))
 void  stack_setword(uint8 offset, uint16 word)
 {
   SET_WORD16(SNESC.RAM+S+offset, word);
 }
 
-__attribute__((section(".itcm")))
 uchar   direct_getbyte(uint32 offset)
 {
   uint16 _offset = (uint16)(D+offset);	 
@@ -235,7 +226,6 @@ uchar   direct_getbyte(uint32 offset)
   	return mem_getbyte(_offset, 0);	
 }
 
-__attribute__((section(".itcm")))
 uchar   direct_getbyte2(uint32 offset)
 {
   uint16 _offset = (uint16)(D+offset);	
@@ -247,7 +237,6 @@ uchar   direct_getbyte2(uint32 offset)
   	return mem_getbyte(_offset+2, 0);	
 }
 
-__attribute__((section(".itcm")))
 void	direct_setbyte(uint32 offset, uchar byte)
 {
   uint16 _offset = (uint16)(D+offset);	
@@ -257,7 +246,6 @@ void	direct_setbyte(uint32 offset, uchar byte)
   	mem_setbyte(_offset, 0, byte);	
 }
 
-__attribute__((section(".itcm")))
 ushort  direct_getword(uint32 offset)
 {
   uint16 _offset = (uint16)(D+offset);	
@@ -269,7 +257,6 @@ ushort  direct_getword(uint32 offset)
   	return mem_getword(_offset, 0);	
 }
 
-__attribute__((section(".itcm")))
 void  direct_setword(uint32 offset, uint16 word)
 {
   uint16 _offset = (uint16)(D+offset);
@@ -279,7 +266,6 @@ void  direct_setword(uint32 offset, uint16 word)
   	mem_setword(_offset, 0, word);	
 }
 
-__attribute__((section(".itcm")))
 uint8 rol_b(uint8 a)
 {
 	uint16 t = a;
@@ -289,7 +275,6 @@ uint8 rol_b(uint8 a)
 	return (uint8)t;
 }
 
-__attribute__((section(".itcm")))
 uint16 rol_w(uint16 a)
 {
 	uint32 t = a;
@@ -299,7 +284,6 @@ uint16 rol_w(uint16 a)
 	return (uint16)t;
 }
 
-__attribute__((section(".itcm")))
 uint8 ror_b(uint8 a)
 {
 	uint16 t = a;
@@ -309,7 +293,6 @@ uint8 ror_b(uint8 a)
 	return (uint8)t;
 }
 
-__attribute__((section(".itcm")))
 uint16 ror_w(uint16 a)
 {
 	uint32 t = a;
@@ -2473,7 +2456,6 @@ void IOWrite16(uint32 addr, uint16 word)
 #ifdef ASM_OPCODES
 
 #include "opc_asm.h"
-__attribute__((section(".itcm")))
 void CPU_pack()
 {
   if (CPU.packed)
@@ -2502,7 +2484,6 @@ void CPU_pack()
   CPU.packed = 1;
 }
 
-__attribute__((section(".itcm")))
 void CPU_unpack()
 {
   if (CPU.unpacked)
@@ -2542,14 +2523,12 @@ void CPU_unpack()
   CPU_update();
 }
 
-__attribute__((section(".itcm")))
 void	pushb(uint8 b)
 {
 	SNESC.RAM[CPU.S] = b;
 	CPU.S--;
 }
 
-__attribute__((section(".itcm")))
 void pushw(uint16 w)
 {
 	CPU.S--;
@@ -2557,14 +2536,12 @@ void pushw(uint16 w)
 	CPU.S--;
 }
 
-__attribute__((section(".itcm")))
 uint8	pullb()
 {
 	CPU.S++;
 	return SNESC.RAM[CPU.S];
 }
 
-__attribute__((section(".itcm")))
 uint16	pullw()
 {
 	uint16 w;
@@ -2576,7 +2553,6 @@ uint16	pullw()
 }
 
 
-__attribute__((section(".itcm")))
 void CPU_goto(int cycles)
 {	
 	if (CFG.CPU_speedhack & 1)

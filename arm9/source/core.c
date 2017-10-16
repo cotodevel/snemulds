@@ -1628,7 +1628,6 @@ uint8	DMA_port_read(uint32 address)
 2105 : bg mode
  */ 
 
-//__attribute__((section(".itcm")))	//at itcm causes segfaults or glitches
 void HDMA_write_port(uchar port, uint8 *data)
 {
   uint32 	PPUport = SNES.HDMA_port[port];
@@ -1664,7 +1663,6 @@ void HDMA_write_port(uchar port, uint8 *data)
   }
 }
 
-__attribute__((section(".itcm")))
 void	HDMA_write()
 {
 	int		HDMASel = CPU.DMA_PORT[0x0C];

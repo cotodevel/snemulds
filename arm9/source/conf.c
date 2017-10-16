@@ -66,19 +66,19 @@ void save_config(CONFIG *cfg)
 		       while (pos) {
 			  	 if (pos->name) {
 			    	 
-					 fputs(pos->name, f);
+					 fputs_fs(pos->name, f);
 			     	 //f_puts(pos->name,&fhandler);
 					 
 					 if (pos->name[0] != '['){
-						fputs(" = ", f);
+						fputs_fs(" = ", f);
 						//f_puts(" = ",&fhandler);
 					 }
 			     }
 			    if (pos->data){
-			       fputs(pos->data, f);
+			       fputs_fs(pos->data, f);
 				   //f_puts(pos->data,&fhandler);
 				}
-			     fputs("\n", f);
+			     fputs_fs("\n", f);
 			     //f_puts("\n",&fhandler);
 				 
 				 pos = pos->next;
@@ -451,7 +451,7 @@ void set_config(CONFIG **config, sint8 *data, int length, sint8 *filename)
 /* load_config_file:
  *  Does the work of loading a config file.
  */
-void load_config_file(CONFIG **config, sint8 *filename, sint8 *savefile)
+void load_config_file(CONFIG **config, sint8 *filename, sint8 *savefile)	//requires getfatfsPath() to be called from outside!
 {
 	int length = 0;
 	if (*config)

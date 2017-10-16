@@ -1109,12 +1109,10 @@ int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 
 //read rom from (path)touchscreen:output rom -> CFG.ROMFile
 void GUI_getROM(sint8 *rompath){
-	//snprintf (CFG.ROMPath, strlen(rompath)+1, "%s/",rompath);	//path:/test/
-	
     GUI.ScanJoypad = 1;
 	consoleClear(DefaultSessionConsole);
 
-		// Get ROMs list
+	// Get ROMs list
 	int		cnt;
     sint8 **dir_list = FS_getDirectoryList(rompath, "SMC|SFC|SWC|FIG|ZIP|GZ", &cnt);
 	
@@ -1135,12 +1133,7 @@ void GUI_getROM(sint8 *rompath){
 	sint8 *sel = GUISelector_getSelected(scr, NULL);
 
     GUI.ScanJoypad = 0;
-	
-	//sprintf(CFG.ROMPath,"%s/%s",buf,sel);	//rets path+rom.smc	/ok
-	//printf("rom:%s",sel);
-	
-	//while(1){}
-	sprintf(CFG.ROMFile,"%s",sel);	//filename.tst;
+	sprintf(CFG.ROMFile,"%s",sel);	//CFG.ROMFile <- selected file from touchscreen: file.ext
 }
 
 void GUI_deleteROMSelector(){
@@ -1173,7 +1166,7 @@ void GUI_createMainMenu(){
 			GUIStatic_handler);*/
 #else
 	
-	GUI_loadPalette(get_config_string("GUI", "Palette", "test.dat"));
+	GUI_loadPalette(get_config_string("GUI", "Palette", getfatfsPath("test.dat")));
 	GUI.img_list = GUI_newImageList(32);
 	
 	scr_main = buildMainMenu();

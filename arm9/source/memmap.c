@@ -311,7 +311,6 @@ void mem_init_paging()
 	ROM_paging_cur = 0;
 }
 
-__attribute__((section(".itcm")))
 void mem_setCacheBlock(int block, uchar *ptr)
 {
 	int i;
@@ -331,7 +330,6 @@ void mem_setCacheBlock(int block, uchar *ptr)
 	}
 }
 
-__attribute__((section(".itcm")))
 void mem_removeCacheBlock(int block)
 {
 	int i;
@@ -351,7 +349,6 @@ void mem_removeCacheBlock(int block)
 	}
 }
 
-__attribute__((section(".itcm")))
 uint8 *mem_checkReload(int block)
 {
 	int i;
@@ -431,7 +428,6 @@ void InitMap()
 		mem_init_paging();
 }
 
-__attribute__((section(".itcm")))
 /*inline */uint8 IO_getbyte(int addr, uint32 address)
 {
 	uint8 result;
@@ -472,7 +468,6 @@ __attribute__((section(".itcm")))
 
 }
 
-__attribute__((section(".itcm")))
 /*inline */void IO_setbyte(int addr, uint32 address, uint8 byte)
 {
 	switch ((int)addr)
@@ -513,7 +508,6 @@ __attribute__((section(".itcm")))
 	}
 }
 
-__attribute__((section(".itcm")))
 /*inline */uint16 IO_getword(int addr, uint32 address)
 {
 	uint16 result;
@@ -559,7 +553,6 @@ __attribute__((section(".itcm")))
 	}
 }
 
-__attribute__((section(".itcm")))
 /*inline */void IO_setword(int addr, uint32 address, uint16 word)
 {
 	switch ((int)addr)
@@ -605,7 +598,6 @@ __attribute__((section(".itcm")))
 	}
 }
 
-__attribute__((section(".itcm")))
 uchar mem_getbyte(uint32 offset,uchar bank)
 {
 	int address = (bank<<16)+offset;
@@ -626,7 +618,6 @@ uchar mem_getbyte(uint32 offset,uchar bank)
 	return IO_getbyte((int)addr, address);
 }
 
-__attribute__((section(".itcm")))
 void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 {
 	int address = (bank<<16)+offset;
@@ -645,7 +636,6 @@ void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 	IO_setbyte((int)addr, address, byte);
 }
 
-__attribute__((section(".itcm")))
 ushort mem_getword(uint32 offset,uchar bank)
 {
 	int address = (bank<<16)+offset;
@@ -665,7 +655,6 @@ ushort mem_getword(uint32 offset,uchar bank)
 	return IO_getword((int)addr, address);
 }
 
-__attribute__((section(".itcm")))
 void mem_setword(uint32 offset, uchar bank, ushort word)
 {
 	int address = (bank<<16)+offset;

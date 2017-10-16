@@ -354,8 +354,8 @@ int main(int _argc, sint8 **_argv) {
 	printf((sint8*)"EmuCoreVersion:%s",appver);
 	*/
 	
-	// Load SNEMUL.CFG
-	set_config_file(getfatfsPath("snemul.cfg"));	//correct: getfatfsPath("snemul.cfg")
+	// Load SNEMUL.CFG: 0:/snemul.cfg
+	set_config_file(getfatfsPath("snemul.cfg"));
 	
 	//printf((sint8*)"ReadSettingOldVal:%s",GUI_getConfigStr((sint8*)"GUI", (sint8*)"FileChooserOrder", NULL));
 	//GUI_setConfigStr((sint8*)"GUI", (sint8*)"FileChooserOrder", "2");	//does not update
@@ -402,17 +402,9 @@ int main(int _argc, sint8 **_argv) {
 		GUI_getConfig();
 	}else{
 		
-		//old: CFG.ROMPath = get_config_string(NULL, "ROMPath", (sint8*)READ_GAME_DIR[0]);	//put 3rd arg into 2nd of CFG."Name"
-		sprintf(CFG.ROMPath,"%s",get_config_string(NULL, "ROMPath", (sint8*)READ_GAME_DIR[0]));
-		
-		readOptionsFromConfig("Global");
+		sprintf(CFG.ROMPath,"%s",getfatfsPath((char*)READ_GAME_DIR[0]));	//put 3rd arg into 2nd of CFG."Name".
+		readOptionsFromConfig("Global");	//reload Global settings from file into CFG Program
 		GUI_getConfig();
-		
-		//printf("readFrontend phail!");	//here
-		//while(1);
-		
-		//parse init dir correctly (dir format)
-		sprintf(CFG.ROMPath,"%s",getfatfsPath(CFG.ROMPath));
 		
 		//touchscreen new
 		/*
@@ -471,14 +463,7 @@ int main(int _argc, sint8 **_argv) {
 		}
 		*/
 		
-		//printf("Loading:%s",CFG.ROMPath);
-		//while(1);
-		
 		GUI_getROM(CFG.ROMPath);	//read rom from (path)touchscreen:output rom -> CFG.ROMFile
-		
-		
-		
-		
 	}
 	
 	//printf("Loading:%s",CFG.ROMPath);
