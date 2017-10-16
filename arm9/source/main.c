@@ -86,10 +86,6 @@ int main(int _argc, sint8 **_argv) {
 	bool project_specific_console = true;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
 	
-	//Init DS Firmware Settings
-	while(getFWSettingsstatus() == false){
-		//TODO: add swidelay here
-	}
 	sint32 fwlanguage = (sint32)getLanguage();
 	GUI_setLanguage(fwlanguage);
 	

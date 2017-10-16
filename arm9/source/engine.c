@@ -74,7 +74,9 @@ int loadSRAM()
     {
     	strcpy(sramTemp, CFG.ROMFile);
 		strcpy(strrchr(sramTemp, '.'), ".SRM");
-		sprintf(sramFile,"%s/%s",getfatfsPath((sint8*)READ_GAME_DIR[0]),sramTemp);
+		sprintf(sramFile,"%s/%s",CFG.ROMPath,sramTemp);	//0:/snes/filename.srm
+		//clrscr();
+		//printf("loadSRAM");
 		//printf("sramfile:%s",sramFile);
 		//while(1);
     	FS_loadFile(sramFile, (sint8 *)SNESC.SRAM, SNESC.SRAMMask+1);
@@ -92,8 +94,11 @@ int saveSRAM()
     {
     	strcpy(sramTemp, CFG.ROMFile);
 		strcpy(strrchr(sramTemp, '.'), ".SRM");
-		sprintf(sramFile,"%s/%s",getfatfsPath((sint8*)READ_GAME_DIR[0]),sramTemp);
-		
+		sprintf(sramFile,"%s/%s",CFG.ROMPath,sramTemp);	//0:/snes/filename.srm
+		//clrscr();
+		//printf("saveSRAM");
+		//printf("sramfile:%s",sramFile);
+		//while(1);
     	FS_saveFile(sramFile, (sint8 *)SNESC.SRAM, SNESC.SRAMMask+1,false);	//force_file_creation == false here (we could destroy or corrupt saves..)
     }	
 	return 0;
