@@ -297,7 +297,7 @@ void	UnInterleaveROM()
         }
 	}
 
-	tmp = malloc(0x8000);
+	tmp = (uchar*)malloc(0x8000);
 	for (i = 0;i < nblocks*2;i++)
     {
 		for (j = i;j < nblocks*2;j++)

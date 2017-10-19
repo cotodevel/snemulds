@@ -87,6 +87,7 @@ extern void DspSetEndOfSample(uint32 channel);
 extern DspChannel channels[8];
 extern void DspReset();
 extern void DspPrepareStateAfterReload();
+extern uint32 DecodeSampleBlock(DspChannel *channel);
 
 #ifdef __cplusplus
 }

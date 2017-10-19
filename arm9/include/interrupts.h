@@ -18,16 +18,26 @@ USA
 
 */
 
-#ifndef __api_wrapper_h__
-#define __api_wrapper_h__
+#ifndef __interrupts9_h__
+#define __interrupts9_h__
 
-#include "dsregs.h"
-#include "typedefs.h"
-#include "console.h"
-#include "api_wrapper.h"
-#include "apu_jukebox.h"
-#include "gui_console_connector.h"
-
+#include "InterruptsARMCores_h.h"
+#include "specific_shared.h"
+#include "gui.h"
+#include "dsregs_asm.h"
+#include "fs.h"
+#include "gfx.h"
+#include "cfg.h"
+#include "apu.h"
+#include "ram.h"
+#include "core.h"
+#include "conf.h"
+#include "frontend.h"
+#include "main.h"
+#include "font_8x8_uv.h"
+#include "ppu.h"
+#include "keypad.h"
+#include "interrupts.h"
 
 #endif
 
@@ -36,19 +46,9 @@ USA
 extern "C" {
 #endif
 
-extern uint8 LayersConf[10][4];
-
-extern void readOptionsFromConfig(sint8 *section);
-extern void saveOptionsToConfig(sint8 *section);
-extern void	PPU_ChangeLayerConf(int i);
-extern void	applyOptions();
-
-extern void packOptions(uint8 *ptr);
-extern void unpackOptions(int version, uint8 *ptr);
-extern int 	checkConfiguration(sint8 *name, int crc);
-
-extern int	loadROM(sint8 *name, int confirm);
-extern int	changeROM(sint8 *ROM, int size);
+extern void Vcounter();
+extern void Vblank();
+extern void Hblank();
 
 #ifdef __cplusplus
 }

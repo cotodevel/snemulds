@@ -79,7 +79,8 @@ GNU General Public License for more details.
 #include "video.h"
 
 
-#endif
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,8 +115,7 @@ extern void GUI_getROM(sint8 *rompath);
 extern void GUI_deleteROMSelector();
 extern void GUI_createMainMenu();
 extern void GUI_getConfig();
-extern void	GUI_showROMInfos(int size);
-
+extern void	GUI_showrominfo(int size);
 
 //Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
 extern vramSetup * getProjectSpecificVRAMSetup();
@@ -130,4 +130,7 @@ extern vramSetup * SNEMULDS_2DVRAM_SETUP();
 
 #ifdef __cplusplus
 }
+#endif
+
+
 #endif

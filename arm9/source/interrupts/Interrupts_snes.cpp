@@ -14,6 +14,7 @@
 #include "font_8x8_uv.h"
 #include "ppu.h"
 #include "keypad.h"
+#include "interrupts.h"
 
 
 

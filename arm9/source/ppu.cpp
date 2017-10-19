@@ -2200,7 +2200,7 @@ SNES.stat_GFX = 0;
 #endif 
 }
 
-inline void	PPU_setPalette(int c, uint16 rgb)
+void	PPU_setPalette(int c, uint16 rgb)
 {
 	if ((CPU.PPU_PORT[0x05]&7) > 1)
 	{

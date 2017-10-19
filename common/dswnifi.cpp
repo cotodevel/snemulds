@@ -31,7 +31,7 @@ USA
 #include "wifi_arm9.h"
 #include "dswifi9.h"
 #include "client_http_handler.h"
-
+#include <string.h>
 #endif
 
 #ifdef ARM9

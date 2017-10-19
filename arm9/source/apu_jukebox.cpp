@@ -18,6 +18,7 @@
 #include "gui.h"
 #include "common.h"
 #include "specific_shared.h"
+#include "toolchain_utils.h"
 
 int selectSong(sint8 *name)
 {

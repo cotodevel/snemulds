@@ -301,7 +301,7 @@ void mem_init_paging()
 	 }*/
 	ROM_paging = (uint8*)rom_page;
 	memset(ROM_paging, 0, ROM_PAGING_SIZE);
-	ROM_paging_offs = malloc((ROM_PAGING_SIZE/ROM_STATIC_SIZE)*2);
+	ROM_paging_offs = (uint16 *)malloc((ROM_PAGING_SIZE/ROM_STATIC_SIZE)*2);
 	if (!ROM_paging_offs)
 	{
 		printf("Not enough memory for ROM paging (2).\n");
@@ -675,7 +675,7 @@ void mem_setword(uint32 offset, uchar bank, ushort word)
 	IO_setword((int)addr, address, word);
 }
 
-void *mem_getbaseaddress(uint16 offset, uchar bank)
+uint8 *mem_getbaseaddress(uint16 offset, uchar bank)
 {
 	int block;
 	int address = (bank<<16)+offset;
@@ -706,7 +706,7 @@ void *mem_getbaseaddress(uint16 offset, uchar bank)
 }
 
 //IN_ITCM2
-void *map_memory(uint16 offset, uchar bank)
+uint8 *map_memory(uint16 offset, uchar bank)
 {
 	int block;
 	int address = (bank<<16)+offset;

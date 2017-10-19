@@ -17,14 +17,6 @@
 #include "posix_hook_shared.h"	//add Toolchain Generic DS Filesystem Support
 #include "mem_handler_shared.h"	//malloc support
 
-void xfree(void *opaque, void *address){
-	free(address);
-}
-void* xcalloc(void *opaque, unsigned items, unsigned size){
-	uint8 * ret = calloc(items,size);
-	return ret;
-}
-
 #else
 //#include "../xenobox.h"
 #endif
@@ -103,8 +95,8 @@ int funzipstdio(FILE *in, FILE *out){
 			err( buf );
 		}
 		
-		ibuffer = malloc(BUFFER_SIZE);
-		obuffer = malloc(BUFFER_SIZE);
+		ibuffer = (Bytef *)malloc(BUFFER_SIZE);
+		obuffer = (Bytef *)malloc(BUFFER_SIZE);
 		
 		memset ( ibuffer, 0, BUFFER_SIZE);
 		memset ( obuffer, 0, BUFFER_SIZE);

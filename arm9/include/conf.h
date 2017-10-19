@@ -83,7 +83,7 @@ typedef struct CONFIG_HOOK
 	struct CONFIG_HOOK *next; 
 }CONFIG_HOOK;
 
-#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -149,4 +149,7 @@ extern int get_line(sint8 *data, int length, sint8 *name, sint8 *val);
 
 #ifdef __cplusplus
 }
+#endif
+
+
 #endif

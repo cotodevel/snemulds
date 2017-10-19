@@ -34,6 +34,7 @@
 */
 #include <stdbool.h>
 #include "conf.h"
+#include "toolchain_utils.h"
 
 CONFIG *config[MAX_CONFIGS] = { NULL, NULL, NULL, NULL };
 CONFIG *config_override = NULL;
@@ -200,7 +201,7 @@ void init_config(int loaddata)
    }
 
    if (!system_config) {
-      system_config = malloc(sizeof(CONFIG));
+      system_config = (CONFIG *)malloc(sizeof(CONFIG));
       if (system_config) {
 	 system_config->head = NULL;
 	 system_config->filename = NULL;
@@ -402,7 +403,7 @@ void set_config(CONFIG **config, sint8 *data, int length, sint8 *filename)
       *config = NULL;
    }
 
-   *config = malloc(sizeof(CONFIG));
+   *config = (CONFIG *)malloc(sizeof(CONFIG));
    if (!(*config))
       return;
 
@@ -410,7 +411,7 @@ void set_config(CONFIG **config, sint8 *data, int length, sint8 *filename)
    (*config)->dirty = false;
 
    if (filename) {
-      (*config)->filename = malloc(strlen(filename)+1);
+      (*config)->filename = (sint8 *)malloc(strlen(filename)+1);
       if ((*config)->filename)
 	 strcpy((*config)->filename, filename); 
    }
@@ -423,19 +424,19 @@ void set_config(CONFIG **config, sint8 *data, int length, sint8 *filename)
    while (pos < length) {
       pos += get_line(data+pos, length-pos, name, val);
 
-      p = malloc(sizeof(CONFIG_ENTRY));
+      p = (CONFIG_ENTRY *)malloc(sizeof(CONFIG_ENTRY));
       if (!p)
 	 return;
 
       if (name[0]) {
-	 p->name = malloc(strlen(name)+1);
+	 p->name = (sint8*)malloc(strlen(name)+1);
 	 if (p->name)
 	    strcpy(p->name, name);
       }
       else
 	 p->name = NULL;
 
-      p->data = malloc(strlen(val)+1);
+      p->data = (sint8*)malloc(strlen(val)+1);
       if (p->data)
 	 strcpy(p->data, val);
 
@@ -471,7 +472,7 @@ void load_config_file(CONFIG **config, sint8 *filename, sint8 *savefile)	//requi
 		//FIL fhandler;
 		//if(f_open(&fhandler,filename,FA_READ) == FR_OK)
 		//{
-			sint8 *tmp = malloc(length);
+			sint8 *tmp = (sint8*)malloc(length);
 			if (tmp)
 			{
 				fread_fs(tmp, 1, length, f);
@@ -640,11 +641,11 @@ void hook_config_section(sint8 *section, int (*intgetter)(sint8 *, int), sint8 *
    }
 
    /* add a new hook */
-   hook = malloc(sizeof(CONFIG_HOOK));
+   hook = (CONFIG_HOOK*)malloc(sizeof(CONFIG_HOOK));
    if (!hook)
       return;
 
-   hook->section = malloc(strlen(section_name)+1);
+   hook->section = (sint8*)malloc(strlen(section_name)+1);
    if (!(hook->section)) {
       free(hook);
       return;
@@ -756,10 +757,12 @@ sint8 *get_config_string(sint8 *section, sint8 *name, sint8 *def)
 	 p = find_config_string(config[0], section_name, name, NULL);
    }
 
-   if (p)
-      return (p->data ? p->data : "");
-   else
-      return def;
+	if (p){
+		return ((sint8*)p->data ? (sint8*)p->data : (sint8*)"");
+	}
+	else{
+		return def;
+	}
 }
 
 
@@ -904,13 +907,13 @@ sint8 **get_config_argv(sint8 *section, sint8 *name, int *argc)
  */
 CONFIG_ENTRY *insert_variable(CONFIG *the_config, CONFIG_ENTRY *p, sint8 *name, sint8 *data)
 {
-   CONFIG_ENTRY *n = malloc(sizeof(CONFIG_ENTRY));
+   CONFIG_ENTRY *n = (CONFIG_ENTRY *)malloc(sizeof(CONFIG_ENTRY));
 
    if (!n)
       return NULL;
 
    if (name) {
-      n->name = malloc(strlen(name)+1);
+      n->name = (sint8*)malloc(strlen(name)+1);
       if (n->name)
 	 strcpy(n->name, name);
    }
@@ -918,7 +921,7 @@ CONFIG_ENTRY *insert_variable(CONFIG *the_config, CONFIG_ENTRY *p, sint8 *name, 
       n->name = NULL;
 
    if (data) {
-      n->data = malloc(strlen(data)+1);
+      n->data = (sint8*)malloc(strlen(data)+1);
       if (n->data)
 	 strcpy(n->data, data);
    }
@@ -980,7 +983,7 @@ void set_config_string(sint8 *section, sint8 *name, sint8 *val)
 	    if (p->data)
 	       free(p->data);
 
-	    p->data = malloc(strlen(val)+1);
+	    p->data = (sint8*)malloc(strlen(val)+1);
 	    if (p->data)
 	       strcpy(p->data, val);
 	 }

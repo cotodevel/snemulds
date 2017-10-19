@@ -30,6 +30,7 @@ USA
 #include "main.h"
 #include "mixrate.h"
 #include "wifi_arm7.h"
+#include "spifw.h"
 
 #endif
 

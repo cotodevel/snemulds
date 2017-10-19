@@ -68,7 +68,7 @@ sint8 *_FS_getFileExtension(sint8 *filename)
 {
 	static sint8 ext[4];
 	sint8	*ptr;
-	int		i;
+	int		i = 0;
 	
 	ptr = filename;
 	do
@@ -80,7 +80,7 @@ sint8 *_FS_getFileExtension(sint8 *filename)
 	}
 	while (strlen(ptr) > 3);
 		
-	for (i = 0; i < strlen(ptr); i++)
+	for (i = 0; i < (int)strlen(ptr); i++)
 		ext[i] = toupper((int)(ptr[i])); 
 	ext[i] = 0;
 	return ext;
@@ -165,7 +165,7 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt)
 	}
 	rewinddir(dir);
 	
-	sint8	**list = malloc((*cnt)*sizeof(sint8 *)+size);
+	sint8	**list = (sint8	**)malloc((*cnt)*sizeof(sint8 *)+size);
 	sint8	*ptr = ((sint8 *)list) + (*cnt)*sizeof(sint8 *);
 	
 	int i = 0; 

@@ -35,6 +35,7 @@ GNU General Public License for more details.
 
 #include "posix_hook_shared.h"
 #include "fsfat_layer.h"
+#include "toolchain_utils.h"
 
 
 int		get_snapshot_name(sint8 *file, uchar nb, sint8 *name)

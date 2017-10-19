@@ -485,7 +485,7 @@ int loadROM(sint8 *name, int confirm)
 	return 0;
 }
 
-inline int	changeROM(sint8 *ROM, int size)
+int	changeROM(sint8 *ROM, int size)
 {
   CFG.frame_rate = 1;
   CFG.DSP1 = CFG.SuperFX = 0;
@@ -508,11 +508,11 @@ inline int	changeROM(sint8 *ROM, int size)
     load_ROM(ROM, size);
     SNES.ROM_info.title[20] = '\0';
     int i = 20;
-    while (i >= 0 && SNES.ROM_info.title[i] == ' ')
+    while (i >= 0 && SNES.ROM_info.title[i] == ' '){
     	SNES.ROM_info.title[i--] = '\0';
-
-    GUI_showROMInfos(size);
-    
+	}
+	GUI_showrominfo(size);
+	
     reset_SNES();	
 	// Clear screen
 	// Read SRAM

@@ -1070,7 +1070,7 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			GUI_linkObject(scr, 9, (void *)IDS_ADVANCED, GUIStatic_handler);
 			GUI_linkObject(scr, 0, GUI_PARAM(IDS_RESET), GUIStrButton_handler);
 			GUI_linkObject(scr, 1, GUI_PARAM(IDS_SAVE_SRAM), GUIStrButton_handler);
-			GUI_linkObject(scr, 2, "GFX Config", GUIStrButton_handler);
+			GUI_linkObject(scr, 2, (void *)"GFX Config", GUIStrButton_handler);
 			
 			GUI_linkStrButton(scr, 6, IDS_OK, KEY_X);
 			
@@ -1151,7 +1151,7 @@ void GUI_createMainMenu(){
 	
 	GUI_setZone(scr_main, 7, 240, 0, 256, 16);
 	scr_main->zones[7].font = &smallfont_7_font;
-	GUI_linkObject(scr_main, 7,  "*", GUIStrButton_handler);
+	GUI_linkObject(scr_main, 7,  (void *)"*", GUIStrButton_handler);
 	
 //	scr_main->img_list = img_list;
 	scr_main->handler = MainScreenHandler;
@@ -1188,7 +1188,7 @@ void GUI_getConfig(){
 		GUI_setLanguage(CFG.Language);
 }
 
-void	GUI_showROMInfos(int size){
+void	GUI_showrominfo(int size){
     printf("%s %s\n", _STR(IDS_TITLE), SNES.ROM_info.title);
     printf("%s %d bytes\n", _STR(IDS_SIZE), size);
     if (SNES.HiROM) 

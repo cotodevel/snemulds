@@ -140,7 +140,7 @@ bool _readFrontend(sint8 *target){
 		fseek_fs(f,0,SEEK_SET);
 		//f_lseek (&f, 0);
 		
-		fwrite_fs("____",1,4,f);
+		fwrite_fs((void*)"____",1,4,f);
 		//unsigned int written;
 		//f_write(&f, "____", 4, &written);
 		//f_truncate(&f);

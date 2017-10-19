@@ -238,7 +238,7 @@ extern void CPU_unpack();
 
 
 //opcodes2.s
-extern void 	CPU_goto2();
+extern void 	CPU_goto2(int CyclesToCrunch);
 extern void 	CPU_update();
 extern void		CPU_init();	
 #ifdef __cplusplus
