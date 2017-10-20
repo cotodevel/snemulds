@@ -3,26 +3,22 @@
  * note: xenogzip uses gzio but xenofunzip uses normal inflateInit2()/inflate().
  */
 
-#if defined(ARM9) || defined(ARM7)
+//Coto: rewritten compressor code so it's ZLIB standard through malloc/free default memory allocator.
+//Also use EWRAM as stack for giant compressed .zip / .gz files, see zipSwapStack.S for specifics.
+
 #include "xenofunzip.h"
 
 #include "typedefs.h"
 #include "dsregs.h"
 #include "console.h"
-
 #include <stdlib.h>
-
-
 #include "zlib.h"
 #include "posix_hook_shared.h"	//add Toolchain Generic DS Filesystem Support
 #include "mem_handler_shared.h"	//malloc support
 
-#else
-//#include "../xenobox.h"
-#endif
-
+//zalloc / zfree (zlib) default function prototypes look like:
 //void * 	zalloc (void *opaque, unsigned items, unsigned size)
-//void 	zfree (void *opaque, void *ptr)
+//void 		zfree (void *opaque, void *ptr)
 
 int funzipstdio(FILE *in, FILE *out){
 	int encrypted;
@@ -50,36 +46,42 @@ int funzipstdio(FILE *in, FILE *out){
 		g = 0;
 		size = LG(h+LOCSIZ);
 		encrypted = h[LOCFLG] & CRPFLG;
-	}else if (n == GZPMAG){
-		if (fread_fs((char *)h, 1, GZPHDR, in) != GZPHDR)
+	}
+	else if (n == GZPMAG){
+		if (fread_fs((char *)h, 1, GZPHDR, in) != GZPHDR){
 			err("invalid gzip file");
-		if ((method = h[GZPHOW]) != DEFLATED && method != ENHDEFLATED)
+		}
+		if ((method = h[GZPHOW]) != DEFLATED && method != ENHDEFLATED){
 			err("gzip file not deflated");
-		if (h[GZPFLG] & GZPMUL)
+		}
+		if (h[GZPFLG] & GZPMUL){
 			err("cannot handle multi-part gzip files");
+		}
 		if (h[GZPFLG] & GZPISX){
 			n = fgetc_fs(in);  n |= fgetc_fs(in) << 8;
 			while (n--) g = fgetc_fs(in);
 		}
-		if (h[GZPFLG] & GZPISF)
+		if (h[GZPFLG] & GZPISF){
 			while ((g = fgetc_fs(in)) != 0 && g != EOF) ;
-		if (h[GZPFLG] & GZPISC)
+		}
+		if (h[GZPFLG] & GZPISC){
 			while ((g = fgetc_fs(in)) != 0 && g != EOF) ;
+		}
 		g = 1;
 		encrypted = h[GZPFLG] & GZPISE;
-	}else
+	}
+	else{
 		err("input not a zip or gzip file");
-
+	}
 	//now in points to deflated entry. let's just inflate it using zlib.
 
 	//if entry encrypted, decrypt and validate encryption header
-	if (encrypted)
+	if (encrypted){
 		err("encrypted zip unsupported");
-
+	}
 	//decompress
 	if (g || h[LOCHOW]){ //deflate
 		Bytef *ibuffer, *obuffer;
-		//uInt isize, osize;
 		z_stream z;
 		int result;
 		
@@ -100,7 +102,7 @@ int funzipstdio(FILE *in, FILE *out){
 		
 		memset ( ibuffer, 0, BUFFER_SIZE);
 		memset ( obuffer, 0, BUFFER_SIZE);
-			
+		
 		z.next_in = (Bytef *)ibuffer;
 		z.avail_in = 0;
 		
@@ -120,11 +122,9 @@ int funzipstdio(FILE *in, FILE *out){
 					z.avail_in = fread_fs( ibuffer, 1, BUFFER_SIZE, in );
 				}
 			}
-			result = inflate( &z, Z_SYNC_FLUSH ); //Z_NO_FLUSH? aww small buffer size...
+			result = inflate( &z, Z_SYNC_FLUSH );
 			if( result != Z_OK && result != Z_STREAM_END ) {
 				inflateEnd( &z );
-				//char x[10];sprintf(x,"%d",result);
-				//consoletext(64,x,0);while(1);
 				char buf[200];
 				sprintf(buf,"inflate error:%d",result);
 				err(buf);
@@ -135,7 +135,6 @@ int funzipstdio(FILE *in, FILE *out){
 				sint32 FDToSync = fileno(out);
 				fsync(FDToSync);
 			}
-			
 			if(result==Z_STREAM_END){
 				break;
 			}
@@ -153,14 +152,9 @@ int funzipstdio(FILE *in, FILE *out){
 	}
 
 	//should check CRC32 but...
-	
-	
 	return 0;
 }
 
-/*
-#if defined(ARM9) || defined(ARM7)
-*/
 int do_decompression(char *inname, char *outname){ //dszip frontend
 	FILE *in=fopen_fs(inname,"r");
 	if(!in)return -1;
@@ -168,36 +162,8 @@ int do_decompression(char *inname, char *outname){ //dszip frontend
 	if(!out){fclose_fs(in);return -1;}
 	int ret = funzipstdio(in,out);
 	
-	//fseek(out, 0, SEEK_SET);
-	//char buf[4];
-	//fread_fs( (uint8*)&buf[0], 1, 4, out);
-	
 	fclose_fs(in);
 	fclose_fs(out);
 	
-	/*
-	clrscr();
-	printf("fsync ret:%d",retc);
-	while(1){
-		if ((keysPressed() & KEY_A)){
-			break;
-		}
-	}
-	*/
 	return ret;
 }
-/*
-#else
-int xenofunzip(const int argc, const char **argv){
-	if(isatty(fileno(stdin))||isatty(fileno(stdout))){
-		fprintf_fs(stderr,
-			"xenofunzip - gzip/zip decompression interface for zlib\n"
-			"based on info-zip's funzip\n"
-			"Both stdin and stdout have to be redirected\n"
-		);
-		return -1;
-	}
-	return funzipstdio(stdin,stdout);
-}
-#endif
-*/

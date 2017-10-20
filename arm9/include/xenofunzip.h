@@ -100,6 +100,7 @@ extern void xfree(void *opaque, void *address);
 extern void* xcalloc(void *opaque, unsigned items, unsigned size);
 extern int funzipstdio(FILE *in, FILE *out);
 extern int do_decompression(char *inname, char *outname);
+extern int do_decompression_ewramstack(char *inname, char *outname);	//coto: use this to use EWRAM as giant stack by default for decompressing giant .zip / .gz files 
 
 #ifdef __cplusplus
 }

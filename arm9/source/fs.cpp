@@ -366,7 +366,6 @@ char * tmpFile = "TempFile.smc";
 bool zipFileLoaded;	//zip / gz support
 int load_gz(char *fname, char *newtempfname)	//fname,newtempfname must use getfatfsPath() outside!
 {
-	int ret;
-	ret = do_decompression(fname, newtempfname);
+	int ret = do_decompression_ewramstack(fname, newtempfname);	//use EWRAM as STACK
 	return ret;
 }
