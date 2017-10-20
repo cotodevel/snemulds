@@ -52,28 +52,24 @@ void Vblank() {
 	//printf("vblank! \n");	
 }
 
+
 //---------------------------------------------------------------------------------
 __attribute__((section(".itcm")))
 void Hblank() {
 //---------------------------------------------------------------------------------
-	
 	*APU_ADDR_CMD = 0xFFFFFFFF;
-
-	if (REG_VCOUNT >= 192)
+	if (REG_VCOUNT == 192) // We are last scanline, update first line GFX
 	{
-		if (REG_VCOUNT == 192) // We are last scanline, update first line GFX
-		{
-			PPU_updateGFX(0);
-		}
-		*APU_ADDR_CMD = 0;
+		PPU_updateGFX(0);
 	}
-	else
+	else if (REG_VCOUNT > 192)
 	{
+		//nothing
+	}
+	else{
 		PPU_updateGFX(REG_VCOUNT);
-		//	h_blank=1;
-		*APU_ADDR_CMD = 0;
 	}
-    
-    //printf("hblank! \n");
+	*APU_ADDR_CMD = 0;
 	
+    //printf("hblank! \n");	
 }

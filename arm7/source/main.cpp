@@ -131,8 +131,9 @@ int main(int _argc, sint8 **_argv) {
     SetupSound();
     
     while (1) {   
-        //Coto: Sound is best handled when NDS is NOT waiting for interrupt. 
-        if(!SPC_disable){
+        
+		
+		if(SPC_disable == false){
             int cyclesToExecute, samplesToMix;
 			//if (scanlineCount >= 66) {
 			//	scanlineCount -= 66;
@@ -159,9 +160,10 @@ int main(int _argc, sint8 **_argv) {
 				DspMixSamplesStereo(samplesToMix, &playBuffer[apuMixPosition]);
 				apuMixPosition += samplesToMix;								
 			}			
-
-            
         }
+		else{
+			*SNEMUL_ANS = (uint32)0xFF00FF00;
+		}
 		
 		IRQVBlankWait();	//required for sound playback sync with vblank
 	}

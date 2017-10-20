@@ -42,7 +42,7 @@ void	APU_nice_reset()
 {
 #ifndef IN_EMULATOR	
 	APU_stop();
-	APU_reset();	
+	APU_reset();
 #endif
 	
 }
@@ -56,6 +56,10 @@ void	APU_stop()
 {
 #ifndef IN_EMULATOR	
 	APU_command(SNEMULDS_APUCMD_SPCDISABLE); //APU_command(0x00000004);
+	// Wait the APU disabling
+	while (*APU_ADDR_ANS != 0xFF00FF00){
+		IRQVBlankWait();
+	}
 #endif	
 }
 
@@ -101,5 +105,5 @@ void APU_playSong(uint8 *data, int size)
 void APU_command(uint32 command)
 {
 	//prevent APU from desync
-	SendMultipleWordACK(command, 0, 0, 0);
+	SendMultipleWordACK(command, 0, 0, NULL);
 }
