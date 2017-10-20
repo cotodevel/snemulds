@@ -215,7 +215,7 @@ if (CFG.DSP1)
     
 	//printf("test\n");
 	
-	SpecificIPC->counter = 0;
+	APU2->counter = 0;
 	//  if (CFG.Sound_output) 
   	APU_nice_reset();
 	//printf("test1\n");
@@ -237,10 +237,10 @@ if (CFG.DSP1)
 
 	CFG.BG_Layer = 0xd7; //FIXME: BG3 is not used (MODE 0 broken)
 
-	SpecificIPC->skipper_cnt1 = 0;  
-	SpecificIPC->skipper_cnt2 = 0;  
-	SpecificIPC->skipper_cnt3 = 0;  
-	SpecificIPC->skipper_cnt4 = 0;
+	APU2->skipper_cnt1 = 0;  
+	APU2->skipper_cnt2 = 0;  
+	APU2->skipper_cnt3 = 0;  
+	APU2->skipper_cnt4 = 0;
 	SNES.V_Count = 0;
   
 	//printf("test4\n");

@@ -20,6 +20,7 @@ USA
 */
 #include "common_shared.h"
 #include "specific_shared.h"
+#include "apu_shared.h"
 
 #ifdef ARM7
 #include <string.h>
@@ -31,6 +32,7 @@ USA
 #include "mixrate.h"
 #include "wifi_arm7.h"
 #include "spifw.h"
+#include "apu_shared.h"
 
 #endif
 

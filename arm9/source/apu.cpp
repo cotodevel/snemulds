@@ -24,6 +24,13 @@ GNU General Public License for more details.
 #include "typedefs.h"
 #include "InterruptsARMCores_h.h"
 #include "core.h"
+#include "apu_shared.h"
+
+////////////////////////////////////////////////////////////////////////////
+// Definitions
+////////////////////////////////////////////////////////////////////////////
+
+//struct s_apu2 *APU2 = (struct s_apu2 *)(&SpecificIPC->APU2);
 
 void	APU_reset()
 {

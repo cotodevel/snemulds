@@ -9,10 +9,13 @@
 #include "apu.h"
 #include "apumisc.h"
 #include "specific_shared.h"
+#include "apu_shared.h"
 
 ////////////////////////////////////////////////////////////////////////////
 // Definitions
 ////////////////////////////////////////////////////////////////////////////
+
+//struct s_apu2 *APU2 = (struct s_apu2 *)(&SpecificIPC->APU2);
 
 uint8 iplRom[64] ALIGNED =
 {
@@ -130,7 +133,7 @@ void  ApuReset() {
     APU_STATE[8] = 0;
     APU_SP = 0x1FF;
 
-	SpecificIPC->TIM0 = 0;
-	SpecificIPC->TIM1 = 0;
-	SpecificIPC->TIM2 = 0;
+	APU2->TIM0 = 0;
+	APU2->TIM1 = 0;
+	APU2->TIM2 = 0;
 }

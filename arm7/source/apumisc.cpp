@@ -3,7 +3,7 @@
 #include "apu.h"
 #include "apumisc.h"
 #include "specific_shared.h"
-
+#include "apu_shared.h"
 // archeide: shared structure with SNEmul
 
 uint8 apuShowRom;
@@ -11,15 +11,15 @@ uint8 apuShowRom;
 void ApuWriteControlByte(uint8 byte) {
     uint8 orig = APU_MEM[APU_CONTROL_REG];
     if ((orig & 0x1) == 0 && (byte & 0x1) != 0) {
-        SpecificIPC->TIM0 = 0;
+        APU2->TIM0 = 0;
         APU_MEM[APU_COUNTER0] = 0;
 	}
     if ((orig & 0x2) == 0 && (byte & 0x2) != 0) {
-        SpecificIPC->TIM1 = 0;    	
+        APU2->TIM1 = 0;    	
         APU_MEM[APU_COUNTER1] = 0;
 	}
     if ((orig & 0x4) == 0 && (byte & 0x4) != 0) {
-        SpecificIPC->TIM2 = 0;    	
+        APU2->TIM2 = 0;    	
         APU_MEM[APU_COUNTER2] = 0;
 	}
 
@@ -68,9 +68,9 @@ void ApuPrepareStateAfterReload() {
     for (i = 0; i < 4; i++) PORT_SNES_TO_SPC[i] = APU_MEM[0xF4 + i];
 
 	// archeide
-	SpecificIPC->TIM0 = 0;
-	SpecificIPC->TIM1 = 0;
-	SpecificIPC->TIM2 = 0;	
+	APU2->TIM0 = 0;
+	APU2->TIM1 = 0;
+	APU2->TIM2 = 0;	
 
 	apuShowRom = APU_MEM[APU_CONTROL_REG] >> 7;
     if (apuShowRom) {

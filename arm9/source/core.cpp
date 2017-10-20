@@ -59,6 +59,8 @@ GNU General Public License for more details.
 #include "nifi.h"
 #include "multi.h"
 
+#include "apu_shared.h"
+
 //Snes Hardware
 struct s_snes	SNES;
 struct s_cpu	CPU;
@@ -671,7 +673,7 @@ uint32	R2140(uint32 addr)
 //	LOG("0 %02x (%04x, %04x)\n", PORT_SPC_TO_SNES[0], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
       if (!CFG.Sound_output)
       { /* APU Skipper */
-        switch ((SpecificIPC->skipper_cnt1++)%11) {
+        switch ((APU2->skipper_cnt1++)%11) {
           case 0: return CPU.PPU_PORT[0x40];
           case 1: return REAL_A;                                
           case 2: return X;
@@ -717,7 +719,7 @@ uint32	R2141(uint32 addr)
 	
       if (!CFG.Sound_output)
       { /* APU Skipper */
-        switch ((SpecificIPC->skipper_cnt2++)%13) {
+        switch ((APU2->skipper_cnt2++)%13) {
           case 0: return CPU.PPU_PORT[0x41];
           case 1: return REAL_A;
           case 2: return X;
@@ -740,7 +742,7 @@ uint32	R2142(uint32 addr)
 {
       if (!CFG.Sound_output)
 	  {
-        switch ((SpecificIPC->skipper_cnt3++)%7) {
+        switch ((APU2->skipper_cnt3++)%7) {
           case 0: return CPU.PPU_PORT[0x42];
           case 1: return REAL_A;
           case 2: return X;
@@ -757,7 +759,7 @@ uint32	R2143(uint32 addr)
 {     
       if (!CFG.Sound_output)
 	  {
-        switch((SpecificIPC->skipper_cnt4++) % 9) {
+        switch((APU2->skipper_cnt4++) % 9) {
           case 0: return CPU.PPU_PORT[0x43];
           case 1: return REAL_A;
           case 2: return X;

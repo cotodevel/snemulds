@@ -9,6 +9,7 @@
 #include "dsp.h"
 #include "main.h"
 #include "mixrate.h"
+#include "apu_shared.h"
 
 void Timer1handler(){
 	#if PROFILING_ON
@@ -82,22 +83,22 @@ void Hblank() {
 		uint32 T2 = APU_MEM[APU_TIMER2]?APU_MEM[APU_TIMER2]:0x100;
 	
 		if ((VCount & 1) == 1) {        		      	
-			if (++SpecificIPC->TIM0 >= T0) {
-				SpecificIPC->TIM0 -= T0;
+			if (++APU2->TIM0 >= T0) {
+				APU2->TIM0 -= T0;
 				APU_MEM[APU_COUNTER0]++;
 				APU_MEM[APU_COUNTER0] &= 0xf;
 			}
 		
-			if (++SpecificIPC->TIM1 >= T1) {
-				SpecificIPC->TIM1 -= T1;
+			if (++APU2->TIM1 >= T1) {
+				APU2->TIM1 -= T1;
 				APU_MEM[APU_COUNTER1]++;
 				APU_MEM[APU_COUNTER1] &= 0xf;
 			}
 		}
 		
-		SpecificIPC->TIM2 += 4;
-		if (SpecificIPC->TIM2 >= T2) {
-			SpecificIPC->TIM2 -= T2;
+		APU2->TIM2 += 4;
+		if (APU2->TIM2 >= T2) {
+			APU2->TIM2 -= T2;
 			APU_MEM[APU_COUNTER2]++;
 			APU_MEM[APU_COUNTER2] &= 0xf;
 		}

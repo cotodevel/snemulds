@@ -47,7 +47,7 @@ void Vblank() {
 	//*APU_ADDR_CNT += 262;
 	if (CFG.Sound_output)
 	SpecificIPC->APU_ADDR_CNT = APU_MAX;
-	SpecificIPC->counter = 0;
+	APU2->counter = 0;
 
 	//printf("vblank! \n");	
 }
