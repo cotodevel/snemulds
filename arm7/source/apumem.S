@@ -1,8 +1,8 @@
-.align 4
-.code 32
-.ARM
+	.TEXT
+	.ARM
+	.ALIGN
 
-#include "../include/apudef.h"
+#include "apudef.h"
 
 /*
 .GLOBAL BreakR11
@@ -10,6 +10,37 @@ BreakR11:
 	mov r11, r11
 	mov pc, lr
 */	
+
+/*
+.GLOBAL IntrHandlerAsm
+IntrHandlerAsm:
+    mov r0, #0x4000000
+    ldr r1, [r0,#0x214] @ IF
+
+    tst r1, #1 << 18 @ tst for FIFO_NOT_EMPTY
+    beq notFifo
+
+	@ Read once from the FIFO
+    mov r1, #0x4100000
+    ldr r0, [r1]
+
+    stmfd sp!,{lr}
+    bl HandleFifo
+    
+finished:  
+    mov r0, #0x4000000
+
+    @ Clear IF
+    mov r1, #1 << 18
+    str r1, [r0,#0x214]
+
+    ldmfd sp!,{lr}
+    bx lr
+
+notFifo:
+    ldr r0, =InterruptHandler
+    bx r0
+*/
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @ Special memory write functions
@@ -69,39 +100,22 @@ MemWriteUpperByte:
 	ldmfd sp!, {r0-r3,r12,lr}
 	bx lr
 
-
-
-@coto: 0x2CE0000????? wtf where is this writing to? APU2?
-/*
 .GLOBAL     MemWriteApuPort
 MemWriteApuPort:
 	stmfd sp!, {r0-r2}	
 	
-    @ldr r1, =0x02FFFFFC
-    ldr r1,=ADDR_PORT_SPC_TO_SNES      @PORT_SPC_TO_SNES
-    ldr r1,[r1]
-    
-    sub r2, r12, #0xF4
+    @ldr r1, =0x027FFFFC	@PORT_SPC_TO_SNES
+    ldr r1,=ADDRPORT_SPC_TO_SNES
+	ldr r1,[r1]
+	sub r2, r12, #0xF4
     strb r0, [r1, r2]
     
-    ldr	r0, =0x2CE0000
-    str	APU_PC, [r0]    
+    @ldr	r0, =0x27E0000				@APU_PROGRAM_COUNTER
+    ldr r0,=ADDR_APU_PROGRAM_COUNTER
+	ldr r0,[r0]
+	str	APU_PC, [r0]    
 	ldmfd sp!, {r0-r2}
     bx lr
-*/
-
-@v4
-.GLOBAL     MemWriteApuPort
-MemWriteApuPort:
-	stmfd sp!, {r0-r2}
-    ldr r1,=ADDR_PORT_SPC_TO_SNES      @PORT_SPC_TO_SNES
-    ldr r1,[r1]
-    sub r2, r12, #0xF4
-    strb r0, [r1, r2]
-	ldmfd sp!, {r0-r2}
-    bx lr
-
-
 
 .GLOBAL MemWriteCounter
 MemWriteCounter:
@@ -109,17 +123,15 @@ MemWriteCounter:
 	
 	strb r0, [APU_RAMBASE, r12]
 	
-/*	
-@ archeide: update T0 T1 T2 from CPU's APU2
-	ldr r1, =0x2FED000
+/*	@ archeide: update T0 T1 T2 from CPU's APU2
+	ldr r1, =0x27ED000		@APU.T0
 	sub r2, r12, #0xFA
 	add r1, r1, r2, lsl #2
 	@ Update the target
 	mov r2, r0
 	cmp r2, #0
 	moveq r2, #0x100
-	str r2, [r1]
-*/
+	str r2, [r1]*/
 	ldmfd sp!, {r1-r2, lr}
     bx lr
 
@@ -129,14 +141,14 @@ MemWriteCounter:
 MemReadDoNothing:
     bx lr
 
-
-/*
-.GLOBAL		MemReadCounter
+/*.GLOBAL		MemReadCounter
 MemReadCounter:
 	stmfd sp!, {r1-r2} @ is it useful ?
 
 	@ archeide: get APU2->CNT0
-	ldr		r1, =0x2FED018	
+	@ldr		r1, =0x27ED018	
+	ldr r1,=APU_CNT0_ASM_ADDR
+	ldr r1,[r1]
 	sub		r2, r12, #0xFD
 	add 	r1, r1, r2, lsl #4	
 
@@ -172,14 +184,15 @@ MemReadCounter:
 	ldmfd sp!, {r1}
 	bx lr
 
-
 /*
 .GLOBAL		MemReadCounterFE
 MemReadCounterFE:
 	stmfd sp!, {r1-r2} @ is it useful ?
 
 	@ archeide: get APU2->CNT1
-	ldr		r1, =0x2FED01C
+	@ldr		r1, =0x27ED01C					@APU2.CNT1
+	ldr r1,=APU_CNT1_ASM_ADDR
+	ldr r1,[r1]
 	ldrb	r0, [r1]
 	
 	@ APU2->CNT1 = 0
@@ -194,7 +207,9 @@ MemReadCounterFF:
 	stmfd sp!, {r1-r2} @ is it useful ?
 
 	@ archeide: get APU2->CNT2
-	ldr		r1, =0x2CED020
+	@ldr		r1, =0x27ED020			@APU2.CNT2
+	ldr r1,=APU_CNT2_ASM_ADDR
+	ldr r1,[r1]
 	ldrb	r0, [r1]
 	
 	@ APU2->CNT2 = 0
@@ -210,28 +225,36 @@ MemReadCounterFF:
 MemReadApuPort:
 	stmfd sp!, {r1-r3}
 	
-@Doesn't read APU port while CPU is not running
+@Doesn't read APU port while CPU is not running <-- SNES CPU idle == APU Idle goes on its own code
 /*0:
-	ldr	r1, =0x02FFFFE8
+	@ldr	r1, =0x027FFFE8		@SNEMUL_BLK: spinlock here: if 1
+	ldr r1,=ADDR_SNEMUL_BLK
+	ldr r1,[r1]
+	
 	ldr	r1, [r1]
 	cmp	r1,	#1
-	beq	0b
-*/
-    @trace PC APU to a readable empty var, not used by core. Re-enable if snemulds does not boot
-    @ldr	r0, =0x2FE0000
-    @str APU_PC, [r0]
+	beq	0b*/
+	
+
+    @ldr	r0, =0x27E0000    	@APU PC
+    ldr r0,=ADDR_APU_PROGRAM_COUNTER
+	ldr r0,[r0]
+	str APU_PC, [r0]
 
     sub r2, r12, #0xF4
-        
-    @ldr r1, =0x02FFFFF8    
-    ldr r1,=ADDR_PORT_SNES_TO_SPC      @PORT_SNES_TO_SPC
-    ldr r1,[r1]
+	
+    @ldr r1, =0x027FFFF8    @PORT_SNES_TO_SPC
+	ldr r1,=ADDRPORT_SNES_TO_SPC
+	ldr r1,[r1]
     ldrb r0, [r1, r2]       @ Modifies the value that was read from RAM
     
-    @toggles APU_ADDR_CNT + 2 to zero
-    @ldr r1, =0x02FFFFE8
-    @mov	r3, #0	
-    @strb r3, [r1, r2]		@ unblock
+	
+    @ldr r1, =0x027FFFE8		@SNEMUL_BLK
+    ldr r1,=ADDR_SNEMUL_BLK
+	ldr r1,[r1]
+	
+	mov	r3, #0	
+    strb r3, [r1, r2]		@ unblock
     
 	ldmfd sp!, {r1-r3}
     bx lr

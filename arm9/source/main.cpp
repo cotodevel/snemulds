@@ -78,8 +78,8 @@ int main(int _argc, sint8 **_argv) {
 	
 	//argc=_argc, argv=_argv;
 	
-	SpecificIPC->APU_ADDR_CNT = 0;
-	SpecificIPC->APU_ADDR_CMD = 0;
+	*APU_ADDR_CNT = 0;
+	*APU_ADDR_CMD = 0;
 	
 	screen_mode = 0;
 	
@@ -96,8 +96,8 @@ int main(int _argc, sint8 **_argv) {
     GUI.printfy += 32; // FIXME
 	GUI_align_printf(GUI_TEXT_ALIGN_CENTER, _STR(4));
 	
+	update_spc_ports(); //APU Ports from SnemulDS properly binded with Assembly APU Core
 	initSNESEmpty();
-	update_ram_snes();
     
 	
 	int i=0;

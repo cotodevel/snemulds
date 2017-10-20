@@ -109,7 +109,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 
 			memset(playBuffer, 0, MIXBUFSIZE * 8);
 
-			SpecificIPC->APU_ADDR_CNT = 0; 
+			*APU_ADDR_CNT = 0; 
 			ApuReset();
 			DspReset();
 
@@ -134,7 +134,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC 	
 			LoadSpc(APU_RAM_ADDRESS);
 			SetupSound();   	
-			SpecificIPC->APU_ADDR_CNT = 0;             	
+			*APU_ADDR_CNT = 0;             	
 			paused = false;
 			SPC_freedom = true;
 			SPC_disable = false;
@@ -158,7 +158,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 			
 		case SNEMULDS_APUCMD_LOADSPC:{ //case 0x00000007:{ // LOAD state 
 			LoadSpc(APU_RAM_ADDRESS);
-			SpecificIPC->APU_ADDR_CNT = 0; 
+			*APU_ADDR_CNT = 0; 
 		}
 		break;
 		
@@ -201,10 +201,29 @@ void update_ram_snes(){
 }
 #endif
 
-#ifdef ARM7
-//small hack to update IPC APU ports with APU assembly core (on ARM7)
+//APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
-    ADDR_PORT_SNES_TO_SPC       =   (uint32)(uint8*)PORT_SNES_TO_SPC;
-    ADDR_PORT_SPC_TO_SNES   =   (uint32)(uint8*)PORT_SPC_TO_SNES;
+    
+	APU_T0_ASM_ADDR = (uint32)&APU2->T0;
+	APU_T1_ASM_ADDR = (uint32)&APU2->T1;
+	APU_T2_ASM_ADDR = (uint32)&APU2->T2;
+	
+	APU_TIM0_ASM_ADDR = (uint32)&APU2->TIM0;
+	APU_TIM1_ASM_ADDR = (uint32)&APU2->TIM1;
+	APU_TIM2_ASM_ADDR = (uint32)&APU2->TIM2;
+	
+	APU_CNT0_ASM_ADDR = (uint32)&APU2->CNT0;
+	APU_CNT1_ASM_ADDR = (uint32)&APU2->CNT1;
+	APU_CNT2_ASM_ADDR = (uint32)&APU2->CNT2;
+	
+	//must reflect to specific_shared.h defs
+	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)PORT_SPC_TO_SNES;	
+	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)PORT_SNES_TO_SPC; 
+	ADDR_APU_PROGRAM_COUNTER=	(uint32)(volatile uint32*)APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
+	
+	ADDR_SNEMUL_CMD	=	(uint32)(volatile uint32*)APU_ADDR_CMD;	//0x027FFFE8	// SNEMUL_CMD
+	ADDR_SNEMUL_ANS	=	(uint32)(volatile uint32*)APU_ADDR_ANS;	//0x027fffec	// SNEMUL_ANS
+	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
+	
+	//todo: APU_ADDR_CNT: is unused by Assembly APU Core?
 }
-#endif

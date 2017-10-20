@@ -82,7 +82,7 @@ void	APU_loadSpc()
 void	APU_clear()
 {
 	APU_command(SNEMULDS_APUCMD_CLRMIXERBUF); //APU_command(0x00000005);
-	SpecificIPC->APU_ADDR_CNT = 0;
+	*APU_ADDR_CNT = 0;
 }
 
 

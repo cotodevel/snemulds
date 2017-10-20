@@ -53,15 +53,8 @@ typedef struct sSpecificIPC {
 	
 	//dswnifi specific
 	TdsnwifisrvStr dswifiSrv;
-
-	//IPC APU Ports
-	uint32 APU_ADDR_CNT;
-    uint32 APU_ADDR_CMD;
-
-    uint8 APU_ADDR_BLKP[4];
-    uint32 APU_ADDR_BLK;     //deprecated in v6 but declared
-    
-	//struct s_apu2 APU2;	//the unaligned access here kills the SnemulDS APU sync. Must be word aligned.
+	
+	//struct s_apu2 APU2;	//the unaligned access here kills the SnemulDS APU sync. Must be word aligned, so we define it below.
 	
 } tSpecificIPC __attribute__ ((aligned (4)));
 
@@ -70,7 +63,16 @@ typedef struct sSpecificIPC {
 #define APU2 ((volatile struct s_apu2*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))))
 #define PORT_SNES_TO_SPC ((volatile uint8*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(s_apu2))+(4*1)))
 #define PORT_SPC_TO_SNES ((volatile uint8*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(s_apu2))+(4*2))) 
+#define APU_PROGRAM_COUNTER ((volatile uint32*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(s_apu2))+(4*3)))		//0x27E0000	@APU PC
+#define APU_ADDR_CMD	((volatile uint32*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(s_apu2))+(4*4)))		//#define APU_ADDR_CMD ((volatile uint32*)(0x2800000-16))
+#define APU_ADDR_ANS	((volatile uint32*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(s_apu2))+(4*5)))	//#define APU_ADDR_ANS ((volatile uint32*)(0x2800000-20))
+#define APU_ADDR_BLK 	((volatile uint32*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(s_apu2))+(4*6)))		//#define APU_ADDR_BLK ((volatile uint32*)(0x2800000-24))
+#define APU_ADDR_BLKP 	((vuint8*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(s_apu2))+(4*6)))		//#define (vuint8*)APU_ADDR_BLKP == APU_ADDR_BLK
+#define APU_ADDR_CNT	((volatile uint32*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(s_apu2))+(4*7)))	//#define APU_ADDR_CNT ((volatile uint32*)(0x2800000-60))	/ 0x27fffc4 // used a SNES SCanline counter, unused by snemulds
 
+#define SNEMUL_CMD 	APU_ADDR_CMD	//0x027FFFE8
+#define SNEMUL_ANS 	APU_ADDR_ANS	//0x027fffec
+#define SNEMUL_BLK 	APU_ADDR_BLK	//0x027fffe8
 
 // Project Specific
 #define SNEMULDS_APUCMD_RESET 0xffff00a1
@@ -103,9 +105,7 @@ extern uint32 ADDR_PORT_SPC_TO_SNES;
 extern void update_ram_snes();
 #endif
 
-#ifdef ARM7
 extern void update_spc_ports();
-#endif
 
 #ifdef __cplusplus
 }

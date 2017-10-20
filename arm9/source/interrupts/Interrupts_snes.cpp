@@ -46,7 +46,7 @@ void Vblank() {
 #endif		
 	//*APU_ADDR_CNT += 262;
 	if (CFG.Sound_output)
-	SpecificIPC->APU_ADDR_CNT = APU_MAX;
+	*APU_ADDR_CNT = APU_MAX;
 	APU2->counter = 0;
 
 	//printf("vblank! \n");	
@@ -57,7 +57,7 @@ __attribute__((section(".itcm")))
 void Hblank() {
 //---------------------------------------------------------------------------------
 	
-	SpecificIPC->APU_ADDR_CMD = 0xFFFFFFFF;
+	*APU_ADDR_CMD = 0xFFFFFFFF;
 
 	if (REG_VCOUNT >= 192)
 	{
@@ -65,13 +65,13 @@ void Hblank() {
 		{
 			PPU_updateGFX(0);
 		}
-		SpecificIPC->APU_ADDR_CMD = 0;
+		*APU_ADDR_CMD = 0;
 	}
 	else
 	{
 		PPU_updateGFX(REG_VCOUNT);
 		//	h_blank=1;
-		SpecificIPC->APU_ADDR_CMD = 0;
+		*APU_ADDR_CMD = 0;
 	}
     
     //printf("hblank! \n");

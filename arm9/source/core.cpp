@@ -1244,15 +1244,15 @@ void	W2140(uint32 addr, uint32 value)
 		}
 		if (CFG.SoundPortSync & 1)
 		{
-			if (SpecificIPC->APU_ADDR_BLKP[0])
+			if (APU_ADDR_BLKP[0])
 			{
-				while (SpecificIPC->APU_ADDR_BLKP[0]);
+				while (APU_ADDR_BLKP[0]);
 			}
 		}    	
     	PORT_SNES_TO_SPC[0] = value;
     	
 		if ((CFG.SoundPortSync & 1) && value) 
-			SpecificIPC->APU_ADDR_BLKP[0] = 1;    	
+			APU_ADDR_BLKP[0] = 1;    	
     }
     else{
         CPU.PPU_PORT[0x40] = value;
@@ -1270,15 +1270,15 @@ void	W2141(uint32 addr, uint32 value)
 		}
 		if (CFG.SoundPortSync & 2)
 		{
-			if (SpecificIPC->APU_ADDR_BLKP[1])
+			if (APU_ADDR_BLKP[1])
 			{
-				while (SpecificIPC->APU_ADDR_BLKP[1]);
+				while (APU_ADDR_BLKP[1]);
 			}
 		}
     	PORT_SNES_TO_SPC[1] = value;
     	
 		if ((CFG.SoundPortSync & 2) && value){
-			SpecificIPC->APU_ADDR_BLKP[1] = 1;
+			APU_ADDR_BLKP[1] = 1;
 		}
     }
     else{
@@ -1297,16 +1297,16 @@ void	W2142(uint32 addr, uint32 value)
 		}
 		if (CFG.SoundPortSync & 4)
 		{
-			if (SpecificIPC->APU_ADDR_BLKP[2])
+			if (APU_ADDR_BLKP[2])
 			{
-				while (SpecificIPC->APU_ADDR_BLKP[2]);
+				while (APU_ADDR_BLKP[2]);
 			}
 		}
 
     	PORT_SNES_TO_SPC[2] = value;
     	
 		if ((CFG.SoundPortSync & 4) && value) 
-			SpecificIPC->APU_ADDR_BLKP[2] = 1;			    	
+			APU_ADDR_BLKP[2] = 1;			    	
     }
     else{
         CPU.PPU_PORT[0x42] = value;
@@ -1324,16 +1324,16 @@ void	W2143(uint32 addr, uint32 value)
 		}
 		if (CFG.SoundPortSync & 8)
 		{	
-			if (SpecificIPC->APU_ADDR_BLKP[3])
+			if (APU_ADDR_BLKP[3])
 			{
-				while (SpecificIPC->APU_ADDR_BLKP[3]);
+				while (APU_ADDR_BLKP[3]);
 			}
 		}
 
     	PORT_SNES_TO_SPC[3] = value;
    	
 		if ((CFG.SoundPortSync & 8) && value){
-			SpecificIPC->APU_ADDR_BLKP[3] = 1;
+			APU_ADDR_BLKP[3] = 1;
 		}
     }
     else{

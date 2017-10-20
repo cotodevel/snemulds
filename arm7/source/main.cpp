@@ -112,40 +112,11 @@ void SaveSpc(uint8 *spc) {
 //---------------------------------------------------------------------------------
 int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------
-	
-	//ori
-	/*
-	interrupts_to_wait_arm7 = IRQ_TIMER1 | IRQ_HBLANK | IRQ_VBLANK | IRQ_VCOUNT | IRQ_FIFO_NOT_EMPTY;  //| IRQ_FIFO_EMPTY;    
-	
-    //fifo setups
-    irqInitExt(IntrMainExt);
-	fifoInit();
-    
-	installWifiFIFO();
-	
-    irqSet(IRQ_HBLANK,Hblank);
-	irqSet(IRQ_VBLANK, Vblank);
-	irqSet(IRQ_VCOUNT,Vcounter);
-    irqSet(IRQ_TIMER1, Timer1handler);
-	irqSet(IRQ_FIFO_NOT_EMPTY,HandleFifoNotEmpty);
-    //irqSet(IRQ_FIFO_EMPTY,HandleFifoEmpty);
-    
-	irqEnable(interrupts_to_wait_arm7);
-    
-	REG_IPC_SYNC = 0;
-    REG_IPC_FIFO_CR = IPC_FIFO_RECV_IRQ | IPC_FIFO_SEND_IRQ | IPC_FIFO_ENABLE;
-    
-    //set up ppu: do irq on hblank/vblank/vcount/and vcount line is 159
-    REG_DISPSTAT = REG_DISPSTAT | DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ | (VCOUNT_LINE_INTERRUPT << 15);
-	*/
-	
 	IRQInit();
 	
 	// Block execution until we get control of vram D
 	while (!(*((vuint8*)0x04000240) & 0x2));
 	
-	//Read DHCP settings (in order)
-	LoadFirmwareSettingsFromFlash();
 	installWifiFIFO();
 	
     playBuffer = (uint16*)0x6000000;
@@ -154,7 +125,7 @@ int main(int _argc, sint8 **_argv) {
         playBuffer[i] = 0;
     }
 	
-	update_spc_ports(); //updates asm ipc apu core with snemulds IPC apu ports 
+	update_spc_ports(); //APU Ports from SnemulDS properly binded with Assembly APU Core
     ApuReset();
     DspReset();
     SetupSound();
@@ -191,10 +162,6 @@ int main(int _argc, sint8 **_argv) {
 
             
         }
-		//ori
-		//else
-			//swiWaitForVBlank();
-		
 		
 		IRQVBlankWait();	//required for sound playback sync with vblank
 	}

@@ -28,8 +28,8 @@ extern uint32 APU_CNT0_ASM_ADDR;
 extern uint32 APU_CNT1_ASM_ADDR;
 extern uint32 APU_CNT2_ASM_ADDR;
 
-extern uint32 ADDR_PORT_SPC_TO_SNES;
-extern uint32 ADDR_PORT_SNES_TO_SPC;
+extern uint32 ADDRPORT_SPC_TO_SNES;
+extern uint32 ADDRPORT_SNES_TO_SPC;
 
 extern uint32 ADDR_APU_PROGRAM_COUNTER;
 extern uint32 ADDR_SNEMUL_CMD;				//APU_ADDR_CMD	//0x027FFFE8

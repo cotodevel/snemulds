@@ -134,7 +134,8 @@ int initSNESEmpty()
 	
 	SNESC.ROM = (uchar *)NULL;	//Rom is reallocated on file load
     SNESC.RAM = (uchar *)&snes_ram_bsram[0x6000];
-    SNESC.VRAM = (uchar *)&snes_vram[0];
+    update_ram_snes();
+	SNESC.VRAM = (uchar *)&snes_vram[0];
     SNESC.BSRAM = (uchar *)&snes_ram_bsram[0x0];
 	
     init_GFX();
