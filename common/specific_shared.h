@@ -67,9 +67,10 @@ typedef struct sSpecificIPC {
 
 //project specific IPC
 #define SpecificIPC ((volatile tSpecificIPC*)(0x027FF000+(sizeof(tMyIPC))))
-#define PORT_SNES_TO_SPC ((volatile uint8*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(4*1)))
-#define PORT_SPC_TO_SNES ((volatile uint8*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(4*2))) 
-#define APU2 ((volatile struct s_apu2*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(4*3)))
+#define APU2 ((volatile struct s_apu2*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))))
+#define PORT_SNES_TO_SPC ((volatile uint8*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(s_apu2))+(4*1)))
+#define PORT_SPC_TO_SNES ((volatile uint8*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(s_apu2))+(4*2))) 
+
 
 // Project Specific
 #define SNEMULDS_APUCMD_RESET 0xffff00a1
@@ -80,6 +81,9 @@ typedef struct sSpecificIPC {
 #define SNEMULDS_APUCMD_SAVESPC 0xffff00a6
 #define SNEMULDS_APUCMD_LOADSPC 0xffff00a7
 
+
+//Standarized SnemulDS defs
+#define APU_RAM_ADDRESS     ((uint8*)(0x6010000))	//uses VRAM Block as APU WORK RAM
 
 #endif
 

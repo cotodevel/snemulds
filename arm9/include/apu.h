@@ -19,7 +19,6 @@ GNU General Public License for more details.
 #define __apu_h__
 
 #include "common.h"
-#define APU_RAM_ADDRESS     ((uint8*)(0x6010000))
 
 #endif
 
