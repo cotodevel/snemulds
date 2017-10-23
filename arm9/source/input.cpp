@@ -12,7 +12,7 @@
 #include "dsregs.h"
 #include "ppu.h"
 #include "api_wrapper.h"
-#include "multi.h"
+#include "dswnifi.h"
 #include "video.h"
 #include "keypad.h"
 

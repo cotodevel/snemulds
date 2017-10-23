@@ -59,8 +59,11 @@
 
 //wnifilib: multiplayer
 #include "http_utils.h"
-#include "client_http_handler.h"
 #include "nifi.h"
+#include "dswnifi.h"
+
+#include "dswifi9.h"
+#include "wifi_arm9.h"
 
 #include "devoptab_devices.h"
 #include "fsfat_layer.h"
@@ -142,19 +145,6 @@ int main(int _argc, sint8 **_argv) {
 	}
 	*/
 	
-	
-	
-	//single player: (todo: player1 bugged dkc1)
-	switch_dswnifi_mode((uint8)dswifi_idlemode);
-	//nifi: 
-	//switch_dswnifi_mode((uint8)dswifi_nifimode);
-	//wifi: 
-	//switch_dswnifi_mode((uint8)dswifi_wifimode);
-	/*
-	if(Wifi_InitDefault(true) == true){
-		printf("connected: IP: %s",(char*)print_ip((uint32)Wifi_GetIP()));
-	}
-	*/
 	int ret=FS_init();
 	if (ret == 0)
 	{
@@ -166,6 +156,19 @@ int main(int _argc, sint8 **_argv) {
 		printf(_STR(IDS_FS_FAILED));
 	}
 	
+	//single player:
+	switch_dswnifi_mode(dswifi_idlemode);
+	//nifi: 
+	//switch_dswnifi_mode(dswifi_udpnifimode);	//todo
+	//wifi: 
+	//switch_dswnifi_mode(dswifi_tcpnifimode);		//todo
+	/*
+	if(Wifi_InitDefault(true) == true){
+		printf("connected: IP: %s",(char*)print_ip((uint32)Wifi_GetIP()));
+		
+		setMULTIFlag(proc_idle);	
+	}
+	*/
 	//ok
 	//printf("devoptab_stdin.name:%s",devoptab_stdin.name);
 	//printf("devoptab_stdout.name:%s",devoptab_stdout.name);

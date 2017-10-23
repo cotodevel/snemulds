@@ -72,6 +72,18 @@ extern int nifi_cmd;
 extern int nifi_keys;		//holds the keys for players.
 extern int nifi_keys_sync;	//(guestnifikeys & hostnifikeys)
 
+
+extern int plykeys1;		//player1
+extern int plykeys2;		//player2
+extern int guest_framecount;	//used by the guest for syncing.
+extern int host_framecount;		//emulator framecount:host
+extern int guest_framecount;	//emulator framecount:guest
+extern int host_vcount;		//host generated REG_VCOUNT
+extern int guest_vcount;		//guest generated REG_VCOUNT
+extern int topvalue(int a,int b);
+extern int bottomvalue(int a,int b);
+extern int getintdiff(int a,int b);
+
 #ifdef __cplusplus
 }
 #endif

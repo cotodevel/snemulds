@@ -52,7 +52,7 @@ typedef struct sSpecificIPC {
     int rom_size;   	//rom total size
 	
 	//dswnifi specific
-	TdsnwifisrvStr dswifiSrv;
+	//TdsnwifisrvStr dswifiSrv;	//the unaligned access here kills the SnemulDS APU sync. Must be word aligned, defined on ARM9 only
 	
 	//struct s_apu2 APU2;	//the unaligned access here kills the SnemulDS APU sync. Must be word aligned, so we define it below.
 	

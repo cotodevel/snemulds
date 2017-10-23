@@ -15,6 +15,7 @@
 #include "ppu.h"
 #include "keypad.h"
 #include "interrupts.h"
+#include "dswnifi.h"
 
 
 
@@ -23,8 +24,12 @@ __attribute__((section(".itcm")))
 void Vcounter(){
 
 	//stuff that need to run only once per frames
-	//sendcmd();	//UDP Netplay: exception here cant
-	
+	//frames lost here
+	/*
+	if(getWifiStartedFlag() == true){
+		doGDBDaemon();
+	}
+	*/
 	//printf("vcount! \n");
 }
 
@@ -33,6 +38,11 @@ void Vcounter(){
 __attribute__((section(".itcm")))
 void Vblank() {
 //---------------------------------------------------------------------------------
+	//handles DS-DS Comms
+	if(doMULTIDaemon() >=0){
+		do_multi();
+	}
+	
 	//key event between frames
 	do_keys();
 	

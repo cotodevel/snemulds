@@ -55,9 +55,8 @@ GNU General Public License for more details.
 
 //wnifilib: multiplayer
 #include "http_utils.h"
-#include "client_http_handler.h"
 #include "nifi.h"
-#include "multi.h"
+#include "dswnifi.h"
 
 #include "apu_shared.h"
 
