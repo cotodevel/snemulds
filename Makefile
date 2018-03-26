@@ -19,8 +19,8 @@
 #TGDS1.3 compatible Makefile
 
 #ToolchainGenericDS specific: Use Makefiles from either TGDS, or custom
-export SOURCE_MAKEFILE7 = default
-export SOURCE_MAKEFILE9 = default
+export SOURCE_MAKEFILE7 = custom
+export SOURCE_MAKEFILE9 = custom
 
 #Shared
 include $(DEFAULT_GCC_PATH)Makefile.basenewlib
