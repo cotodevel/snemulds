@@ -15,116 +15,110 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-
-#include "snapshot.h"
-#include "common.h"
-#include "opcodes.h"
-
-#include "main.h"
 #include "specific_shared.h"
-#include "fs.h"
+#include "mem_handler_shared.h"
 
+#include "common.h"
+
+#ifdef USE_GBA_FAT_LIB
+#include "fat/gba_nds_fat.h"
+#define FILE FAT_FILE
+#define fopen FAT_fopen
+#define fwrite FAT_fwrite
+#define fread FAT_fread
+#define fclose FAT_fclose 
+
+#elif defined(USE_LIBFAT)
+#include <stdio.h>
+#endif
+#include <malloc.h>
+#include <string.h>
+
+#include "cpu.h"
+#include "snes.h"
 #include "apu.h"
 #include "gfx.h"
 #include "cfg.h"
-#include "core.h"
-#include "engine.h"
 
-#include "posix_hook_shared.h"
-#include "fsfat_layer.h"
-#include "toolchain_utils.h"
+typedef struct {
+  char name[16];
+} TSnapShot_Header;
 
+typedef struct {
+  int            A, X, Y, S, P, D, PB, DB, PC;
 
-int		get_snapshot_name(sint8 *file, uchar nb, sint8 *name)
+  unsigned char  BG_scroll_reg;
+  unsigned char  PPU_NeedMultiply;
+  unsigned char	 options[5];
+  //unsigned char HI_1C, HI_1D, HI_1E, HI_1F, HI_20;
+  unsigned char  SC_incr, FS_incr, OAM_upper_byte;
+} TSnapShot;
+
+int		get_snapshot_name(char *file, uchar nb, char *name)
 {
   FILE *f;
-  //FIL fhandler;
 
   if (nb > 8) return 0;
   file[strlen(file)-1] = '0'+nb; // XXX.SM1 XXXX.SM2 ....
   FS_lock();
-  if ((f = fopen_fs(file, "r")) == NULL){
-  //if(!(f_open(&fhandler,file,FA_READ) == FR_OK))
-  
+  if ((f = fopen(file, "r")) == NULL)
+  {
 	  FS_unlock();
 	  return 0;
   }
 
   TSnapShot_Header *header = (TSnapShot_Header *)malloc(sizeof(TSnapShot_Header));
-  fread_fs(header, sizeof(TSnapShot_Header), 1, f);
-	
-	//unsigned int read_so_far;
-	//f_read(&fhandler, header, sizeof(TSnapShot_Header), &read_so_far);
-	
-  sint8 header_name[17];
+  fread(header, sizeof(TSnapShot_Header), 1, f);
+
+  char header_name[17];
   memcpy(header_name, header->name, 16);
   header_name[16] = 0;
   sprintf(name, "Save #%d - %s", nb, header_name);
 
   free(header);
-  fclose_fs(f);
-  //f_close(&fhandler);
+  fclose(f);
   FS_unlock();
   return 1;
 }
 
-int	read_snapshot(sint8 *file, uchar nb)
+int	read_snapshot(char *file, uchar nb)
 {
   FILE *f;
-  //FIL fhandler;
   int	i;
 
   if (nb > 8)
   	 return 0;
   file[strlen(file)-1] = '0'+nb; // XXX.SM1 XXXX.SM2 ....
   FS_lock();
-  if ((f = fopen_fs(file, "r")) == NULL){
-	//if(!(f_open(&fhandler,file,FA_READ) == FR_OK))
+  if ((f = fopen(file, "r")) == NULL)
+  {
 	 FS_unlock();
   	 return 0;
   }
 
   TSnapShot_Header *header = (TSnapShot_Header *)malloc(sizeof(TSnapShot_Header));
-  
-  
-	
-  fread_fs(header, sizeof(TSnapShot_Header), 1, f);
-	//unsigned int read_so_far;
-	//f_read(&fhandler, header, sizeof(TSnapShot_Header), &read_so_far);
-	
-  fread_fs(SNESC.RAM,  0x20000, 1, f);
-	//f_read(&fhandler, SNESC.RAM, 0x20000, &read_so_far);
-	
-  fread_fs(SNESC.VRAM, 0x10000, 1, f);
-	//f_read(&fhandler, SNESC.VRAM, 0x10000, &read_so_far);
-	
-  fread_fs(SNESC.SRAM, 0x8000, 1, f);
-	//f_read(&fhandler, SNESC.SRAM, 0x8000, &read_so_far);
-	
+  fread(header, sizeof(TSnapShot_Header), 1, f);
+
+  fread(SNESC.RAM,  0x20000, 1, f);
+  fread(SNESC.VRAM, 0x10000, 1, f);
+  fread(SNESC.SRAM, 0x8000, 1, f);
   for (i = 0; i < 256; i++)
   {
   	uint8	pal[3];
-    fread_fs(pal, 3, 1, f);
-	//f_read(&fhandler, pal, 3, &read_so_far);
-	
-	GFX.SNESPal[i] = (pal[2]>>1)|((pal[1]>>1)<<5)|((pal[0]>>1)<<10);
+    fread(pal, 3, 1, f);
+    GFX.SNESPal[i] = (pal[2]>>1)|((pal[1]>>1)<<5)|((pal[0]>>1)<<10);
   }
 
-/*  fread_fs(CPU.PPU_PORT, 2*0x100, 1, f);
-  fread_fs(CPU.DMA_PORT, 2*0x200, 1, f);*/
+/*  fread(PPU_PORT, 2*0x100, 1, f);
+  fread(DMA_PORT, 2*0x200, 1, f);*/
 
-  fread_fs(CPU.PPU_PORT, 2*0x90, 1, f);
-  //f_read_fs(&fhandler, CPU.PPU_PORT, 2*0x90, &read_so_far);
-	
-  fread_fs(CPU.DMA_PORT, 2*0x180, 1, f);
-  //f_read_fs(&fhandler, CPU.DMA_PORT, 2*0x180, &read_so_far);
-  
+  fread(PPU_PORT, 2*0x90, 1, f);
+  fread(EMPTYMEM, 2*0x70, 1, f); // unused
+  fread(DMA_PORT, 2*0x180, 1, f);
+  fread(EMPTYMEM, 2*0x80, 1, f); // unused
+
   TSnapShot *snapshot = (TSnapShot *)malloc(sizeof(TSnapShot));
-  fread_fs(snapshot,  sizeof(TSnapShot), 1, f);
-  //f_read_fs(&fhandler, snapshot, sizeof(TSnapShot), &read_so_far);
+  fread(snapshot,  sizeof(TSnapShot), 1, f);
   
   //printf("PC =  %02X:%04x\n", snapshot->PB, snapshot->PC);
 
@@ -146,44 +140,32 @@ int	read_snapshot(sint8 *file, uchar nb)
    if (CFG.Sound_output) {
 	APU_stop(); // Make sure that the APU is *completely* stopped
    	// Read SPC file format
-	fread_fs(APU_RAM_ADDRESS, 1, 0x10200, f);
-	//f_read(&fhandler, APU_RAM_ADDRESS, 0x10200, &read_so_far);
-  
+	fread(APU_RAM_ADDRESS-0x100, 1, 0x10200, f);
 	APU_loadSpc(); 
   }
 
   free(snapshot);
   free(header);
-  fclose_fs(f);
-  //f_close(&fhandler);
+  fclose(f);
   FS_unlock();
 
   GFX.tiles_dirty = 1;
   GFX.Sprites_table_dirty = 1;
   CPU.unpacked = 0; // Update ASM  
-  return 0;
 }
 
-int write_snapshot(sint8 *file, uint8 nb, const sint8 *name)
+int write_snapshot(char *file, unsigned char nb, const char *name)
 {
   FILE *f;
-  //FIL fhandler;
   int	i;
 
   if (nb > 8) return 0;
   file[strlen(file)-1] = '0'+nb; // XXX.SM1 XXXX.SM2 ....
-  
+  // 3 retries for my buggy M3 slim  
   FS_lock();
-  
-  if ((f = fopen_fs(file, "w")) == NULL)
-	//if(!(f_open(&fhandler,file,FA_WRITE | FA_OPEN_ALWAYS) == FR_OK))
-  
-	/*
-	--both removed originally
-	if ((f = fopen(file, "w")) == NULL)
-	  	if ((f = fopen(file, "w")) == NULL)
-	*/
-		
+  if ((f = fopen(file, "w")) == NULL)
+/*	  if ((f = fopen(file, "w")) == NULL)
+	  	if ((f = fopen(file, "w")) == NULL)*/
   {
 	  FS_unlock();
   	  return 0;
@@ -191,36 +173,24 @@ int write_snapshot(sint8 *file, uint8 nb, const sint8 *name)
   
   TSnapShot_Header *header = (TSnapShot_Header *)malloc(sizeof(TSnapShot_Header));
   strcpy(header->name, name);  
-  
-  fwrite_fs(header, sizeof(TSnapShot_Header), 1, f);
-	//unsigned int written;
-	//f_write(&fhandler, header, sizeof(TSnapShot_Header), &written);
-	
-  fwrite_fs(SNESC.RAM,  0x20000, 1, f);
-	//f_write(&fhandler, SNESC.RAM, 0x20000, &written);
-	
-  fwrite_fs(SNESC.VRAM, 0x10000, 1, f);
-	//f_write(&fhandler, SNESC.VRAM, 0x10000, &written);
-	
-  fwrite_fs(SNESC.SRAM, 0x8000, 1, f);
-	//f_write(&fhandler, SNESC.SRAM, 0x8000, &written);
-	
+  fwrite(header, sizeof(TSnapShot_Header), 1, f);
+
+  fwrite(SNESC.RAM,  0x20000, 1, f);
+  fwrite(SNESC.VRAM, 0x10000, 1, f);
+  fwrite(SNESC.SRAM, 0x8000, 1, f);
   for (i = 0; i < 256; i++)
   {
   	uint8	pal[3];
   	pal[2] = GFX.SNESPal[i]<<1;
   	pal[1] = (GFX.SNESPal[i]>>5)<<1;
   	pal[0] = (GFX.SNESPal[i]>>10)<<1;  	
-    fwrite_fs(pal, 3, 1, f);
-	//f_write(&fhandler, pal, 3, &written);
-	
+    fwrite(pal, 3, 1, f);
   }
     
-  fwrite_fs(CPU.PPU_PORT,  2*0x90, 1, f);
-  //f_write(&fhandler, CPU.PPU_PORT, 2*0x90, &written);
-	
-  fwrite_fs(CPU.DMA_PORT,  2*0x180, 1, f);
-  //f_write(&fhandler, CPU.DMA_PORT, 2*0x180, &written);
+  fwrite(PPU_PORT,  2*0x90, 1, f);
+  fwrite(EMPTYMEM, 	2*0x70, 1, f); // unused
+  fwrite(DMA_PORT,  2*0x180, 1, f);
+  fwrite(EMPTYMEM, 	2*0x80, 1, f); // unused
   
   TSnapShot *snapshot = (TSnapShot *)malloc(sizeof(TSnapShot));
 
@@ -239,21 +209,18 @@ int write_snapshot(sint8 *file, uint8 nb, const sint8 *name)
 
   //GUI_console_printf(0, 23, "State written");
   
-  fwrite_fs(snapshot,  sizeof(TSnapShot), 1, f);
-  //f_write(&fhandler, snapshot, sizeof(TSnapShot), &written);
+  fwrite(snapshot,  sizeof(TSnapShot), 1, f);
   
   if (CFG.Sound_output) {
   	APU_stop(); // Make sure that the APU is *completely* stopped
 	APU_saveSpc(); 
    	
-	fwrite_fs(APU_RAM_ADDRESS, 1, 0x10200, f);
-	//f_write(&fhandler, APU_RAM_ADDRESS, 0x10200, &written);
+	fwrite(APU_RAM_ADDRESS-0x100, 1, 0x10200, f);
   }
   
   free(snapshot);
   free(header);
-  fclose_fs(f);
-  //f_close(&fhandler);
+  fclose(f);
   FS_unlock();
   return (1);
 }

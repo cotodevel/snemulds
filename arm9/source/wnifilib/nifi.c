@@ -18,8 +18,6 @@ USA
 
 */
 
-#ifdef ARM9
-
 //DSWNIFI Library revision: 1.1
 #include "nifi.h"
 
@@ -29,13 +27,15 @@ USA
 
 #include "specific_shared.h"
 #include "wifi_arm9.h"
-#include "dswnifi.h"
+#include "multi.h"
 #include "dswifi9.h"
 #include "wifi_shared.h"
 #include "wifi_arm9.h"
 #include "toolchain_utils.h"
 
+#include "client_http_handler.h"
 #include "http_utils.h"
+
 #include "socket.h"
 #include "in.h"
 #include <netdb.h>
@@ -60,24 +60,11 @@ USA
 #endif
 
 //nifi_stat: 0 not ready, 1 act as a host and waiting, 2 act as a guest and waiting, 3 connecting, 4 connected, 5 host ready, 6 guest ready
-
+//
 int nifi_stat = 0;	//start as idle always
 int nifi_cmd = 0;
 int nifi_keys = 0;		//holds the keys for players. player1 included
 int nifi_keys_sync;	//(guestnifikeys & hostnifikeys)
-
-
-
-int plykeys1 = 0;		//player1
-int plykeys2 = 0;		//player2
-
-int host_vcount = 0;		//host generated REG_VCOUNT
-int guest_vcount = 0;		//guest generated REG_VCOUNT
-
-int host_framecount = 0;
-int guest_framecount = 0;
-
-
 
 //frames
 //
@@ -183,7 +170,7 @@ int Wifi_RawTxFrame_WIFI(uint8 datalen, uint8 * data) {
 	//sender phase
 	{
 		
-		switch(dswifiSrv.dsnwifisrv_stat){
+		switch(SpecificIPC->dswifiSrv.dsnwifisrv_stat){
 		
 			//#1 DS is not connected, wait until server acknowledges this info
 			case(ds_searching_for_multi_servernotaware):{		
@@ -214,12 +201,12 @@ int Wifi_RawTxFrame_WIFI(uint8 datalen, uint8 * data) {
 					int LISTENER_PORT 	=	0;
 					int SENDER_PORT		=	0;
 					char status[10];
-					if(dswifiSrv.dsnwifisrv_stat == ds_netplay_host_servercheck){
+					if(SpecificIPC->dswifiSrv.dsnwifisrv_stat == ds_netplay_host_servercheck){
 						LISTENER_PORT 	= 	(int)NDSMULTI_UDP_PORT_HOST;
 						SENDER_PORT		=	(int)NDSMULTI_UDP_PORT_GUEST;
 						sprintf(status,"host");
 					}
-					else if(dswifiSrv.dsnwifisrv_stat == ds_netplay_guest_servercheck){
+					else if(SpecificIPC->dswifiSrv.dsnwifisrv_stat == ds_netplay_guest_servercheck){
 						LISTENER_PORT 	= 	(int)NDSMULTI_UDP_PORT_GUEST;
 						SENDER_PORT		=	(int)NDSMULTI_UDP_PORT_HOST;
 						sprintf(status,"guest");
@@ -253,7 +240,7 @@ int Wifi_RawTxFrame_WIFI(uint8 datalen, uint8 * data) {
 //coto: just for nifi mode (not wifi)
 //true 	== 	nifi frame
 //false ==	other frame
-bool NiFiHandler(int packetID, int readlength, uint8 * data){
+inline bool NiFiHandler(int packetID, int readlength, uint8 * data){
 	
 	bool valid_nifi_frame = false;
 	
@@ -309,7 +296,7 @@ bool NiFiHandler(int packetID, int readlength, uint8 * data){
 				break;
 			case 4:
 				if(data[frame_header_size + 2] == CRC_OK_SAYS_HOST) {
-					receiveDSWNIFIFrame(data,readlength);
+					getcmd(data);
 					/*
 					if(nifi_cmd & MP_CONN) {	//CRC ok, get ready for multi-play.
 						valid_nifi_frame = true;
@@ -366,12 +353,19 @@ bool NiFiHandler(int packetID, int readlength, uint8 * data){
 		
 		if(crc16_frame_gen == crc16_recv_frame){		//works stable
 			valid_nifi_frame = true;
-			receiveDSWNIFIFrame(data,readlength);
+			getcmd(data);
+			
+			//char buf[64];
+			//sprintf(buf,"[NIFI FRAME CRC OK]");
+			//consoletext(64*2-32,(char *)&buf[0],0);
+		
 			//discard frame used contents. Prevent likely frames
 			memset(data ,0,frame_header_size + framesize);
 		}
 		else{
-			//NIFI FRAME CRC CORRUPTED
+			//char buf[64];
+			//sprintf(buf,"[NIFI FRAME CRC CORRUPTED]");
+			//consoletext(64*2-32,(char *)&buf[0],0);
 		}
 		
 	}
@@ -380,11 +374,11 @@ bool NiFiHandler(int packetID, int readlength, uint8 * data){
 }
 
 
-void Handler(int packetID, int readlength)
+inline void Handler(int packetID, int readlength)
 {
 	//coto
-	switch(getMULTIMode()){
-		case (dswifi_localnifimode):{
+	switch(SpecificIPC->dswifiSrv.dsnwifisrv_mode){
+		case (dswifi_nifimode):{
 			Wifi_RxRawReadPacket(packetID, readlength, (unsigned short *)data);
 			NiFiHandler(packetID, readlength, (uint8*)(&data[0]));	
 		}
@@ -392,9 +386,7 @@ void Handler(int packetID, int readlength)
 		
 		//cant be here, eats too many cycles lagging network services	
 		/*
-		case (dswifi_udpnifimode):
-		case (dswifi_tcpnifimode):
-		{
+		case (dswifi_wifimode):{
 			
 		}
 		break;
@@ -428,6 +420,3 @@ void initNiFi()
 		EnableIrq(IRQ_TIMER3);
 	}
 }
-
-
-#endif

@@ -63,18 +63,11 @@ GNU General Public License for more details.
 #define STATIC_INLINE static inline
 #endif
 
-//handled by stdbool.h
-/*
-#if (TRUE != 1)
 #undef TRUE
 #define TRUE    1
-#endif
 
-#if (FALSE != 0)
 #undef FALSE
 #define FALSE   0
-#endif
-*/
 
 
 #define GET_WORD16(a) (*((uint8 *)(a)) | (*(((uint8 *)(a))+1) << 8)) 

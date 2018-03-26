@@ -1,26 +1,38 @@
+#include "typedefs.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+#include <malloc.h>
 #include <string.h>
 
-#include "common.h"                 //snes common
-#include "specific_shared.h"
-
+#include "common.h"
 #include "gfx.h"
+#include "snes.h"
 #include "cfg.h"
+
 #include "apu.h"
-#include "core.h"
 #include "opcodes.h"
-#include "gui.h"
-#include "dsregs.h"
-#include "ppu.h"
-#include "api_wrapper.h"
-#include "dswnifi.h"
+#include "cpu.h"
+#include "gui_console_connector.h"
 #include "video.h"
 #include "keypad.h"
 
+//extern touchPosition superTouchReadXY();
+
+extern u32 keys;
 
 uint32	joypad_conf_mode = 0;
 uint32	mouse_cur_b;
 
+// Debug
+extern	uint32			CPU_log;
 
+/*
+int	setBacklight(int flags)
+{
+	SendArm7Command(8 | (flags << 16));
+}
+*/
 int myLCDSwap()
 {
 	SWAP_LCDS();
@@ -34,12 +46,14 @@ int myLCDSwap()
 	return 0;
 }
 
-
 int get_joypad()
 {
 	int res = 0;
-    keys = keysPressed();
-	
+
+//#define KEYS_CUR (( ((~REG_KEYINPUT)&0x3ff) | (((~IPC->buttons)&3)<<10) | \
+//	 			 (((~IPC->buttons)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID)	
+	keys = keysPressed();
+
 #if 0
 		if( (keys & KEY_L))
 		{
@@ -62,6 +76,8 @@ int get_joypad()
 				LOG("%04x %04x %02x %02x %04x %04x\n", CPU.PC,
 				(uint32)((sint32)PCptr+(sint32)SnesPCOffset),
 				PORT_SNES_TO_SPC[1], PORT_SPC_TO_SNES[1],  
+				
+				 (*(uint32*)(0x27E0000)) & 0xFFFF, *(uint16 *)(APU_RAM_ADDRESS+0x18));
 				
 				//PORT_SNES_TO_SPC[1] = 0x44; 		
 			}
@@ -158,6 +174,8 @@ int get_joypad()
 	}
 #endif	 	 
 	 
+/*	scanKeys();	
+	keys = keysHeld();*/
 	if( keys & KEY_B ) res |= 0x8000;
 	if( keys & KEY_Y ) res |= 0x4000;
 	if( keys & KEY_SELECT ) res |= 0x2000;
@@ -195,10 +213,12 @@ int get_joypad()
 			}  
 		}
 
-        
-		if(keysHeld() & KEY_TOUCH)	// much better
-		{
-			int tx=0, ty=0;
+		//touchPosition touchXY;
+		//touchXY = superTouchReadXY();
+		
+		if (keysHeld() & KEY_TOUCH)
+		{		
+			int tx, ty;
 
 			tx = MyIPC->touchXpx;
 			if (CFG.Scaled == 0) // No scaling
@@ -244,22 +264,21 @@ int get_joypad()
 
 
 
-
 //new
 uint16 read_joypad1() {
-	return (uint16)(CPU.DMA_PORT[0x18] | (CPU.DMA_PORT[0x19] << 8));
+	return (uint16)(DMA_PORT[0x18] | (DMA_PORT[0x19] << 8));
 }
 
 uint16 read_joypad2() {
-	return (uint16)(CPU.DMA_PORT[0x1a] | (CPU.DMA_PORT[0x1b] << 8));
+	return (uint16)(DMA_PORT[0x1a] | (DMA_PORT[0x1b] << 8));
 }
 
 void write_joypad1(uint16 bits){
-	CPU.DMA_PORT[0x18] = (bits&0xff);
-	CPU.DMA_PORT[0x19] = ((bits>>8)&0xff);
+	DMA_PORT[0x18] = (bits&0xff);
+	DMA_PORT[0x19] = ((bits>>8)&0xff);
 }
 
 void write_joypad2(uint16 bits){
-	CPU.DMA_PORT[0x1a] = (bits&0xff);
-	CPU.DMA_PORT[0x1b] = ((bits>>8)&0xff);
+	DMA_PORT[0x1a] = (bits&0xff);
+	DMA_PORT[0x1b] = ((bits>>8)&0xff);
 }

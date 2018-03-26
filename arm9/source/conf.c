@@ -16,8 +16,10 @@
  * 		+ Changes from archeide 
  */
 
-#include <unistd.h>
+#include <malloc.h>
 #include <stdlib.h>
+//FIXME
+#include "posix_hook_shared.h"
 #include <unistd.h>
 #include <sys/dir.h>
 #include <stdio.h>
@@ -25,29 +27,84 @@
 #include <string.h>
 
 #include "fs.h"
-#include "posix_hook_shared.h"
 
-//stdbool.h handles these
-/*
+
 #define TRUE	1
 #define FALSE	0
-*/
-#include <stdbool.h>
-#include "conf.h"
-#include "toolchain_utils.h"
 
-CONFIG *config[MAX_CONFIGS] = { NULL, NULL, NULL, NULL };
-CONFIG *config_override = NULL;
-CONFIG *config_language = NULL;
-CONFIG *system_config = NULL;
-CONFIG_HOOK *config_hook = NULL;
-int config_installed = false;
+//#include "conf.h"
+
+//#pragma warning(disable : 4996)
+
+#if 0
+typedef struct CONFIG_ENTRY
+{
+   char *name;                      /* variable name (NULL if comment) */
+   char *data;                      /* variable value */
+   struct CONFIG_ENTRY *next;       /* linked list */
+} CONFIG_ENTRY;
+
+typedef struct CONFIG_SECTION
+{
+   char *name;                      /* variable name (NULL if comment) */
+   char *data;                      /* variable value */
+   int	*key;			    // one or more keys
+
+   struct CONFIG_SECTION *next;       /* linked list */
+   struct CONFIG_ENTRY	*head;	    /* linked list */
+} CONFIG_SECTION;
+#else
+typedef struct CONFIG_ENTRY
+{
+   char *name;                      /* variable name (NULL if comment) */
+   char *data;                      /* variable value */
+   struct CONFIG_ENTRY *next;       /* linked list */
+} CONFIG_ENTRY;
+#endif
+
+typedef struct CONFIG
+{
+#if 0
+   CONFIG_SECTION *head;              /* linked list of config entries */
+#else
+   CONFIG_ENTRY *head;              /* linked list of config entries */
+#endif
+   char *filename;                  /* where were we loaded from? */
+   int dirty;                       /* has our data changed? */
+} CONFIG;
 
 
+typedef struct CONFIG_HOOK
+{
+   char *section;                   /* hooked config section info */
+   int (*intgetter)(char *name, int def);
+   char *(*stringgetter)(char *name, char *def);
+   void (*stringsetter)(char *name, char *value);
+   struct CONFIG_HOOK *next; 
+} CONFIG_HOOK;
 
 
-//emuCore CFG into file setting
-void save_config(CONFIG *cfg)
+#define MAX_CONFIGS     4
+
+static CONFIG *config[MAX_CONFIGS] = { NULL, NULL, NULL, NULL };
+static CONFIG *config_override = NULL;
+static CONFIG *config_language = NULL;
+static CONFIG *system_config = NULL;
+
+static CONFIG_HOOK *config_hook = NULL;
+
+static int config_installed = FALSE;
+
+// NL
+#define MIN(a, b) (((a) < (b))?(a):(b))
+#define AL_ID(a,b,c,d)	    0
+
+long file_size(char *filename)
+{
+	return FS_getFileSize(filename);
+}
+
+static void save_config(CONFIG *cfg)
 {
    CONFIG_ENTRY *pos;
 
@@ -57,53 +114,41 @@ void save_config(CONFIG *cfg)
 			FS_lock();
 		    /* write changed data to disk */
 		    FILE *f = fopen_fs(cfg->filename, "w");
-			//FIL fhandler;
-			
-			//if(f_open(&fhandler,cfg->filename,FA_WRITE | FA_OPEN_ALWAYS) == FR_OK)
-			if(f)
-			{				
-				pos = cfg->head;
+	
+		    if (f) {
+		       pos = cfg->head;
 	
 		       while (pos) {
 			  	 if (pos->name) {
-			    	 
-					 fputs_fs(pos->name, f);
-			     	 //f_puts(pos->name,&fhandler);
-					 
-					 if (pos->name[0] != '['){
-						fputs_fs(" = ", f);
-						//f_puts(" = ",&fhandler);
-					 }
+			    	 fputs_fs(pos->name, f);
+			     	 if (pos->name[0] != '[')
+					 fputs_fs(" = ", f);
 			     }
-			    if (pos->data){
+			     if (pos->data)
 			       fputs_fs(pos->data, f);
-				   //f_puts(pos->data,&fhandler);
-				}
+	
 			     fputs_fs("\n", f);
-			     //f_puts("\n",&fhandler);
-				 
-				 pos = pos->next;
+			     pos = pos->next;
 		       }
 		       fclose_fs(f);
-				//f_close(&fhandler);
-			}
+		    }
 		    FS_unlock();
 		  }
       }
    }
 }
 
-
 void save_config_file()
 {
 	save_config(config[0]);
 }
 
+
 /* destroy_config:
  *  Destroys a config structure, writing it out to disk if the contents
  *  have changed.
  */
-void destroy_config(CONFIG *cfg)
+static void destroy_config(CONFIG *cfg)
 {
    CONFIG_ENTRY *pos, *prev;
 
@@ -140,7 +185,7 @@ void destroy_config(CONFIG *cfg)
  *  Called at shutdown time to free memory being used by the config routines,
  *  and write any changed data out to disk.
  */
-void config_cleanup()
+static void config_cleanup()
 {
    CONFIG_HOOK *hook, *nexthook;
    int i;
@@ -183,7 +228,7 @@ void config_cleanup()
    }
 
 //   _remove_exit_func(config_cleanup);
-   config_installed = false;
+   config_installed = FALSE;
 }
 
 
@@ -193,19 +238,19 @@ void config_cleanup()
  *  default config file if the loaddata flag is set and no other config
  *  file is in memory.
  */
-void init_config(int loaddata)
+static void init_config(int loaddata)
 {
    if (!config_installed) {
 //      _add_exit_func(config_cleanup);
-      config_installed = true;
+      config_installed = TRUE;
    }
 
    if (!system_config) {
-      system_config = (CONFIG *)malloc(sizeof(CONFIG));
+      system_config = malloc(sizeof(CONFIG));
       if (system_config) {
 	 system_config->head = NULL;
 	 system_config->filename = NULL;
-	 system_config->dirty = false;
+	 system_config->dirty = FALSE;
       }
    }
 }
@@ -215,9 +260,9 @@ void init_config(int loaddata)
 /* get_line: 
  *  Helper for splitting files up into individual lines.
  */
-int get_line(sint8 *data, int length, sint8 *name, sint8 *val)
+static int get_line(char *data, int length, char *name, char *val)
 {
-   sint8 buf[256], buf2[256];
+   char buf[256], buf2[256];
    int pos, i, j;
 
    for (pos=0; (pos<length) && (pos<255); pos++) {
@@ -239,7 +284,7 @@ int get_line(sint8 *data, int length, sint8 *name, sint8 *val)
 
    /* skip leading spaces */
    i = 0;
-   while ((buf[i]) && (isspace((int)buf[i])))
+   while ((buf[i]) && (isspace(buf[i])))
       i++;
 
    if (buf[i] == '[')
@@ -258,7 +303,7 @@ int get_line(sint8 *data, int length, sint8 *name, sint8 *val)
 
    /* read name string */
    j = 0;
-   while ((buf[i]) && (!isspace((int)buf[i])) && (buf[i] != '=') && (buf[i] != '#'))
+   while ((buf[i]) && (!isspace(buf[i])) && (buf[i] != '=') && (buf[i] != '#'))
       buf2[j++] = buf[i++];
 
    if (j) {
@@ -266,14 +311,14 @@ int get_line(sint8 *data, int length, sint8 *name, sint8 *val)
       buf2[j] = 0;
       strcpy(name, buf2);
 
-      while ((buf[i]) && ((isspace((int)buf[i])) || (buf[i] == '=')))
+      while ((buf[i]) && ((isspace(buf[i])) || (buf[i] == '=')))
 	 i++;
 
       strcpy(val, buf+i);
 
       /* strip trailing spaces */
       i = strlen(val) - 1;
-      while ((i >= 0) && (isspace((int)val[i])))
+      while ((i >= 0) && (isspace(val[i])))
 	 val[i--] = 0;
    }
    else {
@@ -291,16 +336,16 @@ int get_line(sint8 *data, int length, sint8 *name, sint8 *val)
  *  Does the work of setting up a config structure.
  */
 #if 0
-static void set_config(CONFIG **config, sint8 *data, int length, sint8 *filename)
+static void set_config(CONFIG **config, char *data, int length, char *filename)
 {
-   sint8 name[256];
-   sint8 val[256];
+   char name[256];
+   char val[256];
    CONFIG_SECTION **prev, *p;
    CONFIG_ENTRY	**prev_e, *p_e;
    int pos;
    int	in_section = 0;
 
-   init_config(false);
+   init_config(FALSE);
 
    if (*config) {
       destroy_config(*config);
@@ -312,7 +357,7 @@ static void set_config(CONFIG **config, sint8 *data, int length, sint8 *filename
       return;
 
    (*config)->head = NULL;
-   (*config)->dirty = false;
+   (*config)->dirty = FALSE;
 
    if (filename) {
       (*config)->filename = malloc(strlen(filename)+1);
@@ -389,29 +434,29 @@ static void set_config(CONFIG **config, sint8 *data, int length, sint8 *filename
    }
 }
 #else
-void set_config(CONFIG **config, sint8 *data, int length, sint8 *filename)
+static void set_config(CONFIG **config, char *data, int length, char *filename)
 {
-   sint8 name[256];
-   sint8 val[256];
+   char name[256];
+   char val[256];
    CONFIG_ENTRY **prev, *p;
    int pos;
 
-   init_config(false);
-   
+   init_config(FALSE);
+
    if (*config) {
       destroy_config(*config);
       *config = NULL;
    }
 
-   *config = (CONFIG *)malloc(sizeof(CONFIG));
+   *config = malloc(sizeof(CONFIG));
    if (!(*config))
       return;
 
    (*config)->head = NULL;
-   (*config)->dirty = false;
+   (*config)->dirty = FALSE;
 
    if (filename) {
-      (*config)->filename = (sint8 *)malloc(strlen(filename)+1);
+      (*config)->filename = malloc(strlen(filename)+1);
       if ((*config)->filename)
 	 strcpy((*config)->filename, filename); 
    }
@@ -424,19 +469,19 @@ void set_config(CONFIG **config, sint8 *data, int length, sint8 *filename)
    while (pos < length) {
       pos += get_line(data+pos, length-pos, name, val);
 
-      p = (CONFIG_ENTRY *)malloc(sizeof(CONFIG_ENTRY));
+      p = malloc(sizeof(CONFIG_ENTRY));
       if (!p)
 	 return;
 
       if (name[0]) {
-	 p->name = (sint8*)malloc(strlen(name)+1);
+	 p->name = malloc(strlen(name)+1);
 	 if (p->name)
 	    strcpy(p->name, name);
       }
       else
 	 p->name = NULL;
 
-      p->data = (sint8*)malloc(strlen(val)+1);
+      p->data = malloc(strlen(val)+1);
       if (p->data)
 	 strcpy(p->data, val);
 
@@ -452,51 +497,41 @@ void set_config(CONFIG **config, sint8 *data, int length, sint8 *filename)
 /* load_config_file:
  *  Does the work of loading a config file.
  */
-void load_config_file(CONFIG **config, sint8 *filename, sint8 *savefile)	//requires getfatfsPath() to be called from outside!
+static void load_config_file(CONFIG **config, char *filename, char *savefile)
 {
-	int length = 0;
+	int length;
+
 	if (*config)
 	{
 		destroy_config(*config);
 		*config = NULL;
 	}
 
-	length = FS_getFileSize(filename);
-	
+	length = file_size(filename);
+
 	if (length > 0)
 	{
 		FS_lock();
-		FILE *f = fopen_fs(filename, "r");
+		FILE *f = fopen_fs(filename, "rb");
 		if (f)
 		{
-		//FIL fhandler;
-		//if(f_open(&fhandler,filename,FA_READ) == FR_OK)
-		//{
-			sint8 *tmp = (sint8*)malloc(length);
+			char *tmp = malloc(length);
 			if (tmp)
 			{
 				fread_fs(tmp, 1, length, f);
-				//unsigned int read_so_far;
-				//f_read(&fhandler, tmp, length, &read_so_far);
-				printf("Config loaded.\n");
 				set_config(config, tmp, length, savefile);
 				free(tmp);
 			}
-			else{
-				printf("Config not found.Generating...\n");
+			else
 				set_config(config, NULL, 0, savefile);
-			}
 			fclose_fs(f);
-			//f_close(&fhandler);
 		}
-		else{
+		else
 			set_config(config, NULL, 0, savefile);
-		}
 		FS_unlock();
 	}
-	else{
+	else
 		set_config(config, NULL, 0, savefile);
-	}
 }
 
 
@@ -504,7 +539,7 @@ void load_config_file(CONFIG **config, sint8 *filename, sint8 *savefile)	//requi
 /* set_config_file:
  *  Sets the file to be used for all future configuration operations.
  */
-void set_config_file(sint8 *filename)
+void set_config_file(char *filename)
 {
    load_config_file(&config[0], filename, filename);
 }
@@ -515,7 +550,7 @@ void set_config_file(sint8 *filename)
  *  Sets the block of data to be used for all future configuration 
  *  operations.
  */
-void set_config_data(sint8 *data, int length)
+void set_config_data(char *data, int length)
 {
    set_config(&config[0], data, length, NULL);
 }
@@ -525,7 +560,7 @@ void set_config_data(sint8 *data, int length)
 /* override_config_file:
  *  Sets the file that will override all future configuration operations.
  */
-void override_config_file(sint8 *filename)
+void override_config_file(char *filename)
 {
    load_config_file(&config_override, filename, NULL);
 }
@@ -536,7 +571,7 @@ void override_config_file(sint8 *filename)
  *  Sets the block of data that will override all future configuration 
  *  operations.
  */
-void override_config_data(sint8 *data, int length)
+void override_config_data(char *data, int length)
 {
    set_config(&config_override, data, length, NULL);
 }
@@ -582,7 +617,7 @@ void pop_config_state()
 /* prettify_section_name:
  *  Helper for ensuring that a section name is enclosed by [ ] braces.
  */
-void prettify_section_name(sint8 *in, sint8 *out)
+static void prettify_section_name(char *in, char *out)
 {
    if (in) {
       if (in[0] != '[')
@@ -606,12 +641,12 @@ void prettify_section_name(sint8 *in, sint8 *out)
  *  override the normal table of values, and give the provider of the hooks 
  *  complete control over that section.
  */
-void hook_config_section(sint8 *section, int (*intgetter)(sint8 *, int), sint8 *(*stringgetter)(sint8 *, sint8 *), void (*stringsetter)(sint8 *,sint8 *))
+void hook_config_section(char *section, int (*intgetter)(char *, int), char *(*stringgetter)(char *, char *), void (*stringsetter)(char *,char *))
 {
    CONFIG_HOOK *hook, **prev;
-   sint8 section_name[256];
+   char section_name[256];
 
-   init_config(false);
+   init_config(FALSE);
 
    prettify_section_name(section, section_name);
 
@@ -619,7 +654,7 @@ void hook_config_section(sint8 *section, int (*intgetter)(sint8 *, int), sint8 *
    prev = &config_hook;
 
    while (hook) {
-      if (strcasecmp(section_name, hook->section) == 0) {
+      if (stricmp(section_name, hook->section) == 0) {
 	 if ((intgetter) || (stringgetter) || (stringsetter)) {
 	    /* modify existing hook */
 	    hook->intgetter = intgetter;
@@ -641,11 +676,11 @@ void hook_config_section(sint8 *section, int (*intgetter)(sint8 *, int), sint8 *
    }
 
    /* add a new hook */
-   hook = (CONFIG_HOOK*)malloc(sizeof(CONFIG_HOOK));
+   hook = malloc(sizeof(CONFIG_HOOK));
    if (!hook)
       return;
 
-   hook->section = (sint8*)malloc(strlen(section_name)+1);
+   hook->section = malloc(strlen(section_name)+1);
    if (!(hook->section)) {
       free(hook);
       return;
@@ -665,21 +700,21 @@ void hook_config_section(sint8 *section, int (*intgetter)(sint8 *, int), sint8 *
 /* is_config_hooked:
  *  Checks whether a specific section is hooked in any way.
  */
-int config_is_hooked(sint8 *section)
+int config_is_hooked(char *section)
 {
    CONFIG_HOOK *hook = config_hook;
-   sint8 section_name[256];
+   char section_name[256];
 
    prettify_section_name(section, section_name);
 
    while (hook) {
-      if (strcasecmp(section_name, hook->section) == 0)
-	 return true;
+      if (stricmp(section_name, hook->section) == 0)
+	 return TRUE;
 
       hook = hook->next;
    }
 
-   return false;
+   return FALSE;
 }
 
 
@@ -687,10 +722,10 @@ int config_is_hooked(sint8 *section)
 /* find_config_string:
  *  Helper for finding an entry in the configuration file.
  */
-CONFIG_ENTRY *find_config_string(CONFIG *config, sint8 *section, sint8 *name, CONFIG_ENTRY **prev)
+static CONFIG_ENTRY *find_config_string(CONFIG *config, char *section, char *name, CONFIG_ENTRY **prev)
 {
    CONFIG_ENTRY *p;
-   int in_section = true;
+   int in_section = TRUE;
 
    if (config) {
       p = config->head;
@@ -702,11 +737,11 @@ CONFIG_ENTRY *find_config_string(CONFIG *config, sint8 *section, sint8 *name, CO
 	 if (p->name) {
 	    if ((section) && (p->name[0] == '[') && (p->name[strlen(p->name)-1] == ']')) {
 	       /* change section */
-	       in_section = (strcasecmp(section, p->name) == 0);
+	       in_section = (stricmp(section, p->name) == 0);
 	    }
 	    if ((in_section) || (name[0] == '[')) {
 	       /* is this the one? */
-	       if (strcasecmp(p->name, name) == 0)
+	       if (stricmp(p->name, name) == 0)
 		  return p;
 	    }
 	 }
@@ -724,13 +759,13 @@ CONFIG_ENTRY *find_config_string(CONFIG *config, sint8 *section, sint8 *name, CO
 /* get_config_string:
  *  Reads a string from the configuration file.
  */
-sint8 *get_config_string(sint8 *section, sint8 *name, sint8 *def)
+char *get_config_string(char *section, char *name, char *def)
 {
-   sint8 section_name[256];
+   char section_name[256];
    CONFIG_HOOK *hook;
    CONFIG_ENTRY *p;
 
-   init_config(true);
+   init_config(TRUE);
 
    prettify_section_name(section, section_name);
 
@@ -738,7 +773,7 @@ sint8 *get_config_string(sint8 *section, sint8 *name, sint8 *def)
    hook = config_hook;
 
    while (hook) {
-      if (strcasecmp(section_name, hook->section) == 0) {
+      if (stricmp(section_name, hook->section) == 0) {
 	 if (hook->stringgetter)
 	    return hook->stringgetter(name, def);
 	 else
@@ -757,12 +792,10 @@ sint8 *get_config_string(sint8 *section, sint8 *name, sint8 *def)
 	 p = find_config_string(config[0], section_name, name, NULL);
    }
 
-	if (p){
-		return ((sint8*)p->data ? (sint8*)p->data : (sint8*)"");
-	}
-	else{
-		return def;
-	}
+   if (p)
+      return (p->data ? p->data : "");
+   else
+      return def;
 }
 
 
@@ -770,11 +803,11 @@ sint8 *get_config_string(sint8 *section, sint8 *name, sint8 *def)
 /* get_config_int:
  *  Reads an integer from the configuration file.
  */
-int get_config_int(sint8 *section, sint8 *name, int def)
+int get_config_int(char *section, char *name, int def)
 {
    CONFIG_HOOK *hook;
-   sint8 section_name[256];
-   sint8 *s;
+   char section_name[256];
+   char *s;
 
    prettify_section_name(section, section_name);
 
@@ -782,7 +815,7 @@ int get_config_int(sint8 *section, sint8 *name, int def)
    hook = config_hook;
 
    while (hook) {
-      if (strcasecmp(section_name, hook->section) == 0) {
+      if (stricmp(section_name, hook->section) == 0) {
 	 if (hook->intgetter) {
 	    return hook->intgetter(name, def);
 	 }
@@ -813,14 +846,14 @@ int get_config_int(sint8 *section, sint8 *name, int def)
 /* get_config_hex:
  *  Reads a hexadecimal integer from the configuration file.
  */
-int get_config_hex(sint8 *section, sint8 *name, int def)
+int get_config_hex(char *section, char *name, int def)
 {
-   sint8 *s = get_config_string(section, name, NULL);
+   char *s = get_config_string(section, name, NULL);
    int i;
 
    if ((s) && (*s)) {
       i = strtol(s, NULL, 16);
-      if ((i == 0x7FFFFFFF) && (strcasecmp(s, "7FFFFFFF") != 0))	//fat16 boundary limits
+      if ((i == 0x7FFFFFFF) && (stricmp(s, "7FFFFFFF") != 0))
 	 i = -1;
       return i;
    }
@@ -832,9 +865,9 @@ int get_config_hex(sint8 *section, sint8 *name, int def)
 /* get_config_oct:
  *  Reads a octal integer from the configuration file.
  */
-int get_config_oct(sint8 *section, sint8 *name, int def)
+int get_config_oct(char *section, char *name, int def)
 {
-   sint8 *s = get_config_string(section, name, NULL);
+   char *s = get_config_string(section, name, NULL);
    int i;
 
    if ((s) && (*s)) {
@@ -848,9 +881,9 @@ int get_config_oct(sint8 *section, sint8 *name, int def)
 /* get_config_float:
  *  Reads a float from the configuration file.
  */
-float get_config_float(sint8 *section, sint8 *name, float def)
+float get_config_float(char *section, char *name, float def)
 {
-   sint8 *s = get_config_string(section, name, NULL);
+   char *s = get_config_string(section, name, NULL);
 
    if ((s) && (*s))
       return atof(s);
@@ -862,15 +895,15 @@ float get_config_float(sint8 *section, sint8 *name, float def)
 /* get_config_argv:
  *  Reads an argc/argv style token list from the configuration file.
  */
-sint8 **get_config_argv(sint8 *section, sint8 *name, int *argc)
+char **get_config_argv(char *section, char *name, int *argc)
 {
-   
+   #define MAX_ARGV  16
 
-   static sint8 buf[256];
-   static sint8 *argv[MAX_ARGV];
+   static char buf[256];
+   static char *argv[MAX_ARGV];
    int pos, ac;
 
-   sint8 *s = get_config_string(section, name, NULL);
+   char *s = get_config_string(section, name, NULL);
 
    if (!s) {
       *argc = 0;
@@ -882,13 +915,13 @@ sint8 **get_config_argv(sint8 *section, sint8 *name, int *argc)
    ac = 0;
 
    while ((ac<MAX_ARGV) && (buf[pos]) && (buf[pos] != '#')) {
-      while ((buf[pos]) && (isspace((int)buf[pos])))
+      while ((buf[pos]) && (isspace(buf[pos])))
 	 pos++;
 
       if ((buf[pos]) && (buf[pos] != '#')) {
 	 argv[ac++] = buf+pos;
 
-	 while ((buf[pos]) && (!isspace((int)buf[pos])))
+	 while ((buf[pos]) && (!isspace(buf[pos])))
 	    pos++;
 
 	 if (buf[pos])
@@ -905,15 +938,15 @@ sint8 **get_config_argv(sint8 *section, sint8 *name, int *argc)
 /* insert_variable:
  *  Helper for inserting a new variable into a configuration file.
  */
-CONFIG_ENTRY *insert_variable(CONFIG *the_config, CONFIG_ENTRY *p, sint8 *name, sint8 *data)
+static CONFIG_ENTRY *insert_variable(CONFIG *the_config, CONFIG_ENTRY *p, char *name, char *data)
 {
-   CONFIG_ENTRY *n = (CONFIG_ENTRY *)malloc(sizeof(CONFIG_ENTRY));
+   CONFIG_ENTRY *n = malloc(sizeof(CONFIG_ENTRY));
 
    if (!n)
       return NULL;
 
    if (name) {
-      n->name = (sint8*)malloc(strlen(name)+1);
+      n->name = malloc(strlen(name)+1);
       if (n->name)
 	 strcpy(n->name, name);
    }
@@ -921,7 +954,7 @@ CONFIG_ENTRY *insert_variable(CONFIG *the_config, CONFIG_ENTRY *p, sint8 *name, 
       n->name = NULL;
 
    if (data) {
-      n->data = (sint8*)malloc(strlen(data)+1);
+      n->data = malloc(strlen(data)+1);
       if (n->data)
 	 strcpy(n->data, data);
    }
@@ -945,14 +978,14 @@ CONFIG_ENTRY *insert_variable(CONFIG *the_config, CONFIG_ENTRY *p, sint8 *name, 
 /* set_config_string:
  *  Writes a string to the configuration file.
  */
-void set_config_string(sint8 *section, sint8 *name, sint8 *val)
+void set_config_string(char *section, char *name, char *val)
 {
    CONFIG *the_config;
    CONFIG_HOOK *hook;
    CONFIG_ENTRY *p, *prev;
-   sint8 section_name[256];
+   char section_name[256];
 
-   init_config(true);
+   init_config(TRUE);
 
    prettify_section_name(section, section_name);
 
@@ -960,7 +993,7 @@ void set_config_string(sint8 *section, sint8 *name, sint8 *val)
    hook = config_hook;
 
    while (hook) {
-      if (strcasecmp(section_name, hook->section) == 0) {
+      if (stricmp(section_name, hook->section) == 0) {
 	 if (hook->stringsetter)
 	    hook->stringsetter(name, val);
 	 return;
@@ -983,7 +1016,7 @@ void set_config_string(sint8 *section, sint8 *name, sint8 *val)
 	    if (p->data)
 	       free(p->data);
 
-	    p->data = (sint8*)malloc(strlen(val)+1);
+	    p->data = malloc(strlen(val)+1);
 	    if (p->data)
 	       strcpy(p->data, val);
 	 }
@@ -1038,7 +1071,7 @@ void set_config_string(sint8 *section, sint8 *name, sint8 *val)
 	 } 
       }
 
-      the_config->dirty = true;
+      the_config->dirty = TRUE;
    }
 }
 
@@ -1047,9 +1080,9 @@ void set_config_string(sint8 *section, sint8 *name, sint8 *val)
 /* set_config_int:
  *  Writes an integer to the configuration file.
  */
-void set_config_int(sint8 *section, sint8 *name, int val)
+void set_config_int(char *section, char *name, int val)
 {
-   sint8 buf[32];
+   char buf[32];
    sprintf(buf, "%d", val);
    set_config_string(section, name, buf);
 }
@@ -1059,10 +1092,10 @@ void set_config_int(sint8 *section, sint8 *name, int val)
 /* set_config_hex:
  *  Writes a hexadecimal integer to the configuration file.
  */
-void set_config_hex(sint8 *section, sint8 *name, int val)
+void set_config_hex(char *section, char *name, int val)
 {
    if (val >= 0) {
-      sint8 buf[32];
+      char buf[32];
       sprintf(buf, "%X", val);
       set_config_string(section, name, buf);
    }
@@ -1074,11 +1107,11 @@ void set_config_hex(sint8 *section, sint8 *name, int val)
 /* set_config_oct:
  *  Writes a hexadecimal integer to the configuration file.
  */
-void set_config_oct(sint8 *section, sint8 *name, int size, int val)
+void set_config_oct(char *section, char *name, int size, int val)
 {
    if (val >= 0) {
-      sint8 buf[16];
-      sint8 fmt[8];
+      char buf[16];
+      char fmt[8];
       sprintf(fmt, "%%0%do", size);
       sprintf(buf, fmt, val);
       set_config_string(section, name, buf);
@@ -1092,9 +1125,9 @@ void set_config_oct(sint8 *section, sint8 *name, int size, int val)
 /* set_config_float:
  *  Writes a float to the configuration file.
  */
-void set_config_float(sint8 *section, sint8 *name, float val)
+void set_config_float(char *section, char *name, float val)
 {
-   sint8 buf[32];
+   char buf[32];
    sprintf(buf, "%f", val);
    set_config_string(section, name, buf);
 }
@@ -1119,19 +1152,19 @@ void _load_config_text()
  *  returning a suitable message in the current language if one is
  *  available, or a copy of the parameter if no translation can be found.
  */
-sint8 * get_config_text(sint8 *msg)
+char * get_config_text(char *msg)
 {
     return NULL;
 }
 
 
-int	is_section_exists(sint8 *section)
+int	is_section_exists(char *section)
 {
    CONFIG_ENTRY *p;
    CONFIG *cfg;
-   sint8 section_name[256];
+   char section_name[256];
 
-   init_config(true);
+   init_config(TRUE);
 
    prettify_section_name(section, section_name);
 
@@ -1143,7 +1176,7 @@ int	is_section_exists(sint8 *section)
       while (p) {
 	 if (p->name) {
 	    if ((section) && (p->name[0] == '[') && (p->name[strlen(p->name)-1] == ']')) {
-	       if (strcasecmp(section_name, p->name) == 0)
+	       if (stricmp(section_name, p->name) == 0)
 			return 1;
 	    }
 	 }
@@ -1155,17 +1188,17 @@ int	is_section_exists(sint8 *section)
    return 0;
 }
 
-static sint8	g_section[100];
+static char	g_section[100];
 
 /* find_config_string:
  *  Helper for finding an entry in the configuration file.
  */
-sint8 *find_config_section_with_hex(sint8 *name, int hex)
+char *find_config_section_with_hex(char *name, int hex)
 {
    CONFIG_ENTRY *p;
    CONFIG   *cfg;
 
-   init_config(true);
+   init_config(TRUE);
 
    cfg = config[0];
 
@@ -1180,7 +1213,7 @@ sint8 *find_config_section_with_hex(sint8 *name, int hex)
 	    }
 	    else
 	    /* is this the one? */
-	       if (strcasecmp(p->name, name) == 0)
+	       if (stricmp(p->name, name) == 0)
 	       {
 		   if ((p->data) && (*p->data)) {
 		        int i;
@@ -1198,12 +1231,12 @@ sint8 *find_config_section_with_hex(sint8 *name, int hex)
    return NULL;
 }
 
-sint8 *find_config_section_with_string(sint8 *name, sint8 *str)
+char *find_config_section_with_string(char *name, char *str)
 {
    CONFIG_ENTRY *p;
    CONFIG   *cfg;
 
-   init_config(true);
+   init_config(TRUE);
 
    cfg = config[0];
 
@@ -1219,11 +1252,11 @@ sint8 *find_config_section_with_string(sint8 *name, sint8 *str)
 	    }
 	    else
 	    /* is this the one? */
-	       if (strcasecmp(p->name, name) == 0)
+	       if (stricmp(p->name, name) == 0)
 	       {
 		   if ((p->data) && (*p->data)) {
 		        int i;
-			i = strcasecmp(str, p->data);
+			i = stricmp(str, p->data);
 			if (i == 0)
 			    return g_section;
 		   }

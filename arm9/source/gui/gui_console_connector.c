@@ -41,6 +41,10 @@ GNU General Public License for more details.
 #include "gui_console_connector.h"
 #include "fs.h"
 
+#include "snes.h"
+#include "core.h"
+#include "engine.h"
+
 ////////[For custom Console implementation]:////////
 //You need to override :
 	//vramSetup * getProjectSpecificVRAMSetup()
@@ -78,12 +82,12 @@ vramSetup * SNEMULDS_2DVRAM_SETUP(){
 	
 	vramSetup * vramSetupDefault = (vramSetup *)&vramSetupGlobal[0];
 	
-	//vramSetBankA(VRAM_A_MAIN_BG_0x06020000);
-	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].vrambankCR = VRAM_A_0x06020000_ENGINE_A_BG;
+	//vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
+	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].vrambankCR = VRAM_A_0x06000000_ENGINE_A_BG;
 	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].enabled = true;
 	
-	//vramSetBankB(VRAM_B_MAIN_BG_0x06040000);
-	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].vrambankCR = VRAM_B_0x06040000_ENGINE_A_BG;
+	//vramSetBankB(VRAM_B_MAIN_BG_0x06020000);
+	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].vrambankCR = VRAM_B_0x06020000_ENGINE_A_BG;
 	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].enabled = true;
 	
 	// 128Ko (+48kb) for sub screen / GUI / Console
@@ -1070,7 +1074,7 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			GUI_linkObject(scr, 9, (void *)IDS_ADVANCED, GUIStatic_handler);
 			GUI_linkObject(scr, 0, GUI_PARAM(IDS_RESET), GUIStrButton_handler);
 			GUI_linkObject(scr, 1, GUI_PARAM(IDS_SAVE_SRAM), GUIStrButton_handler);
-			GUI_linkObject(scr, 2, (void *)"GFX Config", GUIStrButton_handler);
+			GUI_linkObject(scr, 2, "GFX Config", GUIStrButton_handler);
 			
 			GUI_linkStrButton(scr, 6, IDS_OK, KEY_X);
 			
@@ -1109,10 +1113,12 @@ int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 
 //read rom from (path)touchscreen:output rom -> CFG.ROMFile
 void GUI_getROM(sint8 *rompath){
+	//snprintf (CFG.ROMPath, strlen(rompath)+1, "%s/",rompath);	//path:/test/
+	
     GUI.ScanJoypad = 1;
 	consoleClear(DefaultSessionConsole);
 
-	// Get ROMs list
+		// Get ROMs list
 	int		cnt;
     sint8 **dir_list = FS_getDirectoryList(rompath, "SMC|SFC|SWC|FIG|ZIP|GZ", &cnt);
 	
@@ -1133,7 +1139,11 @@ void GUI_getROM(sint8 *rompath){
 	sint8 *sel = GUISelector_getSelected(scr, NULL);
 
     GUI.ScanJoypad = 0;
-	sprintf(CFG.ROMFile,"%s",sel);	//CFG.ROMFile <- selected file from touchscreen: file.ext
+	
+	//sprintf(CFG.ROMPath,"%s/%s",buf,sel);	//rets path+rom.smc	/ok
+	//printf("rom:%s",sel);
+	
+	sprintf(CFG.ROMFile,"%s",sel);	//filename.ext -> CFG.ROMFile;
 }
 
 void GUI_deleteROMSelector(){
@@ -1151,7 +1161,7 @@ void GUI_createMainMenu(){
 	
 	GUI_setZone(scr_main, 7, 240, 0, 256, 16);
 	scr_main->zones[7].font = &smallfont_7_font;
-	GUI_linkObject(scr_main, 7,  (void *)"*", GUIStrButton_handler);
+	GUI_linkObject(scr_main, 7,  "*", GUIStrButton_handler);
 	
 //	scr_main->img_list = img_list;
 	scr_main->handler = MainScreenHandler;
@@ -1188,7 +1198,7 @@ void GUI_getConfig(){
 		GUI_setLanguage(CFG.Language);
 }
 
-void	GUI_showrominfo(int size){
+void	GUI_showROMInfos(int size){
     printf("%s %s\n", _STR(IDS_TITLE), SNES.ROM_info.title);
     printf("%s %d bytes\n", _STR(IDS_SIZE), size);
     if (SNES.HiROM) 
@@ -1196,4 +1206,9 @@ void	GUI_showrominfo(int size){
     else 
     	printf("%s LoROM\n", _STR(IDS_ROM_TYPE));
     printf("%s %s\n", _STR(IDS_COUNTRY), SNES.ROM_info.countrycode < 2 ? "NTSC" : "PAL");	
+}
+
+
+void LOG(sint8 * ftm, ...){
+
 }

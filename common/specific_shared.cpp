@@ -198,7 +198,7 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 
 //small hack to update SNES_ADDRESS at opcodes2.s
 void update_ram_snes(){
-    snes_ram_address = (uint32)&snes_ram_bsram[0x6000];
+    //snes_ram_address = (uint32)&snes_ram_bsram[0x6000];
 }
 #endif
 

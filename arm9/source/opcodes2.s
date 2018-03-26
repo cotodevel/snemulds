@@ -21,20 +21,21 @@ GNU General Public License for more details.
     .equ    MemoryMap,          memoryMapBase           @ for code compatibility
     .equ	MemoryWriteMap,		0x0689A000
     
+/*    .equ    snesWramBase,       0x027C0000*/
+	.equ    snesWramBase,       0x023C0000              
+/*    .equ    snesWramBase,       0x02200000              @ either 0x2100000 or 0x6800000*/
+/*    .equ    snesVramBase,       0x02220000*/
 
-.align 4
 
-@link against snes cpu macros
-.include    "opc_macros.s"
-.ltorg
+  .include    "../opc_macros.s"
+
 
 @*************************************************************************
 @ All code here in IWRAM
 @*************************************************************************
 
+@    .section    .dtcm, "aw", %progbits
 
-.align 4
-@.section    .dtcm, "aw", %progbits
 
 @=========================================================================
 @ memory mapping table
@@ -178,11 +179,10 @@ m1x1Decoder:
     .long BEQ_m1x1,BEQ_m1x1,  SBC_m1x1,DIY_25,    SBC_m1x1,DI_25,     SBC_m1x1,DSIY_27,   PEA_m1x1,PEA_m1x1,  SBC_m1x1,DX_24,     INC_m1x1,DX_26,     SBC_m1x1,DILY_26    
     .long SED_m1x1,SED_m1x1,  SBC_m1x1,AY_34,     PLX_m1x1,PLX_m1x1,  XCE_m1x1,XCE_m1x1,  JSR_m1x1I,JSR_m1x1I,SBC_m1x1,AX_34,     INC_m1x1,AX_37,     SBC_m1x1,ALX_45     
 @ version 0.27DS fix end
-.pool
 
-.align 4
-.section    .itcm, "awx", %progbits
+    .section    .itcm, "awx", %progbits
 
+    .align 4
 /*    .ascii  ".IWRAMSTART"
     .align 4*/
     
@@ -535,8 +535,6 @@ MVN_m0x1:   OpMVN   M0X1, 0, 0
 MVN_m1x0:   OpMVN   M1X0, 0, 0
 MVN_m1x1:   OpMVN   M1X1, 0, 0
 
-.pool
-
 @------------------------------------------------------
 @ MVP/MVN
 @------------------------------------------------------
@@ -579,7 +577,7 @@ OpMVP_Code:
     bne     9b
 
 OpMVP_Code_End:
-    tst    SnesA, SnesA
+    tsts    SnesA, SnesA
     sub     SnesA, SnesA, #0x00010000       @ make SnesA = 0xffff
 
     ldrb    r0, [SnesPC, #1]
@@ -627,7 +625,7 @@ OpMVN_Code:
     bne     9b
     
 OpMVN_Code_End:
-    tst    SnesA, SnesA
+    tsts    SnesA, SnesA
     sub     SnesA, SnesA, #0x00010000       @ make SnesA = 0xffff
 
     ldrb    r0, [SnesPC, #1]
@@ -1159,4 +1157,5 @@ AsmDebug4:
 		.word	0
 		.word	0
 	
-.ltorg
+
+@	.include	"../opc_misc.s"

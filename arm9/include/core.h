@@ -55,30 +55,6 @@ USA
 
 #define bzero(p, s)	memset(p, 0, s)
 
-typedef	struct {
-			sint8            title[21];
-			uint8   banksize:4;
-			uint8   ROMspeed:4;
-			uint8   ROMtype;
-			uint8   ROMsize;
-			uint8   SRAMsize;
-			uint8   countrycode;
-			uint8   license;
-			uint8   version;
-			unsigned short  checksum_c;
-			unsigned short  checksum;
-		}ROM_Info;
-
-struct s_snescore
-{
-  uint8		*ROM;
-  uint8		*RAM;
-  uint8		*VRAM;
-  uint8		*SRAM;
-  uint8		*BSRAM; /* Battery-saved RAM of non-SuperFX ROM */  
-  int		SRAMMask;  
-};
-
 #ifdef ARM9
 // DS->Snes Memory
 #define DS_SRAM          ((uint8*)0x0A000000)
@@ -116,78 +92,6 @@ struct s_snescore
 //7     VBlank NMI Enable  (0=Disable, 1=Enable) (Initially disabled on reset)
 #define VBLANK_NMI_IRQENABLE          (0x80)
 
-struct s_snes
-{
-/* memory mapping */
-  uint8    	BlockIsRAM[256*8];
-  uint8    	BlockIsROM[256*8];
-/*  uint8    	*Map[256*8];
-  uint8    	*WriteMap[256*8];*/
-  int		HiROM;
-
-  ROM_Info	ROM_info;
-
-/* HDMA */
-  uint8		*HDMA_values[256][8];
-  uint8		HDMA_nblines[8], HDMA_port[8], HDMA_info[8];
-  uint8		HDMA_line;
-  int		UsedCycles;
-
-/* MISC */
-  int		NTSC;
-  uint8		HIRQ_ok;
-  uint8		HIRQ_value;
-  uint8     PPU_NeedMultiply;
-  uint32	JOY_PORT16;
-  uint8		Joy1_cnt, Joy1_rdst;	//Joy1_cnt current bit field for DMA_JOYPAD1 
-  uint8		Joy2_cnt, Joy2_rdst;	//same for joy2
-  
-  int		V_Count;
-  int		Mode7Repeat;
-  int		v_blank; /* screen ray outside of the draw area */
-  int		h_blank;
-  uint32	DelayedNMI;
-
-  int		ROMSize;
-  int		ROMHeader;
-
-  int		mouse_x;
-  int		mouse_y;
-  int		mouse_b;
-  int		mouse_speed;
-  int		prev_mouse_x;
-  int		prev_mouse_y;
-  
-  //coto: I removed these because I will use #defines for further readwrites to IO ports..
-  //int		joypads[4];	//SNES has 4 joypads after all. 1 player 1, 2 player 2/scope/misc , adapter uses dma port 2 and maps joypads 2,3,4
-  
-  int		Stopped;
-  int		SRAMWritten;  
-  
-  int		stat_before;
-  int		stat_before2;
-  int		stat_before3;
-  int		stat_before4;
-  int		stat_CPU;
-  int		stat_GFX;
-  int		stat_IOREGS;
-  int		stat_DMA;
-/*  int		stat_OPC[256];
-  int		stat_OPC_cnt[256];*/
-};
-
-
-typedef struct s_Options
-{
-	uint8 BG3Squish :2;
-	uint8 SoundOutput :1;
-	uint8 LayersConf :6;
-	uint8 TileMode :1;
-	uint8 BG_Layer :8;
-	uint8 YScroll :2;
-	uint8 WaitVBlank :1;
-	uint8 SpeedHack :3;
-} t_Options;
 
 typedef int (*intfuncptr)();
 typedef uint32 (*u32funcptr)();
@@ -218,11 +122,11 @@ extern void fillMemory( void * addr, uint32 count, uint32 value );
 extern void zeroMemory( void * addr, uint32 count );
 
 //Snes Hardware
-extern struct s_snes	SNES;
-extern struct s_cpu	CPU;
-extern struct s_snescore	SNESC;
-extern struct s_gfx	GFX;
-extern struct s_cfg	CFG;
+//extern struct s_snes	SNES;
+//extern struct s_cpu	CPU;
+//extern struct s_snescore	SNESC;
+//extern struct s_gfx	GFX;
+//extern struct s_cfg	CFG;
 extern volatile uint8 snes_ram_bsram[0x20000+0x6000];    //128K SNES RAM + 8K (Big) SNES SRAM
 extern volatile uint8 snes_vram[0x010000];
 extern uint8 * rom_page;        //second slot of rombuffer

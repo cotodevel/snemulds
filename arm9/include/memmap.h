@@ -63,9 +63,8 @@ extern uchar mem_getbyte(uint32 offset,uchar bank);
 extern void mem_setbyte(uint32 offset, uchar bank, uchar byte);
 extern ushort mem_getword(uint32 offset,uchar bank);
 extern void mem_setword(uint32 offset, uchar bank, ushort word);
-extern uint8 *mem_getbaseaddress(uint16 offset, uchar bank);
-
-extern uint8 *map_memory(uint16 offset, uchar bank);
+extern void *mem_getbaseaddress(uint16 offset, uchar bank);
+extern void *map_memory(uint16 offset, uchar bank);
 
 #ifdef __cplusplus
 }

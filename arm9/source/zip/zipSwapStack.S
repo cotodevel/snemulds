@@ -1,25 +1,4 @@
-
-@			Copyright (C) 2017  Coto
-@This program is free software; you can redistribute it and/or modify
-@it under the terms of the GNU General Public License as published by
-@the Free Software Foundation; either version 2 of the License, or
-@(at your option) any later version.
-
-@This program is distributed in the hope that it will be useful, but
-@WITHOUT ANY WARRANTY; without even the implied warranty of
-@MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-@General Public License for more details.
-
-@You should have received a copy of the GNU General Public License
-@along with this program; if not, write to the Free Software
-@Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
-@USA
-
-
-@Coto: this is template code that you can use if you ever run out of stack space (about 0x200 bytes!), and we extend to 32K.
-@In this example code, the ZLIB library fall back to EWRAM as stack, through malloc/free which I already implemented.
-
-.section	.dtcm
+.section	.text
 .arm
 
 .global snapshotRegs
@@ -42,46 +21,35 @@ snapshotRegs:
 	.word 0x00000000	@r15 / pc
 
 
-.section	.text
-.arm
-
 @int do_decompression_ewramstack(r0 = char *inname, r1 = char *outname);
 	.global	do_decompression_ewramstack
 	.type	do_decompression_ewramstack STT_FUNC
 do_decompression_ewramstack:
-	push {r3-r12,lr}
-	ldr r2,=snapshotRegs
-	stmia	r2,{sp}
+	ldr r3,=snapshotRegs
+	stmia	r3, {r1,r2,r4-r14}
 	
 	mov r7,r0
 	mov r8,r1		@save: (r0 = char *inname, r1 = char *outname);
 	
-	mov r0, #(32*1024)	@32K stack
-	push {r7,r8}
+	ldr r0, =(128*1024)	@128K stack
 	blx malloc 
-	pop {r7,r8}
-	add sp,r0,#(32*1024)	@use banked stack and forward to ARM full descending nature
+	mov sp,r0	@use banked stack
 	
 	mov r0,r7
 	mov r1,r8
 	
-	push {r3-r12,lr}
-	blx do_decompression
-	pop {r3-r12,lr}
+	push {lr}
+	blx do_decompression	@r0 ret
+	pop {lr}
 	
-	mov r1,r0	@r0 ret
-	add r0,sp,#-(32*1024)	@use banked stack and rewind from ARM full descending nature to malloc/free linear deallocation
+	mov r0,sp
+	ldr r3,=snapshotRegs
+	ldmia	r3, {r1,r2,r4-r14}
 	
-	ldr r2,=snapshotRegs
-	ldmia	r2,{sp}
-	pop {r3-r12,lr}
+	blx free 
 	
-	push {r1,r3-r12,lr}
-	blx free
-	pop {r1,r3-r12,lr}
-	
-	mov r0,r1	@restore ret
 	bx	lr
 
-
 .pool
+
+.end

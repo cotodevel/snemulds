@@ -14,24 +14,35 @@
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
  GNU General Public License for more details.
  */
-#include "memmap.h"
 
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include "cpu.h"
 #include "opcodes.h"
 #include "common.h"
-#include "dsregs.h"
-#include "typedefs.h"
+#include "snes.h"
 #include "cfg.h"
-#include "core.h"
-#include "specific_shared.h"
-#include "console.h"
-#include "fs.h"
-#include "dma.h"
-#include "bios.h"
-#include "nds_cp15_misc.h"
+
+extern int OldPC;
+extern char *ROM_Image;
+
+#define NOT_LARGE	0
+#define USE_PAGING	1
+#define USE_EXTMEM	2
 
 
+uchar DMA_port_read(long address);
+void DMA_port_write(long address, unsigned short value);
+void PPU_port_write(long address, unsigned short value);
+uchar PPU_port_read(long address);
+
+#ifdef ASM_OPCODES
+#define SPECIAL_MAP(p) ((int)(p) & 0x80000000)
+#define REGULAR_MAP(p) (!((int)(p) & 0x80000000))  	
+#else
+#define SPECIAL_MAP(p) ((int)(p) < MAP_LAST)
+#define REGULAR_MAP(p) ((int)(p) >= MAP_LAST)  	
+#endif
 
 void WriteProtectROM()
 {
@@ -42,9 +53,8 @@ void WriteProtectROM()
 
 	for (c = 0; c < 0x800; c++)
 	{
-		if (SNES.BlockIsROM[c]){
+		if (SNES.BlockIsROM[c])
 			WMAP[c] = (uchar *)MAP_NONE;
-		}
 	}
 }
 
@@ -54,7 +64,7 @@ void FixMap()
 
 	for (c = 0; c < 0x800; c++)
 	{
-		if (MAP[c] != (uchar *)MAP_RELOAD && REGULAR_MAP(MAP[c]))
+		if (MAP[c] != MAP_RELOAD && REGULAR_MAP(MAP[c]))
 		{
 			MAP[c] -= ((c << 13)&0xFF0000);
 		}
@@ -69,17 +79,17 @@ void MapRAM()
 	{
 		MAP[c+0x3f0] = SNESC.RAM;
 		MAP[c+0x3f8] = SNESC.RAM+0x10000;
-		SNES.BlockIsRAM[c+0x3f0] = true;
-		SNES.BlockIsRAM[c+0x3f8] = true;
-		SNES.BlockIsROM[c+0x3f0] = false;
-		SNES.BlockIsROM[c+0x3f8] = false;
+		SNES.BlockIsRAM[c+0x3f0] = TRUE;
+		SNES.BlockIsRAM[c+0x3f8] = TRUE;
+		SNES.BlockIsROM[c+0x3f0] = FALSE;
+		SNES.BlockIsROM[c+0x3f8] = FALSE;
 	}
 
 	for (c = 0; c < 0x40; c++)
 	{
 		MAP[c+0x380] = (uchar *)MAP_LOROM_SRAM;
-		SNES.BlockIsRAM[c+0x380] = true;
-		SNES.BlockIsROM[c+0x380] = false;
+		SNES.BlockIsRAM[c+0x380] = TRUE;
+		SNES.BlockIsROM[c+0x380] = FALSE;
 	}
 }
 
@@ -101,12 +111,19 @@ void InitLoROMMap(int mode)
 		// Only a part of RAM is used static
 		maxRAM = ROM_STATIC_SIZE;
 	}
-	
+	if (mode == USE_EXTMEM)
+	{
+		// Extended RAM mode...
+		// All RAM available is used static
+		// the remaining of mapping use extended RAM
+		maxRAM = ROM_MAX_SIZE;
+		largeROM = (uint8 *)0x8000000 + SNES.ROMHeader;
+	}
 
 	for (c = 0; c < 0x200; c += 8)
 	{
 		MAP[c+0] = MAP[c+0x400] = SNESC.RAM;
-		SNES.BlockIsRAM[c+0] = SNES.BlockIsRAM[c+0x400] = true;
+		SNES.BlockIsRAM[c+0] = SNES.BlockIsRAM[c+0x400] = TRUE;
 
 		MAP[c+1] = MAP[c+0x401] = (uchar *)MAP_PPU;
 		MAP[c+2] = MAP[c+0x402] = (uchar *)MAP_CPU;
@@ -127,7 +144,7 @@ void InitLoROMMap(int mode)
 						MAP[i] = MAP[i+0x400] = largeROM+((c>>1)<<13)-0x8000;
 				}				
 			}			
-			SNES.BlockIsROM[i] = SNES.BlockIsROM[i+0x400] = true;
+			SNES.BlockIsROM[i] = SNES.BlockIsROM[i+0x400] = TRUE;
 		}
 	}
 
@@ -139,10 +156,10 @@ void InitLoROMMap(int mode)
 			MAP[c+5] = MAP[c+0x405] = (uchar *)MAP_DSP;
 			MAP[c+6] = MAP[c+0x406] = (uchar *)MAP_DSP;
 			MAP[c+7] = MAP[c+0x407] = (uchar *)MAP_DSP;
-			SNES.BlockIsROM[c+4] = SNES.BlockIsROM[c+0x404] = false;
-			SNES.BlockIsROM[c+5] = SNES.BlockIsROM[c+0x405] = false;
-			SNES.BlockIsROM[c+6] = SNES.BlockIsROM[c+0x406] = false;
-			SNES.BlockIsROM[c+7] = SNES.BlockIsROM[c+0x407] = false;
+			SNES.BlockIsROM[c+4] = SNES.BlockIsROM[c+0x404] = FALSE;
+			SNES.BlockIsROM[c+5] = SNES.BlockIsROM[c+0x405] = FALSE;
+			SNES.BlockIsROM[c+6] = SNES.BlockIsROM[c+0x406] = FALSE;
+			SNES.BlockIsROM[c+7] = SNES.BlockIsROM[c+0x407] = FALSE;
 		}
 	}
 
@@ -177,7 +194,7 @@ void InitLoROMMap(int mode)
 			}				
 		}
 		for (i = c; i < c+8; i++)
-			SNES.BlockIsROM[i+0x200] = SNES.BlockIsROM[i+0x600] = true;
+			SNES.BlockIsROM[i+0x200] = SNES.BlockIsROM[i+0x600] = TRUE;
 	}
 
 	if (CFG.DSP1)
@@ -185,7 +202,7 @@ void InitLoROMMap(int mode)
 		for (c = 0; c < 0x80; c++)
 		{
 			MAP[c+0x700] = (uchar *)MAP_DSP;
-			SNES.BlockIsROM[c+0x700] = false;
+			SNES.BlockIsROM[c+0x700] = FALSE;
 		}
 	}
 
@@ -212,12 +229,19 @@ void InitHiROMMap(int mode)
 		// Only a part of RAM is used static
 		maxRAM = ROM_STATIC_SIZE;
 	}
-	
+	if (mode == USE_EXTMEM)
+	{
+		// Extended RAM mode...
+		// All RAM available is used static
+		// the remaining of mapping use extended RAM
+		maxRAM = ROM_MAX_SIZE;
+		largeROM = (uint8 *)0x8000000 + SNES.ROMHeader;
+	}
 	
 	for (c = 0; c < 0x200; c += 8)
 	{
 		MAP[c+0] = MAP[c+0x400] = SNESC.RAM;
-		SNES.BlockIsRAM[c+0] = SNES.BlockIsRAM[c+0x400] = true;
+		SNES.BlockIsRAM[c+0] = SNES.BlockIsRAM[c+0x400] = TRUE;
 
 		MAP[c+1] = MAP[c+0x401] = (uchar *)MAP_PPU;
 		MAP[c+2] = MAP[c+0x402] = (uchar *)MAP_CPU;
@@ -239,7 +263,7 @@ void InitHiROMMap(int mode)
 						MAP[i] = MAP[i+0x400] = largeROM+(c<<13);
 				}				
 			}
-			SNES.BlockIsROM[i] = SNES.BlockIsROM[i+0x400] = true;			
+			SNES.BlockIsROM[i] = SNES.BlockIsROM[i+0x400] = TRUE;			
 		}
 	}
 
@@ -247,8 +271,8 @@ void InitHiROMMap(int mode)
 	{
 		MAP[0x183+(c<<3)] = (uchar *)MAP_HIROM_SRAM;
 		MAP[0x583+(c<<3)] = (uchar *)MAP_HIROM_SRAM;
-		SNES.BlockIsRAM[0x183+(c<<3)] = true;
-		SNES.BlockIsRAM[0x583+(c<<3)] = true;
+		SNES.BlockIsRAM[0x183+(c<<3)] = TRUE;
+		SNES.BlockIsRAM[0x583+(c<<3)] = TRUE;
 	}
 
 	for (c = 0; c < 0x200; c += 8)
@@ -266,7 +290,7 @@ void InitHiROMMap(int mode)
 						MAP[i+0x200] = MAP[i+0x600] = largeROM+(c<<13);
 				}				
 			}	
-			SNES.BlockIsROM[i+0x200] = SNES.BlockIsROM[i+0x600] = true;			
+			SNES.BlockIsROM[i+0x200] = SNES.BlockIsROM[i+0x600] = TRUE;			
 		}
 	}
 	MapRAM();
@@ -274,6 +298,10 @@ void InitHiROMMap(int mode)
 	WriteProtectROM();
 }
 
+/*#define	PAGE_SIZE		8192
+ #define PAGE_OFFSET		0*/
+#define	PAGE_SIZE		65536
+#define PAGE_OFFSET		3
 
 uchar *ROM_paging= NULL;
 uint16 *ROM_paging_offs= NULL;
@@ -293,30 +321,32 @@ void mem_clear_paging()
 
 void mem_init_paging()
 {
-	/*	ROM_paging = malloc(ROM_MAX_SIZE);
+	/*	ROM_paging = malloc(ROM_PAGING_SIZE);
 	 if (!ROM_paging)
 	 {
 	 printf("Not enough memory for ROM paging.\n");
 	 while(1);
 	 }*/
-	ROM_paging = (uint8*)rom_page;
+	ROM_paging = SNES_ROM_PAGING_ADDRESS;
 	memset(ROM_paging, 0, ROM_PAGING_SIZE);
-	ROM_paging_offs = (uint16 *)malloc((ROM_PAGING_SIZE/ROM_STATIC_SIZE)*2);
+	ROM_paging_offs = malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
 	if (!ROM_paging_offs)
 	{
 		printf("Not enough memory for ROM paging (2).\n");
-		while (1);
+		while (1)
+			;
 	}
-	memset(ROM_paging_offs, 0xFF, (ROM_MAX_SIZE/ROM_STATIC_SIZE)*2);
+	memset(ROM_paging_offs, 0xFF, (ROM_PAGING_SIZE/PAGE_SIZE)*2);
 	ROM_paging_cur = 0;
 }
+
 
 void mem_setCacheBlock(int block, uchar *ptr)
 {
 	int i;
 
 	block <<= PAGE_OFFSET;
-	for (i = 0; i < ROM_STATIC_SIZE/8192; i++, block++)
+	for (i = 0; i < PAGE_SIZE/8192; i++, block++)
 	{
 
 		if ((block & 7) >= 4)
@@ -330,36 +360,48 @@ void mem_setCacheBlock(int block, uchar *ptr)
 	}
 }
 
+
 void mem_removeCacheBlock(int block)
 {
 	int i;
 
 	block <<= PAGE_OFFSET;
-	for (i = 0; i < ROM_STATIC_SIZE/8192; i++, block++)
+	for (i = 0; i < PAGE_SIZE/8192; i++, block++)
 	{
 
 		if ((block & 7) >= 4)
 		{
-			MAP[block] = (uchar *)MAP_RELOAD;
-			MAP[block+0x400] = (uchar *)MAP_RELOAD;
+			MAP[block] = MAP_RELOAD;
+			MAP[block+0x400] = MAP_RELOAD;
 		}
 		if (SNES.BlockIsROM[block+0x200])
-			MAP[block+0x200] = (uchar *)MAP_RELOAD;
-		MAP[block+0x600] =(uchar *) MAP_RELOAD;
+			MAP[block+0x200] = MAP_RELOAD;
+		MAP[block+0x600] = MAP_RELOAD;
 	}
 }
+
 
 uint8 *mem_checkReload(int block)
 {
 	int i;
 	uchar *ptr;
-	
+	int ret;
+
 	//	FS_flog("==> %d\n", block);
-	//LOG("==> %d\n", block);
+	LOG("==> %d\n", block);
 
 	if (!CFG.LargeROM)
 	return NULL;
 
+#if 0	
+	if (CFG.ExtRAMSize > 0) // FIXME ExtRAMUsed
+
+	{
+		//ptr = ram_unlock();
+		ptr = (uint8 *)0x8000000 + SNES.ROMHeader + (block & 0x1FF)*8192 -(block << 13);
+		return ptr;
+	}
+#endif	
 
 	i = (block & 0x1FF) >> PAGE_OFFSET;
 
@@ -372,9 +414,9 @@ uint8 *mem_checkReload(int block)
 		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET;
 		if (ROM_paging_offs[ROM_paging_cur] == PC_blk)
 		{
-			//LOG("Detected PC unloading, pass it...\n");
+			LOG("Detected PC unloading, pass it...\n");
 			ROM_paging_cur++;
-			if (ROM_paging_cur >= ROM_MAX_SIZE/ROM_STATIC_SIZE)
+			if (ROM_paging_cur >= ROM_PAGING_SIZE/PAGE_SIZE)
 			ROM_paging_cur = 0;
 		}
 		if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF)
@@ -385,28 +427,21 @@ uint8 *mem_checkReload(int block)
 	}
 
 	ROM_paging_offs[ROM_paging_cur] = i;
-	ptr = ROM_paging+(ROM_paging_cur*ROM_STATIC_SIZE);
-	
-	//Prevent Cache problems.
-	coherent_user_range_by_size((uint32)ptr,(int)ROM_STATIC_SIZE);
-	
-	//	LOG("@%d(%d) => blk %d\n", i*ROM_STATIC_SIZE, SNES.ROMHeader+i*ROM_STATIC_SIZE, ROM_paging_cur);
-	FS_loadROMPage((sint8 *)ptr, SNES.ROMHeader+i*ROM_STATIC_SIZE, ROM_STATIC_SIZE);
+	ptr = ROM_paging+(ROM_paging_cur*PAGE_SIZE);
+
+	//	LOG("@%d(%d) => blk %d\n", i*PAGE_SIZE, SNES.ROMHeader+i*PAGE_SIZE, ROM_paging_cur);
+	ret = FS_loadROMPage(ptr, SNES.ROMHeader+i*PAGE_SIZE, PAGE_SIZE);
 	//	LOG("ret = %d %x %x %x %x\n", ret, ptr[0], ptr[1], ptr[2], ptr[3]);
 
-	mem_setCacheBlock(i, ptr);
+	mem_setCacheBlock(i, ptr+0x400000); // Give Read-only memory
 
 	ROM_paging_cur++;
-	if (ROM_paging_cur >= (ROM_PAGING_SIZE/ROM_STATIC_SIZE)){
+	if (ROM_paging_cur >= ROM_PAGING_SIZE/PAGE_SIZE)
 		ROM_paging_cur = 0;
-	}
+
 	//FS_flog("%d %p\n", i, ptr+(block&7)*8192-(block << 13));
-	//LOG("<== %d %p\n", block, ptr+(block&7)*8192-(block << 13));
-	
-	//Coto: todo null check memory here
-	
-	//return ptr+(block&7)*8192-(block << 13)+0x400000;
-	return ptr+(block&7)*8192-(block << 13);
+	LOG("<== %d %p\n", block, ptr+(block&7)*8192-(block << 13));
+	return ptr+(block&7)*8192-(block << 13)+0x400000;
 }
 
 void InitMap()
@@ -418,15 +453,15 @@ void InitMap()
 
 	int mode = (!CFG.LargeROM) ? NOT_LARGE : USE_PAGING; 
 	
-	if (SNES.HiROM){
+	if (SNES.HiROM)
 		InitHiROMMap(mode);
-	}
 	else
 		InitLoROMMap(mode);
 	
 	if (mode == USE_PAGING)
 		mem_init_paging();
 }
+
 
 /*inline */uint8 IO_getbyte(int addr, uint32 address)
 {
@@ -435,23 +470,15 @@ void InitMap()
 	switch ((int)addr)
 	{
 	case MAP_PPU:
-#ifdef SNEMUL_LOGGING
-		START_PROFILE(IOREGS, 2);
-#endif
+		//START_PROFILE(IOREGS, 2);
 		result= PPU_port_read(address&0xFFFF);
-		#ifdef SNEMUL_LOGGING
-		END_PROFILE(IOREGS, 2);
-		#endif
+		//END_PROFILE(IOREGS, 2);
 		return result;
 
 	case MAP_CPU:
-#ifdef SNEMUL_LOGGING
-		START_PROFILE(IOREGS, 2);
-#endif
+		//START_PROFILE(IOREGS, 2);
 		result= DMA_port_read(address&0xFFFF);
-#ifdef SNEMUL_LOGGING
-		END_PROFILE(IOREGS, 2);
-#endif
+		//END_PROFILE(IOREGS, 2);
 		return result;
 	case MAP_LOROM_SRAM:
 		if (SNESC.SRAMMask == 0)
@@ -468,27 +495,20 @@ void InitMap()
 
 }
 
+
 /*inline */void IO_setbyte(int addr, uint32 address, uint8 byte)
 {
 	switch ((int)addr)
 	{
 	case MAP_PPU:
-		#ifdef SNEMUL_LOGGING
-		START_PROFILE(IOREGS, 2);
-		#endif
+		//START_PROFILE(IOREGS, 2);
 		PPU_port_write(address&0xFFFF,byte);
-		#ifdef SNEMUL_LOGGING
-		END_PROFILE(IOREGS, 2);
-		#endif
+		//END_PROFILE(IOREGS, 2);
 		return;
 	case MAP_CPU:
-		#ifdef SNEMUL_LOGGING
-		START_PROFILE(IOREGS, 2);
-		#endif
+		//START_PROFILE(IOREGS, 2);
 		DMA_port_write(address&0xFFFF,byte);
-#ifdef SNEMUL_LOGGING
-		END_PROFILE(IOREGS, 2);
-#endif
+		//END_PROFILE(IOREGS, 2);
 		return;
 	case MAP_LOROM_SRAM:
 		if (SNESC.SRAMMask == 0)
@@ -508,6 +528,7 @@ void InitMap()
 	}
 }
 
+
 /*inline */uint16 IO_getword(int addr, uint32 address)
 {
 	uint16 result;
@@ -515,25 +536,17 @@ void InitMap()
 	switch ((int)addr)
 	{
 	case MAP_PPU:
-		#ifdef SNEMUL_LOGGING
-		START_PROFILE(IOREGS, 2);
-		#endif
+		//START_PROFILE(IOREGS, 2);
 		result= PPU_port_read(address&0xFFFF)+
 			(PPU_port_read((address+1)&0xFFFF)<<8);
-		#ifdef SNEMUL_LOGGING
-		END_PROFILE(IOREGS, 2);
-		#endif
+		//END_PROFILE(IOREGS, 2);
 		return result;
 
 	case MAP_CPU:
-		#ifdef SNEMUL_LOGGING
-		START_PROFILE(IOREGS, 2);
-		#endif
+		//START_PROFILE(IOREGS, 2);
 		result= DMA_port_read(address&0xFFFF)+
 			(DMA_port_read((address+1)&0xFFFF)<<8);
-		#ifdef SNEMUL_LOGGING
-		END_PROFILE(IOREGS, 2);
-		#endif
+		//END_PROFILE(IOREGS, 2);
 		return result;
 	case MAP_LOROM_SRAM:
 		if (SNESC.SRAMMask == 0)
@@ -553,30 +566,22 @@ void InitMap()
 	}
 }
 
+
 /*inline */void IO_setword(int addr, uint32 address, uint16 word)
 {
 	switch ((int)addr)
 	{
 	case MAP_PPU:
-	#ifdef SNEMUL_LOGGING
-		START_PROFILE(IOREGS, 2);
-		#endif
-		
+		//START_PROFILE(IOREGS, 2);
 		PPU_port_write(address&0xFFFF,word&0xFF);
 		PPU_port_write((address+1)&0xFFFF,word>>8);
-		#ifdef SNEMUL_LOGGING
-		END_PROFILE(IOREGS, 2);
-		#endif
+		//END_PROFILE(IOREGS, 2);
 		return;
 	case MAP_CPU:
-	#ifdef SNEMUL_LOGGING
-		START_PROFILE(IOREGS, 2);
-	#endif
+		//START_PROFILE(IOREGS, 2);
 		DMA_port_write(address&0xFFFF,word&0xFF);
 		DMA_port_write((address+1)&0xFFFF,word>>8);
-		#ifdef SNEMUL_LOGGING
-		END_PROFILE(IOREGS, 2);
-		#endif
+		//END_PROFILE(IOREGS, 2);
 		return;
 	case MAP_LOROM_SRAM:
 		if (SNESC.SRAMMask == 0)
@@ -598,6 +603,8 @@ void InitMap()
 	}
 }
 
+//#include "memmap.h"
+
 uchar mem_getbyte(uint32 offset,uchar bank)
 {
 	int address = (bank<<16)+offset;
@@ -607,7 +614,7 @@ uchar mem_getbyte(uint32 offset,uchar bank)
 	block = (address>>13)&0x7FF;
 	addr = MAP[block];
 
-	if (addr == (uchar *)MAP_RELOAD)
+	if (addr == MAP_RELOAD)
 	addr = mem_checkReload(block);
 
 	if (REGULAR_MAP(addr))
@@ -618,6 +625,7 @@ uchar mem_getbyte(uint32 offset,uchar bank)
 	return IO_getbyte((int)addr, address);
 }
 
+
 void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 {
 	int address = (bank<<16)+offset;
@@ -626,7 +634,7 @@ void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 
 	block = (address>>13)&0x7FF;
 	addr = WMAP[block];
-	if (addr == (uchar *)MAP_RELOAD)
+	if (addr == MAP_RELOAD)
 	addr = mem_checkReload(block);
 	if (REGULAR_MAP(addr))
 	{
@@ -635,6 +643,7 @@ void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 	else
 	IO_setbyte((int)addr, address, byte);
 }
+
 
 ushort mem_getword(uint32 offset,uchar bank)
 {
@@ -645,7 +654,7 @@ ushort mem_getword(uint32 offset,uchar bank)
 	block = (address>>13)&0x7FF;
 	addr = MAP[block];
 
-	if (addr == (uchar *)MAP_RELOAD)
+	if (addr == MAP_RELOAD)
 	addr = mem_checkReload(block);
 	if (REGULAR_MAP(addr))
 	{
@@ -654,6 +663,7 @@ ushort mem_getword(uint32 offset,uchar bank)
 	else
 	return IO_getword((int)addr, address);
 }
+
 
 void mem_setword(uint32 offset, uchar bank, ushort word)
 {
@@ -664,7 +674,7 @@ void mem_setword(uint32 offset, uchar bank, ushort word)
 	//  CPU.WaitAddress = -1;
 	block = (address>>13)&0x7FF;
 	addr = WMAP[block];
-	if (addr == (uchar *)MAP_RELOAD)
+	if (addr == MAP_RELOAD)
 	addr = mem_checkReload(block);
 
 	if (REGULAR_MAP(addr))
@@ -675,7 +685,7 @@ void mem_setword(uint32 offset, uchar bank, ushort word)
 	IO_setword((int)addr, address, word);
 }
 
-uint8 *mem_getbaseaddress(uint16 offset, uchar bank)
+void *mem_getbaseaddress(uint16 offset, uchar bank)
 {
 	int block;
 	int address = (bank<<16)+offset;
@@ -684,7 +694,7 @@ uint8 *mem_getbaseaddress(uint16 offset, uchar bank)
 	block = (address>>13)&0x7FF;
 	ptr = MAP[block];
 
-	if (ptr == (uchar *)MAP_RELOAD)
+	if (ptr == MAP_RELOAD)
 		ptr = mem_checkReload(block);
 
 	if (REGULAR_MAP(ptr))
@@ -705,8 +715,8 @@ uint8 *mem_getbaseaddress(uint16 offset, uchar bank)
 	}
 }
 
-//IN_ITCM2
-uint8 *map_memory(uint16 offset, uchar bank)
+//
+void *map_memory(uint16 offset, uchar bank)
 {
 	int block;
 	int address = (bank<<16)+offset;
@@ -715,7 +725,7 @@ uint8 *map_memory(uint16 offset, uchar bank)
 	block = (address>>13)&0x7FF;
 	ptr = MAP[block];
 
-	if (ptr == (uchar *)MAP_RELOAD)
+	if (ptr == MAP_RELOAD)
 		ptr = mem_checkReload(block);
 
 	if (REGULAR_MAP(ptr))

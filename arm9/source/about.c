@@ -30,32 +30,29 @@ USA
 #include "cfg.h"
 #include "gfx.h"
 #include "core.h"
-#include "engine.h"
 #include "apu.h"
 #include "ppu.h"
 #include "main.h"
 #include "conf.h"
 #include "fs.h"
 #include "memmap.h"
-#include "crc32.h"
 #include "gui.h"
 #include "opcodes.h"
 #include "common.h"
 #include "specific_shared.h"
 
-
 sint8*  SNEMULDS_TITLE[] = {
 	"-= SNEmulDS",
-	"by archeide =-\n"
+	"by archeide =- "
 };
 
 sint8*  SNEMULDS_SUBTITLE[] = {
-	"CPU: bubble2k Sound: gladius\n"
+	"CPU: bubble2k Sound: gladius"
 };
 
 //fullpath	/rompath	/gamedir	/dirgame	/dirpath
 sint8*  READ_GAME_DIR[] = {
-	"snes"	//"0:/snes"	//correct format for opendir(); /each folder must not have an ending "/"
+	"snes"
 };
 
 volatile char versionBuf[0x100];

@@ -39,9 +39,9 @@ GNU General Public License for more details.
 #include "gfx.h"
 #include "cfg.h"
 #include "apu.h"
-#include "ram.h"
+//#include "ram.h"
 #include "conf.h"
-#include "frontend.h"
+//#include "frontend.h"
 #include "main.h"
 #include "ppu.h"
 #include "InterruptsARMCores_h.h"
@@ -56,8 +56,8 @@ GNU General Public License for more details.
 #include "dsregs_asm.h"
 #include "typedefs.h"
 #include "console.h"
-#include "api_wrapper.h"
-#include "apu_jukebox.h"
+//#include "api_wrapper.h"
+//#include "apu_jukebox.h"
 #include "toolchain_utils.h"
 #include "about.h"
 #include "file.h"
@@ -68,7 +68,7 @@ sint8 *_FS_getFileExtension(sint8 *filename)
 {
 	static sint8 ext[4];
 	sint8	*ptr;
-	int		i = 0;
+	int		i;
 	
 	ptr = filename;
 	do
@@ -80,7 +80,7 @@ sint8 *_FS_getFileExtension(sint8 *filename)
 	}
 	while (strlen(ptr) > 3);
 		
-	for (i = 0; i < (int)strlen(ptr); i++)
+	for (i = 0; i < strlen(ptr); i++)
 		ext[i] = toupper((int)(ptr[i])); 
 	ext[i] = 0;
 	return ext;
@@ -165,7 +165,7 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt)
 	}
 	rewinddir(dir);
 	
-	sint8	**list = (sint8	**)malloc((*cnt)*sizeof(sint8 *)+size);
+	sint8	**list = malloc((*cnt)*sizeof(sint8 *)+size);
 	sint8	*ptr = ((sint8 *)list) + (*cnt)*sizeof(sint8 *);
 	
 	int i = 0; 
@@ -366,6 +366,7 @@ char * tmpFile = "TempFile.smc";
 bool zipFileLoaded;	//zip / gz support
 int load_gz(char *fname, char *newtempfname)	//fname,newtempfname must use getfatfsPath() outside!
 {
-	int ret = do_decompression_ewramstack(fname, newtempfname);	//use EWRAM as STACK
+	int ret;
+	ret = do_decompression(fname, newtempfname);
 	return ret;
 }

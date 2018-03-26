@@ -1,7 +1,7 @@
 #if 0
 void APU_printOpcode(uint8 opcode, uint16 pc, uint8 pc1, uint8 pc2)
 {
-  sint8	buf[50];
+  char	buf[50];
   
   switch(opcode) {
     case 0xE8 : sprintf(buf,"MOV A,#%02X", pc1); break;
@@ -179,15 +179,15 @@ void APU_printOpcode(uint8 opcode, uint16 pc, uint8 pc1, uint8 pc2)
     case 0xCF : sprintf(buf,"MUL YA"); break;
     case 0x9E : sprintf(buf,"DIV YA,X"); break;
 
-    case 0x2F : sprintf(buf,"BRA %04X", pc+(sint8)pc1+2); break;
-    case 0xF0 : sprintf(buf,"BEQ %04X", pc+(sint8)pc1+2); break;
-    case 0xD0 : sprintf(buf,"BNE %04X", pc+(sint8)pc1+2); break;
-    case 0xB0 : sprintf(buf,"BCS %04X", pc+(sint8)pc1+2); break;
-    case 0x90 : sprintf(buf,"BCC %04X", pc+(sint8)pc1+2); break;
-    case 0x70 : sprintf(buf,"BVS %04X", pc+(sint8)pc1+2); break;
-    case 0x50 : sprintf(buf,"BVC %04X", pc+(sint8)pc1+2); break;
-    case 0x30 : sprintf(buf,"BMI %04X", pc+(sint8)pc1+2); break;
-    case 0x10 : sprintf(buf,"BPL %04X", pc+(sint8)pc1+2); break;
+    case 0x2F : sprintf(buf,"BRA %04X", pc+(char)pc1+2); break;
+    case 0xF0 : sprintf(buf,"BEQ %04X", pc+(char)pc1+2); break;
+    case 0xD0 : sprintf(buf,"BNE %04X", pc+(char)pc1+2); break;
+    case 0xB0 : sprintf(buf,"BCS %04X", pc+(char)pc1+2); break;
+    case 0x90 : sprintf(buf,"BCC %04X", pc+(char)pc1+2); break;
+    case 0x70 : sprintf(buf,"BVS %04X", pc+(char)pc1+2); break;
+    case 0x50 : sprintf(buf,"BVC %04X", pc+(char)pc1+2); break;
+    case 0x30 : sprintf(buf,"BMI %04X", pc+(char)pc1+2); break;
+    case 0x10 : sprintf(buf,"BPL %04X", pc+(char)pc1+2); break;
     case 0x5F : sprintf(buf,"JMP %04X", pc1+pc2*0x100); break;
     case 0x1F : sprintf(buf,"JMP (%04X+X)", pc1+pc2*0x100); break;
 
@@ -204,10 +204,10 @@ void APU_printOpcode(uint8 opcode, uint16 pc, uint8 pc1, uint8 pc2)
     case 0xEE : sprintf(buf,"POP Y"); break;
     case 0x8E : sprintf(buf,"POP PSW"); break;
 
-    case 0x2E : sprintf(buf,"CBNE %02X, %04X",   pc1, pc+(sint8)pc2+3); break;
-    case 0xDE : sprintf(buf,"CBNE %02X+X, %04X", pc1, pc+(sint8)pc2+3); break;
-    case 0x6E : sprintf(buf,"DBNZ %02X, %04X",   pc1, pc+(sint8)pc2+3); break;
-    case 0xFE : sprintf(buf,"DBNZ Y, %04X", pc+(sint8)pc1+2); break;
+    case 0x2E : sprintf(buf,"CBNE %02X, %04X",   pc1, pc+(char)pc2+3); break;
+    case 0xDE : sprintf(buf,"CBNE %02X+X, %04X", pc1, pc+(char)pc2+3); break;
+    case 0x6E : sprintf(buf,"DBNZ %02X, %04X",   pc1, pc+(char)pc2+3); break;
+    case 0xFE : sprintf(buf,"DBNZ Y, %04X", pc+(char)pc1+2); break;
 
     case 0x60 : sprintf(buf,"CLRC"); break;
     case 0x80 : sprintf(buf,"SETC"); break;
@@ -272,14 +272,14 @@ void APU_printOpcode(uint8 opcode, uint16 pc, uint8 pc1, uint8 pc2)
     case 0xEF : sprintf(buf,"SLEEP"); break;
     case 0xFF : sprintf(buf,"STOP"); break;
 
-    default   : sprintf(buf,"?(%02X)", opcode); break;
+    default   : sprintf(buf,"???(%02X)", opcode); break;
   }
   FS_printlog(buf);
   FS_printlog("\n");
 }
 
-uint8	*g_ApuTrace = (uint8*)memUncached(0x2FE0000);
-uint32	*g_ApuTrace32 = (uint32*)memUncached(0x2FE0000);
+uint8	*g_ApuTrace = (uint8*)0x27E0000;
+uint32	*g_ApuTrace32 = (uint32*)0x27E0000;
 
 void	APU_printLog()
 {
