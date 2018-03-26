@@ -19,7 +19,7 @@
 #include <malloc.h>
 #include <stdlib.h>
 //FIXME
-#include "posix_hook_shared.h"
+#include "posixHandleTGDS.h"
 #include <unistd.h>
 #include <sys/dir.h>
 #include <stdio.h>
@@ -113,24 +113,24 @@ static void save_config(CONFIG *cfg)
 		 if (cfg->dirty) {
 			FS_lock();
 		    /* write changed data to disk */
-		    FILE *f = fopen_fs(cfg->filename, "w");
+		    FILE *f = fopen(cfg->filename, "w");
 	
 		    if (f) {
 		       pos = cfg->head;
 	
 		       while (pos) {
 			  	 if (pos->name) {
-			    	 fputs_fs(pos->name, f);
+			    	 fputs(pos->name, f);
 			     	 if (pos->name[0] != '[')
-					 fputs_fs(" = ", f);
+					 fputs(" = ", f);
 			     }
 			     if (pos->data)
-			       fputs_fs(pos->data, f);
+			       fputs(pos->data, f);
 	
-			     fputs_fs("\n", f);
+			     fputs("\n", f);
 			     pos = pos->next;
 		       }
-		       fclose_fs(f);
+		       fclose(f);
 		    }
 		    FS_unlock();
 		  }
@@ -512,19 +512,19 @@ static void load_config_file(CONFIG **config, char *filename, char *savefile)
 	if (length > 0)
 	{
 		FS_lock();
-		FILE *f = fopen_fs(filename, "rb");
+		FILE *f = fopen(filename, "rb");
 		if (f)
 		{
 			char *tmp = malloc(length);
 			if (tmp)
 			{
-				fread_fs(tmp, 1, length, f);
+				fread(tmp, 1, length, f);
 				set_config(config, tmp, length, savefile);
 				free(tmp);
 			}
 			else
 				set_config(config, NULL, 0, savefile);
-			fclose_fs(f);
+			fclose(f);
 		}
 		else
 			set_config(config, NULL, 0, savefile);

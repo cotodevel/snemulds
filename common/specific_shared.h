@@ -19,13 +19,13 @@ USA
 
 */
 
-//inherits what is defined in: common_shared.h
+//inherits what is defined in: ipcfifoTGDS.h
 #ifndef __specific_shared_h__
 #define __specific_shared_h__
 
 #include "dsregs.h"
 #include "dsregs_asm.h"
-#include "common_shared.h"
+#include "ipcfifoTGDS.h"
 #include "dswnifi.h"
 #include "apu_shared.h"
 
@@ -41,38 +41,22 @@ struct s_apu2
 	int	    skipper_cnt3;
 	int	    skipper_cnt4;
 	int		counter;
-}__attribute__ ((aligned (4)));
+};
 
-//---------------------------------------------------------------------------------
-typedef struct sSpecificIPC {
-//---------------------------------------------------------------------------------
-	//project specific
+struct sIPCSharedTGDSSpecific{
 	uint32 * IPC_ADDR;
     uint8 * ROM;   		//pointer to ROM page
     int rom_size;   	//rom total size
-	
-	//dswnifi specific
-	TdsnwifisrvStr dswifiSrv;
-	
-	//struct s_apu2 APU2;	//the unaligned access here kills the SnemulDS APU sync. Must be word aligned, so we define it below.
-	
-} tSpecificIPC __attribute__ ((aligned (4)));
-
-//project specific IPC
-#define SpecificIPC ((volatile tSpecificIPC*)(0x027FF000+(sizeof(tMyIPC))))
-#define APU2 ((volatile struct s_apu2*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))))
-#define PORT_SNES_TO_SPC ((volatile uint8*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(struct s_apu2))+(4*1)))
-#define PORT_SPC_TO_SNES ((volatile uint8*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(struct s_apu2))+(4*2))) 
-#define APU_PROGRAM_COUNTER ((volatile uint32*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(struct s_apu2))+(4*3)))		//0x27E0000	@APU PC
-#define APU_ADDR_CMD	((volatile uint32*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(struct s_apu2))+(4*4)))		//#define APU_ADDR_CMD ((volatile uint32*)(0x2800000-16))
-#define APU_ADDR_ANS	((volatile uint32*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(struct s_apu2))+(4*5)))	//#define APU_ADDR_ANS ((volatile uint32*)(0x2800000-20))
-#define APU_ADDR_BLK 	((volatile uint32*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(struct s_apu2))+(4*6)))		//#define APU_ADDR_BLK ((volatile uint32*)(0x2800000-24))
-#define APU_ADDR_BLKP 	((vuint8*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(struct s_apu2))+(4*6)))		//#define (vuint8*)APU_ADDR_BLKP == APU_ADDR_BLK
-#define APU_ADDR_CNT	((volatile uint32*)(0x027FF000+(sizeof(tMyIPC))+(sizeof(tSpecificIPC))+(sizeof(struct s_apu2))+(4*7)))	//#define APU_ADDR_CNT ((volatile uint32*)(0x2800000-60))	/ 0x27fffc4 // used a SNES SCanline counter, unused by snemulds
-
-#define SNEMUL_CMD 	APU_ADDR_CMD	//0x027FFFE8
-#define SNEMUL_ANS 	APU_ADDR_ANS	//0x027fffec
-#define SNEMUL_BLK 	APU_ADDR_BLK	//0x027fffe8
+	struct s_apu2 APU2;
+	uint8	PORT_SNES_TO_SPC[4];
+	uint8	PORT_SPC_TO_SNES[4];
+	uint32	APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
+	uint32	APU_ADDR_CMD;	//SNEMUL_CMD / APU_ADDR_CMD ((volatile uint32*)(0x2800000-16))	//0x027FFFE8
+	uint32	APU_ADDR_ANS;	//SNEMUL_ANS / ADDR_SNEMUL_ANS : //#define APU_ADDR_ANS ((volatile uint32*)(0x2800000-20))
+	uint32	APU_ADDR_BLK;	//APU_ADDR_BLK / SNEMUL_BLK ((volatile uint32*)(0x2800000-24))
+	volatile uint8 * APU_ADDR_BLKP;	//#define (vuint8*)APU_ADDR_BLKP == APU_ADDR_BLK
+	uint32	APU_ADDR_CNT;	//#define APU_ADDR_CNT ((volatile uint32*)(0x2800000-60))	/ 0x27fffc4 // used a SNES SCanline counter, unused by snemulds
+};
 
 // Project Specific
 #define SNEMULDS_APUCMD_RESET 0xffff00a1
@@ -83,15 +67,19 @@ typedef struct sSpecificIPC {
 #define SNEMULDS_APUCMD_SAVESPC 0xffff00a6
 #define SNEMULDS_APUCMD_LOADSPC 0xffff00a7
 
-
-//Standarized SnemulDS defs
+//Standardized SnemulDS defs
 #define APU_RAM_ADDRESS     ((uint8*)(0x6010000))	//uses VRAM Block as APU WORK RAM
+
+//GDB stub support
+//#define GDB_ENABLE
 
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
 
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4);

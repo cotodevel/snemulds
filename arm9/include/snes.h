@@ -65,7 +65,7 @@ struct s_snescore
 };
 
 /* DS Memory */
-#define SNES_RAM_ADDRESS	((uint8 *)(&__shwram2_start))
+#define SNES_RAM_ADDRESS	((uint8 *)(0x023C0000))
 
 #define MAP  ((uchar **)(0x06898000))
 #define WMAP ((uchar **)(0x0689A000))

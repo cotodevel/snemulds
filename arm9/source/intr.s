@@ -189,6 +189,7 @@ sleep:
    BX lr 	
 */
 
+/*
 	.section    .itcm, "awx", %progbits
 
 	.align	4
@@ -216,4 +217,4 @@ MemCpy16:
 	str r2, [r0], #4
 	bx		lr
 
-	
+*/

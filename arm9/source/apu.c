@@ -21,7 +21,7 @@ GNU General Public License for more details.
 #include "specific_shared.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
-#include "typedefs.h"
+#include "typedefsTGDS.h"
 #include "InterruptsARMCores_h.h"
 #include "core.h"
 #include "apu_shared.h"
@@ -29,8 +29,6 @@ GNU General Public License for more details.
 ////////////////////////////////////////////////////////////////////////////
 // Definitions
 ////////////////////////////////////////////////////////////////////////////
-
-//struct s_apu2 *APU2 = (struct s_apu2 *)(&SpecificIPC->APU2);
 
 void	APU_reset()
 {
@@ -57,7 +55,7 @@ void	APU_stop()
 #ifndef IN_EMULATOR	
 	APU_command(SNEMULDS_APUCMD_SPCDISABLE); //APU_command(0x00000004);
 	// Wait the APU disabling
-	while (*APU_ADDR_ANS != 0xFF00FF00){
+	while (getsIPCSharedTGDSSpecific()->APU_ADDR_ANS != 0xFF00FF00){
 		IRQVBlankWait();
 	}
 #endif	
@@ -86,7 +84,7 @@ void	APU_loadSpc()
 void	APU_clear()
 {
 	APU_command(SNEMULDS_APUCMD_CLRMIXERBUF); //APU_command(0x00000005);
-	*APU_ADDR_CNT = 0;
+	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
 }
 
 

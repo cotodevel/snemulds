@@ -4,7 +4,7 @@
 #ifndef __apu_shared_h__
 #define __apu_shared_h__
 
-#include "typedefs.h"
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "specific_shared.h"
 
@@ -40,8 +40,6 @@ extern uint32 ADDR_SNEMUL_BLK;				//APU_ADDR_BLK	//0x027fffe8
 #ifdef ARM9
 extern uint32 snes_ram_address;
 #endif
-
-//extern struct s_apu2 *APU2;
 
 #ifdef __cplusplus
 }

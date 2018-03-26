@@ -23,7 +23,7 @@ USA
 #define __client_http_handler_wnifilib_h__
 
 #include "dsregs.h"
-#include "typedefs.h"
+#include "typedefsTGDS.h"
 
 #include "in.h"
 #include "netdb.h"

@@ -18,7 +18,7 @@ GNU General Public License for more details.
 #ifndef FS_H_
 #define FS_H_
 
-#include "typedefs.h"
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 
 #include <sys/reent.h>

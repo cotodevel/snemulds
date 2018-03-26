@@ -1,6 +1,6 @@
 #include "InterruptsARMCores_h.h"
 #include "specific_shared.h"
-#include "gui.h"
+#include "guiTGDS.h"
 #include "dsregs_asm.h"
 #include "fs.h"
 #include "gfx.h"
@@ -13,53 +13,38 @@
 #include "main.h"
 //#include "font_8x8_uv.h"
 #include "ppu.h"
-#include "keypad.h"
+#include "keypadTGDS.h"
 
-
-
-//jumps here when desync
+//User Handler Definitions
+#ifdef ARM9
 __attribute__((section(".itcm")))
-void Vcounter(){
-
-	//stuff that need to run only once per frames
-	//sendcmd();	//UDP Netplay: exception here cant
-	
-	//printf("vcount! \n");
+#endif
+void Timer0handlerUser(){
 }
 
-
-//---------------------------------------------------------------------------------
+#ifdef ARM9
 __attribute__((section(".itcm")))
-void Vblank() {
-//---------------------------------------------------------------------------------
-	//key event between frames
-	do_keys();
-	
-	
-	GFX.DSFrame++;
-	GFX.v_blank=1;
-
-	// FIX APU cycles
-#if 0	
-	if (/*CFG.Sound_output && */APU2->counter > 100 && APU2->counter < 261)
-	*APU_ADDR_CNT += 261 - APU2->counter;
-#endif		
-	//*APU_ADDR_CNT += 262;
-	if (CFG.Sound_output)
-	*APU_ADDR_CNT = APU_MAX;
-	APU2->counter = 0;
-
-
-	//printf("vblank! \n");	
+#endif
+void Timer1handlerUser(){
 }
 
-//---------------------------------------------------------------------------------
+#ifdef ARM9
 __attribute__((section(".itcm")))
-void Hblank() {
-//---------------------------------------------------------------------------------
+#endif
+void Timer2handlerUser(){
+}
 
-	
-	*APU_ADDR_CMD = 0xFFFFFFFF;
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void Timer3handlerUser(){
+}
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void HblankUser(){
+	getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0xFFFFFFFF;
 
 	if (REG_VCOUNT >= 192)
 	{
@@ -75,7 +60,35 @@ void Hblank() {
 
 	//	h_blank=1;
 	end:
-	*APU_ADDR_CMD = 0;
+	getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
 	
     //printf("hblank! \n");	
+}
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void VblankUser(){	
+	
+	GFX.DSFrame++;
+	GFX.v_blank=1;
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
+	// FIX APU cycles
+#if 0	
+	if (/*CFG.Sound_output && */APU2->counter > 100 && APU2->counter < 261)
+	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT += 261 - APU2->counter;
+#endif		
+	//*APU_ADDR_CNT += 262;
+	if (CFG.Sound_output)
+	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = APU_MAX;
+	APU2->counter = 0;
+
+
+	//printf("vblank! \n");	
+}
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void VcounterUser(){
 }

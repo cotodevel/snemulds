@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include "typedefs.h"
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
 
@@ -30,8 +30,8 @@ GNU General Public License for more details.
 #include "apu.h"
 #include "opcodes.h"
 #include "cpu.h"
-#include "console.h"
-#include "dma.h"
+#include "consoleTGDS.h"
+#include "dmaTGDS.h"
 
 
 extern int		screen_mode; // NDS MAIN screen mode

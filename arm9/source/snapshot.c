@@ -16,7 +16,7 @@ GNU General Public License for more details.
 */
 
 #include "specific_shared.h"
-#include "mem_handler_shared.h"
+#include "memoryHandleTGDS.h"
 
 #include "common.h"
 

@@ -170,6 +170,7 @@ void	reset_SNES()
     SPC700_emu = 0;
   SPC700_reset();
 */
+  struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
   APU2->counter = 0;
 //  if (CFG.Sound_output) 
   	APU_nice_reset();

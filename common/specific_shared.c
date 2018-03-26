@@ -1,6 +1,4 @@
-
 /*
-
 			Copyright (C) 2017  Coto
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,7 +16,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 USA
 
 */
-#include "common_shared.h"
+#include "ipcfifoTGDS.h"
 #include "specific_shared.h"
 #include "apu_shared.h"
 
@@ -31,7 +29,7 @@ USA
 #include "main.h"
 #include "mixrate.h"
 #include "wifi_arm7.h"
-#include "spifw.h"
+#include "spifwTGDS.h"
 #include "apu_shared.h"
 
 #endif
@@ -55,6 +53,14 @@ USA
 #endif
 
 
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
+	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(getUserIPCAddress());
+	return sIPCSharedTGDSSpecificInst;
+}
+
 //inherits what is defined in: common_shared.c
 #ifdef ARM9
 __attribute__((section(".itcm")))
@@ -62,12 +68,6 @@ __attribute__((section(".itcm")))
 void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 	
 	switch (cmd1) {		
-		//Shared 
-		case(WIFI_SYNC):{
-			Wifi_Sync();
-		}
-		break;
-		
 		//Process the packages (signal) that sent earlier FIFO_SEND_EXT
 		case(FIFO_SOFTFIFO_READ_EXT):{
 		
@@ -94,13 +94,6 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 		}
 		break;
 		
-		//arm9 wants to send a WIFI context block address / userdata is always zero here
-		case(WIFI_STARTUP):{
-			//	wifiAddressHandler( void * address, void * userdata )
-			wifiAddressHandler((Wifi_MainStruct *)(uint32)cmd2, 0);
-		}
-		break;
-		
 		
 		case SNEMULDS_APUCMD_RESET: //case 0x00000001:
 		{
@@ -109,7 +102,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 
 			memset(playBuffer, 0, MIXBUFSIZE * 8);
 
-			*APU_ADDR_CNT = 0; 
+			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0; 
 			ApuReset();
 			DspReset();
 
@@ -134,7 +127,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC 	
 			LoadSpc(APU_RAM_ADDRESS);
 			SetupSound();   	
-			*APU_ADDR_CNT = 0;             	
+			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;             	
 			paused = false;
 			SPC_freedom = true;
 			SPC_disable = false;
@@ -143,7 +136,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 			
 		case SNEMULDS_APUCMD_SPCDISABLE:{ //case 0x00000004:{ // DISABLE 
 			SPC_disable = true;
-			*APU_ADDR_CNT = 0;
+			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
 		}
 		break;        
 		
@@ -159,30 +152,10 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2,uint32 cmd3,uint32 cmd4){
 			
 		case SNEMULDS_APUCMD_LOADSPC:{ //case 0x00000007:{ // LOAD state 
 			LoadSpc(APU_RAM_ADDRESS);
-			*APU_ADDR_CNT = 0; 
+			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0; 
 		}
 		break;
-		
-		
 		#endif
-		
-		
-		
-		//ARM9 command handler
-		#ifdef ARM9
-		//exception handler: arm7
-		case(EXCEPTION_ARM7):{
-			
-			if((uint32)cmd2 == (uint32)unexpectedsysexit_7){
-				exception_handler((uint32)unexpectedsysexit_7);	//r0 = EXCEPTION_ARM7 / r1 = unexpectedsysexit_7
-			}
-		}
-		break;
-		
-		
-		#endif
-	
-		
 	}
 	
 }
@@ -204,7 +177,7 @@ void update_ram_snes(){
 
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
-    
+    struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
 	APU_T0_ASM_ADDR = (uint32)&APU2->T0;
 	APU_T1_ASM_ADDR = (uint32)&APU2->T1;
 	APU_T2_ASM_ADDR = (uint32)&APU2->T2;
@@ -218,13 +191,14 @@ void update_spc_ports(){
 	APU_CNT2_ASM_ADDR = (uint32)&APU2->CNT2;
 	
 	//must reflect to specific_shared.h defs
-	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)PORT_SPC_TO_SNES;	
-	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)PORT_SNES_TO_SPC; 
-	ADDR_APU_PROGRAM_COUNTER=	(uint32)(volatile uint32*)APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
+	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[0];
+	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)&getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[0]; 
+	ADDR_APU_PROGRAM_COUNTER=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
 	
-	ADDR_SNEMUL_CMD	=	(uint32)(volatile uint32*)APU_ADDR_CMD;	//0x027FFFE8	// SNEMUL_CMD
-	ADDR_SNEMUL_ANS	=	(uint32)(volatile uint32*)APU_ADDR_ANS;	//0x027fffec	// SNEMUL_ANS
-	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
+	ADDR_SNEMUL_CMD	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_CMD;	//0x027FFFE8	// SNEMUL_CMD
+	ADDR_SNEMUL_ANS	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_ANS;	//0x027fffec	// SNEMUL_ANS
+	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
+	getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP = (volatile uint8 *)ADDR_SNEMUL_BLK;
 	
 	//todo: APU_ADDR_CNT: is unused by Assembly APU Core?
 }

@@ -11,7 +11,17 @@
 #include "mixrate.h"
 #include "apu_shared.h"
 
-void Timer1handler(){
+//User Handler Definitions
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void Timer0handlerUser(){
+}
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void Timer1handlerUser(){
 	#if PROFILING_ON
 		long long begin = TIMER2_DATA + ((long long)TIMER3_DATA << 19);
 	#endif
@@ -40,37 +50,28 @@ void Timer1handler(){
 	#endif
 }
 
-//---------------------------------------------------------------------------------
-void Vcounter(){
-	//updateMyIPC();
-	doSPIARM7IO();
-}
-//---------------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------------
-void Vblank() {
-//---------------------------------------------------------------------------------
-	#if PROFILING_ON
-		// Debug time data
-		SPC_IPC->curTime += TIMER2_DATA | ((long long)TIMER3_DATA << 19);
-		TIMER2_CR = 0;
-		TIMER3_CR = 0;
-		TIMER2_DATA = 0;
-		TIMER2_CR = TIMER_DIV_64 | TIMER_ENABLE;
-		TIMER3_DATA = 0;
-		TIMER3_CR = TIMER_CASCADE | TIMER_ENABLE;
-	#endif
-	
-	
-	Wifi_Update();
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void Timer2handlerUser(){
 }
 
-//---------------------------------------------------------------------------------
-void Hblank() {
-//---------------------------------------------------------------------------------
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void Timer3handlerUser(){
+}
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void HblankUser(){
+	
 	// Block execution until the hblank processing on ARM9
 	if (!SPC_disable)
 	{
+		struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
 		int VCount = REG_VCOUNT;        
 		scanlineCount++;
 		uint32 T0 = APU_MEM[APU_TIMER0]?APU_MEM[APU_TIMER0]:0x100;
@@ -97,4 +98,27 @@ void Hblank() {
 		}
 		
 	}
+}
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void VblankUser(){
+	#if PROFILING_ON
+		// Debug time data
+		SPC_IPC->curTime += TIMER2_DATA | ((long long)TIMER3_DATA << 19);
+		TIMER2_CR = 0;
+		TIMER3_CR = 0;
+		TIMER2_DATA = 0;
+		TIMER2_CR = TIMER_DIV_64 | TIMER_ENABLE;
+		TIMER3_DATA = 0;
+		TIMER3_CR = TIMER_CASCADE | TIMER_ENABLE;
+	#endif
+	
+}
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void VcounterUser(){
 }

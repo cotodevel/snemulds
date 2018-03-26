@@ -1,4 +1,4 @@
-#include "typedefs.h"
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
 
@@ -14,8 +14,8 @@
 #include "opcodes.h"
 #include "cpu.h"
 #include "gui_console_connector.h"
-#include "video.h"
-#include "keypad.h"
+#include "videoTGDS.h"
+#include "keypadTGDS.h"
 
 //extern touchPosition superTouchReadXY();
 
@@ -73,13 +73,12 @@ int get_joypad()
 			}
 			if ((keys & KEY_RIGHT))
 			{
-				LOG("%04x %04x %02x %02x %04x %04x\n", CPU.PC,
+				/* LOG("%04x %04x %02x %02x %04x %04x\n", CPU.PC,
 				(uint32)((sint32)PCptr+(sint32)SnesPCOffset),
-				PORT_SNES_TO_SPC[1], PORT_SPC_TO_SNES[1],  
-				
+				getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[1], PORT_SPC_TO_SNES[1],
 				 (*(uint32*)(0x27E0000)) & 0xFFFF, *(uint16 *)(APU_RAM_ADDRESS+0x18));
-				
-				//PORT_SNES_TO_SPC[1] = 0x44; 		
+				*/
+				//getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[1] = 0x44; 		
 			}
 			
 		}	
@@ -220,13 +219,14 @@ int get_joypad()
 		{		
 			int tx, ty;
 
-			tx = MyIPC->touchXpx;
+			tx = getsIPCSharedTGDS()->touchXpx;
+			
 			if (CFG.Scaled == 0) // No scaling
-				ty = MyIPC->touchYpx+GFX.YScroll;
+				ty = getsIPCSharedTGDS()->touchYpx+GFX.YScroll;
 			else if (CFG.Scaled == 1) // Half scaling
-				ty = MyIPC->touchYpx*208/192+12; // FIXME			
+				ty = getsIPCSharedTGDS()->touchYpx*208/192+12; // FIXME			
 			else if (CFG.Scaled == 2) // Full screen
-				ty = MyIPC->touchYpx*224/192;
+				ty = getsIPCSharedTGDS()->touchYpx*224/192;
 			
 			if (CFG.MouseMode == 0)
 			{

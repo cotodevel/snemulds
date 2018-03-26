@@ -38,7 +38,7 @@ USA
 #define NDSMULTI_UDP_PORT_GUEST 8890		//guest listener - 
 
 
-#include "typedefs.h"
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
 

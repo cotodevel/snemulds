@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include "typedefs.h"
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
 
@@ -46,15 +46,15 @@ GNU General Public License for more details.
 #include "conf.h"
 #include "fs.h"
 #include "memmap.h"
-#include "gui.h"
+#include "guiTGDS.h"
 #include "opcodes.h"
 //#include "common.h"
 #include "specific_shared.h"
 #include "nds_cp15_misc.h"
-#include "fsfat_layer.h"
+#include "fsfatlayerTGDS.h"
 #include "about.h"
-#include "toolchain_utils.h"
-#include "clock.h"
+#include "utilsTGDS.h"
+#include "clockTGDS.h"
 
 
 //struct s_snes SNES;
@@ -225,7 +225,7 @@ int go()
 		return 0;
 	}
 	
-	
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
 	CPU.HCycles = SNES.UsedCycles;	
     if (DMA_PORT[0x00]&0x10) 
     {

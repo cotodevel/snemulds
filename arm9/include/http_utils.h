@@ -22,7 +22,7 @@ USA
 #define __http_utils_h__
 
 #include "dsregs.h"
-#include "typedefs.h"
+#include "typedefsTGDS.h"
 
 #include <stdio.h>
 #include <string.h>

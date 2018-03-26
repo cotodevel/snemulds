@@ -23,7 +23,7 @@ USA
 
 #include "about.h"
 
-#include "toolchain_utils.h"
+#include "utilsTGDS.h"
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
@@ -36,7 +36,7 @@ USA
 #include "conf.h"
 #include "fs.h"
 #include "memmap.h"
-#include "gui.h"
+#include "guiTGDS.h"
 #include "opcodes.h"
 #include "common.h"
 #include "specific_shared.h"

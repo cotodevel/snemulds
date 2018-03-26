@@ -15,7 +15,7 @@
  GNU General Public License for more details.
  */
 
-#include "typedefs.h"
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
 
@@ -38,7 +38,7 @@
 #include "console_str.h"
 
 #include "main.h"
-#include "timer.h"
+#include "timerTGDS.h"
 
 //#define USE_EMUL
 
@@ -434,8 +434,8 @@ int main(int argc, char ** argv)
 {
 	IRQInit();
 	
-	*APU_ADDR_CNT = 0;
-	*APU_ADDR_ANS = *APU_ADDR_CMD = 0;
+	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
+	getsIPCSharedTGDSSpecific()->APU_ADDR_ANS = getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
 
 	screen_mode = 0;
 	bool project_specific_console = true;	//set default console or custom console: custom console

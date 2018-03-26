@@ -15,14 +15,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include "typedefs.h"
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "InterruptsARMCores_h.h"
 #include "interrupts.h"
 #include "specific_shared.h"
 
 
-#include "timer.h"
+#include "timerTGDS.h"
 
 #include "common.h"
 #include "opcodes.h"
