@@ -367,7 +367,27 @@ int loadROM(char *name, int confirm)
 	mem_clear_paging(); // FIXME: move me...
 
 	ROM = (char *) SNES_ROM_ADDRESS;
-
+	bool zipFileLoaded = false;
+	if(strstr (_FS_getFileExtension(name),"ZIP")){	
+		zipFileLoaded = true;
+	}
+	
+	if(zipFileLoaded == true){
+		//build into tmpFile2, filename.smc out of passed filename.ext compressed
+		char outFile[512] = {0};
+		char inFile[512] = {0};
+		char temp1[512] = {0};
+		char temp2[512] = {0};
+		int sizeExt=strlen(_FS_getFileExtension(CFG.ROMFile))+1;
+		strncpy(temp1, CFG.ROMFile, strlen(CFG.ROMFile) - sizeExt);	//"filename" (no extension)
+		sprintf(outFile,"%s%s",temp1,".smc");
+		printf("decompressing:%s",CFG.ROMFile);
+		printf("->%s",outFile);
+		sprintf(romname,"%s",outFile);
+		//Decompress File for reload later
+		int stat = load_gz((char*)CFG.ROMFile, (char*)outFile);
+	}
+	
 	size = FS_getFileSize(romname);
 	ROMheader = size & 8191;
 	if (ROMheader != 0&& ROMheader != 512)

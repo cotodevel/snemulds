@@ -415,7 +415,7 @@ int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		{
 			sint8 *sel = GUISelector_getSelected(GUI.screen, NULL);
 			//clrscr();
-			//printf("ROMSelectorHandler:");
+			//printf("ROMSelectorHandler:");	//filename.smc
 			//printf("romfile:%s",sel);
 			//while(1);
 			loadROM(sel, 0);
