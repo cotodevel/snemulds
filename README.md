@@ -1,22 +1,49 @@
 # SnemulDS
-SnemulDS 0.6 Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes).
+SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes)... 
+This is based from real 0.6.a sources archeide left years ago and I managed to find.
 
-21/10/2017
+/release folder has precompiled binaries for you to enjoy
 
-After a lot of work (rewrite a toolchain, create a proper interrupt friendly environment required for ToolchainGenericDS and emulators, dswifi compatible)
-This is the original SnemulDS 0.6 sources ported to ToolchainGenericDS. It is not based on SnemulDS revival.
+Compile Toolchain: To compile this project you will need to follow the steps at https://github.com/cotodevel/ToolchainGenericDS: Then simply extract the project somewhere.
+
+Compile this project: 
+
+[Windows]
+Open msys, through msys commands head to the directory your extracted this project. 
+Then write: make clean make
+
+[Linux]
+Then write: make clean make
+
+After compiling, run the example in NDS.
+
+Project Specific description: 
+
+Coto: added ZIP support:
+The code was taken from NesDS, and changed some stuff so it could work with Toolchain Generic DS.
+
+Requisites:
+
+a) Every .zip file must be within root:/snes/ folder, where root is your sd letter.
+b) The file extension must be renamed to .smc before compression.
+c) The compressed file must use  .zip (deflate) or .gz, and the compressed .zip must have 1 only file.
 
 
-- You will need the NintendoDS toolchain "toolchain generic" to build these sources.
-Follow the steps at: https://github.com/cotodevel/ToolchainGenericDS to set up the Nintendo DS "toolchain generic" toolchain, GNU licensed. 
+Optional:
+GDB Remote debugging is now possible, to enable GDB Remote Debugging you will head to: common/specific_shared.h and change the commented out line:
+//#define GDB_ENABLE
 
-- use the d7c8989 ToolchainGenericDS branch from master to compile this, any other commit will not compile on these sources.
+into uncommented:
+#define GDB_ENABLE
 
-- Now run "Make" inside SnemulDS folder, project should compile fine.
+1.  Then recompile the project, note that games won´t boot while GDB Remote debugging due to TCP nature, this is normal. 
+2.  Follow the steps @ https://github.com/cotodevel/ToolchainGenericDS-gdbstub-example
 
-- After building simply copy snemul.cfg and snemulds.nds to root of your SD, and enjoy.
+to disable GDB Remote debugging simply comment out the GDB_ENABLE line so it looks like this:
+//#define GDB_ENABLE
+and recompile project.
 
-    
+
 to do:
 
 -   fix Mode 0 (no transparency/broken)

@@ -40,6 +40,11 @@
 #include "main.h"
 #include "timerTGDS.h"
 
+//wnifilib: multiplayer
+#include "dswnifi_lib.h"
+#include "dswnifi.h"
+#include "specific_shared.h"
+
 //#define USE_EMUL
 
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
@@ -614,6 +619,10 @@ int main(int argc, char ** argv)
 		}
 		*/
 		
+		#ifdef GDB_ENABLE
+		//GDB Stub Process must run here
+		remoteStubMain();
+		#endif
 	}
 
 	return 0;
