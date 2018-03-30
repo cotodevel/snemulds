@@ -117,9 +117,7 @@ int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------
 	IRQInit();
 	while (!(*((vuint8*)0x04000240) & 0x2));
-	useARM7VRAMStacks();	//change ARM7 stacks to VRAM
 	installWifiFIFO();		//use DSWIFI
-	
 	
     playBuffer = (uint16*)0x6000000;
     int i   = 0;

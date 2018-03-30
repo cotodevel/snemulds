@@ -100,13 +100,13 @@ vramSetup * SNEMULDS_2DVRAM_SETUP(){
 	vramSetupDefault->vramBankSetupInst[VRAM_D_INDEX].vrambankCR = VRAM_D_0x06000000_ARM7;
 	vramSetupDefault->vramBankSetupInst[VRAM_D_INDEX].enabled = true;
 	
-	// 80Ko for Sprites (SNES : 32-64Ko)
-	//vramSetBankE(VRAM_E_MAIN_SPRITE); // 0x6400000
+	// 80K for Sprites
+	//(SNES:32K -NDSVRAM 64K @ 0x6400000)
 	vramSetupDefault->vramBankSetupInst[VRAM_E_INDEX].vrambankCR = VRAM_E_0x06400000_ENGINE_A_BG;
 	vramSetupDefault->vramBankSetupInst[VRAM_E_INDEX].enabled = true;
 	
-	//vramSetBankF(VRAM_F_MAIN_SPRITE);
-	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].vrambankCR = VRAM_F_0x064XXXXX_ENGINE_A_BG;
+	//(NDSVRAM 16K @ 0x06410000)
+	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].vrambankCR = VRAM_F_0x06410000_ENGINE_A_BG;
 	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].enabled = true;
 	
 	//vramSetBankG(VRAM_G_BG_EXT_PALETTE);
