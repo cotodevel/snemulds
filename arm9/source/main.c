@@ -415,7 +415,7 @@ int loadROM(char *name, int confirm)
 		printf("CRC = %08x ", crc);
 	}
 
-	ROM += 0x400000; // Protected ROM
+	//ROM += 0x400000; // Protected ROM
 
 	changeROM(ROM-ROMheader, size);
 
