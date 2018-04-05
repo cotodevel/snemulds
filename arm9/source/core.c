@@ -1827,18 +1827,6 @@ void SNES_update()
 
 void GoNMI()
 {
-#ifndef ASM_OPCODES	
-  if (CPU.WAI_state) {
-    CPU.WAI_state = 0; PC++;
-  };
-
-  pushb(PB);
-  pushw(PC);
-  pushb(P);
-  PC = CPU.NMI;
-  PB = 0;
-  P &= ~P_D;
-#else
   CPU_pack();
 
   if (CPU.WAI_state) {
@@ -1853,28 +1841,12 @@ void GoNMI()
   CPU.P &= ~P_D;
   
   CPU.unpacked = 0; // ASM registers to update
-#endif
 
 //  if (CFG.CPU_log) fprintf(SNES.flog, "--> NMI\n");
 }
 
 void GoIRQ()
 {
-#ifndef ASM_OPCODES	
-  if (CPU.WAI_state) {
-    CPU.WAI_state = 0; PC++;
-  };
-
-  if (!(P&P_I)) {
-    pushb(PB);
-    pushw(PC);
-    pushb(P);
-    PC = CPU.IRQ; 
-    PB = 0;
-    P |= P_I;
-    P &= ~P_D;
-  }
-#else
   CPU_pack();
 
   if (CPU.WAI_state) {
@@ -1891,7 +1863,6 @@ void GoIRQ()
     CPU.P &= ~P_D;
   }
   CPU.unpacked = 0; // ASM registers to update  
-#endif  
   
   DMA_PORT[0x11] = 0x80;
 //  if (CFG.CPU_log) fprintf(SNES.flog, "--> IRQ\n");

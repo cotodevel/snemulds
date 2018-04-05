@@ -28,9 +28,6 @@ USA
 #include <string.h>
 #include <stdlib.h>
 
-
-#ifdef ASM_OPCODES
-
 #define MAP_RELOAD      0x80000000
 #define MAP_PPU         0x81000000
 #define MAP_CPU         0x82000000
@@ -39,18 +36,6 @@ USA
 #define MAP_HIROM_SRAM  0x85000000
 #define MAP_NONE        0x86000000
 #define MAP_LAST        0x8F000000
-#else
-
-#define MAP_RELOAD      0x00000000
-#define MAP_PPU         0x00000001
-#define MAP_CPU         0x00000002
-#define MAP_DSP         0x00000003
-#define MAP_LOROM_SRAM  0x00000004
-#define MAP_HIROM_SRAM  0x00000005
-#define MAP_NONE        0x00000006
-#define MAP_LAST        0x0000000F
-#endif
-
 
 
 #define bzero(p, s)	memset(p, 0, s)

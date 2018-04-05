@@ -100,13 +100,6 @@ void	reset_CPU()
   BRKaddress = CPU.BRK; 
   CPU.COP = mem_getword(0xffe4, 0);
   COPaddress = CPU.COP;
-#ifndef ASM_OPCODES  
-  PC  = mem_getword(0xfffc, 0);
-  D = PB = DB = 0;
-  P = P_E | P_M | P_X | P_I;
-  A = X = Y = 0;
-  S = 0x1ff;
-#else
   CPU.PC  = mem_getword(0xfffc, 0);
   CPU.D = CPU.PB = CPU.DB = 0;
   CPU.P = P_E | P_M | P_X | P_I;
@@ -117,7 +110,6 @@ void	reset_CPU()
   PCptr = map_memory(CPU.PC, CPU.PB);
   SnesPCOffset = -((sint32)mem_getbaseaddress(CPU.PC, CPU.PB));
   //printf("PCptr = %08x\n", PCptr);
-#endif  
   CPU.IsBreak = 0;
   CPU.packed = CPU.unpacked = 0;
   

@@ -571,11 +571,10 @@ int main(int argc, char ** argv)
 	GUI_deleteROMSelector(); // Should also free ROMFile
 	GUI_createMainMenu();	//Start GUI
 	
+//trace code
 #if 0
-#ifdef ASM_OPCODES    
 	printf("CPU_init=%p ", CPU_init);
 	printf("CPU_goto=%p ", CPU_goto2);
-#endif      
 	printf("logbuf=%p ", logbuf);
 
 	while (1)

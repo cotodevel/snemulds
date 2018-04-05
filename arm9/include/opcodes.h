@@ -37,38 +37,23 @@ GNU General Public License for more details.
 #endif
 
 
-#ifdef ASM_OPCODES
+#define REAL_A ((SaveR8 & 0x00000080) ? \
+			(A >> 24 | (SnesB&0xFF000000) >> 16) : (A >> 16))
+#define REAL_CYCLES (-((sint32)SaveR8 >> 14))
+#define HCYCLES (CPU.HCycles+CPU.Cycles+((sint32)SaveR8 >> 14))
+#define ADD_CYCLES(x)	(SaveR8 +=((x)<<14))
+//#define FIX_VCOUNT		{ if ((sint32)SaveR8 > 0) { SNES.VCount++; (sint32)SaveR8 -= NB_CYCLES; ) }  
+#define SET_WAITCYCLES(c) {	\
+	CPU_WaitAddress = CPU_LoopAddress; \
+	CPU_NextCycles = 0; }
 
-	#define REAL_A ((SaveR8 & 0x00000080) ? \
-				(A >> 24 | (SnesB&0xFF000000) >> 16) : (A >> 16))
-	#define REAL_CYCLES (-((sint32)SaveR8 >> 14))
-	#define HCYCLES (CPU.HCycles+CPU.Cycles+((sint32)SaveR8 >> 14))
-	#define ADD_CYCLES(x)	(SaveR8 +=((x)<<14))
-	//#define FIX_VCOUNT		{ if ((sint32)SaveR8 > 0) { SNES.VCount++; (sint32)SaveR8 -= NB_CYCLES; ) }  
-	#define SET_WAITCYCLES(c) {	\
-		CPU_WaitAddress = CPU_LoopAddress; \
-		CPU_NextCycles = 0; }
+#define SET_WAITCYCLESDELAY(delay) {	\
+	CPU_WaitAddress = CPU_LoopAddress; \
+	uint32 tmp = NB_CYCLES-delay-CPU.Cycles-CPU.HCycles; \
+	if (tmp < 0) CPU_NextCycles = (tmp) << 14; \
+	else CPU_NextCycles = 0;	\
+}
 
-	#define SET_WAITCYCLESDELAY(delay) {	\
-		CPU_WaitAddress = CPU_LoopAddress; \
-		uint32 tmp = NB_CYCLES-delay-CPU.Cycles-CPU.HCycles; \
-		if (tmp < 0) CPU_NextCycles = (tmp) << 14; \
-		else CPU_NextCycles = 0;	\
-	}
-
-#else
-	
-
-	#define REAL_A	A
-	#define REAL_CYCLES	Cycles
-	#define HCYCLES	(CPU.HCycles+Cycles)
-	#define ADD_CYCLES(x)	(Cycles +=(x))
-	#define SET_WAITCYCLES(c) { CPU.WaitAddress = CPU.LastAddress; \
-								CPU.WaitCycles = c; }
-	#define SET_WAITCYCLESDELAY(delay) { CPU.WaitAddress = CPU.LastAddress; \
-										 CPU.WaitCycles = CPU.Cycles-(delay); }
-
-#endif
 
 //CPU Hardware
 #ifndef __opcodes_cpu_snemul__
@@ -84,37 +69,25 @@ GNU General Public License for more details.
 extern "C" {
 #endif
 
-
-
-//todo: check later if SNES CPU Core (non assembler snezzi core) compiles and work
-
 //Snezzi Assembler Snes Core
-#ifdef ASM_OPCODES
-
 extern unsigned short P;
 extern unsigned short PC;
 extern uint8  PB, DB, t;
 extern unsigned int A, X, Y, D, S;
 extern long Cycles;
 extern uint8	*PCptr;
-
 extern unsigned int		SnesPCOffset;
 extern unsigned int		SaveR6;
 extern unsigned int		SaveR8;
-
 extern unsigned int		SnesB;
-
 extern	uint32			CPU_log;
 extern	uint32			AsmDebug[16];
-
 extern	sint32			CPU_NextCycles;
 extern	uint32			CPU_LoopSpeedHacks;
 extern	uint8	*CPU_WaitAddress;
 extern	uint8	*CPU_LoopAddress;
-
 extern	uint32			BRKaddress;
 extern	uint32			COPaddress;
-
 extern void CPU_pack();
 extern void CPU_unpack();
 extern void	pushb(uint8 b);
@@ -122,65 +95,6 @@ extern void pushw(uint16 w);
 extern uint8	pullb();
 extern uint16	pullw();
 extern void CPU_goto(int cycles);
-
-
-	
-//SnemulDS high level core (slower)
-#else
-
-extern 	uint32 PCptr;
-extern 	uint32 SnesPCOffset;
-extern	uint32	BRKaddress;
-extern	uint32	COPaddress;
-
-extern unsigned short P;
-extern unsigned short PC;
-extern uint8  PB, DB, t;
-extern unsigned short A, X, Y, D, S;
-extern long Cycles;
-
-extern uint8 OpCycles_MX[256];
-extern uint8 OpCycles_mX[256];
-extern uint8 OpCycles_Mx[256];
-extern uint8 OpCycles_mx[256];
-extern uint32	F_C;
-extern uint32	F_Z;
-extern uint32	F_N;
-extern uint32	F_V;
-
-extern void		pushb(uint8 b);
-extern void		pushw(uint16 w);
-extern uint8	pullb();
-extern uint16	pullw();
-extern uchar   stack_getbyte(uint8 offset);
-extern void	stack_setbyte(uint8 offset, uchar byte);
-extern ushort  stack_getword(uint8 offset);
-extern void  stack_setword(uint8 offset, uint16 word);
-extern uchar   direct_getbyte(uint32 offset);
-extern uchar   direct_getbyte2(uint32 offset);
-extern void	direct_setbyte(uint32 offset, uchar byte);
-extern ushort  direct_getword(uint32 offset);
-extern void  direct_setword(uint32 offset, uint16 word);
-extern uint8 rol_b(uint8 a);
-extern uint16 rol_w(uint16 a);
-extern uint8 ror_b(uint8 a);
-extern uint16 ror_w(uint16 a);
-extern uint8			*OpCycles;
-extern void ADC16(uint16 Work16);
-extern void ADC8(uint8 Work8);
-extern void SBC16(uint16 Work16);
-extern void SBC8(uint8 Work8);
-extern void	RTI();
-extern void	XCE();
-extern void	MVN(uint8 SB);
-extern void	MVP(uint8 SB);
-extern void	BRK();
-extern void	COP();
-extern void CPU_goto(int cycles);
-extern void do_branch();
-extern void CPU_pack();
-extern void CPU_unpack();
-#endif
 
 
 //opcodes2.s

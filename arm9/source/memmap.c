@@ -33,18 +33,13 @@ extern char *ROM_Image;
 #define USE_EXTMEM	2
 
 
-uchar DMA_port_read(long address);
-void DMA_port_write(long address, unsigned short value);
-void PPU_port_write(long address, unsigned short value);
-uchar PPU_port_read(long address);
+extern uchar DMA_port_read(long address);
+extern void DMA_port_write(long address, unsigned short value);
+extern void PPU_port_write(long address, unsigned short value);
+extern uchar PPU_port_read(long address);
 
-#ifdef ASM_OPCODES
 #define SPECIAL_MAP(p) ((int)(p) & 0x80000000)
 #define REGULAR_MAP(p) (!((int)(p) & 0x80000000))  	
-#else
-#define SPECIAL_MAP(p) ((int)(p) < MAP_LAST)
-#define REGULAR_MAP(p) ((int)(p) >= MAP_LAST)  	
-#endif
 
 void WriteProtectROM()
 {

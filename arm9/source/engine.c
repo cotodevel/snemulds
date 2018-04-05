@@ -659,7 +659,7 @@ int trace_CPU()
   char	buf[64];
   char	buf2[256];
 
-
+/*
 #if 0
 	if (addri != 0)
 	{
@@ -670,8 +670,8 @@ int trace_CPU()
 		addri = 0;
 	}
 #endif
+*/
 
-#ifdef ASM_OPCODES
   Cycles = -((sint32)SaveR8 >> 14);
   
   if (Cycles <= 0)
@@ -680,20 +680,9 @@ int trace_CPU()
   CPU.packed = 0;	
   CPU_pack();
   P = CPU.P;
-#else
-  CPU.PC = CPU.LastAddress;
-  CPU.A = A;
-  CPU.X = X;
-  CPU.Y = Y;
-//  CPU.Cycles = Cycles;
-  CPU.S = S;
-  CPU.P = P;
-  CPU.D = D;
-  CPU.DB = DB;
-  CPU.PB = PB;
-#endif  
 
-#if 1
+//trace code
+#if 0
   show_opcode(buf, mem_getbyte(CPU.PC, CPU.PB), CPU.PC, CPU.PB, P);
   sprintf(buf2,
           "A:%04X X:%04X Y:%04X S:%04X D:%02X/%04X VC:%03d ?:%08x/%04x/%04x %d%d%d%d%d%d%d%d %02X:%04X %s\n",
@@ -722,6 +711,7 @@ int trace_CPU()
   printf("%s", buf2);
   //swiDelay(10000000);
 #endif          
+
 
 	if (CPU.PB == 0 && CPU.PC == 0x8F15)
 		CPU_log = 0;

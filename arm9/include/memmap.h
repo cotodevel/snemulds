@@ -23,14 +23,8 @@ GNU General Public License for more details.
 #define NOT_LARGE	0
 #define USE_PAGING	1
 
-#ifdef ASM_OPCODES
 #define SPECIAL_MAP(p) ((int)(p) & 0x80000000)
 #define REGULAR_MAP(p) (!((int)(p) & 0x80000000))  	
-#else
-#define SPECIAL_MAP(p) ((int)(p) < MAP_LAST)
-#define REGULAR_MAP(p) ((int)(p) >= MAP_LAST)  	
-#endif
-
 
 
 #endif /*MEMMAP_H_*/
