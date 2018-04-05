@@ -33,8 +33,6 @@ GNU General Public License for more details.
 extern "C" {
 #endif
 
-extern bool isValidMap(uint32 addr);
-
 extern void WriteProtectROM();
 extern void FixMap();
 extern void MapRAM();
