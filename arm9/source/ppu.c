@@ -1035,7 +1035,12 @@ void	draw_plane_withpriority(int bg, int bg_mode, int nb_tilex, int nb_tiley, in
   		
   if (tile_size != 3)
   	return;
-
+	
+	//discard any VRAM writes that aren't handled correctly by the emu
+	if(isValidMap((uint32)(uint16 *)vram_addr) == false){
+		return;
+	}
+	
   	/* 8 px tile mode */
   	map_ptr = (uint16 *)(SNESC.VRAM+map_address);
 
