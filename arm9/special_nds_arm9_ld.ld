@@ -27,6 +27,7 @@ MEMORY
 	VECTORS : ORIGIN = 0x01FF8000, LENGTH = 1K - 256
 	GBAROM : ORIGIN = 0x08000000, LENGTH = 32M
 	EWRAM : ORIGIN = 0x02000000, LENGTH = 4M
+	ARM9SHAREDWRAM : ORIGIN = 0x03000000, LENGTH = 32K
 	GBAEW   : ORIGIN = 0x02000000, LENGTH = 256k	/* todo... */
 }
 
@@ -38,6 +39,9 @@ _vector_end = ORIGIN(VECTORS)	+	LENGTH(VECTORS);
 
 _ewram_start = ORIGIN(EWRAM);
 _ewram_end = ORIGIN(EWRAM)	+	LENGTH(EWRAM);
+
+_arm9sharedwram_start = ORIGIN(ARM9SHAREDWRAM);
+_arm9sharedwram_end = ORIGIN(ARM9SHAREDWRAM)	+	LENGTH(ARM9SHAREDWRAM);
 
 _gba_start = ORIGIN(GBAROM);
 _gba_end = ORIGIN(GBAROM)	+	LENGTH(GBAROM);
@@ -202,5 +206,11 @@ SECTIONS
 		. = ALIGN(4);
 	} > VECTORS AT > EWRAM
 	__vectors_vma_end__ = .;
-	__vma_stub_end__ = __lib__end__ + SIZEOF(.itcm) + SIZEOF(.dtcm) + SIZEOF(.vectors);
+	___arm9sharedwram_vma_start = .;
+	.arm9sharedwram : {
+		KEEP (*(.arm9sharedwram*))
+		. = ALIGN(4);
+	} > ARM9SHAREDWRAM AT > EWRAM
+	___arm9sharedwram_vma_end__ = .;
+	__vma_stub_end__ = __lib__end__ + SIZEOF(.itcm) + SIZEOF(.dtcm) + SIZEOF(.vectors) + SIZEOF(.arm9sharedwram);
 }

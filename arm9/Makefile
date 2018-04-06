@@ -38,14 +38,14 @@ d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_
 MAPFILE = $(DIR_ARM9).map
 SHARED_FLAGS	=	-mcpu=arm946e-s	-mthumb-interwork
 AS_ASFLAGS		=	$(SHARED_FLAGS)	-defsym debug=0	-defsym	appver='$(EXECUTABLE_VERSION)'	-defsym	ARM9='1'
-CC_ASFLAGS		=	$(SHARED_FLAGS)	-Wall	-DNDS -DARM9	-fno-common	-mtune=arm946e-s	-marm	-O2 -ffast-math -fomit-frame-pointer	-Ddebug=0	-Dappver='$(EXECUTABLE_VERSION)'
-CPP_FLAGS		=	$(SHARED_FLAGS)	-fno-exceptions -fno-rtti	-marm	-MMD -MP	-DARM9	-Ddebug=0	-Dappver='$(EXECUTABLE_VERSION)'	-DNDS
+CC_ASFLAGS		=	$(SHARED_FLAGS)	-Wall	-DNDS -DARM9	-fno-common	-mtune=arm946e-s	-marm	-O2 -ffast-math -fomit-frame-pointer	-Ddebug=0	-Dappver='$(EXECUTABLE_VERSION)'	-nostdinc
+CPP_FLAGS		=	$(SHARED_FLAGS)	-fno-exceptions -fno-rtti	-marm	-MMD -MP	-DARM9	-Ddebug=0	-Dappver='$(EXECUTABLE_VERSION)'	-DNDS	-nostdinc++
 BUILD			= 	$(BUILD_ARM9)
 DIR_SRC			=	$(DIRS_ARM9_SRC)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE)
+LDFLAGS	=	-specs=special_nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE)
 LIBRARIES =	-lgcc	-liberty	-lsupc++	-lstdc++	-l$(TARGET_LIBRARY_NAME_9)	-lcnano9
 
 ################################################################################################
@@ -69,12 +69,12 @@ $(OBJDIR):
 $(OBJDIR)/%.o : %.bin
 	-@echo 'trying to convert .BIN ($<) -> .C output: ${@:.o=.c} : arrayName: $(subst build/,,${@:.o=})'
 	$(BIN2C)	$<	${@:.o=.c}	$(subst build/,,${@:.o=})
-	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-nostdinc	$(DIRLIBS_PROHIBITED)	-o $@ -c ${@:.o=.c}
+	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_PROHIBITED)	-o $@ -c ${@:.o=.c}
 
 #Do C Compile now!
 $(OBJDIR)/%.o : %.c
 	-@echo 'C Compile start: $@'
-	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-nostdinc	$(DIRLIBS_PROHIBITED)	-o $@ -c $<
+	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_PROHIBITED)	-o $@ -c $<
 	-@echo 'C Compile End: $@'
 
 #Do C++ (CXX) Compile now!

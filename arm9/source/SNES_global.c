@@ -42,8 +42,10 @@ GNU General Public License for more details.
 
 //__attribute__((section(".dtcm")))
 struct s_cpu	CPU;
+__attribute__((section(".arm9sharedwram")))
 struct s_gfx	GFX;
 struct s_cfg	CFG;
+__attribute__((section(".arm9sharedwram")))
 struct s_snes	SNES;
 __attribute__((section(".dtcm")))
 struct s_snescore	SNESC;
