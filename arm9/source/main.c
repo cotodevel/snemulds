@@ -621,9 +621,12 @@ int main(int argc, char ** argv)
 		#ifdef GDB_ENABLE
 		setBacklight(POWMAN_BACKLIGHT_TOP_BIT|POWMAN_BACKLIGHT_BOTTOM_BIT);
 		//GDB Stub Process must run here
-		if(remoteStubMain() == remoteStubMainWIFINotConnected){
+		int retGDBVal = remoteStubMain();
+		if(retGDBVal == remoteStubMainWIFINotConnected){
 			if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){
+				clrscr();
 				//Show IP and port here
+				printf("[Connect to GDB]:");
 				printf("Port:%d GDB IP:%s",remotePort,(char*)print_ip((uint32)Wifi_GetIP()));
 				remoteInit();
 			}
@@ -631,6 +634,18 @@ int main(int argc, char ** argv)
 				//GDB Client Reconnect:ERROR
 			}
 		}
+		else if(retGDBVal == remoteStubMainWIFIConnectedGDBDisconnected){
+			setWIFISetup(false);
+			if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){ // gdbNdsStart() called
+				reconnectCount++;
+				clrscr();
+				//Show IP and port here
+				printf("[Re-Connect to GDB]:So far:%d time(s)",reconnectCount);
+				printf("Port:%d GDB IP:%s",remotePort,(char*)print_ip((uint32)Wifi_GetIP()));
+				remoteInit();
+			}
+		}
+		
 		//else should be connected and GDB running at desired IP/port
 		#endif
 	}
