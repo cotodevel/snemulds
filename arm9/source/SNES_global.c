@@ -33,7 +33,7 @@ GNU General Public License for more details.
 //#include "common.h"
 #include "specific_shared.h"
 #include "nds_cp15_misc.h"
-#include "fsfatlayerTGDS.h"
+#include "fsfatlayerTGDSLegacy.h"
 #include "about.h"
 #include "utilsTGDS.h"
 #include "clockTGDS.h"
