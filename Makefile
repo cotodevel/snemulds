@@ -16,7 +16,7 @@
 #USA
 #
 
-#TGDS1.3 compatible Makefile
+#TGDS1.4 compatible Makefile
 
 #ToolchainGenericDS specific: Use Makefiles from either TGDS, or custom
 export SOURCE_MAKEFILE7 = default
