@@ -2001,7 +2001,7 @@ void	PPU_updateGFX(int line)
 //	BRIGHTNESS = l->lBRIGHTNESS;
 }
 
-inline void	PPU_line_handle_BG3()
+void	PPU_line_handle_BG3()
 { 
   int 			  y;
   t_GFX_lineInfo *l;

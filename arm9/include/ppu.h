@@ -155,7 +155,8 @@ extern void draw_screen();
 extern void	PPU_setPalette(int c, uint16 rgb);
 extern void	PPU_setScreen(int value);
 extern void PPU_update();
-
+extern void	PPU_line_handle_BG3();
+	
 #ifdef __cplusplus
 }
 #endif
