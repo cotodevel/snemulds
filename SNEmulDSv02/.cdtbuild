@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?fileVersion 3.1.0?>
+
+<ManagedProjectBuildInfo>
+<project id="testDS.nds.managedbuilder.rom.eabi.467172014" name="NDS ROM (eabi)" projectType="nds.managedbuilder.rom.eabi">
+<configuration artifactExtension="nds" artifactName="000SNEmulDS" cleanCommand="rm -rf" description="" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="nds.managedbuilder.config.release.eabi.1279135489" name="Release" parent="nds.managedbuilder.config.release.eabi" prebuildStep="">
+<toolChain id="nds.managedbuilder.toolchain.release.eabi.472433568" name="GCC Toolchain" superClass="nds.managedbuilder.toolchain.release.eabi">
+<tool id="nds.managedbuilder.tool.c.compiler.release.eabi.1087132313" name="GCC C Compiler" superClass="nds.managedbuilder.tool.c.compiler.release.eabi">
+<option id="gnu.c.compiler.option.include.paths.1492995177" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+<listOptionValue builtIn="false" value="&quot;C:\devkitPro\libnds\include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;C:\devkitPro\devkitARM\arm-eabi\include&quot;"/>
+</option>
+<option id="gnu.c.compiler.option.misc.other.597804633" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -fsigned-char" valueType="string"/>
+<option id="gnu.c.compiler.option.optimization.level.1408937282" superClass="gnu.c.compiler.option.optimization.level" value="gnu.c.optimization.level.more" valueType="enumerated"/>
+<option id="gnu.c.compiler.option.optimization.flags.945921912" superClass="gnu.c.compiler.option.optimization.flags" value="" valueType="string"/>
+<option id="gnu.c.compiler.option.preprocessor.def.symbols.1379836023" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+<listOptionValue builtIn="false" value="NDS"/>
+</option>
+<option id="nds.managedbuilder.compiler.c.option.iset.1864472958" superClass="nds.managedbuilder.compiler.c.option.iset" value="nds.managedbuilder.compiler.c.option.iset.arm" valueType="enumerated"/>
+<option id="nds.managedbuilder.compiler.c.option.interwork.1937386696" superClass="nds.managedbuilder.compiler.c.option.interwork" value="false" valueType="boolean"/>
+<option id="gnu.c.compiler.option.debugging.level.606762241" superClass="gnu.c.compiler.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
+</tool>
+<tool id="nds.managedbuilder.tool.cpp.compiler.release.eabi.1795843650" name="GCC C++ Compiler" superClass="nds.managedbuilder.tool.cpp.compiler.release.eabi"/>
+<tool id="nds.managedbuilder.tool.c.linker.release.eabi.27808975" name="GCC C Linker" superClass="nds.managedbuilder.tool.c.linker.release.eabi">
+<option id="nds.managedbuilder.linker.cpp.option.libs.1167124717" superClass="nds.managedbuilder.linker.cpp.option.libs" valueType="stringList">
+<listOptionValue builtIn="false" value="nds9"/>
+</option>
+<option id="nds.managedbuilder.linker.cpp.option.paths.547379422" superClass="nds.managedbuilder.linker.cpp.option.paths" valueType="stringList">
+<listOptionValue builtIn="false" value="&quot;C:\devkitPro\libnds\lib&quot;"/>
+</option>
+<option id="nds.managedbuilder.linker.cpp.option.userobjs.363523107" superClass="nds.managedbuilder.linker.cpp.option.userobjs"/>
+</tool>
+<tool id="nds.managedbuilder.tool.cpp.linker.release.eabi.1694172348" name="GCC C++ Linker" superClass="nds.managedbuilder.tool.cpp.linker.release.eabi"/>
+<tool id="nds.managedbuilder.tool.as.release.eabi.1180332442" name="GCC Assembler" superClass="nds.managedbuilder.tool.as.release.eabi"/>
+<tool id="nds.managedbuilder.tool.objcopy.release.eabi.1312575206" name="Object Copy" superClass="nds.managedbuilder.tool.objcopy.release.eabi"/>
+<tool id="nds.managedbuilder.tool.ndstool.release.eabi.796179821" name="NDS Tool" superClass="nds.managedbuilder.tool.ndstool.release.eabi">
+<option id="nds.managedbuilder.ndstool.option.datafiles.249939292" superClass="nds.managedbuilder.ndstool.option.datafiles" value="" valueType="string"/>
+<option id="nds.managedbuilder.ndstool.option.rominfo.711167871" superClass="nds.managedbuilder.ndstool.option.rominfo" value="SNDS AR SNEmulDS 1" valueType="string"/>
+</tool>
+<macros/>
+</toolChain>
+</configuration>
+<macros/>
+</project>
+</ManagedProjectBuildInfo>
