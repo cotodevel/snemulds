@@ -1,6 +1,0 @@
-special_nds_arm_ld_crt0.xxx in /arm9 uses ARM9 WRAM as a whole new section to run very fast data... like the ppu code!
-
-snes rendering is going to be faster now.
-
-06/04/2018
-Coto.

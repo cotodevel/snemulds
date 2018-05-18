@@ -1,0 +1,13 @@
+#Wed Feb 07 23:07:01 CET 2007
+eclipse.preferences.version=1
+environment/buildEnvironmentInclude/nds.managedbuilder.config.release.eabi.1279135489=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<environment>\r\n<variable name\="CPATH" operation\="remove"/>\r\n<variable name\="C_INCLUDE_PATH" operation\="remove"/>\r\n</environment>\r\n
+environment/buildEnvironmentInclude/nds.managedbuilder.config.release.eabi.1664658324=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<environment>\r\n<variable name\="CPATH" operation\="remove"/>\r\n<variable name\="C_INCLUDE_PATH" operation\="remove"/>\r\n</environment>\r\n
+environment/buildEnvironmentLibrary/nds.managedbuilder.config.release.eabi.1279135489=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<environment>\r\n<variable name\="LIBRARY_PATH" operation\="remove"/>\r\n</environment>\r\n
+environment/buildEnvironmentLibrary/nds.managedbuilder.config.release.eabi.1664658324=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<environment>\r\n<variable name\="LIBRARY_PATH" operation\="remove"/>\r\n</environment>\r\n
+environment/project=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<environment/>\r\n
+environment/project/nds.managedbuilder.config.release.eabi.1279135489=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<environment/>\r\n
+environment/project/nds.managedbuilder.config.release.eabi.1664658324=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<environment/>\r\n
+nds.managedbuilder.config.release.eabi.1279135489/internalBuilder/enabled=false
+nds.managedbuilder.config.release.eabi.1279135489/internalBuilder/ignoreErr=true
+nds.managedbuilder.config.release.eabi.1664658324/internalBuilder/enabled=false
+nds.managedbuilder.config.release.eabi.1664658324/internalBuilder/ignoreErr=true
