@@ -601,11 +601,18 @@ int main(int argc, char ** argv)
 		}
 		
 		//test the nifi
+		/*
 		if ((keysPressed() & KEY_L) && (getMULTIMode() == dswifi_localnifimode)){
 			volatile char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
 			//Sender DS Time
 			sprintf((char*)somebuf,"DSTime:%d:%d:%d",getTime()->tm_hour,getTime()->tm_min,getTime()->tm_sec);
 			FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));
+		}
+		*/
+		
+		//cmd: Both DS become host/guest
+		if(keysPressed() & KEY_L){
+			issueISHOSTCmd();
 		}
 		
 		/*

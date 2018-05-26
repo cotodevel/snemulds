@@ -45,6 +45,7 @@ USA
 #include <socket.h>
 #include <in.h>
 #include <assert.h>
+#include <string.h>
 
 //emu specific
 #include "cfg.h"
@@ -121,10 +122,75 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 		//NIFI local
 		case(dswifi_localnifimode):{
 			
-			clrscr();
-			printf("DSWNIFIStatus:LocalNifi!");
-			printf("%s",(char*)frameBlockRecv->framebuffer);
+			////////////////////////////// physical nifi layer
+			//receiver
+			struct snemulDSNIFIUserMsg thissnemulDSNIFIUserMsgReceiver;
+			//void * memcpy ( void * destination, const void * source, size_t num );
+			memcpy((uint8*)&thissnemulDSNIFIUserMsgReceiver,(uint8*)frameBlockRecv->framebuffer, sizeof(struct snemulDSNIFIUserMsg));
 			
+			//handle cmds
+			
+			//both are guest: based on timestamp the oldest time is guest
+			if(thissnemulDSNIFIUserMsgReceiver.cmdIssued == HOSTCMD_FROM_EXT_DS_UPDATESTEP1){
+				struct tm * tmInst = getTime();
+				//host time is highest than ours: we guest
+				if(
+					(thissnemulDSNIFIUserMsgReceiver.DSEXTTime.tm_hour >= tmInst->tm_hour)  //equal or more than
+					&&
+					(thissnemulDSNIFIUserMsgReceiver.DSEXTTime.tm_min >= tmInst->tm_min)		//equal or more than
+					&&
+					(thissnemulDSNIFIUserMsgReceiver.DSEXTTime.tm_sec >= tmInst->tm_sec)		//always more than
+				){
+					nifiHost = false;
+				}
+				else{
+					nifiHost = true;
+				}
+				
+				nifiSetup = true;	//host: nifi ok
+				/*
+				clrscr();
+				if(nifiHost == true){
+					printf("this DS is HOST");
+				}
+				else{
+					printf("this DS is GUEST");
+				}
+				*/
+				//issue response
+				issueISHOSTACKCmd(nifiHost);
+			}
+			else if(thissnemulDSNIFIUserMsgReceiver.cmdIssued == HOSTCMD_FROM_EXT_DS_UPDATESTEP2){
+				
+				if(thissnemulDSNIFIUserMsgReceiver.host == true){
+					nifiHost = false;
+				}
+				else{
+					nifiHost = true;
+				}
+				
+				nifiSetup = true;	//guest: nifi ok
+				
+				/*
+				clrscr();
+				if(nifiHost == true){
+					printf("this DS is HOST");
+				}
+				else{
+					printf("this DS is GUEST");
+				}
+				*/
+			}
+			else if(thissnemulDSNIFIUserMsgReceiver.cmdIssued == HOSTCMD_FROM_EXT_DS_RESETNIFI){
+				nifiHost = false;
+				nifiSetup = false;
+			}
+			
+			
+			///////////////////////////////////// emu layer
+			if(nifiSetup == true){
+				
+			}
 			
 			return true;
 		}
@@ -142,5 +208,71 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 	return false;
 }
 
+//logic:
+//both are guest: based on timestamp the oldest time is guest
+
+bool nifiHost = false;	//true = yes, false = no
+bool nifiSetup = false; //true = yes, false = no
+
+//sender
+struct snemulDSNIFIUserMsg thissnemulDSNIFIUserMsgSender;
+
+struct snemulDSNIFIUserMsg * forgeNIFIMsg(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,struct tm DSEXTTime){
+	thissnemulDSNIFIUserMsgSender.keys = keys;
+	thissnemulDSNIFIUserMsgSender.DS_VCOUNT = DS_VCOUNT;
+	thissnemulDSNIFIUserMsgSender.host = host;
+	thissnemulDSNIFIUserMsgSender.SNES_VCOUNT = SNES_VCOUNT;
+	thissnemulDSNIFIUserMsgSender.cmdIssued = cmdIssued;
+	thissnemulDSNIFIUserMsgSender.DSEXTTime = DSEXTTime;
+	return (struct snemulDSNIFIUserMsg *)(&thissnemulDSNIFIUserMsgSender);
+}
+
+
+void issueISHOSTCmd(){
+	if (getMULTIMode() == dswifi_localnifimode){
+		struct snemulDSNIFIUserMsg * snemulDSNIFIUserMsgInst = forgeNIFIMsg(0, 0, 0, 0, HOSTCMD_FROM_EXT_DS_UPDATESTEP1,*getTime());
+		volatile char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
+		//void * memcpy ( void * destination, const void * source, size_t num );
+		memcpy((uint8*)&somebuf[0], (const uint8*)snemulDSNIFIUserMsgInst, sizeof(struct snemulDSNIFIUserMsg));
+		FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));
+	}
+}
+
+
+void issueISHOSTACKCmd(bool hostorGuest){
+	if (getMULTIMode() == dswifi_localnifimode){
+		struct snemulDSNIFIUserMsg * snemulDSNIFIUserMsgInst = forgeNIFIMsg(0, 0, hostorGuest, 0, HOSTCMD_FROM_EXT_DS_UPDATESTEP2,*getTime());
+		volatile char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
+		//void * memcpy ( void * destination, const void * source, size_t num );
+		memcpy((uint8*)&somebuf[0], (const uint8*)snemulDSNIFIUserMsgInst, sizeof(struct snemulDSNIFIUserMsg));
+		FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));
+	}
+}
+
+
+void resetNifi(){
+	if (getMULTIMode() == dswifi_localnifimode){
+		struct snemulDSNIFIUserMsg * snemulDSNIFIUserMsgInst = forgeNIFIMsg(0, 0, 0, 0, HOSTCMD_FROM_EXT_DS_RESETNIFI,*getTime());
+		volatile char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
+		//void * memcpy ( void * destination, const void * source, size_t num );
+		memcpy((uint8*)&somebuf[0], (const uint8*)snemulDSNIFIUserMsgInst, sizeof(struct snemulDSNIFIUserMsg));
+		FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));
+		nifiHost = false;
+		nifiSetup = false;
+	}
+}
+
+//runs in loop
+void donifi(){
+	if (getMULTIMode() == dswifi_localnifimode){
+		if(nifiSetup == false){
+			//cmd: Both DS become host/guest
+			issueISHOSTCmd();
+		}
+		else{
+			//play/update code
+		}
+	}
+}
 
 #endif

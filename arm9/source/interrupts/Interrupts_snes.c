@@ -83,7 +83,7 @@ void VblankUser(){
 	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = APU_MAX;
 	APU2->counter = 0;
 
-
+	donifi();
 	//printf("vblank! \n");	
 }
 

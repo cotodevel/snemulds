@@ -909,6 +909,9 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			CFG.LocalPlayMode = 1;
 		}
 		else if(CFG.LocalPlayMode == 1){
+			
+			resetNifi();
+			
 			//single player:
 			switch_dswnifi_mode(dswifi_idlemode);
 			CFG.LocalPlayMode = 0;
