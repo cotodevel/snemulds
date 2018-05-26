@@ -120,7 +120,12 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 		
 		//NIFI local
 		case(dswifi_localnifimode):{
-			//todo
+			
+			clrscr();
+			printf("DSWNIFIStatus:LocalNifi!");
+			printf("%s",(char*)frameBlockRecv->framebuffer);
+			
+			
 			return true;
 		}
 		break;

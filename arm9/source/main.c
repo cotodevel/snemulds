@@ -560,12 +560,14 @@ int main(int argc, char ** argv)
 	//char *ROMfile = GUI_getROM(CFG.ROMPath);
 	//clrscr();
 	
+	//single player:
+	switch_dswnifi_mode(dswifi_idlemode);
+	
 	char bufstr[0x100];
 	sprintf(bufstr,"%s",getfatfsPath("snes"));	//0:/snes
 	sprintf(CFG.ROMPath,"%s",bufstr);
 	
 	GUI_getROM(bufstr);	//read rom from (path)touchscreen:output rom -> CFG.ROMFile
-	
 	
 	loadROM(CFG.ROMFile, 0);
 	GUI_deleteROMSelector(); // Should also free ROMFile
@@ -594,8 +596,17 @@ int main(int argc, char ** argv)
 		if (!SNES.Stopped){
 			go();
 		}
-		if (/*!CFG.mouse && */REG_POWERCNT & POWER_SWAP_LCDS)
+		if (/*!CFG.mouse && */REG_POWERCNT & POWER_SWAP_LCDS){
 			GUI_update();
+		}
+		
+		//test the nifi
+		if ((keysPressed() & KEY_L) && (getMULTIMode() == dswifi_localnifimode)){
+			volatile char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
+			//Sender DS Time
+			sprintf((char*)somebuf,"DSTime:%d:%d:%d",getTime()->tm_hour,getTime()->tm_min,getTime()->tm_sec);
+			FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));
+		}
 		
 		/*
 		if (keys & KEY_LID)

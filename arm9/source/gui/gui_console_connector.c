@@ -44,6 +44,7 @@ GNU General Public License for more details.
 #include "snes.h"
 #include "core.h"
 #include "engine.h"
+#include "dswnifi_lib.h"
 
 ////////[For custom Console implementation]:////////
 //You need to override :
@@ -899,7 +900,21 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			return 1;	
 		case 5: // Automatic SRAM saving
 			CFG.AutoSRAM = (int)arg >> 24;
-			return 1;			
+			return 1;
+		
+		case 6: //multiplayer
+		if(CFG.LocalPlayMode == 0){
+			//local nifi: 
+			switch_dswnifi_mode(dswifi_localnifimode);	//LOCAL NIFI:
+			CFG.LocalPlayMode = 1;
+		}
+		else if(CFG.LocalPlayMode == 1){
+			//single player:
+			switch_dswnifi_mode(dswifi_idlemode);
+			CFG.LocalPlayMode = 0;
+		}
+		return 1;
+	
 		case 14: // IDSAVE			
 			saveOptionsToConfig(SNES.ROM_info.title);
 			return 1;						
@@ -937,22 +952,27 @@ t_GUIScreen *buildOptionsMenu(){
 	GUI_linkObject(scr, 9, GUI_STATIC_LEFT(IDS_SPEED, 0), GUIStaticEx_handler);
 	GUI_setZone   (scr, 3, 80, 104, 256, 104+16); // Speed
 	GUI_linkObject(scr, 3, GUI_CHOICE(IDS_SPEED+1, 2, !CFG.WaitVBlank), GUIChoiceButton_handler);
-
+	
 	GUI_setZone   (scr, 10, 0, 124, 80, 124+16); // static
 	GUI_linkObject(scr, 10, GUI_STATIC_LEFT(IDS_HACKS, 0), GUIStaticEx_handler);
 	GUI_setZone   (scr, 4, 80, 124, 256, 124+16); // Hacks
 	GUI_linkObject(scr, 4, GUI_CHOICE(IDS_HACKS+1, 4, CFG.CPU_speedhack), GUIChoiceButton_handler);
 
-	GUI_setZone   (scr, 5, 0, 144, 16, 144+16); // Automatic SRAM saving
-	GUI_linkObject(scr, 5, GUI_CHOICE(IDS_CHECK, 2, CFG.AutoSRAM), GUIChoiceButton_handler);
 	GUI_setZone   (scr, 11, 24, 144, 256, 144+16); // Auto order static
 	GUI_linkObject(scr, 11, GUI_STATIC_LEFT(IDS_AUTO_SRAM, 0), GUIStaticEx_handler);
+	GUI_setZone   (scr, 5, 0, 144, 16, 144+16); // Automatic SRAM saving
+	GUI_linkObject(scr, 5, GUI_CHOICE(IDS_CHECK, 2, CFG.AutoSRAM), GUIChoiceButton_handler);
 
 	//GUI_setZone   (scr, 6, 100, 84, 100+16, 84+16); // Memory pak extension
 	//GUI_linkObject(scr, 6, GUI_CHOICE(IDS_CHECK, 2, 0 > 0), GUIChoiceButton_handler);
 	//GUI_setZone   (scr, 12, 100+24, 84, 256, 84+16); 
 	//GUI_linkObject(scr, 12, GUI_STATIC_LEFT(IDS_USE_MEM_PACK, 0), GUIStaticEx_handler);		
 	//scr->zones[6].state |= GUI_ST_DISABLED;
+	//scr instance , scr index, X pixel pos , pixel Y pos , zone Y, zone width
+	GUI_setZone   (scr, 12, 90, 94, 100+16, 84+10); // static
+	GUI_linkObject(scr, 12, GUI_STATIC_LEFT(IDS_MULTIPLAYER_MODE, 0), GUIStaticEx_handler);
+	GUI_setZone   (scr, 6, 100+24, 84, 256, 84+10); // multiplayer mode
+	GUI_linkObject(scr, 6, GUI_CHOICE(IDS_MULTIPLAYER_MODE+1, 2, CFG.LocalPlayMode), GUIChoiceButton_handler);
 	
 	
 	// Three elements
