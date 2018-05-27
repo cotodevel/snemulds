@@ -28,13 +28,16 @@ USA
 #define HOSTCMD_FROM_EXT_DS_UPDATESTEP1 (uint32)(0xffff1011)	//host -> client : guest changes
 #define HOSTCMD_FROM_EXT_DS_UPDATESTEP2 (uint32)(0xffff1012)	//host -> client-> host: acknowledge guest changes to host
 #define HOSTCMD_FROM_EXT_DS_RESETNIFI (uint32)(0xffff1013)		//host -> client reset nifi
+#define HOSTCMD_FROM_EXT_DS_PLAYNIFI (uint32)(0xffff1014)		//host -> client nifi play	//emu sender will send this
+
 
 //nifi status
 #define NIFI_SETUP (int)(0)
 #define NIFI_PLAY (int)(1)
 
 struct snemulDSNIFIUserMsg{
-	int keys;	
+	int keys;	//plykeys1 / plykeys2
+	int Joy_cnt;	//Joy1_cnt / Joy2_cnt
 	int DS_VCOUNT;	//REG_VCOUNT
 	bool host;	//if host == true, snes vcount syncline is from host (if guest). If host then snes vcount syncline generates here
 	int SNES_VCOUNT;
@@ -60,12 +63,11 @@ extern "C"{
 //				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	//make room for crc16 frame
 //}
 
-extern struct snemulDSNIFIUserMsg thissnemulDSNIFIUserMsg;
-extern struct snemulDSNIFIUserMsg * forgeNIFIMsg(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,struct tm DSEXTTime);
+extern struct snemulDSNIFIUserMsg forgeNIFIMsg(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,struct tm DSEXTTime);
 extern void issueISHOSTCmd();
 extern void issueISHOSTACKCmd(bool hostorGuest);
 extern void resetNifi();
-extern void donifi();
+extern bool donifi(int DS_VCOUNTER);
 
 #ifdef __cplusplus
 }

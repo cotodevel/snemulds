@@ -189,7 +189,21 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 			
 			///////////////////////////////////// emu layer
 			if(nifiSetup == true){
-				
+				switch(thissnemulDSNIFIUserMsgReceiver.cmdIssued){
+					case(HOSTCMD_FROM_EXT_DS_PLAYNIFI):{
+						
+						//host logic
+						if(nifiHost == true){
+							
+						}
+						//guest logic
+						else{
+						
+						}
+						
+					}
+					break;
+				}
 			}
 			
 			return true;
@@ -215,55 +229,51 @@ bool nifiHost = false;	//true = yes, false = no
 bool nifiSetup = false; //true = yes, false = no
 
 //sender
-struct snemulDSNIFIUserMsg thissnemulDSNIFIUserMsgSender;
 
-struct snemulDSNIFIUserMsg * forgeNIFIMsg(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,struct tm DSEXTTime){
+__attribute__((section(".itcm")))
+struct snemulDSNIFIUserMsg forgeNIFIMsg(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,struct tm DSEXTTime){
+	struct snemulDSNIFIUserMsg thissnemulDSNIFIUserMsgSender;
 	thissnemulDSNIFIUserMsgSender.keys = keys;
 	thissnemulDSNIFIUserMsgSender.DS_VCOUNT = DS_VCOUNT;
 	thissnemulDSNIFIUserMsgSender.host = host;
 	thissnemulDSNIFIUserMsgSender.SNES_VCOUNT = SNES_VCOUNT;
 	thissnemulDSNIFIUserMsgSender.cmdIssued = cmdIssued;
 	thissnemulDSNIFIUserMsgSender.DSEXTTime = DSEXTTime;
-	return (struct snemulDSNIFIUserMsg *)(&thissnemulDSNIFIUserMsgSender);
+	return thissnemulDSNIFIUserMsgSender;
 }
 
-
+__attribute__((section(".itcm")))
 void issueISHOSTCmd(){
 	if (getMULTIMode() == dswifi_localnifimode){
-		struct snemulDSNIFIUserMsg * snemulDSNIFIUserMsgInst = forgeNIFIMsg(0, 0, 0, 0, HOSTCMD_FROM_EXT_DS_UPDATESTEP1,*getTime());
-		volatile char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
-		//void * memcpy ( void * destination, const void * source, size_t num );
-		memcpy((uint8*)&somebuf[0], (const uint8*)snemulDSNIFIUserMsgInst, sizeof(struct snemulDSNIFIUserMsg));
-		FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));
+		struct snemulDSNIFIUserMsg snemulDSNIFIUserMsgInst = forgeNIFIMsg(0, 0, 0, 0, HOSTCMD_FROM_EXT_DS_UPDATESTEP1,*getTime());
+		FrameSenderUser = HandleSendUserspace((uint8*)&snemulDSNIFIUserMsgInst,sizeof(struct snemulDSNIFIUserMsg));	//char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
 	}
 }
 
-
+__attribute__((section(".itcm")))
 void issueISHOSTACKCmd(bool hostorGuest){
 	if (getMULTIMode() == dswifi_localnifimode){
-		struct snemulDSNIFIUserMsg * snemulDSNIFIUserMsgInst = forgeNIFIMsg(0, 0, hostorGuest, 0, HOSTCMD_FROM_EXT_DS_UPDATESTEP2,*getTime());
-		volatile char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
-		//void * memcpy ( void * destination, const void * source, size_t num );
-		memcpy((uint8*)&somebuf[0], (const uint8*)snemulDSNIFIUserMsgInst, sizeof(struct snemulDSNIFIUserMsg));
-		FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));
+		struct snemulDSNIFIUserMsg snemulDSNIFIUserMsgInst = forgeNIFIMsg(0, 0, hostorGuest, 0, HOSTCMD_FROM_EXT_DS_UPDATESTEP2,*getTime());
+		FrameSenderUser = HandleSendUserspace((uint8*)&snemulDSNIFIUserMsgInst,sizeof(struct snemulDSNIFIUserMsg));	//char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
 	}
 }
 
 
 void resetNifi(){
 	if (getMULTIMode() == dswifi_localnifimode){
-		struct snemulDSNIFIUserMsg * snemulDSNIFIUserMsgInst = forgeNIFIMsg(0, 0, 0, 0, HOSTCMD_FROM_EXT_DS_RESETNIFI,*getTime());
-		volatile char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
-		//void * memcpy ( void * destination, const void * source, size_t num );
-		memcpy((uint8*)&somebuf[0], (const uint8*)snemulDSNIFIUserMsgInst, sizeof(struct snemulDSNIFIUserMsg));
-		FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));
+		struct snemulDSNIFIUserMsg snemulDSNIFIUserMsgInst = forgeNIFIMsg(0, 0, 0, 0, HOSTCMD_FROM_EXT_DS_RESETNIFI,*getTime());
+		FrameSenderUser = HandleSendUserspace((uint8*)&snemulDSNIFIUserMsgInst,sizeof(struct snemulDSNIFIUserMsg));	//char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
 		nifiHost = false;
 		nifiSetup = false;
 	}
 }
 
-//runs in loop
-void donifi(){
+//runs in loop. Must be in hblank since we need each snes vcount line to be sync
+//true == nifi running
+//false == nifi not running
+
+__attribute__((section(".itcm")))
+bool donifi(int DS_VCOUNTER){
 	if (getMULTIMode() == dswifi_localnifimode){
 		if(nifiSetup == false){
 			//cmd: Both DS become host/guest
@@ -271,8 +281,18 @@ void donifi(){
 		}
 		else{
 			//play/update code
+			//host logic
+			if(nifiHost == true){
+				
+			}
+			//guest logic
+			else{
+			
+			}			
 		}
+		return true;
 	}
+	return false;
 }
 
 #endif

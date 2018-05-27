@@ -44,11 +44,12 @@ void Timer3handlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void HblankUser(){
+	int DS_VCOUNT = REG_VCOUNT;
 	getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0xFFFFFFFF;
 
-	if (REG_VCOUNT >= 192)
+	if (DS_VCOUNT >= 192)
 	{
-		if (REG_VCOUNT == 192) // We are last scanline, update first line GFX
+		if (DS_VCOUNT == 192) // We are last scanline, update first line GFX
 
 		{
 			PPU_updateGFX(0);
@@ -56,7 +57,7 @@ void HblankUser(){
 		goto end;
 	}
 
-	PPU_updateGFX(REG_VCOUNT);
+	PPU_updateGFX(DS_VCOUNT);
 
 	//	h_blank=1;
 	end:
@@ -69,6 +70,8 @@ void HblankUser(){
 __attribute__((section(".itcm")))
 #endif
 void VblankUser(){	
+	
+	bool nifiRunning = donifi((int)REG_VCOUNT);
 	
 	GFX.DSFrame++;
 	GFX.v_blank=1;
@@ -83,7 +86,6 @@ void VblankUser(){
 	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = APU_MAX;
 	APU2->counter = 0;
 
-	donifi();
 	//printf("vblank! \n");	
 }
 
