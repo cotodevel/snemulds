@@ -55,7 +55,7 @@ GNU General Public License for more details.
 #include "about.h"
 #include "utilsTGDS.h"
 #include "clockTGDS.h"
-
+#include "dswnifi_lib.h"
 
 //struct s_snes SNES;
 //struct s_cfg CFG;
@@ -207,11 +207,24 @@ int initSNESEmpty()
 	
 int OldPC;
 
+__attribute__((section(".dtcm")))
+bool nifiVblankEndWait = false;	//true == nifi awaits in VblankEnd, false = nifi running N vcounter lines and hasn't reached vblankEnd yet
+
 __attribute__((section(".itcm")))
 int go()
 {
   if (CPU.IsBreak) return 0;
-	
+
+	//new
+	//if localplay && guest and ended up rendering a whole frame (full vcount lines), means we wait for host response to our "acknowledge"
+	/*
+	if((getMULTIMode() == dswifi_localnifimode) && (nifiSetup == true)){
+		if( (nifiHost == false) && (nifiVblankEndWait == true)){
+			return 0;
+		}
+	}
+	*/
+
   while (1)
   {	
 	if (GFX.v_blank)
@@ -257,12 +270,37 @@ int go()
     SNES.UsedCycles = 0;
  
  	/* HBLANK Starts here */
- 
 	SNES.V_Count++;
 	if (SNES.V_Count > (SNES.NTSC ? 261 : 311))
 	{
-      SNES.V_Count = 0;
-      //update_joypads();
+		//new
+		/*
+		switch(getMULTIMode()){
+			case(dswifi_localnifimode):{
+				if(nifiSetup == true){
+					//play/update code
+					//host logic
+					if(nifiHost == true){
+						//host should send a "render next frame" to guest here along the current V_Count
+					}
+					//guest logic
+					else{
+						//guest should toggle the nifiVblankEndWait to true here, so it waits until the host tells to run next frame
+						nifiVblankEndWait = true;
+					}
+				}
+				else{
+				}
+			}
+			break;
+			case(dswifi_idlemode):{
+				SNES.V_Count = 0;
+			}
+			break;
+		}
+		*/
+		
+		SNES.V_Count = 0;
 	}
 #if 0
     if (CFG.Sound_output) {

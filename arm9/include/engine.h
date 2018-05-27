@@ -43,6 +43,9 @@ extern int trace_CPU();
 extern void trace_CPUFast();
 
 
+//true == nifi awaits in VblankEnd, false = nifi running N vcounter lines and hasn't reached vblankEnd yet
+extern bool nifiVblankEndWait;
+
 #ifdef __cplusplus
 }
 #endif

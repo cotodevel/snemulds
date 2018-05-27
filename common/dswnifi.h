@@ -64,6 +64,8 @@ extern "C"{
 //}
 
 extern struct snemulDSNIFIUserMsg forgeNIFIMsg(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,struct tm DSEXTTime);
+extern bool SendRawEmuFrame(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,struct tm DSEXTTime);
+
 extern void issueISHOSTCmd();
 extern void issueISHOSTACKCmd(bool hostorGuest);
 extern void resetNifi();

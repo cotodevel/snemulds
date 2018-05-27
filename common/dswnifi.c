@@ -187,7 +187,7 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 			}
 			
 			
-			///////////////////////////////////// emu layer
+			///////////////////////////////////// emu layer receiver
 			if(nifiSetup == true){
 				switch(thissnemulDSNIFIUserMsgReceiver.cmdIssued){
 					case(HOSTCMD_FROM_EXT_DS_PLAYNIFI):{
@@ -222,13 +222,12 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 	return false;
 }
 
-//logic:
-//both are guest: based on timestamp the oldest time is guest
-
+//host/guest decider logic: based on timestamp the oldest time is guest
+__attribute__((section(".dtcm")))
 bool nifiHost = false;	//true = yes, false = no
-bool nifiSetup = false; //true = yes, false = no
 
-//sender
+__attribute__((section(".dtcm")))
+bool nifiSetup = false; //true = yes, false = no
 
 __attribute__((section(".itcm")))
 struct snemulDSNIFIUserMsg forgeNIFIMsg(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,struct tm DSEXTTime){
@@ -244,31 +243,36 @@ struct snemulDSNIFIUserMsg forgeNIFIMsg(int keys, int DS_VCOUNT, bool host, int 
 
 __attribute__((section(".itcm")))
 void issueISHOSTCmd(){
-	if (getMULTIMode() == dswifi_localnifimode){
-		struct snemulDSNIFIUserMsg snemulDSNIFIUserMsgInst = forgeNIFIMsg(0, 0, 0, 0, HOSTCMD_FROM_EXT_DS_UPDATESTEP1,*getTime());
-		FrameSenderUser = HandleSendUserspace((uint8*)&snemulDSNIFIUserMsgInst,sizeof(struct snemulDSNIFIUserMsg));	//char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
-	}
+	SendRawEmuFrame(0, 0, 0, 0, HOSTCMD_FROM_EXT_DS_UPDATESTEP1,*getTime());
 }
 
 __attribute__((section(".itcm")))
 void issueISHOSTACKCmd(bool hostorGuest){
-	if (getMULTIMode() == dswifi_localnifimode){
-		struct snemulDSNIFIUserMsg snemulDSNIFIUserMsgInst = forgeNIFIMsg(0, 0, hostorGuest, 0, HOSTCMD_FROM_EXT_DS_UPDATESTEP2,*getTime());
-		FrameSenderUser = HandleSendUserspace((uint8*)&snemulDSNIFIUserMsgInst,sizeof(struct snemulDSNIFIUserMsg));	//char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
-	}
+	SendRawEmuFrame(0, 0, hostorGuest, 0, HOSTCMD_FROM_EXT_DS_UPDATESTEP2,*getTime());
 }
 
-
+__attribute__((section(".itcm")))
 void resetNifi(){
-	if (getMULTIMode() == dswifi_localnifimode){
-		struct snemulDSNIFIUserMsg snemulDSNIFIUserMsgInst = forgeNIFIMsg(0, 0, 0, 0, HOSTCMD_FROM_EXT_DS_RESETNIFI,*getTime());
-		FrameSenderUser = HandleSendUserspace((uint8*)&snemulDSNIFIUserMsgInst,sizeof(struct snemulDSNIFIUserMsg));	//char somebuf[frameDSsize];	//use frameDSsize as the sender buffer size, any other size won't be sent.
+	if(SendRawEmuFrame(0, 0, 0, 0, HOSTCMD_FROM_EXT_DS_RESETNIFI,*getTime()) == true){
 		nifiHost = false;
 		nifiSetup = false;
 	}
 }
 
-//runs in loop. Must be in hblank since we need each snes vcount line to be sync
+__attribute__((section(".itcm")))
+bool SendRawEmuFrame(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,struct tm DSEXTTime){
+	if (getMULTIMode() == dswifi_localnifimode){
+		struct snemulDSNIFIUserMsg snemulDSNIFIUserMsgInst = forgeNIFIMsg(keys, DS_VCOUNT, host, SNES_VCOUNT, cmdIssued,DSEXTTime);
+		int curFrameSize = sizeof(struct snemulDSNIFIUserMsg);
+		if(curFrameSize <= frameDSsize){	//use frameDSsize (or less) as the sender buffer size, any other size won't be sent.
+			FrameSenderUser = HandleSendUserspace((uint8*)&snemulDSNIFIUserMsgInst, curFrameSize);
+			return true;
+		}
+	}
+	return false;
+}
+
+//runs in loop. Must be in vblank. (hblank is too slow since we need each snes vcount line to be sync). So a multiplayer is 1 frame render based, then awaits for update from host.
 //true == nifi running
 //false == nifi not running
 
@@ -280,6 +284,7 @@ bool donifi(int DS_VCOUNTER){
 			issueISHOSTCmd();
 		}
 		else{
+			///////////////////////////////////// emu layer sender
 			//play/update code
 			//host logic
 			if(nifiHost == true){
