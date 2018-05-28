@@ -51,7 +51,7 @@ struct s_cfg
   int	YScroll;
   int	WaitVBlank;
   
-  int	LocalPlayMode; //0 == idle / 1 == local
+  int	LocalPlayMode; //0 == idle / 1 == local: host / 2 == local: guest
   
   int	LargeROM;
   

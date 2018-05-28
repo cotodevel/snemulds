@@ -264,20 +264,23 @@ int get_joypad()
 
 
 
-//new
+__attribute__((section(".itcm")))
 uint16 read_joypad1() {
 	return (uint16)(DMA_PORT[0x18] | (DMA_PORT[0x19] << 8));
 }
 
+__attribute__((section(".itcm")))
 uint16 read_joypad2() {
 	return (uint16)(DMA_PORT[0x1a] | (DMA_PORT[0x1b] << 8));
 }
 
+__attribute__((section(".itcm")))
 void write_joypad1(uint16 bits){
 	DMA_PORT[0x18] = (bits&0xff);
 	DMA_PORT[0x19] = ((bits>>8)&0xff);
 }
 
+__attribute__((section(".itcm")))
 void write_joypad2(uint16 bits){
 	DMA_PORT[0x1a] = (bits&0xff);
 	DMA_PORT[0x1b] = ((bits>>8)&0xff);

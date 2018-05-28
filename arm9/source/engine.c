@@ -171,7 +171,7 @@ int initSNESEmpty()
   CFG.WaitVBlank = 0;
   CFG.YScroll = 0;
   CFG.CPU_speedhack = 1;
-  CFG.LocalPlayMode = 0; //0 == idle / 1 == local
+  CFG.LocalPlayMode = 0; //0 == idle / 1 == local: host / 2 == local: guest
   //CFG.TileMode = 1;
   CFG.Scaled = 0;
   CFG.LayersConf = 0;

@@ -905,16 +905,24 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		case 6: //multiplayer
 		if(CFG.LocalPlayMode == 0){
 			//local nifi: 
-			switch_dswnifi_mode(dswifi_localnifimode);	//LOCAL NIFI:
+			switch_dswnifi_mode(dswifi_localnifimode);	//LOCAL NIFI: host
 			CFG.LocalPlayMode = 1;
+			nifiHost = true;
+			nifiSetup = true;
 		}
-		else if(CFG.LocalPlayMode == 1){
-			
-			resetNifi();
-			
+		else if(CFG.LocalPlayMode == 1){			
+			//local nifi:
+			switch_dswnifi_mode(dswifi_localnifimode);	//LOCAL NIFI: guest
+			CFG.LocalPlayMode = 2;
+			nifiHost = false;
+			nifiSetup = true;
+		}
+		else if(CFG.LocalPlayMode == 2){			
 			//single player:
 			switch_dswnifi_mode(dswifi_idlemode);
 			CFG.LocalPlayMode = 0;
+			nifiHost = false;
+			nifiSetup = false;
 		}
 		return 1;
 	
@@ -975,7 +983,7 @@ t_GUIScreen *buildOptionsMenu(){
 	GUI_setZone   (scr, 12, 90, 94, 100+16, 84+10); // static
 	GUI_linkObject(scr, 12, GUI_STATIC_LEFT(IDS_MULTIPLAYER_MODE, 0), GUIStaticEx_handler);
 	GUI_setZone   (scr, 6, 100+24, 84, 256, 84+10); // multiplayer mode
-	GUI_linkObject(scr, 6, GUI_CHOICE(IDS_MULTIPLAYER_MODE+1, 2, CFG.LocalPlayMode), GUIChoiceButton_handler);
+	GUI_linkObject(scr, 6, GUI_CHOICE(IDS_MULTIPLAYER_MODE+1, 3, CFG.LocalPlayMode), GUIChoiceButton_handler);
 	
 	
 	// Three elements
