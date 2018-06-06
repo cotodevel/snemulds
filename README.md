@@ -4,7 +4,7 @@ This is based from real 0.6.a sources archeide left years ago and I managed to f
 
 /release folder has precompiled binaries for you to enjoy
 
-Compile Toolchain: To compile this project you will need to follow the steps at https://github.com/cotodevel/ToolchainGenericDS: Then simply extract the project somewhere.
+Compile Toolchain: To compile this project you will need to follow the steps at https://bitbucket.org/Coto88/toolchaingenericds : Then simply extract the project somewhere.
 
 Compile this project: 
 
@@ -37,7 +37,7 @@ into uncommented:
 #define GDB_ENABLE
 
 1.  Then recompile the project, note that games won´t boot while GDB Remote debugging due to TCP nature, this is normal. 
-2.  Follow the steps @ https://github.com/cotodevel/ToolchainGenericDS-gdbstub-example
+2.  Follow the steps @ https://bitbucket.org/Coto88/toolchaingenericds-gdbstub-example
 
 to disable GDB Remote debugging simply comment out the GDB_ENABLE line so it looks like this:
 //#define GDB_ENABLE
