@@ -40,7 +40,7 @@ GNU General Public License for more details.
 #include "snes.h"
 
 
-//__attribute__((section(".dtcm")))
+__attribute__((section(".dtcm")))
 struct s_cpu	CPU;
 __attribute__((section(".arm9sharedwram")))
 struct s_gfx	GFX;
