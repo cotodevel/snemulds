@@ -35,7 +35,6 @@
 
 #include "conf.h"
 
-#include "console_str.h"
 #include "spifwTGDS.h"
 #include "main.h"
 #include "timerTGDS.h"

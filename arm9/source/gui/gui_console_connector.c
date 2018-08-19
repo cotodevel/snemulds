@@ -39,6 +39,8 @@ GNU General Public License for more details.
 
 
 #include "gui_console_connector.h"
+#include "consoleTGDS.h"
+
 #include "fs.h"
 
 #include "snes.h"
@@ -1242,4 +1244,174 @@ void	GUI_showROMInfos(int size){
 
 void LOG(sint8 * ftm, ...){
 
+}
+
+
+
+//GUI parts
+
+int GUI_getStrWidth(t_GUIZone *zone, sint8 *text)
+{
+	t_GUIFont   *font = zone->font;
+	int			in_katakana = 0;
+    int 		i, w;
+
+    for (i=0, w=0; i < strlen(text); i++)
+    {
+    	if (text[i] == 0x0e)
+    	{
+    		in_katakana = 1;
+    		continue;
+    	}
+    	if (text[i] == 0x0f)
+    	{
+    		in_katakana = 0;
+    		continue;
+    	}
+    	
+    	if (in_katakana)
+    	{
+    		if (text[i] < 0x26 || text[i] > 0x5f)
+    			continue;
+    		sint8 c = g_katana_jisx0201_conv[text[i]-0x26];
+    		w += katakana_12_font.glyphs[c - katakana_12_font.offset]->width + font->space;
+    	}
+    	else
+    	{
+    		if (text[i] - font->offset >= 0 && font->glyphs[text[i] - font->offset] != NULL)
+    		{
+    			w += font->glyphs[text[i] - font->offset]->width + font->space;
+    		}
+    		else
+    			w += font->space;
+    	}
+    }
+
+    return w - font->space;
+}
+
+
+
+
+
+
+
+//
+
+
+int		GUI_getZoneTextHeight(t_GUIZone *zone)
+{
+	return (zone->y2 - zone->y1) / (GUI_getFontHeight(zone)+1);
+}
+
+int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
+{
+	int		width = zone->x2 - zone->x1;
+	sint8	*subtext[8];
+	int		cnt = 0;
+	sint8	*cur_text = text;
+	int		sy = 0;
+	
+	//GUI_printf("-> %s\n", text);
+	subtext[0] = cur_text;
+	while (GUI_getStrWidth(zone, subtext[cnt]) > width - 6)
+	{
+		sint8 *ptr = subtext[cnt]; 
+		sint8 *good_space = NULL; // Position of the space to remove
+		
+		//GUI_printf("%s", ptr);
+		
+		do 
+		{
+			good_space = ptr; // Le bon espace est pour l'instant ici
+			if (ptr > subtext[cnt])
+			{
+				*ptr++ = ' '; // Remet l'espace pour l'instant
+			}
+			ptr = strchr(ptr, ' '); // Prochain espace
+			if (ptr == NULL)
+				break; // plus d'espace
+			*ptr = 0;			
+		}
+		while (GUI_getStrWidth(zone, subtext[cnt]) <= width-6); // Testons la taille
+		
+		if (ptr == NULL) 
+		{
+			// Nous avons touché la fin de la chaine
+			if (good_space == subtext[cnt]) // Pas d'espace positionné, plus rien à faire
+				break;
+			// S'il on est là c'est qui faut couper la chaine avant
+		}
+		
+		if (good_space != subtext[cnt]) // Si l'espace a été positionné
+		{
+			if (ptr)
+				*ptr = ' '; // Le dernier essai doit être effacé
+			*good_space = 0; // Le bon espace est marqué
+		} else
+			good_space = ptr; // Pas de bon espace, alors coupons un mot trop grand
+				
+		cur_text = good_space+1; // Nouveau mot après l'espace
+		//GUI_printf("=> %s", cur_text);		
+		subtext[++cnt] = cur_text; 
+	}
+	
+	int y0 = y - GUI_getFontHeight(zone)*(cnt+1) / 2;
+	
+	//GUI_printf("%d\n", cnt);
+	
+	int i;
+	for (i = 0; i < cnt+1; i++)
+	{
+		int x0 = 0;
+		switch (flags)
+		{
+		case GUI_TEXT_ALIGN_CENTER:
+			x0 = width / 2 - GUI_getStrWidth(zone, subtext[i]) / 2; break;
+		case GUI_TEXT_ALIGN_LEFT:
+			x0 = 0; break;
+		case GUI_TEXT_ALIGN_RIGHT:
+			x0 = width - GUI_getStrWidth(zone, subtext[i]); break;
+		}
+		
+		//GUI_printf("%d %d %s\n", x0, y0 + (GUI_getFontHeight(zone)-1)*i, subtext[i]);
+		GUI_drawText(zone, x0, y0 + (GUI_getFontHeight(zone)-1)*i, col, subtext[i]);
+		if (i < cnt)
+			subtext[i][strlen(subtext[i])] = ' ';
+		sy += GUI_getFontHeight(zone);
+	}
+	return sy;
+}
+
+//
+
+void		GUI_printf2(int cx, int cy, sint8 *fmt, ...)
+{
+	va_list ap;
+    va_start(ap, fmt);
+    vsnprintf((sint8*)g_printfbuf, 64, fmt, ap);
+    va_end(ap);
+		
+    // FIXME
+    t_GUIZone zone;
+    zone.x1 = 0; zone.y1 = 0; zone.x2 = 256; zone.y2 = 192;
+    zone.font = &trebuchet_9_font;
+    GUI_drawText(&zone, cx, cy, 255, (sint8*)g_printfbuf);
+}
+
+
+//center screen needs a rewrite
+void		GUI_align_printf(int flags, sint8 *fmt, ...)
+{
+	va_list ap;
+    va_start(ap, fmt);
+    vsnprintf((sint8*)g_printfbuf, 64, fmt, ap);
+    va_end(ap);
+
+    // FIXME
+    t_GUIZone zone;
+    zone.x1 = 0; zone.y1 = 0; zone.x2 = 256; zone.y2 = 192;
+    zone.font = &trebuchet_9_font;
+    // FIXME
+    GUI.printfy += GUI_drawAlignText(&zone, flags, GUI.printfy, 255, (sint8*)g_printfbuf);
 }

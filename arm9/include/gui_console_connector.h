@@ -68,7 +68,6 @@ GNU General Public License for more details.
 
 #include "conf.h"
 #include "gui_widgets.h"
-#include "console_str.h"
 #include "InterruptsARMCores_h.h"
 #include "about.h"
 #include "dmaTGDS.h"
