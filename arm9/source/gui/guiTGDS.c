@@ -37,7 +37,7 @@ GNU General Public License for more details.
 #include "dmaTGDS.h"
 
 #include "posixHandleTGDS.h"
-#include "fsfatlayerTGDSLegacy.h"
+#include "fsfatlayerTGDS.h"
 #include "keypadTGDS.h"
 #include "utilsTGDS.h"
 #include "spifwTGDS.h"
