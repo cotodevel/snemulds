@@ -30,7 +30,8 @@ int	GUIList_handler(t_GUIZone *zone, int message, int param, void *arg)
 			if (c >= 0)
 				GUI_drawBar(zone, c, 0, i*gh, 
 							zone->x2-zone->x1, (i+1)*gh);
-			GUI_drawText(zone, 0, i*gh, GUI_WHITE, this->items[this->first_item+i]);
+			bool readAndBlendFromVRAM = true;	//we blend old vram characters here since it may have other valid pixel values, such as background color
+			GUI_drawText(zone, 0, i*gh, GUI_WHITE, this->items[this->first_item+i],readAndBlendFromVRAM);
 		}
 		return 1;
 	}

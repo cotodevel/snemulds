@@ -1312,14 +1312,14 @@ int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 	sint8	*cur_text = text;
 	int		sy = 0;
 	
-	//GUI_printf("-> %s\n", text);
+	//printf("-> %s\n", text);
 	subtext[0] = cur_text;
 	while (GUI_getStrWidth(zone, subtext[cnt]) > width - 6)
 	{
 		sint8 *ptr = subtext[cnt]; 
 		sint8 *good_space = NULL; // Position of the space to remove
 		
-		//GUI_printf("%s", ptr);
+		//printf("%s", ptr);
 		
 		do 
 		{
@@ -1352,13 +1352,13 @@ int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 			good_space = ptr; // Pas de bon espace, alors coupons un mot trop grand
 				
 		cur_text = good_space+1; // Nouveau mot après l'espace
-		//GUI_printf("=> %s", cur_text);		
+		//printf("=> %s", cur_text);		
 		subtext[++cnt] = cur_text; 
 	}
 	
 	int y0 = y - GUI_getFontHeight(zone)*(cnt+1) / 2;
 	
-	//GUI_printf("%d\n", cnt);
+	//printf("%d\n", cnt);
 	
 	int i;
 	for (i = 0; i < cnt+1; i++)
@@ -1374,8 +1374,9 @@ int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 			x0 = width - GUI_getStrWidth(zone, subtext[i]); break;
 		}
 		
-		//GUI_printf("%d %d %s\n", x0, y0 + (GUI_getFontHeight(zone)-1)*i, subtext[i]);
-		GUI_drawText(zone, x0, y0 + (GUI_getFontHeight(zone)-1)*i, col, subtext[i]);
+		//printf("%d %d %s\n", x0, y0 + (GUI_getFontHeight(zone)-1)*i, subtext[i]);
+		bool readAndBlendFromVRAM = true;	//we blend old vram characters here since it may have other valid pixel values, such as background color
+		GUI_drawText(zone, x0, y0 + (GUI_getFontHeight(zone)-1)*i, col, subtext[i],readAndBlendFromVRAM);
 		if (i < cnt)
 			subtext[i][strlen(subtext[i])] = ' ';
 		sy += GUI_getFontHeight(zone);
@@ -1396,7 +1397,8 @@ void		GUI_printf2(int cx, int cy, sint8 *fmt, ...)
     t_GUIZone zone;
     zone.x1 = 0; zone.y1 = 0; zone.x2 = 256; zone.y2 = 192;
     zone.font = &trebuchet_9_font;
-    GUI_drawText(&zone, cx, cy, 255, (sint8*)g_printfbuf);
+    bool readAndBlendFromVRAM = true;	//we blend old vram characters here since it may have other valid pixel values, such as background color
+	GUI_drawText(&zone, cx, cy, 255, (sint8*)g_printfbuf,readAndBlendFromVRAM);
 }
 
 

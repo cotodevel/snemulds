@@ -500,7 +500,7 @@ int main(int argc, char ** argv)
 		printf(_STR(IDS_FS_FAILED));
 	}
 	
-	//GUI_printf("zzz");
+	//printf("zzz");
 #if 0
 	{	char *p = malloc(10);
 		printf("RAM = %p last malloc = %p", SNESC.RAM, p);
@@ -541,10 +541,10 @@ int main(int argc, char ** argv)
 	/*
 	{
 		FILE *f=fopen("/moonshl2/extlink.dat","rb");
-		if(!f){GUI_printf("Extlink cannot open.");while(1);}//__swiSleep();}
+		if(!f){printf("Extlink cannot open.");while(1);}//__swiSleep();}
 		fread(&extlink,1,sizeof(extlink),f);
 		fclose(f);
-		if(extlink.ID!=ExtLinkBody_ID){GUI_printf("Not valid extlink.");while(1);}//__swiSleep();}
+		if(extlink.ID!=ExtLinkBody_ID){printf("Not valid extlink.");while(1);}//__swiSleep();}
 	}
 	*/
 	

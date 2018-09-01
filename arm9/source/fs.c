@@ -150,7 +150,7 @@ int	FS_loadROM(sint8 *ROM, sint8 *filename)
 	coherent_user_range_by_size((uint32)ROM, (int)size);
 	
 	fread(ROM, 1, size, f);
-	GUI_printf("Read done\n");
+	printf("Read done\n");
 	fclose(f);
 	FS_unlock();
 
