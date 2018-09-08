@@ -1384,24 +1384,6 @@ int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 	return sy;
 }
 
-//
-
-void		GUI_printf2(int cx, int cy, sint8 *fmt, ...)
-{
-	va_list ap;
-    va_start(ap, fmt);
-    vsnprintf((sint8*)g_printfbuf, 64, fmt, ap);
-    va_end(ap);
-		
-    // FIXME
-    t_GUIZone zone;
-    zone.x1 = 0; zone.y1 = 0; zone.x2 = 256; zone.y2 = 192;
-    zone.font = &trebuchet_9_font;
-    bool readAndBlendFromVRAM = true;	//we blend old vram characters here since it may have other valid pixel values, such as background color
-	GUI_drawText(&zone, cx, cy, 255, (sint8*)g_printfbuf,readAndBlendFromVRAM);
-}
-
-
 //center screen needs a rewrite
 void		GUI_align_printf(int flags, sint8 *fmt, ...)
 {
