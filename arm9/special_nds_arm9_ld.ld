@@ -59,33 +59,18 @@ sp_USR	= sp_UND - 0x200;	/* usr / sys stacks */
 ENTRY (_start)
 SECTIONS
 {
-	.init : ALIGN(4) { __init_start__ = .;
+	.init : ALIGN(4) { __init_start__ = .;	/* used by TGDS-Newlib C/C++ code */
 		*(.init*)
 	} > EWRAM = 0xff
 	__init_end__ = .;
-	.preinit_array : ALIGN(4) {
-		__preinit_array_start__ = .;
-		*(.preinit_array*)
-	} > EWRAM = 0xff
-	__preinit_array_end__ = .;
-	.init_array : ALIGN(4) { 
-		__init_array_start__ = .;
-		*(.init_array*)
-	} > EWRAM = 0xff
-	init_array_end__ = .;
-	.fini_array : ALIGN(4) {
-		__fini_array_start__ = .;
-		*(.fini_array*)
-	} > EWRAM = 0xff
-	__fini_array_end__ = .;
-	.text : ALIGN(4) {
+	.text : ALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
 		__text_start__ = .;
 		*(.text*)
 		*(.text)
 		*(.gnu.linkonce.t*)
 	} > EWRAM = 0xff
 	__text_end__ = .;
-	.bss : ALIGN(4) {
+	.bss (NOLOAD): {				/* used by TGDS-Newlib C/C++ code */
 		__bss_vma_start = .;
 		*(COMMON)					/* libc requires these for uninitialized objects, include any heap uninit vars*/
 		*(.dynbss*)
@@ -94,20 +79,14 @@ SECTIONS
 		*(.gnu.linkonce.b*.)
 	} > EWRAM = 0xff
 	__bss_vma_end = .;
-	.sbss : ALIGN(4) {
-		__sbss_start__ = .;
-		*(.sbss*)
-		*(.sbss)
-	}> EWRAM = 0xff
-	__sbss_vma_end = .;
-	.data : ALIGN(4) {
+	.data : ALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
 		__data_start__ = .;
 		*(.data)
 		*(.data.*)
 		*(.gnu.linkonce.d*)
 	} > EWRAM = 0xff
 	__data_end__ = .;
-	.rodata : ALIGN(4) {
+	.rodata : ALIGN(4) {			/* used by TGDS-Newlib C/C++ code */
 		__rodata_start__ = .;
 		*(.rdata)
 		*(.rodata)
@@ -115,51 +94,7 @@ SECTIONS
     	*(.gnu.linkonce.r.*)
 	} > EWRAM = 0xff
 	__rodata_end__ = .;
-	.eh_frame : ALIGN(4) {
-		__eh_frame_start__ = .;
-		*(.eh_frame*)
-	} > EWRAM = 0xff
-	__eh_frame_end__ = .;
-	.jcr : ALIGN(4) {
-		__jcr_start__ = .;
-		*(.jcr*)
-	} > EWRAM = 0xff
-	__jcr_end__ = .;
-	.vfp11_veneer : ALIGN(4) {
-		__vfp11_veneer_start__ = .;
-		*(.vfp11_veneer*)
-	} > EWRAM = 0xff
-	__vfp11_veneer_end__ = .;
-    .ARM.exidx : ALIGN(4) {
-		__exidx_start = .;
-		*(.ARM.exidx)
-		*(.ARM.exidx*)
-		*(.gnu.linkonce.armexidx.)
-		*(.gnu.linkonce.armexidx.*)
-	} > EWRAM = 0xff
-    __exidx_end = .;
-	.v4_bx : ALIGN(4) {
-		__v4_bx_start__ = .;
-		*(.v4_bx)
-		*(.v4_bx*)
-	} > EWRAM = 0xff
-	__v4_bx_end__ = .;
-	.iplt : ALIGN(4) {
-		__iplt_start__ = .;
-		*(.iplt*)
-	} > EWRAM = 0xff
-	__iplt_end__ = .;
-	.igot.plt : ALIGN(4) {
-		__igot_plt_start__ = .;
-		*(.igot.plt*)
-	} > EWRAM = 0xff
-	__igot_plt_end__ = .;
-	.rel.dyn : ALIGN(4) {
-		__rel_dyn_start__ = .;
-		*(.rel.dyn*)
-	} > EWRAM = 0xff
-	__rel_dyn_end__ = .;
-	.fini : ALIGN(4) {
+	.fini : ALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
 		__fini_start__ = .;
 		*(.fini)
 		*(.fini*)
@@ -169,10 +104,11 @@ SECTIONS
 	. = ALIGN(4);
 	__itcm_vma_start = .;
 	.itcm : ALIGN(4) {
-		KEEP (*(.itcm*))
-		_vector_start = .;
+		_vectors_start = .;
+		__vectors_vma_start = _vectors_start;
 		KEEP (*(.vectors*))
-		_vector_end = .;
+		_vectors_end = .;
+		KEEP (*(.itcm*))
 	} > ITCM AT > EWRAM
 	__itcm_vma_end__ = .;
 	__dtcm_vma_start = .;
@@ -180,10 +116,10 @@ SECTIONS
 		KEEP (*(.dtcm*))
 	} > DTCM AT > EWRAM
 	__dtcm_vma_end__ = .;
+	___arm9sharedwram_vma_start = .;
 	.arm9sharedwram : ALIGN(4) {
-		___arm9sharedwram_vma_start = .;
 		KEEP (*(.arm9sharedwram*))
 	} > ARM9SHAREDWRAM AT > EWRAM
 	___arm9sharedwram_vma_end__ = .;
-	__vma_stub_end__ = __lib__end__ + 4 + SIZEOF(.itcm) + SIZEOF(.dtcm) + SIZEOF(.arm9sharedwram);
+	__vma_stub_end__ = __lib__end__ + SIZEOF(.itcm) + SIZEOF(.dtcm) + SIZEOF(.arm9sharedwram);
 }
