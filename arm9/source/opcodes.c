@@ -71,8 +71,10 @@ void IOWrite16(uint32 addr, uint16 word)
 
 void CPU_pack()
 {
-  if (CPU.packed)
-  	return;
+	if (CPU.packed){
+		return;
+	}
+	
   CPU.PC = (uint32)((sint32)PCptr+(sint32)SnesPCOffset); 
   CPU.PB = S&0xFFFF;
   
@@ -99,8 +101,9 @@ void CPU_pack()
 
 void CPU_unpack()
 {
-  if (CPU.unpacked)
-  	return;	
+	if (CPU.unpacked){
+		return;	
+	}
 	
   SnesPCOffset = -(sint32)mem_getbaseaddress(CPU.PC, CPU.PB);
   PCptr = map_memory(CPU.PC, CPU.PB);

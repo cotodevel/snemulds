@@ -1824,7 +1824,7 @@ void SNES_update()
   GFX.map_slot[3] = (PPU_PORT[0x0A]&0x7C)>>2;
 }
 
-
+__attribute__((section(".itcm")))
 void GoNMI()
 {
   CPU_pack();
@@ -1845,6 +1845,7 @@ void GoNMI()
 //  if (CFG.CPU_log) fprintf(SNES.flog, "--> NMI\n");
 }
 
+__attribute__((section(".itcm")))
 void GoIRQ()
 {
   CPU_pack();
@@ -1867,4 +1868,3 @@ void GoIRQ()
   DMA_PORT[0x11] = 0x80;
 //  if (CFG.CPU_log) fprintf(SNES.flog, "--> IRQ\n");
 }
-

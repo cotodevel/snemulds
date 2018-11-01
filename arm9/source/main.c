@@ -454,6 +454,7 @@ int selectSong(char *name)
 
 
 //---------------------------------------------------------------------------------
+__attribute__((section(".itcm")))
 int main(int argc, char ** argv)
 {
 	IRQInit();
@@ -586,39 +587,12 @@ int main(int argc, char ** argv)
 	}
 #endif	
 	
-
-	/*		GUI.log = 1;		
-	 consoleClear();*/
-
 	while (1)
 	{
-		if (!SNES.Stopped){
-			go();
-		}
-		if (/*!CFG.mouse && */REG_POWERCNT & POWER_SWAP_LCDS){
+		go();
+		if (REG_POWERCNT & POWER_SWAP_LCDS){
 			GUI_update();
 		}
-		
-		/*
-		if (keys & KEY_LID)
-		{
-			saveSRAM();
-			APU_pause();
-			// hinge is closed 
-			// power off everything not needed
-			//powerOFF(POWER_ALL) ;
-			// set system into sleep 
-			while (keys & KEY_LID)
-			{
-				IRQVBlankWait();
-				keys = keysPressed();
-			}
-			// wait a bit until returning power 
-			// power on again 
-			// set up old irqs again 
-			APU_pause();
-		}
-		*/
 		
 		#ifdef GDB_ENABLE
 		setBacklight(POWMAN_BACKLIGHT_TOP_BIT|POWMAN_BACKLIGHT_BOTTOM_BIT);

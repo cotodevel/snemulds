@@ -25,7 +25,6 @@
 #include "memmap.h"
 #include "memoryHandleTGDS.h"
 
-extern int OldPC;
 extern char *ROM_Image;
 
 #define NOT_LARGE	0

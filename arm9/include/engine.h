@@ -36,7 +36,6 @@ extern int saveSRAM();
 extern uint8 interrupted;
 
 extern int initSNESEmpty();
-extern int OldPC;
 extern int go();
 extern void show_opcode(sint8 *buf, uint8 opcode, int pc, int pb, unsigned short flags);
 extern int trace_CPU();

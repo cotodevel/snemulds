@@ -204,8 +204,6 @@ int initSNESEmpty()
 //  printf("Init OK...\n");
   return 0;
 }
-	
-int OldPC;
 
 __attribute__((section(".dtcm")))
 bool nifiVblankEndWait = false;	//true == nifi awaits in VblankEnd, false = nifi running N vcounter lines and hasn't reached vblankEnd yet
@@ -213,8 +211,9 @@ bool nifiVblankEndWait = false;	//true == nifi awaits in VblankEnd, false = nifi
 __attribute__((section(".itcm")))
 int go()
 {
-  if (CPU.IsBreak) return 0;
-
+	if ((CPU.IsBreak == true) || (SNES.Stopped == true)){
+		return 0;
+	}
 	//new
 	//if localplay && guest and ended up rendering a whole frame (full vcount lines), means we wait for host response to our "acknowledge"
 	/*

@@ -46,23 +46,21 @@ __attribute__((section(".itcm")))
 void HblankUser(){
 	int DS_VCOUNT = REG_VCOUNT;
 	getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0xFFFFFFFF;
-
-	if (DS_VCOUNT >= 192)
-	{
-		if (DS_VCOUNT == 192) // We are last scanline, update first line GFX
-
-		{
+	
+	switch(DS_VCOUNT){
+		case(192):{
 			PPU_updateGFX(0);
 		}
-		goto end;
+		break;
+		default:{
+			if(DS_VCOUNT < 192){
+				PPU_updateGFX(DS_VCOUNT);
+			}
+		}
+		break;
 	}
-
-	PPU_updateGFX(DS_VCOUNT);
-
-	//	h_blank=1;
-	end:
-	getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
 	
+	getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
     //printf("hblank! \n");	
 }
 
@@ -85,7 +83,7 @@ void VblankUser(){
 	if (CFG.Sound_output)
 	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = APU_MAX;
 	APU2->counter = 0;
-
+	
 	//printf("vblank! \n");	
 }
 
