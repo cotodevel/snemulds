@@ -420,6 +420,7 @@ t_GUIEvent	g_event;
 
 int GUI_update()
 {
+	scanKeys();
 	int new_event = 0;
 	int pressed = keysPressed(); 	// buttons pressed this loop
 	int released = keysReleased();

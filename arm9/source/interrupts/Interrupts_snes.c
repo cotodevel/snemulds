@@ -6,12 +6,10 @@
 #include "gfx.h"
 #include "cfg.h"
 #include "apu.h"
-//#include "ram.h"
 #include "core.h"
 #include "conf.h"
-//#include "frontend.h"
+#include "interrupts.h"
 #include "main.h"
-//#include "font_8x8_uv.h"
 #include "ppu.h"
 #include "keypadTGDS.h"
 
@@ -87,8 +85,15 @@ void VblankUser(){
 	//printf("vblank! \n");	
 }
 
+
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
+bool handleInputVcount = false;
+
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void VcounterUser(){
+	handleInputVcount = true;
 }

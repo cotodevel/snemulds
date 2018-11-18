@@ -34,7 +34,6 @@ USA
 #include "conf.h"
 #include "frontend.h"
 #include "main.h"
-#include "font_8x8_uv.h"
 #include "ppu.h"
 #include "keypadTGDS.h"
 #include "interrupts.h"
@@ -46,9 +45,14 @@ USA
 extern "C" {
 #endif
 
-extern void Vcounter();
-extern void Vblank();
-extern void Hblank();
+extern void Timer0handlerUser();
+extern void Timer1handlerUser();
+extern void Timer2handlerUser();
+extern void Timer3handlerUser();
+extern void HblankUser();
+extern void VblankUser();
+extern void VcounterUser();
+extern bool handleInputVcount;
 
 #ifdef __cplusplus
 }

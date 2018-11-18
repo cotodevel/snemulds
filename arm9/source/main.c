@@ -30,9 +30,7 @@
 #include "gfx.h"
 #include "cfg.h"
 #include "apu.h"
-
-//#include "ram.h"
-
+#include "interrupts.h"
 #include "conf.h"
 
 #include "spifwTGDS.h"
@@ -589,10 +587,12 @@ int main(int argc, char ** argv)
 	
 	while (1)
 	{
-		go();
-		if (REG_POWERCNT & POWER_SWAP_LCDS){
+		//handle input only on vcounter
+		if(handleInputVcount == true){
 			GUI_update();
+			handleInputVcount = false;
 		}
+		go();
 		
 		#ifdef GDB_ENABLE
 		setBacklight(POWMAN_BACKLIGHT_TOP_BIT|POWMAN_BACKLIGHT_BOTTOM_BIT);

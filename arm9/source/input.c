@@ -49,9 +49,6 @@ int myLCDSwap()
 int get_joypad()
 {
 	int res = 0;
-
-//#define KEYS_CUR (( ((~REG_KEYINPUT)&0x3ff) | (((~IPC->buttons)&3)<<10) | \
-//	 			 (((~IPC->buttons)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID)	
 	keys = keysPressed();
 
 #if 0
