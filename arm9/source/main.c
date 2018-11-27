@@ -455,18 +455,33 @@ int selectSong(char *name)
 __attribute__((section(".itcm")))
 int main(int argc, char ** argv)
 {
+	/*			TGDS 1.5 Standard ARM9 Init code start	*/
 	IRQInit();
+	REG_IF = 1;
 	
-	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
-	getsIPCSharedTGDSSpecific()->APU_ADDR_ANS = getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
-
-	screen_mode = 0;
 	bool project_specific_console = true;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
 	
 	clrscr();
 	sint32 fwlanguage = (sint32)getLanguage();
 	GUI_setLanguage(fwlanguage);
+	
+	printf(_STR(IDS_INITIALIZATION));
+	int ret=FS_init();
+	if (ret == 0)
+	{
+		printf(_STR(IDS_FS_SUCCESS));
+		//FRESULT res = FS_chdir("0:/");
+	}
+	else if(ret == -1)
+	{
+		printf(_STR(IDS_FS_FAILED));
+	}
+	/*			TGDS 1.5 Standard ARM9 Init code end	*/
+	
+	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
+	getsIPCSharedTGDSSpecific()->APU_ADDR_ANS = getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
+	screen_mode = 0;
 	
 #ifndef DSEMUL_BUILD	
 	GUI.printfy = 32;
@@ -484,22 +499,6 @@ int main(int argc, char ** argv)
 	for (i = 0; i < 192; i++)
 		GFX.lineInfo[i].mode = -1;
 
-	//PrecalculateCalibrationData();
-	
-	printf(_STR(IDS_INITIALIZATION));
-	
-	int ret=FS_init();
-	if (ret == 0)
-	{
-		printf(_STR(IDS_FS_SUCCESS));
-		//FRESULT res = FS_chdir("0:/");
-	}
-	else if(ret == -1)
-	{
-		printf(_STR(IDS_FS_FAILED));
-	}
-	
-	//printf("zzz");
 #if 0
 	{	char *p = malloc(10);
 		printf("RAM = %p last malloc = %p", SNESC.RAM, p);

@@ -74,16 +74,27 @@ _start:
 	mov r1,#0
 	str r1,[r0]
 	
+	ldr r0,=0x04000204
+	ldr r1,[r0]
+	str r1,[r0]
+	
+	ldr r0,=0x04000200
+	mov r1,#0
+	str r1,[r0]
 	
 	#ifdef ARM9
-	mov	r0, #0xdf		@ sys
+	mov	r0, #0x13
 	msr	cpsr, r0
 	ldr 	sp, =(0x027FF000 + 0x1000 - 0x800)
 	
-	push {r0-r3,lr}
-	ldr	r3, =setSnemulDSSpecial0xFFFF0000MPUSettings
-	blx	r3
-	pop {r0-r3,lr}
+	mov	r0, #0x1f		@ sys
+	msr	cpsr, r0
+	ldr 	sp, =(0x027FF000 + 0x400)
+	
+	push {r0-r12,r14}
+	bl setSnemulDSSpecial0xFFFF0000MPUSettings
+	pop {r0-r12,r14}
+	
 	#endif
 	
 	mov	r0, #0x12		@ irq
@@ -99,18 +110,6 @@ _start:
 	@on data/prefetch aborts (caused by the protection unit), 
 	@on FIQ (possibly caused by hardware debuggers). 
 	@It is also called by accidental software-jumps to the reset vector, and by unused SWI numbers within range 0..1Fh.
-	
-	mov 	r3 , #0x1b	@ undef dtcm stacks, irq enable
-	msr     CPSR, r3
-	ldr 	sp, =sp_UND
-	
-	mov 	r3 , #0x17	@ dataabt dtcm stacks, irq enable
-	msr     CPSR,r3 
-	ldr 	sp, =sp_ABT
-	
-	mov 	r3 , #0x11	@FIRQ mode, irq enable
-	msr     CPSR, r3
-	ldr 	sp, =sp_FIQ
 	
 	mov	r0, #0x1F		@ usr/sys dtcm stacks, irq enable (ignore all exceptions usermode must be excluded here)
 	msr	cpsr, r0
@@ -128,7 +127,7 @@ _start:
 	ldr                 r3,=_dtcm_end                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy
 	#endif
-	
+
 	/* set WRAM9 from vma to lma (must be before clearing up our relocated area) */
 	ldr                 r1,=___arm9sharedwram_vma_start                /* point our source register to the start of the .arm9sharedwram section (VMA)*/
 	ldr                 r2,=_arm9sharedwram_start                 /* point our destination register to the ARM9 SHARED WRAM dedicated to our writable data (LMA)*/
@@ -141,24 +140,11 @@ _start:
 	ldr                 r1,=__bss_vma_end
 	bl clear
 	
-	/*  Clear old VMA section used earlier for hardware RAM initialization*/
-	ldr                 r0,=__lib__end__
-	ldr                 r1,=__vma_stub_end__
-	bl clear
 	#endif
 	
-	push	{r0-r3,lr}
-	ldr	r3, =initHardware
-	mov lr,pc
-	bx	r3	
-	pop	{r0-r3,lr}
+	bl initHardware
+	bl __libc_init_array
 	
-	push	{r0-r3,lr}
-	ldr	r3, =__libc_init_array
-	mov lr,pc
-	bx	r3
-	pop	{r0-r3,lr}
-
 	ldr	r3, =main
 	ldr	lr, =exception_sysexit
 	bx	r3			@entrypoint

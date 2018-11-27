@@ -115,9 +115,13 @@ void SaveSpc(uint8 *spc) {
 //---------------------------------------------------------------------------------
 int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------
+	/*			TGDS 1.5 Standard ARM7 Init code start	*/
 	IRQInit();
-	while (!(*((vuint8*)0x04000240) & 0x2));
 	installWifiFIFO();		//use DSWIFI
+	/*			TGDS 1.5 Standard ARM7 Init code end	*/
+	
+	//wait for VRAM Block to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
+	while (!(*((vuint8*)0x04000240) & 0x2));
 	
     playBuffer = (uint16*)0x6000000;
     int i   = 0;
