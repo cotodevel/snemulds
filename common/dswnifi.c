@@ -71,6 +71,17 @@ USA
 
 #ifdef ARM9
 
+int nifi_stat = 0;	//start as idle always
+int nifi_cmd = 0;
+int nifi_keys = 0;		//holds the keys for players. player1 included
+int nifi_keys_sync;	//(guestnifikeys & hostnifikeys)
+int plykeys1 = 0;		//player1
+int plykeys2 = 0;		//player2
+int host_vcount = 0;		//host generated REG_VCOUNT
+int guest_vcount = 0;		//guest generated REG_VCOUNT
+int host_framecount = 0;
+int guest_framecount = 0;
+
 //These methods are template you must override (as defined below), to have an easy DS - DS framework running.
 
 //Example Sender Code

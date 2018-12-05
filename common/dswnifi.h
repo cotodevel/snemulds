@@ -46,6 +46,29 @@ extern bool nifiSetup;
 extern "C"{
 #endif
 
+#ifdef ARM9
+
+//DSWNIFI: message for nifi beacons
+extern volatile const uint8 nifitoken[32];
+extern volatile const uint8 nificonnect[32];
+extern volatile uint8 nificrc[32];
+
+//DSWNIFI: WIFI specific
+extern int nifi_stat;
+extern int nifi_cmd;
+extern int nifi_keys;		//holds the keys for players.
+extern int nifi_keys_sync;	//(guestnifikeys & hostnifikeys)
+
+extern int plykeys1;		//player1
+extern int plykeys2;		//player2
+extern int guest_framecount;	//used by the guest for syncing.
+extern int host_framecount;		//emulator framecount:host
+extern int guest_framecount;	//emulator framecount:guest
+extern int host_vcount;		//host generated REG_VCOUNT
+extern int guest_vcount;		//guest generated REG_VCOUNT
+
+#endif
+
 //Example Sender Code
 //Send This DS Time to External DS through UDP NIFI or Local NIFI:
 //volatile uint8 somebuf[128];
