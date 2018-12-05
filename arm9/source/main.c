@@ -456,7 +456,6 @@ __attribute__((section(".itcm")))
 int main(int argc, char ** argv)
 {
 	/*			TGDS 1.5 Standard ARM9 Init code start	*/
-	IRQInit();
 	REG_IF = 1;
 	
 	bool project_specific_console = true;	//set default console or custom console: custom console

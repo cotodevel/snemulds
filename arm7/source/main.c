@@ -116,7 +116,6 @@ void SaveSpc(uint8 *spc) {
 int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.5 Standard ARM7 Init code start	*/
-	IRQInit();
 	installWifiFIFO();		//use DSWIFI
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
