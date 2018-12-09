@@ -453,11 +453,8 @@ int selectSong(char *name)
 
 //---------------------------------------------------------------------------------
 __attribute__((section(".itcm")))
-int main(int argc, char ** argv)
-{
+int main(int argc, char ** argv){
 	/*			TGDS 1.5 Standard ARM9 Init code start	*/
-	REG_IF = 1;
-	
 	bool project_specific_console = true;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
 	
@@ -476,6 +473,7 @@ int main(int argc, char ** argv)
 	{
 		printf(_STR(IDS_FS_FAILED));
 	}
+	switch_dswnifi_mode(dswifi_idlemode);
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
 	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
