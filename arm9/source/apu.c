@@ -103,5 +103,5 @@ void APU_playSong(uint8 *data, int size)
 void APU_command(uint32 command)
 {
 	//prevent APU from desync
-	SendMultipleWordACK(command, 0, 0, NULL);
+	SendFIFOWords(command, 0, 0, NULL);
 }
