@@ -70,12 +70,13 @@ int get_joypad()
 			}
 			if ((keys & KEY_RIGHT))
 			{
+				struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 				/* LOG("%04x %04x %02x %02x %04x %04x\n", CPU.PC,
 				(uint32)((sint32)PCptr+(sint32)SnesPCOffset),
-				getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[1], PORT_SPC_TO_SNES[1],
+				TGDSIPC->PORT_SNES_TO_SPC[1], PORT_SPC_TO_SNES[1],
 				 (*(uint32*)(0x27E0000)) & 0xFFFF, *(uint16 *)(APU_RAM_ADDRESS+0x18));
 				*/
-				//getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[1] = 0x44; 		
+				//TGDSIPC->PORT_SNES_TO_SPC[1] = 0x44; 		
 			}
 			
 		}	
@@ -214,16 +215,16 @@ int get_joypad()
 		
 		if (keysHeld() & KEY_TOUCH)
 		{		
+			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 			int tx, ty;
-
-			tx = getsIPCSharedTGDS()->touchXpx;
+			tx = TGDSIPC->touchXpx;
 			
 			if (CFG.Scaled == 0) // No scaling
-				ty = getsIPCSharedTGDS()->touchYpx+GFX.YScroll;
+				ty = TGDSIPC->touchYpx+GFX.YScroll;
 			else if (CFG.Scaled == 1) // Half scaling
-				ty = getsIPCSharedTGDS()->touchYpx*208/192+12; // FIXME			
+				ty = TGDSIPC->touchYpx*208/192+12; // FIXME			
 			else if (CFG.Scaled == 2) // Full screen
-				ty = getsIPCSharedTGDS()->touchYpx*224/192;
+				ty = TGDSIPC->touchYpx*224/192;
 			
 			if (CFG.MouseMode == 0)
 			{

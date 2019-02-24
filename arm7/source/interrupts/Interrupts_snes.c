@@ -71,7 +71,8 @@ void HblankUser(){
 	// Block execution until the hblank processing on ARM9
 	if (!SPC_disable)
 	{
-		struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
+		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+		struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSUSERIPC->APU2);
 		int VCount = REG_VCOUNT;        
 		scanlineCount++;
 		uint32 T0 = APU_MEM[APU_TIMER0]?APU_MEM[APU_TIMER0]:0x100;

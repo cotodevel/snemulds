@@ -35,31 +35,19 @@ USA
 #endif
 
 #ifdef ARM9
-
 #include <stdbool.h>
-
 #include "memmap.h"
 #include "common.h"
 #include "cfg.h"
 #include "main.h"
 #include "core.h"
-
 #include "dsregs.h"
 #include "dsregs_asm.h"
 #include "InterruptsARMCores_h.h"
-
 #include "wifi_arm9.h"
-
 #endif
 
 
-#ifdef ARM9
-__attribute__((section(".itcm")))
-#endif
-struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
-	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(getUserIPCAddress());
-	return sIPCSharedTGDSSpecificInst;
-}
 
 //inherits what is defined in: common_shared.c
 #ifdef ARM9
@@ -101,8 +89,8 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			StopSound();
 
 			memset(playBuffer, 0, MIXBUFSIZE * 8);
-
-			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0; 
+			struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+			TGDSUSERIPC->APU_ADDR_CNT = 0; 
 			ApuReset();
 			DspReset();
 
@@ -127,7 +115,8 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC 	
 			LoadSpc(APU_RAM_ADDRESS);
 			SetupSound();   	
-			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;             	
+			struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+			TGDSUSERIPC->APU_ADDR_CNT = 0;             	
 			paused = false;
 			SPC_freedom = true;
 			SPC_disable = false;
@@ -136,7 +125,8 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			
 		case SNEMULDS_APUCMD_SPCDISABLE:{ //case 0x00000004:{ // DISABLE 
 			SPC_disable = true;
-			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
+			struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+			TGDSUSERIPC->APU_ADDR_CNT = 0;
 		}
 		break;        
 		
@@ -152,7 +142,8 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			
 		case SNEMULDS_APUCMD_LOADSPC:{ //case 0x00000007:{ // LOAD state 
 			LoadSpc(APU_RAM_ADDRESS);
-			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0; 
+			struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+			TGDSUSERIPC->APU_ADDR_CNT = 0; 
 		}
 		break;
 		#endif
@@ -177,7 +168,8 @@ void update_ram_snes(){
 
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
-    struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
+	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSUSERIPC->APU2);
 	APU_T0_ASM_ADDR = (uint32)&APU2->T0;
 	APU_T1_ASM_ADDR = (uint32)&APU2->T1;
 	APU_T2_ASM_ADDR = (uint32)&APU2->T2;
@@ -191,14 +183,14 @@ void update_spc_ports(){
 	APU_CNT2_ASM_ADDR = (uint32)&APU2->CNT2;
 	
 	//must reflect to specific_shared.h defs
-	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[0];
-	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)&getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[0]; 
-	ADDR_APU_PROGRAM_COUNTER=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
+	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&TGDSUSERIPC->PORT_SPC_TO_SNES[0];
+	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)&TGDSUSERIPC->PORT_SNES_TO_SPC[0]; 
+	ADDR_APU_PROGRAM_COUNTER=	(uint32)(volatile uint32*)&TGDSUSERIPC->APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
 	
-	ADDR_SNEMUL_CMD	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_CMD;	//0x027FFFE8	// SNEMUL_CMD
-	ADDR_SNEMUL_ANS	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_ANS;	//0x027fffec	// SNEMUL_ANS
-	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
-	getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP = (volatile uint8 *)ADDR_SNEMUL_BLK;
+	ADDR_SNEMUL_CMD	=	(uint32)(volatile uint32*)&TGDSUSERIPC->APU_ADDR_CMD;	//0x027FFFE8	// SNEMUL_CMD
+	ADDR_SNEMUL_ANS	=	(uint32)(volatile uint32*)&TGDSUSERIPC->APU_ADDR_ANS;	//0x027fffec	// SNEMUL_ANS
+	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)&TGDSUSERIPC->APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
+	TGDSUSERIPC->APU_ADDR_BLKP = (volatile uint8 *)ADDR_SNEMUL_BLK;
 	
 	//todo: APU_ADDR_CNT: is unused by Assembly APU Core?
 }

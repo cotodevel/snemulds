@@ -476,8 +476,9 @@ int main(int argc, char ** argv){
 	switch_dswnifi_mode(dswifi_idlemode);
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
-	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
-	getsIPCSharedTGDSSpecific()->APU_ADDR_ANS = getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
+	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+	TGDSUSERIPC->APU_ADDR_CNT = 0;
+	TGDSUSERIPC->APU_ADDR_ANS = TGDSUSERIPC->APU_ADDR_CMD = 0;
 	screen_mode = 0;
 	
 #ifndef DSEMUL_BUILD	

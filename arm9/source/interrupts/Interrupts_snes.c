@@ -43,7 +43,8 @@ __attribute__((section(".itcm")))
 #endif
 void HblankUser(){
 	int DS_VCOUNT = REG_VCOUNT;
-	getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0xFFFFFFFF;
+	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+	TGDSUSERIPC->APU_ADDR_CMD = 0xFFFFFFFF;
 	
 	switch(DS_VCOUNT){
 		case(192):{
@@ -58,7 +59,7 @@ void HblankUser(){
 		break;
 	}
 	
-	getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
+	TGDSUSERIPC->APU_ADDR_CMD = 0;
     //printf("hblank! \n");	
 }
 
@@ -71,15 +72,17 @@ void VblankUser(){
 	
 	GFX.DSFrame++;
 	GFX.v_blank=1;
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
+	
+	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSUSERIPC->APU2);
 	// FIX APU cycles
 #if 0	
 	if (/*CFG.Sound_output && */APU2->counter > 100 && APU2->counter < 261)
-	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT += 261 - APU2->counter;
+	TGDSUSERIPC->APU_ADDR_CNT += 261 - APU2->counter;
 #endif		
 	//*APU_ADDR_CNT += 262;
 	if (CFG.Sound_output)
-	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = APU_MAX;
+	TGDSUSERIPC->APU_ADDR_CNT = APU_MAX;
 	APU2->counter = 0;
 	
 	//printf("vblank! \n");	

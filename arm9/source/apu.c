@@ -55,7 +55,8 @@ void	APU_stop()
 #ifndef IN_EMULATOR	
 	APU_command(SNEMULDS_APUCMD_SPCDISABLE); //APU_command(0x00000004);
 	// Wait the APU disabling
-	while (getsIPCSharedTGDSSpecific()->APU_ADDR_ANS != 0xFF00FF00){
+	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+	while (TGDSUSERIPC->APU_ADDR_ANS != 0xFF00FF00){
 		IRQVBlankWait();
 	}
 #endif	
@@ -84,7 +85,8 @@ void	APU_loadSpc()
 void	APU_clear()
 {
 	APU_command(SNEMULDS_APUCMD_CLRMIXERBUF); //APU_command(0x00000005);
-	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
+	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+	TGDSUSERIPC->APU_ADDR_CNT = 0;
 }
 
 

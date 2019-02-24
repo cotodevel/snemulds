@@ -132,10 +132,9 @@ int main(int _argc, sint8 **_argv) {
     ApuReset();
     DspReset();
     SetupSound();
-    
-    while (1) {   
-        
-		
+    struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+	
+    while (1) {
 		if(SPC_disable == false){
             int cyclesToExecute, samplesToMix;
 			//if (scanlineCount >= 66) {
@@ -165,7 +164,7 @@ int main(int _argc, sint8 **_argv) {
 			}			
         }
 		else{
-			getsIPCSharedTGDSSpecific()->APU_ADDR_ANS = (uint32)0xFF00FF00;
+			TGDSUSERIPC->APU_ADDR_ANS = (uint32)0xFF00FF00;
 		}
 		
 		IRQVBlankWait();	//required for sound playback sync with vblank

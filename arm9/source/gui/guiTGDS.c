@@ -426,6 +426,7 @@ int GUI_update()
 	int released = keysReleased();
 	int held = keysHeld();				//touch screen
 	int repeated = keysRepeated();
+	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 	
 	if (GUI.hide)
 	{
@@ -441,8 +442,8 @@ int GUI_update()
 		if((pressed & KEY_TOUCH) && !(held & KEY_TOUCH))
 		{
 			g_event.event = EVENT_STYLUS_PRESSED;
-			g_event.stl.x = getsIPCSharedTGDS()->touchXpx;
-			g_event.stl.y = getsIPCSharedTGDS()->touchYpx;		
+			g_event.stl.x = TGDSIPC->touchXpx;
+			g_event.stl.y = TGDSIPC->touchYpx;		
 			new_event = GUI_EVENT_STYLUS;
 		}
 		
@@ -454,10 +455,10 @@ int GUI_update()
 			
 			g_event.event = EVENT_STYLUS_DRAGGED;
 
-			g_event.stl.dx = getsIPCSharedTGDS()->touchXpx - g_event.stl.x;
-			g_event.stl.dy = getsIPCSharedTGDS()->touchYpx - g_event.stl.y;
-			g_event.stl.x = getsIPCSharedTGDS()->touchXpx;
-			g_event.stl.y = getsIPCSharedTGDS()->touchYpx;
+			g_event.stl.dx = TGDSIPC->touchXpx - g_event.stl.x;
+			g_event.stl.dy = TGDSIPC->touchYpx - g_event.stl.y;
+			g_event.stl.x = TGDSIPC->touchXpx;
+			g_event.stl.y = TGDSIPC->touchYpx;
 			new_event = GUI_EVENT_STYLUS;
 		
 		}
@@ -467,10 +468,10 @@ int GUI_update()
 			new_event = GUI_EVENT_STYLUS;
 		}	
 
-		else if((getsIPCSharedTGDS()->buttons7 != 0) && GUI.ScanJoypad){
+		else if((TGDSIPC->buttons7 != 0) && GUI.ScanJoypad){
 				g_event.event = EVENT_BUTTON_ANY;
 				new_event = GUI_EVENT_BUTTON;
-				g_event.joy.buttons = getsIPCSharedTGDS()->buttons7;
+				g_event.joy.buttons = TGDSIPC->buttons7;
 				g_event.joy.pressed = pressed;
 				g_event.joy.repeated = repeated;
 				g_event.joy.released = released;

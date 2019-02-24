@@ -79,8 +79,6 @@ struct sIPCSharedTGDSSpecific{
 extern "C" {
 #endif
 
-extern struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
-
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
