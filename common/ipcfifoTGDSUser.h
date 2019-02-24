@@ -19,7 +19,12 @@ USA
 
 */
 
-//inherits what is defined in: ipcfifoTGDS.h
+//TGDS required version: IPC Version: 1.3
+
+//IPC FIFO Description: 
+//		struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 														// Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
+//		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;		// Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
+
 #ifndef __specific_shared_h__
 #define __specific_shared_h__
 
@@ -86,11 +91,6 @@ extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 //project specific
 extern uint32 ADDR_PORT_SNES_TO_SPC;
 extern uint32 ADDR_PORT_SPC_TO_SNES;
-
-#ifdef ARM9
-extern void update_ram_snes();
-#endif
-
 extern void update_spc_ports();
 
 #ifdef __cplusplus

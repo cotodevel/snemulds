@@ -16,6 +16,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 USA
 
 */
+
+//TGDS required version: IPC Version: 1.3
+
+//IPC FIFO Description: 
+//		struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 														// Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
+//		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;		// Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
+
+
 #include "ipcfifoTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #include "apu_shared.h"
@@ -157,14 +165,7 @@ __attribute__((section(".itcm")))
 void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 }
 
-//project specific stuff
-#ifdef ARM9
-
-//small hack to update SNES_ADDRESS at opcodes2.s
-void update_ram_snes(){
-    //snes_ram_address = (uint32)&snes_ram_bsram[0x6000];
-}
-#endif
+//project specific stuff:
 
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
