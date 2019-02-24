@@ -2,7 +2,7 @@
 #include "pocketspc.h"
 #include "apu.h"
 #include "apumisc.h"
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 #include "apu_shared.h"
 // archeide: shared structure with SNEmul
 

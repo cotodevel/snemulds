@@ -24,7 +24,7 @@ GNU General Public License for more details.
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 #include "apu_shared.h"
 
 #ifdef WIN32

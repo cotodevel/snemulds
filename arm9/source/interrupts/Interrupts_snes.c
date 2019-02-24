@@ -1,5 +1,5 @@
 #include "InterruptsARMCores_h.h"
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 #include "guiTGDS.h"
 #include "dsregs_asm.h"
 #include "fs.h"

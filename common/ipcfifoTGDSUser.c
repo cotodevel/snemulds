@@ -17,7 +17,7 @@ USA
 
 */
 #include "ipcfifoTGDS.h"
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 #include "apu_shared.h"
 
 #ifdef ARM7
@@ -182,7 +182,7 @@ void update_spc_ports(){
 	APU_CNT1_ASM_ADDR = (uint32)&APU2->CNT1;
 	APU_CNT2_ASM_ADDR = (uint32)&APU2->CNT2;
 	
-	//must reflect to specific_shared.h defs
+	//must reflect to ipcfifoTGDSUser.h defs
 	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&TGDSUSERIPC->PORT_SPC_TO_SNES[0];
 	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)&TGDSUSERIPC->PORT_SNES_TO_SPC[0]; 
 	ADDR_APU_PROGRAM_COUNTER=	(uint32)(volatile uint32*)&TGDSUSERIPC->APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC

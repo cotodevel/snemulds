@@ -39,7 +39,7 @@ USA
 #include "guiTGDS.h"
 #include "opcodes.h"
 #include "common.h"
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 
 sint8*  SNEMULDS_TITLE[] = {
 	"-= SNEmulDS",

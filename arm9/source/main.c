@@ -40,7 +40,7 @@
 //wnifilib: multiplayer
 #include "dswnifi_lib.h"
 #include "dswnifi.h"
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 
 //#define USE_EMUL
 

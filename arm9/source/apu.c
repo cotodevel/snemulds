@@ -18,7 +18,7 @@ GNU General Public License for more details.
 #include <string.h>
 #include "cfg.h"
 #include "apu.h"
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
 #include "typedefsTGDS.h"

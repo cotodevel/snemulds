@@ -47,7 +47,7 @@ GNU General Public License for more details.
 #include <malloc.h>
 #include <ctype.h>
 #include "common.h"
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"

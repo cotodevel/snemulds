@@ -49,7 +49,7 @@ GNU General Public License for more details.
 #include "guiTGDS.h"
 #include "opcodes.h"
 //#include "common.h"
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 #include "nds_cp15_misc.h"
 #include "fsfatlayerTGDS.h"
 #include "about.h"

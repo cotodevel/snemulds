@@ -6,7 +6,7 @@
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 
 #endif
 

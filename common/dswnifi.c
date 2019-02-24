@@ -19,7 +19,7 @@ USA
 */
 
 //DSWNIFI Library revision: 1.2
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 #include "wifi_shared.h"
 #include "clockTGDS.h"
 #include "ipcfifoTGDS.h"

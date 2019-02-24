@@ -19,7 +19,7 @@ GNU General Public License for more details.
 #include "dsregs.h"
 #include "InterruptsARMCores_h.h"
 #include "interrupts.h"
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 
 
 #include "timerTGDS.h"

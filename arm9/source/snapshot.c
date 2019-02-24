@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 #include "memoryHandleTGDS.h"
 
 #include "common.h"

@@ -25,7 +25,7 @@ GNU General Public License for more details.
 #include "cfg.h"
 //#include "superfx.h"
 #include "opcodes.h"
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 
 #define bzero(p, s)	memset(p, 0, s)
 

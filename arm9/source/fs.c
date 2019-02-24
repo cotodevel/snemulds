@@ -21,7 +21,7 @@ GNU General Public License for more details.
 #include <ctype.h>
 #include <stdlib.h>
 
-#include "specific_shared.h"
+#include "ipcfifoTGDSUser.h"
 #include "devoptab_devices.h"
 #include "posixHandleTGDS.h"
 #include "utilsTGDS.h"
@@ -45,7 +45,6 @@ GNU General Public License for more details.
 #include "main.h"
 #include "ppu.h"
 #include "InterruptsARMCores_h.h"
-#include "specific_shared.h"
 #include "ff.h"
 #include "memoryHandleTGDS.h"
 #include "reent.h"
