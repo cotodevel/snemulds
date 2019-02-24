@@ -12,6 +12,8 @@
 #include "main.h"
 #include "ppu.h"
 #include "keypadTGDS.h"
+#include "dswnifi_lib.h"
+#include "dswnifi.h"
 
 //User Handler Definitions
 #ifdef ARM9

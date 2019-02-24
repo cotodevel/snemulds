@@ -20,7 +20,8 @@ GNU General Public License for more details.
 #include <time.h>
 #include <string.h>
 #include "opcodes.h"
-//#include "snemul.h"
+#include "dswnifi.h"
+#include "dswnifi_lib.h"
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
@@ -1789,28 +1790,55 @@ void read_scope()
     }
 }
 
-void	update_joypads()
-{
-//  read_joypads();	
-  int joypad = get_joypad();
-//      read_joypads();
-  SNES.joypads[0] = joypad;
-  SNES.joypads[0] |= 0x80000000;
-  if (CFG.mouse)
-    read_mouse();
-  if (CFG.scope)
-  	read_scope();
+void	update_joypads(){
 
-  if (DMA_PORT[0x00]&1)
-    {
-  	  SNES.Joy1_cnt = 16;    	
-      DMA_PORT[0x18] = SNES.joypads[0];
-      DMA_PORT[0x19] = SNES.joypads[0]>>8;
-      DMA_PORT[0x1A] = SNES.joypads[1];
-      DMA_PORT[0x1B] = SNES.joypads[1]>>8;
-    }
+	switch(getMULTIMode()){
+		case(dswifi_idlemode):{
+			//  read_joypads();	
+			int joypad = get_joypad();
+			//      read_joypads();
+			SNES.joypads[0] = joypad;
+			SNES.joypads[0] |= 0x80000000;
+			if (CFG.mouse)
+				read_mouse();
+			if (CFG.scope)
+				read_scope();
+
+			if (DMA_PORT[0x00]&1){
+				SNES.Joy1_cnt = 16;    	
+				DMA_PORT[0x18] = SNES.joypads[0];
+				DMA_PORT[0x19] = SNES.joypads[0]>>8;
+				DMA_PORT[0x1A] = SNES.joypads[1];
+				DMA_PORT[0x1B] = SNES.joypads[1]>>8;
+			}
+		}
+		break;
+		
+		case(dswifi_localnifimode):{
+			//guest update from remote host, host joypad
+			if(nifiHost == false){
+				SNES.joypads[0] = plykeys1;
+				SNES.joypads[0] |= 0x80000000;
+				
+				//todo: p2
+				if (DMA_PORT[0x00]&1){
+					SNES.Joy1_cnt = 16;    	
+					DMA_PORT[0x18] = SNES.joypads[0];
+					DMA_PORT[0x19] = SNES.joypads[0]>>8;
+					DMA_PORT[0x1A] = SNES.joypads[1];
+					DMA_PORT[0x1B] = SNES.joypads[1]>>8;
+				}
+			}
+			//host update from remote guest, guest joypad
+			else{
+				SNES.joypads[1] = plykeys2;
+				SNES.joypads[1] |= 0x80000000;
+			}
+			
+		}
+		break;
+	}
 }
-
 void SNES_update()
 { 
   int value;

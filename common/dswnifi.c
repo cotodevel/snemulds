@@ -82,6 +82,7 @@ int guest_vcount = 0;		//guest generated REG_VCOUNT
 int host_framecount = 0;
 int guest_framecount = 0;
 
+
 //These methods are template you must override (as defined below), to have an easy DS - DS framework running.
 
 //Example Sender Code
@@ -142,27 +143,69 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 						//[host -> guest sent frame]
 						if((thissnemulDSNIFIUserMsgReceiver->host == true) && (nifiHost == false)){
 							//GUEST:RECV from HOST: plykeys2 is this DS, plykeys1 is ext DS
-							//joypad1 ready state? start reading from 15th bit backwards.
-							if (thissnemulDSNIFIUserMsgReceiver->DMA_PORT_EXT > 0)
-							{
+							host_vcount = thissnemulDSNIFIUserMsgReceiver->DS_VCOUNT;
+							
+							//port bits ready? feed input
+							if(thissnemulDSNIFIUserMsgReceiver->DMA_PORT_EXT > 0){
 								plykeys1 = thissnemulDSNIFIUserMsgReceiver->keys;
 								SNES.Joy1_cnt = 16;	//ok send acknowledge bit
-								write_joypad1((plykeys1&0xffff)); //only use actual joypad bits
+								//write_joypad1((plykeys1&0xffff)); //only use actual joypad bits
+							}
+							else{
+								SNES.Joy1_cnt = 0;
 							}
 							
-							//SNES.V_Count = thissnemulDSNIFIUserMsgReceiver->SNES_VCOUNT;
+							if((u8)(DMA_PORT[0x00]&1) > 0){			
+								plykeys2 = get_joypad() | 0x80000000;	//bit15 (second half word) is for ready bit, required by emu		
+								//joypad2 ready state? start reading from 15th bit backwards.
+								SNES.Joy2_cnt = 16;	//ok send acknowledge bit
+								//write_joypad2((plykeys2&0xffff)); //only use actual joypad bits
+							}
+							
 						}
+						
 						//[guest -> host sent frame]
 						else if((thissnemulDSNIFIUserMsgReceiver->host == false) && (nifiHost == true)){
 							//HOST:RECV from GUEST: plykeys1 is this DS, plykeys2 is ext DS
-							//joypad1 ready state? start reading from 15th bit backwards.
-							if (thissnemulDSNIFIUserMsgReceiver->DMA_PORT_EXT > 0)
-							{
+							guest_vcount = thissnemulDSNIFIUserMsgReceiver->DS_VCOUNT;
+							
+							if(thissnemulDSNIFIUserMsgReceiver->DMA_PORT_EXT > 0){
 								plykeys2 = thissnemulDSNIFIUserMsgReceiver->keys;
 								SNES.Joy2_cnt = 16;	//ok send acknowledge bit
 								write_joypad2((plykeys2&0xffff)); //only use actual joypad bits
 							}
+							else{
+								SNES.Joy2_cnt = 0;
+							}
+							
+							if((u8)(DMA_PORT[0x00]&1) > 0){
+								plykeys1 = get_joypad() | 0x80000000;	//bit15 (second half word) is for ready bit, required by emu		
+								//joypad1 ready state? start reading from 15th bit backwards.
+								SNES.Joy1_cnt = 16;	//ok send acknowledge bit
+								write_joypad1((plykeys1&0xffff)); //only use actual joypad bits
+							}	
 						}
+						
+						switch(getMULTIMode()){
+							case(dswifi_idlemode):{
+								
+							}
+							break;
+							case(dswifi_localnifimode):{
+								//DS HW Sync
+								int DSScanline = (REG_VCOUNT&0x1ff);
+								if(DSScanline >= 202 && DSScanline < 213){
+									if(nifiHost == true){
+										REG_VCOUNT= guest_vcount;	//wait for guest
+									}
+									else{
+										//REG_VCOUNT = host_vcount;
+									}
+								}
+							}
+							break;
+						}
+						
 					}
 				}
 			}
@@ -228,27 +271,11 @@ bool donifi(int DS_VCOUNTER){
 		
 		//host logic: plykeys1 is this DS, plykeys2 is ext DS
 		if(nifiHost == true){
-			plykeys1 = get_joypad() | 0x80000000;	//bit15 (second half word) is for ready bit, required by emu		
-			//joypad1 ready state? start reading from 15th bit backwards.
-			u8 p1active = (DMA_PORT[0x00]&1);
-			if (p1active > 0)
-			{
-				SNES.Joy1_cnt = 16;	//ok send acknowledge bit
-				write_joypad1((plykeys1&0xffff)); //only use actual joypad bits
-			}
-			SendRawEmuFrame(plykeys1, DS_VCOUNTER, nifiHost, SNES.V_Count, NIFI_FRAME_EXT, p1active, *getTime());
+			SendRawEmuFrame(plykeys1, DS_VCOUNTER, nifiHost, SNES.V_Count, NIFI_FRAME_EXT, (u8)(DMA_PORT[0x00]&1), *getTime());
 		}
 		//guest logic: plykeys2 is this DS, plykeys1 is ext DS
 		else{
-			plykeys2 = get_joypad() | 0x80000000;	//bit15 (second half word) is for ready bit, required by emu		
-			//joypad2 ready state? start reading from 15th bit backwards.
-			u8 p2active = (DMA_PORT[0x00]&1);
-			if (p2active > 0)
-			{
-				SNES.Joy2_cnt = 16;	//ok send acknowledge bit
-				write_joypad2((plykeys2&0xffff)); //only use actual joypad bits
-			}
-			SendRawEmuFrame(plykeys2, DS_VCOUNTER, nifiHost, SNES.V_Count, NIFI_FRAME_EXT, p2active, *getTime());
+			SendRawEmuFrame(plykeys2, DS_VCOUNTER, nifiHost, SNES.V_Count, NIFI_FRAME_EXT, (u8)(DMA_PORT[0x00]&1), *getTime());
 		}
 		return true;
 	}

@@ -271,6 +271,8 @@ int go()
  
  	/* HBLANK Starts here */
 	SNES.V_Count++;
+	
+	
 	if (SNES.V_Count > (SNES.NTSC ? 261 : 311))
 	{
 		//new
