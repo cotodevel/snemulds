@@ -78,7 +78,6 @@ extern int guest_vcount;		//guest generated REG_VCOUNT
 //				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	//make room for crc16 frame
 //}
 
-extern struct snemulDSNIFIUserMsg forgeNIFIMsg(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,u8 DMA_PORT_EXTInst, struct tm DSEXTTime);
 extern bool SendRawEmuFrame(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,u8 DMA_PORT_EXTInst, struct tm DSEXTTime);
 extern bool donifi(int DS_VCOUNTER);
 

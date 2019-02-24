@@ -172,7 +172,7 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 							if(thissnemulDSNIFIUserMsgReceiver->DMA_PORT_EXT > 0){
 								plykeys2 = thissnemulDSNIFIUserMsgReceiver->keys;
 								SNES.Joy2_cnt = 16;	//ok send acknowledge bit
-								write_joypad2((plykeys2&0xffff)); //only use actual joypad bits
+								//write_joypad2((plykeys2&0xffff)); //only use actual joypad bits
 							}
 							else{
 								SNES.Joy2_cnt = 0;
@@ -196,10 +196,10 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 								int DSScanline = (REG_VCOUNT&0x1ff);
 								if(DSScanline >= 202 && DSScanline < 213){
 									if(nifiHost == true){
-										REG_VCOUNT= guest_vcount;	//wait for guest
+										//REG_VCOUNT= guest_vcount;	//wait for guest
 									}
 									else{
-										//REG_VCOUNT = host_vcount;
+										REG_VCOUNT = host_vcount;	//sync to host
 									}
 								}
 							}
@@ -233,23 +233,16 @@ __attribute__((section(".dtcm")))
 bool nifiSetup = false; //true = yes, false = no
 
 __attribute__((section(".itcm")))
-struct snemulDSNIFIUserMsg forgeNIFIMsg(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,u8 DMA_PORT_EXTInst, struct tm DSEXTTime){
-	struct snemulDSNIFIUserMsg thissnemulDSNIFIUserMsgSender;
-	thissnemulDSNIFIUserMsgSender.keys = keys;
-	thissnemulDSNIFIUserMsgSender.DS_VCOUNT = DS_VCOUNT;
-	thissnemulDSNIFIUserMsgSender.host = host;
-	thissnemulDSNIFIUserMsgSender.SNES_VCOUNT = SNES_VCOUNT;
-	thissnemulDSNIFIUserMsgSender.cmdIssued = cmdIssued;
-	thissnemulDSNIFIUserMsgSender.DMA_PORT_EXT = DMA_PORT_EXTInst;
-	thissnemulDSNIFIUserMsgSender.DSEXTTime = DSEXTTime;
-	return thissnemulDSNIFIUserMsgSender;
-}
-
-
-__attribute__((section(".itcm")))
 bool SendRawEmuFrame(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued, u8 DMA_PORT_EXTInst, struct tm DSEXTTime){
 	if (getMULTIMode() == dswifi_localnifimode){
-		struct snemulDSNIFIUserMsg snemulDSNIFIUserMsgInst = forgeNIFIMsg(keys, DS_VCOUNT, host, SNES_VCOUNT, cmdIssued, DMA_PORT_EXTInst, DSEXTTime);
+		struct snemulDSNIFIUserMsg snemulDSNIFIUserMsgInst;
+		snemulDSNIFIUserMsgInst.keys = keys;
+		snemulDSNIFIUserMsgInst.DS_VCOUNT = DS_VCOUNT;
+		snemulDSNIFIUserMsgInst.host = host;
+		snemulDSNIFIUserMsgInst.SNES_VCOUNT = SNES_VCOUNT;
+		snemulDSNIFIUserMsgInst.cmdIssued = cmdIssued;
+		snemulDSNIFIUserMsgInst.DMA_PORT_EXT = DMA_PORT_EXTInst;
+		snemulDSNIFIUserMsgInst.DSEXTTime = DSEXTTime;
 		int curFrameSize = sizeof(struct snemulDSNIFIUserMsg);
 		if(curFrameSize <= frameDSsize){	//use frameDSsize (or less) as the sender buffer size, any other size won't be sent.
 			FrameSenderUser = HandleSendUserspace((uint8*)&snemulDSNIFIUserMsgInst, curFrameSize);
@@ -288,7 +281,19 @@ void OnDSWIFIlocalnifiEnable(){
 }
 
 void OnDSWIFIidlemodeEnable(){
-
+	nifiHost = false;
+	nifiSetup = false;
+	guest_vcount = 0;
+	host_vcount = 0;
+	
+	
+	SNES.Joy1_cnt = 0;
+	SNES.Joy2_cnt = 0;
+	
+	plykeys1 = 0;
+	plykeys2 = 0;
+	
+	SNES.V_Count = 0;
 }
 
 void OnDSWIFIudpnifiEnable(){
