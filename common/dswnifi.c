@@ -206,7 +206,10 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 							break;
 						}
 						
+						
+						guestSNESFrameCount = thissnemulDSNIFIUserMsgReceiver->ExtSnesFrameCount;
 					}
+					break;
 				}
 			}
 			return true;
@@ -233,13 +236,13 @@ __attribute__((section(".dtcm")))
 bool nifiSetup = false; //true = yes, false = no
 
 __attribute__((section(".itcm")))
-bool SendRawEmuFrame(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued, u8 DMA_PORT_EXTInst, struct tm DSEXTTime){
+bool SendRawEmuFrame(int keys, int DS_VCOUNT, bool host, int ExtSnesFrameCount, uint32 cmdIssued, u8 DMA_PORT_EXTInst, struct tm DSEXTTime){
 	if (getMULTIMode() == dswifi_localnifimode){
 		struct snemulDSNIFIUserMsg snemulDSNIFIUserMsgInst;
 		snemulDSNIFIUserMsgInst.keys = keys;
 		snemulDSNIFIUserMsgInst.DS_VCOUNT = DS_VCOUNT;
 		snemulDSNIFIUserMsgInst.host = host;
-		snemulDSNIFIUserMsgInst.SNES_VCOUNT = SNES_VCOUNT;
+		snemulDSNIFIUserMsgInst.ExtSnesFrameCount = ExtSnesFrameCount;
 		snemulDSNIFIUserMsgInst.cmdIssued = cmdIssued;
 		snemulDSNIFIUserMsgInst.DMA_PORT_EXT = DMA_PORT_EXTInst;
 		snemulDSNIFIUserMsgInst.DSEXTTime = DSEXTTime;
@@ -264,11 +267,11 @@ bool donifi(int DS_VCOUNTER){
 		
 		//host logic: plykeys1 is this DS, plykeys2 is ext DS
 		if(nifiHost == true){
-			SendRawEmuFrame(plykeys1, DS_VCOUNTER, nifiHost, SNES.V_Count, NIFI_FRAME_EXT, (u8)(DMA_PORT[0x00]&1), *getTime());
+			SendRawEmuFrame(plykeys1, DS_VCOUNTER, nifiHost, ThisSNESFrameCount, NIFI_FRAME_EXT, (u8)(DMA_PORT[0x00]&1), *getTime());
 		}
 		//guest logic: plykeys2 is this DS, plykeys1 is ext DS
 		else{
-			SendRawEmuFrame(plykeys2, DS_VCOUNTER, nifiHost, SNES.V_Count, NIFI_FRAME_EXT, (u8)(DMA_PORT[0x00]&1), *getTime());
+			SendRawEmuFrame(plykeys2, DS_VCOUNTER, nifiHost, ThisSNESFrameCount, NIFI_FRAME_EXT, (u8)(DMA_PORT[0x00]&1), *getTime());
 		}
 		return true;
 	}

@@ -28,6 +28,9 @@ GNU General Public License for more details.
 extern "C" {
 #endif
 
+extern int ThisSNESFrameCount;
+extern int guestSNESFrameCount;
+
 extern void writeSRAM(int offset, uint8* src, int size);
 extern void readSRAM(int offset, uint8* dest, int size);
 extern int loadSRAM();

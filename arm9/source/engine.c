@@ -60,6 +60,13 @@ GNU General Public License for more details.
 //struct s_snes SNES;
 //struct s_cfg CFG;
 
+
+__attribute__((section(".dtcm")))
+int ThisSNESFrameCount = 0;
+
+__attribute__((section(".dtcm")))
+int guestSNESFrameCount = 0;
+
 void writeSRAM(int offset, uint8* src, int size) {
         WAIT_CR &= ~0x0880;
         uint8* dest = DS_SRAM+offset;
@@ -214,16 +221,7 @@ int go()
 	if ((CPU.IsBreak == true) || (SNES.Stopped == true)){
 		return 0;
 	}
-	//new
-	//if localplay && guest and ended up rendering a whole frame (full vcount lines), means we wait for host response to our "acknowledge"
-	/*
-	if((getMULTIMode() == dswifi_localnifimode) && (nifiSetup == true)){
-		if( (nifiHost == false) && (nifiVblankEndWait == true)){
-			return 0;
-		}
-	}
-	*/
-
+	
   while (1)
   {	
 	if (GFX.v_blank)
@@ -270,6 +268,16 @@ int go()
     SNES.UsedCycles = 0;
  
  	/* HBLANK Starts here */
+	//if localplay && guest and ended up rendering a whole frame (full vcount lines), means we wait for host response to our "acknowledge"
+	if(getMULTIMode() == dswifi_localnifimode){
+		if(nifiHost == true){
+			if(ThisSNESFrameCount != guestSNESFrameCount){
+				ThisSNESFrameCount = guestSNESFrameCount;
+				return 0;
+			}
+		}
+	}
+	
 	SNES.V_Count++;
 	
 	
@@ -301,6 +309,12 @@ int go()
 			break;
 		}
 		*/
+		if(ThisSNESFrameCount > 59){
+			ThisSNESFrameCount = 0;
+		}
+		else{
+			ThisSNESFrameCount++;
+		}
 		
 		SNES.V_Count = 0;
 	}

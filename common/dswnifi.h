@@ -30,7 +30,7 @@ struct snemulDSNIFIUserMsg{
 	int Joy_cnt;	//Joy1_cnt / Joy2_cnt
 	int DS_VCOUNT;	//REG_VCOUNT
 	bool host;	//if host == true, snes vcount syncline is from host (if guest). If host then snes vcount syncline generates here
-	int SNES_VCOUNT;
+	int ExtSnesFrameCount;
 	uint32 cmdIssued;
 	u8 DMA_PORT_EXT; 
 	struct tm DSEXTTime;
@@ -78,7 +78,7 @@ extern int guest_vcount;		//guest generated REG_VCOUNT
 //				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	//make room for crc16 frame
 //}
 
-extern bool SendRawEmuFrame(int keys, int DS_VCOUNT, bool host, int SNES_VCOUNT, uint32 cmdIssued,u8 DMA_PORT_EXTInst, struct tm DSEXTTime);
+extern bool SendRawEmuFrame(int keys, int DS_VCOUNT, bool host, int ExtSnesFrameCount, uint32 cmdIssued,u8 DMA_PORT_EXTInst, struct tm DSEXTTime);
 extern bool donifi(int DS_VCOUNTER);
 
 #ifdef __cplusplus
