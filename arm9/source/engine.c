@@ -267,55 +267,29 @@ int go()
 
     SNES.UsedCycles = 0;
  
- 	/* HBLANK Starts here */
-	//if localplay && guest and ended up rendering a whole frame (full vcount lines), means we wait for host response to our "acknowledge"
+	//Sync emulator frame count in host/guest if frame desync happens
 	if(getMULTIMode() == dswifi_localnifimode){
-		if(nifiHost == true){
-			if(ThisSNESFrameCount != guestSNESFrameCount){
+		if(ThisSNESFrameCount != guestSNESFrameCount){
+			//lowest frame takes precedence
+			if(ThisSNESFrameCount > guestSNESFrameCount){
 				ThisSNESFrameCount = guestSNESFrameCount;
-				return 0;
 			}
+			SNES.V_Count = 0;
+			return 0;
 		}
 	}
 	
+	//HBLANK Starts here
 	SNES.V_Count++;
-	
 	
 	if (SNES.V_Count > (SNES.NTSC ? 261 : 311))
 	{
-		//new
-		/*
-		switch(getMULTIMode()){
-			case(dswifi_localnifimode):{
-				if(nifiSetup == true){
-					//play/update code
-					//host logic
-					if(nifiHost == true){
-						//host should send a "render next frame" to guest here along the current V_Count
-					}
-					//guest logic
-					else{
-						//guest should toggle the nifiVblankEndWait to true here, so it waits until the host tells to run next frame
-						nifiVblankEndWait = true;
-					}
-				}
-				else{
-				}
-			}
-			break;
-			case(dswifi_idlemode):{
-				SNES.V_Count = 0;
-			}
-			break;
-		}
-		*/
 		if(ThisSNESFrameCount > 59){
 			ThisSNESFrameCount = 0;
 		}
 		else{
 			ThisSNESFrameCount++;
-		}
-		
+		}	
 		SNES.V_Count = 0;
 	}
 #if 0

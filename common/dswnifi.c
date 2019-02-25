@@ -195,11 +195,13 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 								//DS HW Sync
 								int DSScanline = (REG_VCOUNT&0x1ff);
 								if(DSScanline >= 202 && DSScanline < 213){
-									if(nifiHost == true){
-										//REG_VCOUNT= guest_vcount;	//wait for guest
+									//delay between synced screens
+									if(nifiHost == false){
+										REG_VCOUNT = host_vcount;
 									}
 									else{
-										REG_VCOUNT = host_vcount;	//sync to host
+										SNES.V_Count = REG_VCOUNT - 1;
+										IRQVBlankWait(1,IRQ_HBLANK);
 									}
 								}
 							}
