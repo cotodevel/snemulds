@@ -22,3 +22,15 @@ The .ZIP routine is slow because I use a page buffer to decompress a portion of 
 it will be slow. Be patient.
 
 Coto.
+
+--
+
+notes 02/24/2019:
+
+dswnifi: will disconnect after a while but it actually works. There are some games that read the first bit in the DMA port for joypad access, and the joypad bits are subsequently built,
+thus, games like donkey kong country 1 might not work correctly in local nifi.
+
+Only tested P1 on both DS
+
+I already added code that detects wether host/guest are in the same frame count (as N SNES scanlines will increase one snes frame), also added code where the GUEST NDS PPU syncs from HOST NDS PPU
+VCOUNT line (or scanline). There is still joypad input lag thus, I have to build a good joypad input predictor. (sort of what NesDS does already in NIFI).
