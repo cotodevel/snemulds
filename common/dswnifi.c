@@ -194,14 +194,13 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 							case(dswifi_localnifimode):{
 								//DS HW Sync
 								int DSScanline = (REG_VCOUNT&0x1ff);
-								if(DSScanline >= 202 && DSScanline < 213){
+								if(DSScanline >= 202 && DSScanline < 211){
 									//delay between synced screens
 									if(nifiHost == false){
-										REG_VCOUNT = host_vcount;
+										SNES.V_Count = REG_VCOUNT = host_vcount;
 									}
 									else{
-										SNES.V_Count = REG_VCOUNT - 1;
-										IRQVBlankWait(1,IRQ_HBLANK);
+										SNES.V_Count = DSScanline;
 									}
 								}
 							}

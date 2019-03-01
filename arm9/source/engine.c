@@ -266,7 +266,10 @@ int go()
     CPU.HCycles = NB_CYCLES;
 
     SNES.UsedCycles = 0;
- 
+	
+	//HBLANK Starts here
+	SNES.V_Count++;
+	
 	//Sync emulator frame count in host/guest if frame desync happens
 	if(getMULTIMode() == dswifi_localnifimode){
 		if(ThisSNESFrameCount != guestSNESFrameCount){
@@ -274,17 +277,14 @@ int go()
 			if(ThisSNESFrameCount > guestSNESFrameCount){
 				ThisSNESFrameCount = guestSNESFrameCount;
 			}
-			SNES.V_Count = 0;
 			return 0;
 		}
 	}
 	
-	//HBLANK Starts here
-	SNES.V_Count++;
-	
 	if (SNES.V_Count > (SNES.NTSC ? 261 : 311))
 	{
 		if(ThisSNESFrameCount > 59){
+			IRQWait(1,IRQ_VBLANK);
 			ThisSNESFrameCount = 0;
 		}
 		else{
