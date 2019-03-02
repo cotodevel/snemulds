@@ -221,6 +221,11 @@ int go()
 	if ((CPU.IsBreak == true) || (SNES.Stopped == true)){
 		return 0;
 	}
+	else if(waitforhblank == true){
+		IRQWait(1,IRQ_HBLANK);
+		waitforhblank = false;
+		return 0;
+	}
 	
   while (1)
   {	
@@ -281,10 +286,8 @@ int go()
 		}
 	}
 	
-	if (SNES.V_Count > (SNES.NTSC ? 261 : 311))
-	{
+	if (SNES.V_Count > (SNES.NTSC ? 261 : 311)){
 		if(ThisSNESFrameCount > 59){
-			IRQWait(1,IRQ_VBLANK);
 			ThisSNESFrameCount = 0;
 		}
 		else{

@@ -81,6 +81,7 @@ extern int guest_vcount;		//guest generated REG_VCOUNT
 extern bool SendRawEmuFrame(int keys, int DS_VCOUNT, bool host, int ExtSnesFrameCount, uint32 cmdIssued,u8 DMA_PORT_EXTInst, struct tm DSEXTTime);
 extern bool donifi(int DS_VCOUNTER);
 
+extern bool waitforhblank;
 #ifdef __cplusplus
 }
 #endif

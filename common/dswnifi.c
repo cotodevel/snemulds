@@ -93,6 +93,9 @@ int guest_framecount = 0;
 //				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	//make room for crc16 frame
 //}
 
+__attribute__((section(".dtcm")))
+bool waitforhblank = false;
+
 //Example Receiver Code
 __attribute__((section(".itcm")))
 void HandleRecvUserspace(struct frameBlock * frameBlockRecv){
@@ -186,29 +189,23 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 							}	
 						}
 						
-						switch(getMULTIMode()){
-							case(dswifi_idlemode):{
+						guestSNESFrameCount = thissnemulDSNIFIUserMsgReceiver->ExtSnesFrameCount;
+						
+						
+						//DS HW Sync
+						int DSScanline = (REG_VCOUNT&0x1ff);
+						if(DSScanline >= 202 && DSScanline < 211){
+							//delay between synced screens
+							if(nifiHost == false){
+								SNES.V_Count = REG_VCOUNT = host_vcount;
 								
 							}
-							break;
-							case(dswifi_localnifimode):{
-								//DS HW Sync
-								int DSScanline = (REG_VCOUNT&0x1ff);
-								if(DSScanline >= 202 && DSScanline < 211){
-									//delay between synced screens
-									if(nifiHost == false){
-										SNES.V_Count = REG_VCOUNT = host_vcount;
-									}
-									else{
-										SNES.V_Count = DSScanline;
-									}
-								}
+							else{
+								SNES.V_Count = REG_VCOUNT = (DSScanline - 2);
 							}
-							break;
+							
+							waitforhblank = true;	//force sync
 						}
-						
-						
-						guestSNESFrameCount = thissnemulDSNIFIUserMsgReceiver->ExtSnesFrameCount;
 					}
 					break;
 				}
