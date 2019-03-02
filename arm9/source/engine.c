@@ -222,7 +222,7 @@ int go()
 		return 0;
 	}
 	else if(waitforhblank == true){
-		IRQWait(1,IRQ_HBLANK);
+		IRQWait(IRQ_HBLANK);
 		waitforhblank = false;
 		return 0;
 	}
