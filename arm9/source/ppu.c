@@ -32,7 +32,7 @@ GNU General Public License for more details.
 #include "cpu.h"
 #include "consoleTGDS.h"
 #include "dmaTGDS.h"
-
+#include "engine.h"
 
 extern int		screen_mode; // NDS MAIN screen mode
 
@@ -1778,33 +1778,33 @@ void PPU_RenderLineMode7(t_GFX_lineInfo *l)
 	l->CY = l->C*(-X0+HOffset)+l->D*(SNES.V_Count-Y0+VOffset)+(Y0<<8);
 }
 
-void renderMode7()
-{
-	static int Mode7FrameSkip = 0;
+__attribute__((section(".itcm")))
+void renderMode7(){
 
+	//skip 6 frames + last frame
+	if (
+		((ThisSNESFrameCount % 10) == 0)
+		||
+		(ThisSNESFrameCount == 59)
+	)
+		return;
+	
 	if (!(CFG.BG_Layer & 0x1))
 		return;
 		
-	// Update one frame on 4
-	// FIXME : find a better method to speed up MODE 7
-	if ((Mode7FrameSkip++ & 3) == 0)
-		return;
-
     // Copy map
 	uint16	*map_addr = (uint16*)BG_MAP_RAM(0);
 	uint8	*VRAM = SNESC.VRAM;
 	uint8	*VRAM1 = SNESC.VRAM+1;
 	int		i, j;
-	for (i = 0, j = 0; i < 128*128*2; i+=4, j++)
-	{
+	for (i = 0, j = 0; i < 128*128*2; i+=4, j++){
 		uint16	t;
 		t = VRAM[i]+(VRAM[i+2]<<8); 
 		map_addr[j] = t;
 	}
 	// Copy tile data
 	uint16	*tile_addr = (uint16*)BG_TILE_RAM(GFX.tile_slot[0]);
-	for (i = 0, j = 0; i < 128*128*2; i+=4, j++)
-	{
+	for (i = 0, j = 0; i < 128*128*2; i+=4, j++){
 		uint16	t;
 		t = VRAM1[i]+(VRAM1[i+2]<<8); 
 		tile_addr[j] = t;
@@ -1902,43 +1902,42 @@ void	update_scrollx(int bg)
 }
 #endif
 
-//extern char *logbuf;
+
+
 
 __attribute__((section(".itcm")))
 void	PPU_updateGFX(int line)
 {
 	t_GFX_lineInfo *l = &GFX.lineInfo[line];
 	
-	if (l->mode & 0xf8)
-	{
-	if (l->mode == -1)
-	{
-		// Blank line
-		DISPCNT |= DISPLAY_SCREEN_OFF;
-		return;
-	}	
-	if (l->mode & 0x10)
-	{
-		PPU_set_sprites_bank(0);
-		return;
-	}
-	if (l->mode & 0x20)
-	{
-		PPU_set_sprites_bank(1);
-		return;
-	}
-	if (l->mode & 0x40) // bi-linear filtering
-	{
-		l->lBG0_Y0 += GFX.DSFrame&1;
-		l->lBG1_Y0 += GFX.DSFrame&1;
-		l->lBG2_Y0 += GFX.DSFrame&1;
-		l->lBG3_Y0 += GFX.DSFrame&1;
-		l->mode &= 7;
-	}
-	}
+	switch(l->mode & 0xf8){
+		case(-1):{
+			// Blank line
+			DISPCNT |= DISPLAY_SCREEN_OFF;
+		}
+		break;
+		case(0x10):{
+			PPU_set_sprites_bank(0);
+			return;
+		}
+		break;
+		case(0x20):{
+			PPU_set_sprites_bank(1);
+			return;
+		}
+		break;
 		
-	if (l->mode == 7)
-	{	
+		case(0x40):{	// bi-linear filtering
+			l->lBG0_Y0 += GFX.DSFrame&1;
+			l->lBG1_Y0 += GFX.DSFrame&1;
+			l->lBG2_Y0 += GFX.DSFrame&1;
+			l->lBG3_Y0 += GFX.DSFrame&1;
+			l->mode &= 7;
+		}
+		break;
+	}
+	
+	if (l->mode == 7){	
 		asm("ldr  	r2, [%1, #12];"
 			"str  	r2, [%0, #12];"
 			"ldr	r2, [%1, #8];"
@@ -2269,8 +2268,9 @@ void draw_screen()
 		
     GFX.was_not_blanked = 0; 			
     GFX.Blank_Screen = 0;   
-    if (CFG.WaitVBlank/* && GFX.speed > 95*/) 
+    if (CFG.WaitVBlank/* && GFX.speed > 95*/) {
     	IRQVBlankWait();
+	}
 #if 1    	
     else
     {
