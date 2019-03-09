@@ -177,7 +177,7 @@ GNU General Public License for more details.
 .endm
 
 .macro TranslateAddressFromDPCache
-    ldr     r2, =DPCache
+    adr     r2, DPCache
     mov     r1, r0, lsr #13
     ldr     r2, [r2, r1, lsl #2]
     add     r0, r0, r2
@@ -190,10 +190,10 @@ GNU General Public License for more details.
 
     and     r0, SnesDBR, #0xff
     add     r1, SnesMemMap, r0, lsl #5		@ Source address
-    ldr     r2, =MapCache			@ Dest address
+    adr     r2, MapCache			@ Dest address
 
     sub     r3, r2, r0, lsl #5
-    ldr     r0, =MapCacheOffset     @ save the offset
+    adr     r0, MapCacheOffset     @ save the offset
     str     r3, [r0]
 
 	mov r3, #8						@ Copy 16 words
@@ -860,7 +860,7 @@ GNU General Public License for more details.
     bic     SnesPBR, SnesPBR, #0xFF 
     orr     SnesPBR, SnesPBR, r0, lsr #16       @ save PBR
     .ifeq   \fast-0
-        ldr     r1,=SnesPCOffset        
+        adr     r1,SnesPCOffset        
         str     r0,[r1]                             @ r0 = the actual SNES PC
     .else
         str     r0, SnesPCOffset                    @ r0 = the actual SNES PC
@@ -873,7 +873,7 @@ GNU General Public License for more details.
     Debug2
     
     .ifeq   \fast-0
-        ldr     r1,=SnesPCOffset                    @ r0 = the translated GBA PC, 
+        adr     r1,SnesPCOffset                    @ r0 = the translated GBA PC, 
         ldr     r2,[r1]                             @ r2 = actual SNES PC
     .else
         ldr     r2, SnesPCOffset
@@ -906,7 +906,7 @@ ADCD_m0:    @ r1 = 0000XXxx, SnesA = AAaa0000
     addne   r0, r0, #1                          @ r0 = r0 + 1 (if carry flag set)
     add     r0, r0, SnesA, lsr #8               @ r0 = 00AAaaxx
     bic     r0, r0, #0x00ff0000                 @ r0 = 0000aaxx
-    ldr     r2, =decimalAdd
+    adr     r2, decimalAdd
     add     r2, r2, r0, lsl #1  
     ldrh    r0, [r2]                            @ r0 = 00000??? (aa+xx)
 
@@ -915,7 +915,7 @@ ADCD_m0:    @ r1 = 0000XXxx, SnesA = AAaa0000
     add     r1, r1, r2, lsl #8
     and     r1, r1, #0x0000ff00                 @ r1 = 0000XX00
     add     r1, r1, SnesA, lsr #24              @ r1 = 0000XXAA
-    ldr     r2, =decimalAdd
+    adr     r2, decimalAdd
     add     r2, r2, r1, lsl #1
     ldrh    r1, [r2]                            @ r1 = 00000??? (XX+AA)
     add     r1, r0, r1, lsl #8
@@ -934,7 +934,7 @@ ADCD_m1:
     tsts    SnesCV, #SnesFlagC
     add     r1, r1, SnesA, lsr #16
     addne   r1, r1, #1                          @ r0 = r0 + 1 (if carry flag set)
-    ldr     r2, =decimalAdd
+    adr     r2, decimalAdd
     add     r2, r2, r1, lsl #1
     ldrh    r2, [r2]
     movs    SnesA, r2, lsl #24

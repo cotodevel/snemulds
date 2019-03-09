@@ -772,7 +772,7 @@ NOP_m0x0:   NOP_m0x1:   NOP_m1x0:   NOP_m1x1:   OpNOP   NA, 1, 2
 /* ------------------------- IO wrappers for SNEmulDS ----------------- */
 
 MemReloadPC:
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	stmia	r2,	{r3-r12,lr}			@Save Registers
 
 	bic		r1, r0, #0xFF000000 	@ real address
@@ -783,12 +783,12 @@ MemReloadPC:
 	ldmfd	sp!, {r1, r2}
 	add		r0, r0, r1 				@ get effective address
 	
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	ldmia	r2,	{r3-r12,lr}			@ Load Registers
 	bx		lr   
 
 MemReload2:
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	stmia	r2,	{r3-r12,lr}			@Save Registers
 
 	bic		r1, r0, #0xFF000000 	@ real address
@@ -798,7 +798,7 @@ MemReload2:
 	ldmfd	sp!, {r1, r2}
 	add		r0, r0, r1 				@ get effective address
 	
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	ldmia	r2,	{r3-r12,lr}			@ Load Registers
 	bx		lr
 
@@ -814,7 +814,7 @@ MemReload:
 	add		r0, r0, r1 		@ get effective address
 	mov		r1, r2	
 
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	ldmia	r2,	{r3-r12,lr}	@ Load Registers
 	
 	movs	r2, #0	@ clear ne flag, can we avoid this ?
@@ -822,7 +822,7 @@ MemReload:
 	
 
 IORead8:
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	stmia	r2,	{r3-r12,lr}	@Save Registers
 
 	bic		r1, r0,  #0xFF000000 @ real address
@@ -833,7 +833,7 @@ IORead8:
 
 	bl		IO_getbyte 				@ SNEmul entry point
 
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	ldmia	r2,	{r3-r12,lr}	@ Load Registers
 
 	mov		r1, r0	@result
@@ -841,7 +841,7 @@ IORead8:
 	bx		lr
 
 IOWrite8:
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	stmia	r2,	{r3-r12,lr}	@Save Registers
 
 /*	ldr		r2, =0x81002100
@@ -851,7 +851,7 @@ IOWrite8:
 	bic		r0, r0,  #0xFF000000 @ real address
 	blx		PPU_port_write	
 
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	ldmia	r2,	{r3-r12,lr}	@ Load Registers
 	bx		lr
 1:	*/
@@ -863,7 +863,7 @@ IOWrite8:
 	cmp		r0, #0x82000000 @ Is CPU/DMA I/O ?
 	bne		1f
 	
-	ldr		r3, =IOWrite_DMA
+	adr		r3, IOWrite_DMA
 	ldr		r3, [r3, r1]
 	blx		r3
 
@@ -872,7 +872,7 @@ IOWrite8:
 	cmp		r0, #0x81000000	@ Is PPU I/O ?
 	bne		1f
 	
-	ldr		r3, =IOWrite_PPU
+	adr		r3, IOWrite_PPU
 	sub		r0, r1, #0x2100	
 	mov		r1, r2
 	ldr		r3, [r3, r0, lsl #2]
@@ -887,14 +887,14 @@ IOWrite8:
 	
 	bl		IO_setbyte 				@ SNEmul entry point
 2:
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	ldmia	r2,	{r3-r12,lr}	@ Load Registers
 	movs	r2, #1 		@ set ne flag, can we avoid this ?
 	bx		lr
 
 
 IORead16:
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	stmia	r2,	{r3-r12,lr}	@Save Registers
 
 	bic		r1, r0,  #0xFF000000 @ real address
@@ -905,7 +905,7 @@ IORead16:
 
 	bl		IO_getword 				@ SNEmul entry point
 	
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	ldmia	r2,	{r3-r12,lr}	@ Load Registers
 
 	mov		r1, r0	@result
@@ -913,7 +913,7 @@ IORead16:
 	bx		lr
 
 IOWrite16:
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	stmia	r2,	{r3-r12,lr}	@Save Registers
 
 	mov		r2, r1
@@ -925,7 +925,7 @@ IOWrite16:
 
 	bl		IO_setword 				@ SNEmul entry point
 	
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	ldmia	r2,	{r3-r12,lr}	@ Load Registers
 	
 	movs	r2, #1 		@ set ne flag, can we avoid this ?
@@ -942,7 +942,7 @@ CPU_update:
 	stmfd	sp!, {r0-r12}
 
 	@ Need to load some SNES registers 
-	ldr		r1,	=SNEmulRegisters
+	adr		r1,	SNEmulRegisters
 	ldmia	r1,	{r3-r12}
 
 	and		r1, SnesMXDI, #0x000000FF
@@ -962,11 +962,11 @@ DPCacheLoop:
 
 	CacheMemoryMap	
 	    
-/*	ldr		r0, =TimeOutHandler
-	ldr		r1, =TimeOutHandlerAddress
+/*	adr		r0, TimeOutHandler
+	adr		r1, TimeOutHandlerAddress
 	str		r0, [r1]*/
     
-/*	ldr		r1,	=SNEmulRegisters
+/*	adr		r1,	SNEmulRegisters
 	stmia	r1,	{r3-r12}*/    
     
     ldmfd	sp!, {r0-r12}
@@ -978,7 +978,7 @@ CPU_goto2:
 
 	@ here put SNES regs in DS regs
 
-	ldr		r1,	=SNEmulRegisters
+	adr		r1,	SNEmulRegisters
 	ldmia	r1,	{r3-r12}
 
 	@ r0 : Number of cycles to execute
@@ -995,18 +995,18 @@ Fetch:
 @	bne		SkipDebug
 	bne		FastDebug
   
-  	ldr		r2, =SNEmulRegisters
+  	adr		r2, SNEmulRegisters
 	stmia	r2,	{r3-r12}			@Save Registers  
   	bl		trace_CPU
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	ldmia	r2,	{r3-r12}			@Load Registers
 	b		SkipDebug    
 
 FastDebug:
-  	ldr		r2, =SNEmulRegisters
+  	adr		r2, SNEmulRegisters
 	stmia	r2,	{r3-r12}			@Save Registers  
   	bl		trace_CPUFast
-	ldr		r2, =SNEmulRegisters
+	adr		r2, SNEmulRegisters
 	ldmia	r2,	{r3-r12}			@Load Registers    
 
 
@@ -1019,7 +1019,7 @@ SkipDebug:
 	
 EndOfCPULoop:
 
-	ldr		r0,	=SNEmulRegisters
+	adr		r0,	SNEmulRegisters
 	stmia	r0,	{r3-r12}
 				
 	ldmfd	sp!, {r1-r12,lr}
