@@ -40,21 +40,6 @@ USA
 
 #define bzero(p, s)	memset(p, 0, s)
 
-#ifdef ARM9
-// DS->Snes Memory
-#define DS_SRAM          ((uint8*)0x0A000000)
-
-#define MAP  ((uint8 **)(0x06898000))
-#define WMAP ((uint8 **)(0x0689A000))
-
-//Rom Page variables
-#define ROM_MAX_SIZE	(sint32)(2*1024*1024)
-#define ROM_STATIC_SIZE	(sint32)(64*1024)
-#define ROM_PAGING_SIZE	(sint32)(ROM_MAX_SIZE-ROM_STATIC_SIZE)
-#define PAGE_OFFSET		3	//page offset in SNES regs
-
-#endif
-
 //snes irqs
 #define IRQ_PENDING_FLAG    (1 << 11)
 
@@ -85,7 +70,6 @@ typedef void (*voidfuncptr)();
 //ReadWrite mapped table defs
 typedef void (*IOWriteFunc)(uint32 addr, uint32 byte);
 typedef uint32 (*IOReadFunc)(uint32 addr);
-
 
 //masked bits from a joypad port
 

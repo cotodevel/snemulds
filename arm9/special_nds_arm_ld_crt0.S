@@ -128,6 +128,10 @@ _start:
 	bl                  copy
 
 	/* set WRAM9 from vma to lma (must be before clearing up our relocated area) */
+	ldr                 r0,=___arm9sharedwram_vma_start
+	ldr                 r1,=___arm9sharedwram_vma_end__
+	bl clear
+	
 	ldr                 r1,=___arm9sharedwram_vma_start                /* point our source register to the start of the .arm9sharedwram section (VMA)*/
 	ldr                 r2,=_arm9sharedwram_start                 /* point our destination register to the ARM9 SHARED WRAM dedicated to our writable data (LMA)*/
 	ldr                 r3,=_arm9sharedwram_end                  /* point r3 after the last byte we will be writing (LMA)*/

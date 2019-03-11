@@ -123,25 +123,26 @@ struct s_snes
 };
 
 extern struct s_snes	SNES;
-
 //#define SNES	((struct s_snes *)(0x23E0000))
-
 extern uint16	PPU_PORT[0x90]; // 2100 -> 2183
 extern uint16	DMA_PORT[0x180]; // 4200 -> 437F
+
+// DS->Snes Memory
+#define DS_SRAM          ((uint8*)0x0A000000)
 
 #define EMPTYMEM		(ushort *)(0x23E0000)
 //#define PPU_PORT	((ushort *)(0x23E0000))
 //#define DMA_PORT	((ushort *)(0x23E4000))
 
 #define SNES_SRAM_ADDRESS ((uchar *)(0x23E6000))
-
 #define SNES_ROM_ADDRESS ((uchar *)(0x20C0000))
 
-#define ROM_MAX_SIZE	(3*1024*1024)
+//Rom Page variables
+#define ROM_MAX_SIZE	(sint32)(3*1024*1024)
 //#define ROM_STATIC_SIZE	(1*1024*1024)
 //#define ROM_PAGING_SIZE	(2*1024*1024)
-#define ROM_STATIC_SIZE	(64*1024)
-#define ROM_PAGING_SIZE	(ROM_MAX_SIZE-ROM_STATIC_SIZE)
+#define ROM_STATIC_SIZE	(sint32)(64*1024)
+#define ROM_PAGING_SIZE	(sint32)(ROM_MAX_SIZE-ROM_STATIC_SIZE)
 #define SNES_ROM_PAGING_ADDRESS (SNES_ROM_ADDRESS+ROM_STATIC_SIZE)
 
 void	pushb(uint8 value);

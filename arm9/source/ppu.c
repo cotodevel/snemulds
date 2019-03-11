@@ -1910,7 +1910,7 @@ void	PPU_updateGFX(int line)
 {
 	t_GFX_lineInfo *l = &GFX.lineInfo[line];
 	
-	switch(l->mode & 0xf8){
+	switch(l->mode & 0xff){
 		case(-1):{
 			// Blank line
 			DISPCNT |= DISPLAY_SCREEN_OFF;
@@ -1935,10 +1935,9 @@ void	PPU_updateGFX(int line)
 			l->mode &= 7;
 		}
 		break;
-	}
-	
-	if (l->mode == 7){	
-		asm("ldr  	r2, [%1, #12];"
+		
+		case(7):{
+			asm("ldr  	r2, [%1, #12];"
 			"str  	r2, [%0, #12];"
 			"ldr	r2, [%1, #8];"
 			"str 	r2, [%0, #8];"
@@ -1947,18 +1946,20 @@ void	PPU_updateGFX(int line)
 			"ldr	r2, [%1, #0];"
 			"str 	r2, [%0, #0]" : :
 			"r"(0x04000030), "r"(&l->A) : "r2");	
-/*	   	BG3_XDX = l->A; 
-	   	BG3_XDY = l->B;
-	  	BG3_YDX = l->C; 
-	  	BG3_YDY = l->D;
-		BG3_CX = l->CX;
-		BG3_CY = l->CY;*/
+			/*BG3_XDX = l->A; 
+			BG3_XDY = l->B;
+			BG3_YDX = l->C; 
+			BG3_YDY = l->D;
+			BG3_CX = l->CX;
+			BG3_CY = l->CY;*/
 		
-		DISPCNT = l->lDISPLAY_CR;
-		REG_BG3CNT = l->lBG3_CR;		
-		return;		
+			DISPCNT = l->lDISPLAY_CR;
+			REG_BG3CNT = l->lBG3_CR;		
+			return;
+		}
+		break;
 	}
-
+	
 	DISPCNT = l->lDISPLAY_CR;
 	BG_PALETTE[0] = l->lBACK_color;
 	
@@ -1994,8 +1995,6 @@ void	PPU_updateGFX(int line)
 
 	// BLEND
 	(*(vuint32*)0x04000050) = l->lBLEND; 
-		
-
 	
 //	BRIGHTNESS = l->lBRIGHTNESS;
 }

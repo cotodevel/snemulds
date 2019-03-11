@@ -493,10 +493,12 @@ int main(int argc, char ** argv){
 	initSNESEmpty();
 
 	// Clear "HDMA"
-	int i;
-	for (i = 0; i < 192; i++)
+	int i = 0;
+	for (i = 0; i < 192; i++){
 		GFX.lineInfo[i].mode = -1;
-
+		t_GFX_lineInfo *l = &GFX.lineInfo[i];
+		memset((u8*)l, 0, sizeof(GFX.lineInfo));
+	}
 #if 0
 	{	char *p = malloc(10);
 		printf("RAM = %p last malloc = %p", SNESC.RAM, p);

@@ -296,7 +296,7 @@ void InitHiROMMap(int mode)
 
 /*#define	PAGE_SIZE		8192
  #define PAGE_OFFSET		0*/
-#define	PAGE_SIZE		65536
+#define	PAGE_SIZE		ROM_STATIC_SIZE
 #define PAGE_OFFSET		3
 
 uchar *ROM_paging= NULL;
