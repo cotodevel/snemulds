@@ -38,7 +38,7 @@ d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_
 #ARM9 specific definitions.	-fno-common so we force initialized data to rodata
 MAPFILE = $(DIR_ARM9).map
 AS_ASFLAGS		=	-march=armv5te	-mthumb-interwork	-defsym	ARM9='1'	-defsym	appver='$(EXECUTABLE_VERSION)'		-defsym	readvertoolchain='$(TOOLCHAIN_GENERIC_DS_VER)'	-defsym		NDS='1'	-defsym debug=0
-CC_ASFLAGS		=	-g	-marm	-O2	-fno-exceptions	-fno-common	-MMD	-MP	-nostdinc	-DARM9	-Dappver='$(EXECUTABLE_VERSION)'
+CC_ASFLAGS		=	-marm	-Os	-fno-exceptions	-fno-common	-fdata-sections -ffunction-sections		-MMD	-MP	-nostdinc	-DARM9	-Dappver='$(EXECUTABLE_VERSION)'
 CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++
 BUILD			= 	$(BUILD_ARM9)
 DIR_SRC			=	$(DIRS_ARM9_SRC)
