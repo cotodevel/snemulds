@@ -18,28 +18,13 @@ USA
 
 */
 
-#ifndef __interrupts9_h__
-#define __interrupts9_h__
+#ifndef __interrupts7_h__
+#define __interrupts7_h__
 
-#include "InterruptsARMCores_h.h"
-#include "ipcfifoTGDSUser.h"
-#include "guiTGDS.h"
-#include "dsregs_asm.h"
-#include "fs.h"
-#include "gfx.h"
-#include "cfg.h"
-#include "apu.h"
-#include "ram.h"
-#include "core.h"
-#include "conf.h"
-#include "frontend.h"
-#include "main.h"
-#include "ppu.h"
-#include "keypadTGDS.h"
-#include "interrupts.h"
+#include "typedefsTGDS.h"
+#include "dsregs.h"
 
 #endif
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,7 +38,6 @@ extern void HblankUser();
 extern void VblankUser();
 extern void VcounterUser();
 extern void ScreenlidhandlerUser();
-extern bool handleInputVcount;
 
 #ifdef __cplusplus
 }

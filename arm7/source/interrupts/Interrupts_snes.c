@@ -10,6 +10,7 @@
 #include "main.h"
 #include "mixrate.h"
 #include "apu_shared.h"
+#include "interrupts.h"
 
 //User Handler Definitions
 #ifdef ARM9
@@ -122,4 +123,13 @@ void VblankUser(){
 __attribute__((section(".itcm")))
 #endif
 void VcounterUser(){
+}
+
+
+//Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void ScreenlidhandlerUser(){
+
 }

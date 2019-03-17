@@ -102,3 +102,13 @@ __attribute__((section(".itcm")))
 void VcounterUser(){
 	handleInputVcount = true;
 }
+
+
+
+//Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void ScreenlidhandlerUser(){
+
+}
