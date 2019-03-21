@@ -68,7 +68,7 @@ int		get_snapshot_name(char *file, uchar nb, char *name)
   }
 
   TSnapShot_Header *header = (TSnapShot_Header *)malloc(sizeof(TSnapShot_Header));
-  fread(header, sizeof(TSnapShot_Header), 1, f);
+  fread(header, 1, sizeof(TSnapShot_Header), f);
 
   char header_name[17];
   memcpy(header_name, header->name, 16);
@@ -97,28 +97,28 @@ int	read_snapshot(char *file, uchar nb)
   }
 
   TSnapShot_Header *header = (TSnapShot_Header *)malloc(sizeof(TSnapShot_Header));
-  fread(header, sizeof(TSnapShot_Header), 1, f);
+  fread(header, 1, sizeof(TSnapShot_Header), f);
 
-  fread(SNESC.RAM,  0x20000, 1, f);
-  fread(SNESC.VRAM, 0x10000, 1, f);
-  fread(SNESC.SRAM, 0x8000, 1, f);
+  fread(SNESC.RAM,  1, 0x20000, f);
+  fread(SNESC.VRAM, 1, 0x10000, f);
+  fread(SNESC.SRAM, 1, 0x8000, f);
   for (i = 0; i < 256; i++)
   {
   	uint8	pal[3];
-    fread(pal, 3, 1, f);
+    fread(pal, 1, 3, f);
     GFX.SNESPal[i] = (pal[2]>>1)|((pal[1]>>1)<<5)|((pal[0]>>1)<<10);
   }
 
-/*  fread(PPU_PORT, 2*0x100, 1, f);
-  fread(DMA_PORT, 2*0x200, 1, f);*/
+/*  fread(PPU_PORT, 1, 2*0x100, f);
+  fread(DMA_PORT, 1, 2*0x200, f);*/
 
-  fread(PPU_PORT, 2*0x90, 1, f);
-  fread(EMPTYMEM, 2*0x70, 1, f); // unused
-  fread(DMA_PORT, 2*0x180, 1, f);
-  fread(EMPTYMEM, 2*0x80, 1, f); // unused
+  fread(PPU_PORT, 1, 2*0x90, f);
+  fread(EMPTYMEM, 1, 2*0x70, f); // unused
+  fread(DMA_PORT, 1, 2*0x180, f);
+  fread(EMPTYMEM, 1, 2*0x80, f); // unused
 
   TSnapShot *snapshot = (TSnapShot *)malloc(sizeof(TSnapShot));
-  fread(snapshot,  sizeof(TSnapShot), 1, f);
+  fread(snapshot,  1, sizeof(TSnapShot), f);
   
   //printf("PC =  %02X:%04x\n", snapshot->PB, snapshot->PC);
 
@@ -173,24 +173,24 @@ int write_snapshot(char *file, unsigned char nb, const char *name)
   
   TSnapShot_Header *header = (TSnapShot_Header *)malloc(sizeof(TSnapShot_Header));
   strcpy(header->name, name);  
-  fwrite(header, sizeof(TSnapShot_Header), 1, f);
+  fwrite(header, 1, sizeof(TSnapShot_Header), f);
 
-  fwrite(SNESC.RAM,  0x20000, 1, f);
-  fwrite(SNESC.VRAM, 0x10000, 1, f);
-  fwrite(SNESC.SRAM, 0x8000, 1, f);
+  fwrite(SNESC.RAM,  1, 0x20000, f);
+  fwrite(SNESC.VRAM, 1, 0x10000, f);
+  fwrite(SNESC.SRAM, 1, 0x8000, f);
   for (i = 0; i < 256; i++)
   {
   	uint8	pal[3];
   	pal[2] = GFX.SNESPal[i]<<1;
   	pal[1] = (GFX.SNESPal[i]>>5)<<1;
   	pal[0] = (GFX.SNESPal[i]>>10)<<1;  	
-    fwrite(pal, 3, 1, f);
+    fwrite(pal, 1, 3, f);
   }
     
-  fwrite(PPU_PORT,  2*0x90, 1, f);
-  fwrite(EMPTYMEM, 	2*0x70, 1, f); // unused
-  fwrite(DMA_PORT,  2*0x180, 1, f);
-  fwrite(EMPTYMEM, 	2*0x80, 1, f); // unused
+  fwrite(PPU_PORT,  1, 2*0x90, f);
+  fwrite(EMPTYMEM, 	1, 2*0x70, f); // unused
+  fwrite(DMA_PORT,  1, 2*0x180, f);
+  fwrite(EMPTYMEM, 	1, 2*0x80, f); // unused
   
   TSnapShot *snapshot = (TSnapShot *)malloc(sizeof(TSnapShot));
 
@@ -209,7 +209,7 @@ int write_snapshot(char *file, unsigned char nb, const char *name)
 
   //GUI_console_printf(0, 23, "State written");
   
-  fwrite(snapshot,  sizeof(TSnapShot), 1, f);
+  fwrite(snapshot,  1, sizeof(TSnapShot), f);
   
   if (CFG.Sound_output) {
   	APU_stop(); // Make sure that the APU is *completely* stopped
