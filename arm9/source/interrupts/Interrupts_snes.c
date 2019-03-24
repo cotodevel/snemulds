@@ -16,6 +16,14 @@
 #include "dswnifi.h"
 
 //User Handler Definitions
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void IpcSynchandlerUser(){
+	
+}
+
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif

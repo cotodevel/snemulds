@@ -30,6 +30,7 @@ USA
 extern "C" {
 #endif
 
+extern void IpcSynchandlerUser();
 extern void Timer0handlerUser();
 extern void Timer1handlerUser();
 extern void Timer2handlerUser();
