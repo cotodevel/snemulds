@@ -12,7 +12,7 @@ For compatibility on older cards, the --no-gc-sections must be added (for both A
 the building sessions. But hey, it's kept. 50~KB shouldn't matter much here.
 
 2)
--O2 preferred as it cause issues/slower gameplay.
+-Os is preferred, as -02 it cause slower gameplay and takes a lot of space.
 
 3)
 Nifi works, but the multiplayer is not implemented. Todo
