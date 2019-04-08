@@ -54,7 +54,7 @@ LIBRARIES =	-l$(TARGET_LIBRARY_NAME_9)	-lstdc++	-lcnano9	-lgcc
 OBJECTS = 	$(objs_arm9)	$(file_arm9_src_o_out)
 OBJDIR 	=	./$(BUILD)
 VPATH 	=	$(DIR_SRC)
-OBJPROG = 	$(addprefix $(OBJDIR)/, $(ELF_ARM9))
+OBJPROG = 	$(addprefix $(OBJDIR)/, $(NONSTRIPELF_ARM9))
 
 
 all: $(OBJDIR)|	$(TARGET_LIBRARY_CRT0_FILE_9).o	$(BINSTRIP_RULE_9)
@@ -105,12 +105,16 @@ $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	$(CC) $^ $(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
 	-@echo 'Leaving Linking phase. Output: $@'
 
-#keep only binary sections from elf. --only-section
-$(BINSTRIP_RULE_9): $(OBJPROG)
-	-@echo 'Binary-only strip start'
-	$(OBJCOPY) 	-O binary	$<	$@
-	-@echo 'Binary-only strip finish: $<	->	$@'
-
+#xxxx-nonstripped.elf -> xxxx.elf STRIP operation
+$(ELF_ARM9): $(OBJPROG)
+	-@echo '$@ Unstripped. STRIP Start!'
+	$(OBJSTRIP)	-s	$<
+	-mv	$<	$@
+	
+$(BINSTRIP_RULE_9): $(ELF_ARM9)
+	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
+	$(OBJCOPY) 	-S -O binary	$<	$@
+	-rm	$<
 ################################################################################################
 
 clean:

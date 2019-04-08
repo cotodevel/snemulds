@@ -41,6 +41,8 @@ export BUILD_ARM7	=	build
 export BUILD_ARM9	=	build
 export ELF_ARM7 = arm7.elf
 export ELF_ARM9 = arm9.elf
+export NONSTRIPELF_ARM7 = arm7-nonstripped.elf
+export NONSTRIPELF_ARM9 = arm9-nonstripped.elf
 
 export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_9 = special_nds_arm_ld_crt0
