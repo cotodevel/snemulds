@@ -28,7 +28,7 @@ int my_function2(int x, int y)
     else{
         abc = x;
     }
-    char hello[512];
+    char hello[256];
     return (abc);
  
 }

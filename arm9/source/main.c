@@ -36,6 +36,8 @@
 #include "spifwTGDS.h"
 #include "main.h"
 #include "timerTGDS.h"
+#include "dmaTGDS.h"
+#include "fsfatlayerTGDS.h"
 
 //wnifilib: multiplayer
 #include "dswnifi_lib.h"
@@ -367,8 +369,9 @@ int loadROM(char *name, int confirm)
 	free(ptr);
 
 	mem_clear_paging(); // FIXME: move me...
-
 	ROM = (char *) SNES_ROM_ADDRESS;
+	dmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE);	//Clear memory: ZIP Will use this as malloc
+	
 	bool zipFileLoaded = false;
 	if(strstr (_FS_getFileExtension(name),"ZIP")){	
 		zipFileLoaded = true;
@@ -376,10 +379,10 @@ int loadROM(char *name, int confirm)
 	
 	if(zipFileLoaded == true){
 		//build into tmpFile2, filename.smc out of passed filename.ext compressed
-		char outFile[512] = {0};
-		char inFile[512] = {0};
-		char temp1[512] = {0};
-		char temp2[512] = {0};
+		char outFile[MAX_TGDSFILENAME_LENGTH+1] = {0};
+		char inFile[MAX_TGDSFILENAME_LENGTH+1] = {0};
+		char temp1[MAX_TGDSFILENAME_LENGTH+1] = {0};
+		char temp2[MAX_TGDSFILENAME_LENGTH+1] = {0};
 		int sizeExt=strlen(_FS_getFileExtension(CFG.ROMFile))+1;
 		strncpy(temp1, CFG.ROMFile, strlen(CFG.ROMFile) - sizeExt);	//"filename" (no extension)
 		sprintf(outFile,"%s%s",temp1,".smc");
@@ -389,6 +392,8 @@ int loadROM(char *name, int confirm)
 		//Decompress File for reload later
 		int stat = load_gz((char*)CFG.ROMFile, (char*)outFile);
 	}
+	
+	dmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE);	////Clear memory: ROM will use it
 	
 	size = FS_getFileSize(romname);
 	ROMheader = size & 8191;
