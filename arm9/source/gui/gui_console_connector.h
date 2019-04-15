@@ -193,17 +193,15 @@ extern void	GUI_showROMInfos(int size);
 
 
 //Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
-extern vramSetup * getProjectSpecificVRAMSetup();
+extern ConsoleInstance * getProjectSpecificVRAMSetup();
 
 //Custom console VRAM layout setup
 
 //1) VRAM Layout
-extern bool InitProjectSpecificConsole();
+extern bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst);
 
 //2) Uses subEngine: VRAM Layout -> Console Setup
-extern vramSetup * SNEMULDS_2DVRAM_SETUP();
-
-
+extern ConsoleInstance * SNEMULDS_2DVRAM_SETUP();
 
 extern sint8*  g_snemulds_str_jpn[];
 extern sint8*  g_snemulds_str_eng[];

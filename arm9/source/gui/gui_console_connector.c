@@ -76,14 +76,16 @@ GNU General Public License for more details.
 
 
 //Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
-vramSetup * getProjectSpecificVRAMSetup(){
+ConsoleInstance * getProjectSpecificVRAMSetup(){
 	return SNEMULDS_2DVRAM_SETUP();
 }
 
 //1) VRAM Layout
-vramSetup * SNEMULDS_2DVRAM_SETUP(){
+ConsoleInstance * SNEMULDS_2DVRAM_SETUP(){
 	
-	vramSetup * vramSetupDefault = (vramSetup *)&vramSetupGlobal[0];
+	ConsoleInstance * CustomSessionConsoleInst = (ConsoleInstance *)(&CustomConsole);
+	memset (CustomSessionConsoleInst, 0, sizeof(CustomSessionConsoleInst));
+	vramSetup * vramSetupDefault = (vramSetup *)&CustomSessionConsoleInst->thisVRAMSetupConsole;
 	
 	//vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
 	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].vrambankCR = VRAM_A_0x06000000_ENGINE_A_BG;
@@ -125,33 +127,31 @@ vramSetup * SNEMULDS_2DVRAM_SETUP(){
 	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].vrambankCR = VRAM_I_LCDC_MODE;
 	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].enabled = true;
 	
-	
-	return vramSetupDefault;
+	return CustomSessionConsoleInst;
 }
 
 
 //2) Uses subEngine: VRAM Layout -> Console Setup
-bool InitProjectSpecificConsole(){
-	DefaultSessionConsole = (ConsoleInstance *)(&CustomConsole);
+bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst){
 	
 	//Set subEngine
-	SetEngineConsole(subEngine,DefaultSessionConsole);
+	SetEngineConsole(subEngine,ConsoleInstanceInst);
 	
 	//Set subEngine properties
-	DefaultSessionConsole->ConsoleEngineStatus.ENGINE_DISPCNT	=	(uint32)(MODE_5_2D | DISPLAY_BG3_ACTIVE | DISPLAY_BG0_ACTIVE | DISPLAY_BG1_ACTIVE);
+	ConsoleInstanceInst->ConsoleEngineStatus.ENGINE_DISPCNT	=	(uint32)(MODE_5_2D | DISPLAY_BG3_ACTIVE | DISPLAY_BG0_ACTIVE | DISPLAY_BG1_ACTIVE);
 	
 	// BG0: Background layer :
-	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[0].BGNUM = 0;
-	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[0].REGBGCNT = BG_MAP_BASE(30) | BG_TILE_BASE(7) | BG_32x32 | BG_COLOR_16 | BG_PRIORITY_3;
+	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[0].BGNUM = 0;
+	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[0].REGBGCNT = BG_MAP_BASE(30) | BG_TILE_BASE(7) | BG_32x32 | BG_COLOR_16 | BG_PRIORITY_3;
 	// Available : 0 - 60 Ko
 	
 	// BG1: Text layer : 
-	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[1].BGNUM = 1;
-	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[1].REGBGCNT = BG_MAP_BASE(31) | BG_TILE_BASE(7) | BG_32x32 | BG_COLOR_16;
+	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[1].BGNUM = 1;
+	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[1].REGBGCNT = BG_MAP_BASE(31) | BG_TILE_BASE(7) | BG_32x32 | BG_COLOR_16;
 	
 	// BG3: FrameBuffer : 64(TILE:4) - 128 Kb
-	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[3].BGNUM = 3;
-	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[3].REGBGCNT = BG_BMP_BASE(4) | BG_BMP8_256x256 | BG_PRIORITY_1;
+	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[3].BGNUM = 3;
+	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[3].REGBGCNT = BG_BMP_BASE(4) | BG_BMP8_256x256 | BG_PRIORITY_1;
 	
 	REG_BG3X_SUB = 0;
 	REG_BG3Y_SUB = 0;
@@ -160,7 +160,7 @@ bool InitProjectSpecificConsole(){
 	REG_BG3PC_SUB = 0;
 	REG_BG3PD_SUB = 1 << 8;
 	
-	GUI.DSFrameBuffer = (uint16 *)BG_BMP_RAM_SUB(4);
+	ConsoleInstanceInst->VideoBuffer = GUI.DSFrameBuffer = (uint16 *)BG_BMP_RAM_SUB(4);
 	GUI.DSText = (uint16 *)BG_MAP_RAM_SUB(31);
 	GUI.DSBack = (uint16 *)BG_MAP_RAM_SUB(30);
 	GUI.DSTileMemory = (uint16 *)BG_TILE_RAM_SUB(7);
@@ -225,7 +225,7 @@ bool InitProjectSpecificConsole(){
 	
 	GUI.Palette[39] = RGB8(255, 255, 255); // White
 	
-	InitializeConsole(DefaultSessionConsole);
+	InitializeConsole(ConsoleInstanceInst);
 	
 	return true;
 }
@@ -409,8 +409,9 @@ t_GUIScreen *buildMainMenu()
 
 
 int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
-	if (msg == GUI_DRAW)
-		consoleClear(DefaultSessionConsole);
+	if (msg == GUI_DRAW){
+		GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);	//todo
+	}
 	if (msg == GUI_COMMAND && (param == 3|| param == 4)) // OK ou cancel
 	{
 		//minimal file select parts taken from GUI_getROM
@@ -422,7 +423,7 @@ int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			//printf("romfile:%s",sel);
 			//while(1);
 			loadROM(sel, 0);
-			consoleClear(DefaultSessionConsole);
+			GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
 		}
 		if (param == 4)
 		{
@@ -440,8 +441,9 @@ int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 
 
 int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
-	if (msg == GUI_DRAW)
-		consoleClear(DefaultSessionConsole);
+	if (msg == GUI_DRAW){
+		GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
+	}
 	if (msg == GUI_COMMAND && (param == 3|| param == 4)) // OK ou cancel
 	{
 		if (param == 3)
@@ -461,8 +463,9 @@ int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 }
 
 int LoadStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
-	if (msg == GUI_DRAW)
-		consoleClear(DefaultSessionConsole);
+	if (msg == GUI_DRAW){
+		GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
+	}
 	if (msg == GUI_COMMAND&& (param == 3|| param == 4)) // OK ou cancel
 	{
 		if (param == 3)
@@ -491,8 +494,9 @@ int LoadStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
 }
 
 int SaveStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
-	if (msg == GUI_DRAW)
-		consoleClear(DefaultSessionConsole);
+	if (msg == GUI_DRAW){
+		GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
+	}
 	if (msg == GUI_COMMAND && (param == 3 || param == 4)) // OK ou cancel
 	{
 		if (param == 3)
@@ -529,9 +533,10 @@ int SaveStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
 int GFXConfigHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-	case GUI_DRAW:
-		consoleClear(DefaultSessionConsole);
-		return 0;
+	case GUI_DRAW:{
+		GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
+	}
+	return 0;
 	case GUI_COMMAND:
 	{
 		switch (param)
@@ -594,9 +599,10 @@ int GFXConfigHandler(t_GUIZone *zone, int msg, int param, void *arg){
 int AdvancedHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-	case GUI_DRAW:
-		consoleClear(DefaultSessionConsole);
-		return 0;
+	case GUI_DRAW:{
+		GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
+	}
+	return 0;
 	case GUI_COMMAND:
 	{
 		switch (param)
@@ -662,9 +668,10 @@ void LayerOptionsUpdate()
 int LayersOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){	
 	switch (msg)
 	{
-	case GUI_DRAW:
-		consoleClear(DefaultSessionConsole);
-		break;
+	case GUI_DRAW:{
+		GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
+	}
+	break;
 	case GUI_COMMAND:
 		//printf2(0, 23, "Command %d %08x", param, arg);
 		switch (param)
@@ -781,9 +788,10 @@ t_GUIScreen *buildLayersMenu(){
 int ScreenOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-	case GUI_DRAW:
-		consoleClear(DefaultSessionConsole);
-		return 0;
+	case GUI_DRAW:{
+		GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
+	}
+	return 0;
 	case GUI_COMMAND:
 		switch (param)
 		{
@@ -865,9 +873,10 @@ t_GUIScreen *buildScreenMenu(){
 int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-	case GUI_DRAW:
-		consoleClear(DefaultSessionConsole);
-		break;
+	case GUI_DRAW:{
+		GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
+	}
+	break;
 	case GUI_COMMAND:
 //		printf2(0, 23, "Command %d", param);
 		switch (param)
@@ -1021,8 +1030,9 @@ t_GUIScreen *buildOptionsMenu(){
 int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	int i;
 	
-	if (msg == GUI_DRAW)
-		consoleClear(DefaultSessionConsole);
+	if (msg == GUI_DRAW){
+		GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
+	}
 	if (msg == GUI_COMMAND)
 	{
 		//GUI_console_printf(0, 0, "Command %d", param);		
@@ -1130,9 +1140,10 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-	case GUI_DRAW:
-		consoleClear(DefaultSessionConsole);
-		break;
+	case GUI_DRAW:{
+		GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
+	}	
+	break;
 	case GUI_COMMAND:
 		if (param == 3)
 		{
@@ -1149,7 +1160,7 @@ void GUI_getROM(sint8 *rompath){
 	//snprintf (CFG.ROMPath, strlen(rompath)+1, "%s/",rompath);	//path:/test/
 	
     GUI.ScanJoypad = 1;
-	consoleClear(DefaultSessionConsole);
+	GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
 
 		// Get ROMs list
 	int		cnt;
@@ -1181,11 +1192,11 @@ void GUI_getROM(sint8 *rompath){
 
 void GUI_deleteROMSelector(){
 	GUI_deleteSelector(GUI.screen); // Should also delete dir_list
-	consoleClear(DefaultSessionConsole);
+	GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
 }
 
 void GUI_createMainMenu(){
-	consoleClear(DefaultSessionConsole);
+	GUI_clearScreen(0);	//consoleClear(DefaultSessionConsole);
 	
 #if 1
 	// Create Main screen
