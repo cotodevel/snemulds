@@ -17,6 +17,7 @@
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void IpcSynchandlerUser(){
 	
 }
@@ -24,12 +25,14 @@ void IpcSynchandlerUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer0handlerUser(){
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer1handlerUser(){
 	#if PROFILING_ON
 		long long begin = TIMER2_DATA + ((long long)TIMER3_DATA << 19);
@@ -63,18 +66,21 @@ void Timer1handlerUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer2handlerUser(){
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer3handlerUser(){
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void HblankUser(){
 	
 	// Block execution until the hblank processing on ARM9
@@ -113,6 +119,7 @@ void HblankUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void VblankUser(){
 	#if PROFILING_ON
 		// Debug time data
@@ -130,6 +137,7 @@ void VblankUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void VcounterUser(){
 }
 
@@ -138,6 +146,7 @@ void VcounterUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void ScreenlidhandlerUser(){
 
 }

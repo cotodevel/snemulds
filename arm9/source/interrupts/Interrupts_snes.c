@@ -20,6 +20,7 @@
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void IpcSynchandlerUser(){
 	
 }
@@ -27,30 +28,35 @@ void IpcSynchandlerUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer0handlerUser(){
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer1handlerUser(){
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer2handlerUser(){
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void Timer3handlerUser(){
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void HblankUser(){
 	int DS_VCOUNT = REG_VCOUNT;
 	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
@@ -76,6 +82,7 @@ void HblankUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void VblankUser(){	
 	
 	bool nifiRunning = donifi((int)REG_VCOUNT);
@@ -107,6 +114,7 @@ bool handleInputVcount = false;
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void VcounterUser(){
 	handleInputVcount = true;
 }
@@ -117,6 +125,7 @@ void VcounterUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+inline __attribute__((always_inline)) 
 void ScreenlidhandlerUser(){
 
 }
