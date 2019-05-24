@@ -1249,6 +1249,7 @@ void	GUI_showROMInfos(int size){
     else 
     	printf("%s LoROM\n", _STR(IDS_ROM_TYPE));
     printf("%s %s\n", _STR(IDS_COUNTRY), SNES.ROM_info.countrycode < 2 ? "NTSC" : "PAL");	
+	printf("SRAM Size: %d", SNES.ROM_info.SRAMsize);
 }
 
 

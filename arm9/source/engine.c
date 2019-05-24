@@ -92,7 +92,7 @@ int loadSRAM()
 {
   char sramFile[100];
   	
-  if (SNESC.SRAMMask)
+  if (SNESC.SRAMMask > 0)
     {
 #ifdef USE_GBFS
 /*		char header[16];
@@ -117,7 +117,7 @@ int saveSRAM()
 {
   char sramFile[100];
   	
-  if (SNESC.SRAMMask)
+  if (SNESC.SRAMMask > 0)
     {
 #ifndef USE_GBFS    	
     	strcpy(sramFile, CFG.ROMFile);
