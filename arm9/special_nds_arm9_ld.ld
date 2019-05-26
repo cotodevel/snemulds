@@ -59,49 +59,119 @@ sp_USR	= sp_UND - 0x200;	/* usr / sys stacks */
 ENTRY (_start)
 SECTIONS
 {
-	.init : ALIGN(4) { __init_start__ = .;	/* used by TGDS-Newlib C/C++ code */
-		*(.init*)
+	.init : ALIGN(4) { 			/* Entrypoint */
+		PROVIDE (__init_start__ = ABSOLUTE(.));
+		KEEP(*(.init*))
+		PROVIDE (__init_end__ = ABSOLUTE(.));
 	} > EWRAM = 0xff
-	__init_end__ = .;
-	.text : ALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
-		__text_start__ = .;
-		*(.text*)
-		*(.text)
-		*(.gnu.linkonce.t*)
-	} > EWRAM = 0xff
-	__text_end__ = .;
-	.bss (NOLOAD): {				/* used by TGDS-Newlib C/C++ code */
-		__bss_vma_start = .;
-		*(COMMON)					/* libc requires these for uninitialized objects, include any heap uninit vars*/
-		*(.dynbss*)
-		*(.bss*)
-		*(.bss)
-		*(.gnu.linkonce.b*.)
-	} > EWRAM = 0xff
-	__bss_vma_end = .;
+	
+	. = ALIGN(4);
+	
 	.data : ALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
-		__data_start__ = .;
+		PROVIDE (__data_start__ = ABSOLUTE(.));
 		*(.data)
 		*(.data.*)
 		*(.gnu.linkonce.d*)
+		*(.gnu.linkonce.t*)
+		PROVIDE (__data_end__ = ABSOLUTE(.));
 	} > EWRAM = 0xff
-	__data_end__ = .;
+	
+	. = ALIGN(4);
+	
 	.rodata : ALIGN(4) {			/* used by TGDS-Newlib C/C++ code */
-		__rodata_start__ = .;
+		PROVIDE (__rodata_start__ = ABSOLUTE(.));
 		*(.rdata)
 		*(.rodata)
 		*(.rodata.*)
     	*(.gnu.linkonce.r.*)
+		PROVIDE (__rodata_end__ = ABSOLUTE(.));
 	} > EWRAM = 0xff
-	__rodata_end__ = .;
+	
+	. = ALIGN(4);
+	
+	.bss (NOLOAD): {				/* used by TGDS-Newlib C/C++ code */
+		PROVIDE (__bss_vma_start = ABSOLUTE(.));
+		*(.dynbss*)
+		*(.bss*)
+		*(.bss)
+		*(.gnu.linkonce.b*.)
+		PROVIDE (__bss_vma_end = ABSOLUTE(.));
+	} > EWRAM = 0xff
+	
+	. = ALIGN(4);
+	
+	.text : ALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
+		PROVIDE (__text_start__ = ABSOLUTE(.));
+		KEEP(*(.text*))
+		KEEP(*(COMMON))					/* libc requires these for uninitialized objects, include any heap uninit vars*/
+		PROVIDE (__text_end__ = ABSOLUTE(.));
+	} > EWRAM = 0xff
+	
+	. = ALIGN(4);
+	
+	.ARM.exidx : ALIGN(4) {			/* not used at all, but some code rely on ARM debugging symbols */
+		PROVIDE (__exidx_start = ABSOLUTE(.));
+		*(.ARM.exidx)
+		*(.ARM.exidx*)
+		*(.gnu.linkonce.armexidx.)
+		*(.gnu.linkonce.armexidx.*)
+		PROVIDE (__exidx_end = ABSOLUTE(.));	
+	} > EWRAM = 0xff
+	
+	. = ALIGN(4);
+	
+	/*
+     * Stabs le debugging sections.
+     *
+     */
+
+    .stab          0 : { *(.stab) }
+    .stabstr       0 : { *(.stabstr) }
+    .stab.excl     0 : { *(.stab.excl) }
+    .stab.exclstr  0 : { *(.stab.exclstr) }
+    .stab.index    0 : { *(.stab.index) }
+    .stab.indexstr 0 : { *(.stab.indexstr) }
+    .comment       0 : { *(.comment) }
+    /* DWARF debug sections.
+       Symbols in the DWARF debugging sections are relative to the beginning
+       of the section so we begin them at 0.  */
+    /* DWARF 1 */
+    .debug          0 : { *(.debug) }
+    .line           0 : { *(.line) }
+    /* GNU DWARF 1 extensions */
+    .debug_srcinfo  0 : { *(.debug_srcinfo) }
+    .debug_sfnames  0 : { *(.debug_sfnames) }
+    /* DWARF 1.1 and DWARF 2 */
+    .debug_aranges  0 : { *(.debug_aranges) }
+    .debug_pubnames 0 : { *(.debug_pubnames) }
+    /* DWARF 2 */
+    .debug_info     0 : { *(.debug_info .gnu.linkonce.wi.*) }
+    .debug_abbrev   0 : { *(.debug_abbrev) }
+    .debug_line     0 : { *(.debug_line) }
+    .debug_frame    0 : { *(.debug_frame) }
+    .debug_str      0 : { *(.debug_str) }
+    .debug_loc      0 : { *(.debug_loc) }
+    .debug_macinfo  0 : { *(.debug_macinfo) }
+    /* SGI/MIPS DWARF 2 extensions */
+    .debug_weaknames 0 : { *(.debug_weaknames) }
+    .debug_funcnames 0 : { *(.debug_funcnames) }
+    .debug_typenames 0 : { *(.debug_typenames) }
+    .debug_varnames  0 : { *(.debug_varnames) }
+	
+	. = ALIGN(4);
+	
 	.fini : ALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
-		__fini_start__ = .;
+		PROVIDE (__fini_start__ = ABSOLUTE(.));
 		*(.fini)
 		*(.fini*)
+		PROVIDE (__fini_end__ = ABSOLUTE(.));
+		FILL(0x40);
 	} > EWRAM = 0xff
-	__fini_end__ = .;
-	__lib__end__ = __fini_end__;
+	
 	. = ALIGN(4);
+	
+	PROVIDE (__lib__end__ = __fini_end__ + 0x40);
+	
 	__itcm_vma_start = .;
 	.itcm : ALIGN(4) {
 		_vectors_start = .;
@@ -111,15 +181,22 @@ SECTIONS
 		KEEP (*(.itcm*))
 	} > ITCM AT > EWRAM
 	__itcm_vma_end__ = .;
+	
+	. = ALIGN(4);
+	
 	__dtcm_vma_start = .;
 	.dtcm : ALIGN(4) {
 		KEEP (*(.dtcm*))
 	} > DTCM AT > EWRAM
 	__dtcm_vma_end__ = .;
+	
+	. = ALIGN(4);
+	
 	___arm9sharedwram_vma_start = .;
 	.arm9sharedwram : ALIGN(4) {
 		KEEP (*(.arm9sharedwram*))
 	} > ARM9SHAREDWRAM AT > EWRAM
 	___arm9sharedwram_vma_end__ = .;
-	__vma_stub_end__ = __lib__end__ + SIZEOF(.itcm) + SIZEOF(.dtcm) + SIZEOF(.arm9sharedwram);
+	
+	PROVIDE (__vma_stub_end__ = __lib__end__ + SIZEOF(.itcm) + SIZEOF(.dtcm) + SIZEOF(.arm9sharedwram));
 }
