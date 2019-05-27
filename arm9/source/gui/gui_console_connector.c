@@ -40,6 +40,7 @@ GNU General Public License for more details.
 
 #include "gui_console_connector.h"
 #include "consoleTGDS.h"
+#include "memoryHandleTGDS.h"
 
 #include "fs.h"
 
@@ -1398,9 +1399,10 @@ int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 //center screen needs a rewrite
 void		GUI_align_printf(int flags, sint8 *fmt, ...)
 {
+	char * printfBuf = (char*)&ConsolePrintfBuf[0];
 	va_list ap;
     va_start(ap, fmt);
-    vsnprintf((sint8*)g_printfbuf, 64, fmt, ap);
+    vsnprintf((sint8*)printfBuf, sizeof(ConsolePrintfBuf), fmt, ap);
     va_end(ap);
 
     // FIXME
@@ -1408,5 +1410,5 @@ void		GUI_align_printf(int flags, sint8 *fmt, ...)
     zone.x1 = 0; zone.y1 = 0; zone.x2 = 256; zone.y2 = 192;
     zone.font = &trebuchet_9_font;
     // FIXME
-    GUI.printfy += GUI_drawAlignText(&zone, flags, GUI.printfy, 255, (sint8*)g_printfbuf);
+    GUI.printfy += GUI_drawAlignText(&zone, flags, GUI.printfy, sizeof(ConsolePrintfBuf), (sint8*)printfBuf);
 }

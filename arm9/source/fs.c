@@ -126,14 +126,12 @@ void	FS_printlog(sint8 *buf)
 //printf that instead stores on Filesystem
 void	FS_flog(sint8 *fmt, ...)
 {
-		
-	va_list ap;	
-
+	char * printfBuf = (char*)&ConsolePrintfBuf[0];
+	va_list ap;
     va_start(ap, fmt);
-    vsnprintf((sint8*)g_printfbuf, 100, fmt, ap);
+    vsnprintf((sint8*)printfBuf, 100, fmt, ap);
     va_end(ap);
-
-	FS_printlog((sint8*)g_printfbuf);
+	FS_printlog((sint8*)printfBuf);
 }
 
 int	FS_loadROM(sint8 *ROM, sint8 *filename)
