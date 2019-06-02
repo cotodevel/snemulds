@@ -1037,7 +1037,7 @@ void	draw_plane_withpriority(int bg, int bg_mode, int nb_tilex, int nb_tiley, in
   	return;
 	
 	//discard any VRAM writes that aren't handled correctly by the emu
-	if(isValidMap((uint32)(uint16 *)vram_addr) == false){
+	if( (((uint32)vram_addr) < 0x06000000) || ((uint32)vram_addr > ((uint32)0x06000000 + (256*1024)) ) ){
 		return;
 	}
 	
