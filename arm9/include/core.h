@@ -96,10 +96,6 @@ extern void zeroMemory( void * addr, uint32 count );
 //extern struct s_snescore	SNESC;
 //extern struct s_gfx	GFX;
 //extern struct s_cfg	CFG;
-extern volatile uint8 snes_ram_bsram[0x20000+0x6000];    //128K SNES RAM + 8K (Big) SNES SRAM
-extern volatile uint8 snes_vram[0x010000];
-extern uint8 * rom_page;        //second slot of rombuffer
-extern uint8 * rom_buffer;
 
 extern int _offsetY_tab[4];
 extern uint32 screen_mode;
@@ -107,9 +103,6 @@ extern int APU_MAX;
 extern uint32 keys;
 extern int	SPC700_emu;
 
-extern int	PPU_fastDMA_2118_1(int offs, int bank, int len);
-extern void DMA_transfert(uchar port);
-extern void		HDMA_transfert(uint8 port);
 extern uint32	IONOP_DMA_READ(uint32 addr);
 extern uint32	IONOP_PPU_READ(uint32 addr);
 extern void	IONOP_PPU_WRITE(uint32 addr, uint32 byte);

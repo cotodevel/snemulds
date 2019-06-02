@@ -56,9 +56,9 @@ int	SPC700_emu;
 void	PPU_port_write(uint32 address, uint8 value);
 uchar	PPU_port_read(uint32 address);
 
-
 // A OPTIMISER
-int	PPU_fastDMA_2118_1(int offs, int bank, int len)
+static inline 
+int PPU_fastDMA_2118_1(int offs, int bank, int len)
 {
 	int i;
 	uint8	*ptr;
@@ -124,7 +124,7 @@ int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 	return offs+len;
 }
 
-void DMA_transfert(uchar port)
+static inline void DMA_transfert(uchar port)
 {
   uint		tmp;
   ushort	PPU_port;
@@ -204,9 +204,7 @@ void DMA_transfert(uchar port)
   //END_PROFILE(DMA, 4);
 }
 
-
-void		HDMA_transfert(unsigned char port)
-{
+inline void		HDMA_transfert(unsigned char port){
   uint		len;
   uchar		*ptr, *ptr2, repeat;
   ushort	tmp=0;

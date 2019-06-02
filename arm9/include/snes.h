@@ -162,7 +162,6 @@ void	GoIRQ();
 void	reset_SNES();
 int		get_joypad();
 void	HDMA_write();
-void	HDMA_transfert(uchar port);
 void	load_ROM(char *ROM, int ROM_size);
 
 
