@@ -230,6 +230,7 @@ extern int GUI_getStrWidth(t_GUIZone *zone, sint8 *text);
 extern int		GUI_getZoneTextHeight(t_GUIZone *zone);
 extern int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text);
 extern void		GUI_align_printf(int flags, sint8 *fmt, ...);
+extern t_GUIFont trebuchet_9_font;
 
 #ifdef __cplusplus
 }
