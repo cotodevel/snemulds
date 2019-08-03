@@ -73,7 +73,7 @@ GNU General Public License for more details.
 #include "dmaTGDS.h"
 
 #include "posixHandleTGDS.h"
-#include "fsfatlayerTGDS.h"
+#include "fatfslayerTGDS.h"
 #include "keypadTGDS.h"
 #include "videoTGDS.h"
 

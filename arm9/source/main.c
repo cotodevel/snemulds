@@ -37,7 +37,7 @@
 #include "main.h"
 #include "timerTGDS.h"
 #include "dmaTGDS.h"
-#include "fsfatlayerTGDS.h"
+#include "fatfslayerTGDS.h"
 
 //wnifilib: multiplayer
 #include "dswnifi_lib.h"
