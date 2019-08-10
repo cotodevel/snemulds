@@ -139,6 +139,11 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void VcounterUser(){
+
+	if((REG_KEYXY & KEY_HINGE) == KEY_HINGE){
+		setBacklight(0);
+	}
+	
 }
 
 

@@ -13,6 +13,7 @@
 
 #include "timerTGDS.h"
 #include "CPUARMTGDS.h"
+#include "utilsTGDS.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
 uint16 *playBuffer;
@@ -167,7 +168,6 @@ int main(int _argc, sint8 **_argv) {
 			TGDSUSERIPC->APU_ADDR_ANS = (uint32)0xFF00FF00;
 		}
 		
-		IRQVBlankWait();	//required for sound playback sync with vblank
 	}
    
 	return 0;
