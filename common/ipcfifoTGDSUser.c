@@ -63,19 +63,8 @@ __attribute__((section(".itcm")))
 #endif
 void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 	
-	switch (cmd1) {		
-		//Process the packages (signal) that sent earlier FIFO_SEND_EXT
-		case(FIFO_SOFTFIFO_READ_EXT):{
-		
-		}
-		break;
-		
-		case(FIFO_SOFTFIFO_WRITE_EXT):{
-			SetSoftFIFO(cmd2);
-		}
-		break;
-		
-		
+	switch (cmd1) {
+	
 		//ARM7 command handler
 		#ifdef ARM7
 		
@@ -89,7 +78,6 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			PowerManagementDeviceWrite(PM_SOUND_AMP, (int)cmd2>>16);  // void * data == command2
 		}
 		break;
-		
 		
 		case SNEMULDS_APUCMD_RESET: //case 0x00000001:
 		{

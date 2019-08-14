@@ -84,7 +84,6 @@ void HblankUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-inline __attribute__((always_inline)) 
 void VblankUser(){	
 	
 	bool nifiRunning = donifi((int)REG_VCOUNT);
@@ -122,12 +121,20 @@ void VcounterUser(){
 }
 
 
+//Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+inline __attribute__((always_inline)) 
+void screenLidHasOpenedhandlerUser(){
+	setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);	//both lit screens
+}
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
-void ScreenlidhandlerUser(){
-	setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);	//both lit screens
+void screenLidHasClosedhandlerUser(){
+	
 }
