@@ -215,7 +215,7 @@ inline void		HDMA_transfert(unsigned char port){
                     DMA_PORT[0x104+port*0x10]);
 
   if (!ptr) {
-/*    iprintf(" (invalid memory access during a H-DMA transfert : %06X)",
+/*    printf(" (invalid memory access during a H-DMA transfert : %06X)",
       DMA_PORT[0x102+port*0x10]+(DMA_PORT[0x103+port*0x10]<<8)+
       (DMA_PORT[0x104+port*0x10]<<16));*/
       return;
