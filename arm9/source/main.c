@@ -607,7 +607,8 @@ int main(int argc, char ** argv){
 				clrscr();
 				//Show IP and port here
 				printf("[Connect to GDB]:");
-				printf("Port:%d GDB IP:%s",remotePort,(char*)print_ip((uint32)Wifi_GetIP()));
+				char IP[16];
+				printf("Port:%d GDB IP:%s", remotePort, print_ip((uint32)Wifi_GetIP(), IP));
 				remoteInit();
 			}
 			else{
@@ -621,7 +622,8 @@ int main(int argc, char ** argv){
 				clrscr();
 				//Show IP and port here
 				printf("[Re-Connect to GDB]:So far:%d time(s)",reconnectCount);
-				printf("Port:%d GDB IP:%s",remotePort,(char*)print_ip((uint32)Wifi_GetIP()));
+				char IP[16];
+				printf("Port:%d GDB IP:%s", remotePort, print_ip((uint32)Wifi_GetIP(), IP));
 				remoteInit();
 			}
 		}
