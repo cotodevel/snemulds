@@ -57,6 +57,6 @@ sint8*  READ_GAME_DIR[] = {
 
 volatile char versionBuf[0x100];
 sint8 * RetTitleCompiledVersion(){
-	sprintf((char*)&versionBuf[0],"%s %s %s",(sint8*)SNEMULDS_TITLE[0],(sint8*)"TGDS1.5",(sint8*)SNEMULDS_TITLE[1]);
+	sprintf((char*)&versionBuf[0],"%s %s %s",(sint8*)SNEMULDS_TITLE[0],(sint8*)"0.6b",(sint8*)SNEMULDS_TITLE[1]);
 	return (char*)&versionBuf[0];
 }

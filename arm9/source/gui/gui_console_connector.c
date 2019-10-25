@@ -37,13 +37,10 @@ GNU General Public License for more details.
 
 //This file abstracts specific SnemulDS console code that relies on core functionality.
 
-
 #include "gui_console_connector.h"
 #include "consoleTGDS.h"
-#include "memoryHandleTGDS.h"
-
+#include "utilsTGDS.h"
 #include "fs.h"
-
 #include "snes.h"
 #include "core.h"
 #include "engine.h"
@@ -69,11 +66,7 @@ GNU General Public License for more details.
 
 
 
-
-
 	////////[Custom Console implementation]////////
-
-
 
 
 //Definition that overrides the weaksymbol expected from toolchain to init console video subsystem

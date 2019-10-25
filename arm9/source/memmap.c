@@ -23,7 +23,7 @@
 #include "snes.h"
 #include "cfg.h"
 #include "memmap.h"
-#include "memoryHandleTGDS.h"
+#include "utilsTGDS.h"
 
 extern char *ROM_Image;
 

@@ -21,7 +21,7 @@ USA
 #include "special_mpu_settings.h"
 #include "typedefsTGDS.h"
 #include "nds_cp15_misc.h"
-#include "memoryHandleTGDS.h"
+#include "utilsTGDS.h"
 
 void setSnemulDSSpecial0xFFFF0000MPUSettings(){
 	mpuSetting[VECTORS_0xFFFF0000_MPU].inst_regionSetting[0].regionsettings = (uint32)( PAGE_128M | 0x00000000 | 1);

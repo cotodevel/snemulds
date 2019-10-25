@@ -16,7 +16,7 @@ GNU General Public License for more details.
 */
 
 #include "ipcfifoTGDSUser.h"
-#include "memoryHandleTGDS.h"
+#include "utilsTGDS.h"
 
 #include "common.h"
 

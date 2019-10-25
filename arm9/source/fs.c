@@ -35,18 +35,15 @@ GNU General Public License for more details.
 #include <fcntl.h>
 #include "fatfslayerTGDS.h"
 #include "fileHandleTGDS.h"
-
+#include "xenofunzip.h"
 #include "gfx.h"
 #include "cfg.h"
 #include "apu.h"
-//#include "ram.h"
 #include "conf.h"
-//#include "frontend.h"
 #include "main.h"
 #include "ppu.h"
 #include "InterruptsARMCores_h.h"
 #include "ff.h"
-#include "memoryHandleTGDS.h"
 #include "reent.h"
 #include "sys/types.h"
 #include "engine.h"
@@ -55,19 +52,19 @@ GNU General Public License for more details.
 #include "dsregs_asm.h"
 #include "typedefsTGDS.h"
 #include "consoleTGDS.h"
-//#include "api_wrapper.h"
-//#include "apu_jukebox.h"
 #include "about.h"
-#include "fileHandleTGDS.h"
-#include "xenofunzip.h"
 
 /* *********************** FAT ************************ */
 
+//#define ENABLE_LOGGING
+
+#ifdef ENABLE_LOGGING
 sint8 logbuf[32000];
 static int logcnt = 0;
-
+#endif
 void	FS_printlogBufOnly(sint8 *buf)
 {
+	#ifdef ENABLE_LOGGING
 	if (logcnt == 0)
 	{
 		// first call
@@ -82,11 +79,12 @@ void	FS_printlogBufOnly(sint8 *buf)
 	}
 	else
 		strcat(logbuf, buf);
+	#endif
 }
 
 void	FS_printlog(sint8 *buf)
 {
- 
+	#ifdef ENABLE_LOGGING
 	static FILE *f_log = NULL;
 	if (logcnt == 0)
 	{
@@ -120,18 +118,23 @@ void	FS_printlog(sint8 *buf)
 	else{
 		strcat(logbuf, buf);
 	}
-	
+	#endif
 }
 
 //printf that instead stores on Filesystem
 void	FS_flog(sint8 *fmt, ...)
 {
+	#ifdef ENABLE_LOGGING
 	char * printfBuf = (char*)&ConsolePrintfBuf[0];
 	va_list ap;
     va_start(ap, fmt);
     vsnprintf((sint8*)printfBuf, 100, fmt, ap);
     va_end(ap);
 	FS_printlog((sint8*)printfBuf);
+	#endif
+	#ifndef ENABLE_LOGGING
+	return -1;
+	#endif
 }
 
 int	FS_loadROM(sint8 *ROM, sint8 *filename)
@@ -185,7 +188,6 @@ int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
 
 
 int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
-	
 	int ret;	
 	FS_lock();
 	
@@ -203,8 +205,6 @@ int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
 		FS_unlock();
 		return -1;
 	}
-	
-	
 	return fread(buf, 1, size, fPaging);
 }
 
