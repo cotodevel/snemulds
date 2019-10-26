@@ -11,6 +11,7 @@
 #include "mixrate.h"
 #include "apu_shared.h"
 #include "interrupts.h"
+#include "biosTGDS.h"
 
 //User Handler Definitions
 
@@ -139,11 +140,7 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void VcounterUser(){
-
-	if((REG_KEYXY & KEY_HINGE) == KEY_HINGE){
-		setBacklight(0);
-	}
-	
+	handleARM7SVC();	/* Do not remove, handles TGDS services */
 }
 
 
@@ -153,7 +150,7 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void screenLidHasOpenedhandlerUser(){
-	
+	isArm7ClosedLid = false;
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
@@ -162,5 +159,5 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void screenLidHasClosedhandlerUser(){
-	
+	setBacklight(0);
 }
