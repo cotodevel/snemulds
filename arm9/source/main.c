@@ -19,12 +19,6 @@
 #include "dsregs.h"
 #include "dsregs_asm.h"
 
-#include <stdio.h>
-#include <malloc.h>
-#include <string.h>
-
-#include "gui_console_connector.h"
-
 #include "fs.h"
 #include "snes.h"
 #include "gfx.h"
@@ -32,17 +26,7 @@
 #include "apu.h"
 #include "interrupts.h"
 #include "conf.h"
-
-#include "spifwTGDS.h"
-#include "main.h"
-#include "timerTGDS.h"
-#include "dmaTGDS.h"
-#include "fatfslayerTGDS.h"
-
-//wnifilib: multiplayer
 #include "dswnifi_lib.h"
-#include "dswnifi.h"
-#include "ipcfifoTGDSUser.h"
 
 //#define USE_EMUL
 
