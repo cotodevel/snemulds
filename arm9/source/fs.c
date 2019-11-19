@@ -34,7 +34,6 @@ GNU General Public License for more details.
 #include <sys/dir.h>
 #include <fcntl.h>
 #include "fatfslayerTGDS.h"
-#include "fileHandleTGDS.h"
 #include "xenofunzip.h"
 #include "gfx.h"
 #include "cfg.h"
