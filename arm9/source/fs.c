@@ -132,7 +132,7 @@ void	FS_flog(sint8 *fmt, ...)
 	FS_printlog((sint8*)printfBuf);
 	#endif
 	#ifndef ENABLE_LOGGING
-	return -1;
+	return;
 	#endif
 }
 
@@ -210,4 +210,85 @@ int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
 int	FS_shouldFreeROM()
 {
 	return 1;
+}
+
+//This method uses opendir(); and readdir(); to iterate through dir/file contents.
+sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
+	int	size = 0;
+	*cnt = size;
+	FS_lock();
+	DIR *dir = opendir(path);
+	if( NULL != dir ){
+		while (1){
+			struct dirent* pent = readdir(dir);
+			if(pent != NULL){
+				struct fd * fdinst = getStructFD(pent->d_ino);	//struct stat st is generated at the moment readdir(); is called, so get access to it through fdinst->stat
+				if(fdinst){
+					if(!S_ISDIR(fdinst->stat.st_mode)){
+						continue;
+					}
+					if(!strcmp(pent->d_name, ".")){
+						continue;
+					}
+					if(mask){
+						sint8 *ext = _FS_getFileExtension(pent->d_name);
+						if (ext && strstr(mask, ext)){
+							//filecount Increase
+							(*cnt)++;
+							size += strlen(pent->d_name)+1;
+						}
+					}
+					else{
+						//filecount Increase
+						(*cnt)++;
+						size += strlen(pent->d_name)+1;
+					}
+				}
+			}
+			else{
+				break;
+			}
+		}
+	}
+	rewinddir(dir);
+	
+	sint8	**list = (sint8	**)malloc((*cnt)*sizeof(sint8 *)+size);
+	sint8	*ptr = ((sint8 *)list) + (*cnt)*sizeof(sint8 *);
+	
+	int i = 0; 
+	if(NULL != dir){
+		while (1){
+			struct dirent* pent = readdir(dir);	//if NULL already not a dir
+			if(pent != NULL){
+				struct fd * fdinst = getStructFD(pent->d_ino);
+				if(fdinst){
+					if(!S_ISDIR(fdinst->stat.st_mode)){
+						continue;
+					}
+					if(!strcmp(pent->d_name, ".")){
+						continue;
+					}
+					if(mask){
+						sint8 *ext = _FS_getFileExtension(pent->d_name);
+						if (ext && strstr(mask, ext)){
+							strcpy(ptr, pent->d_name);
+							list[i++] = ptr;
+							ptr += strlen(pent->d_name)+1;  
+						}
+					}
+					else{
+						strcpy(ptr, pent->d_name);
+						list[i++] = ptr;
+						ptr += strlen(pent->d_name)+1;
+					}
+				}
+			}
+			else{
+				break;
+			}
+		}
+	}
+	closedir(dir);
+	FS_unlock();
+	return list;
 }

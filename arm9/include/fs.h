@@ -56,6 +56,8 @@ extern sint8 	*FS_getFileName(sint8 *filename);
 extern int load_gz(char *fname, char *newtempfname);
 extern char * tmpFile;
 extern bool zipFileLoaded;	//zip / gz support
+extern sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt);
+
 #ifdef __cplusplus
 }
 #endif
