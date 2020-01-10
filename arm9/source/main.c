@@ -465,6 +465,8 @@ int main(int argc, char ** argv){
 	switch_dswnifi_mode(dswifi_idlemode);
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
+	DisableIrq(IRQ_VCOUNT);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
+	
 	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
 	TGDSUSERIPC->APU_ADDR_CNT = 0;
 	TGDSUSERIPC->APU_ADDR_ANS = TGDSUSERIPC->APU_ADDR_CMD = 0;
@@ -575,11 +577,10 @@ int main(int argc, char ** argv){
 	
 	while (1)
 	{
-		//handle input only on vcounter
-		if(handleInputVcount == true){
+		if(REG_DISPSTAT & DISP_VBLANK_IRQ){
 			GUI_update();
-			handleInputVcount = false;
 		}
+		
 		go();
 		
 		#ifdef GDB_ENABLE

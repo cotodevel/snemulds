@@ -43,6 +43,12 @@ void IpcSynchandlerUser(){
 		}
 		break;
 		
+		//Update VCOUNT through ARM7
+		case(SNEMULDS_HANDLE_VCOUNT):{
+			//GUI_update();			//Works! But sadly this breaks DSWNIFI, thus, it can't be called here
+		}
+		break;
+		
 		default:{
 			//ipcByte should be the byte you sent from external ARM Core through sendByteIPC(ipcByte);
 		}
@@ -131,16 +137,11 @@ void VblankUser(){
 
 
 #ifdef ARM9
-__attribute__((section(".dtcm")))
-#endif
-bool handleInputVcount = false;
-
-#ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void VcounterUser(){
-	handleInputVcount = true;
+	
 }
 
 

@@ -78,6 +78,9 @@ struct sIPCSharedTGDSSpecific{
 //GDB stub support
 //#define GDB_ENABLE
 
+//IPC Cmd
+#define SNEMULDS_HANDLE_VCOUNT (u8)(0x2)
+
 #endif
 
 #ifdef __cplusplus

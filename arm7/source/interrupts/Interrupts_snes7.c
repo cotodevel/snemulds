@@ -164,6 +164,7 @@ __attribute__((section(".itcm")))
 inline __attribute__((always_inline)) 
 void VcounterUser(){
 	handleARM7SVC();	/* Do not remove, handles TGDS services */
+	//sendByteIPC(SNEMULDS_HANDLE_VCOUNT);	//Works! But it is unused
 }
 
 

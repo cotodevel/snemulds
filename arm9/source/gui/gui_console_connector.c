@@ -1133,16 +1133,16 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-	case GUI_DRAW:{
-		GUI_clearScreen(0);
-	}	
-	break;
-	case GUI_COMMAND:
-		if (param == 3)
-		{
-			GUI.exit = 1;
-			return 1;
-		}
+		case GUI_DRAW:{
+			GUI_clearScreen(0);
+		}	
+		break;
+		case GUI_COMMAND:
+			if (param == 3)
+			{
+				GUI.exit = 1;
+				return 1;
+			}
 	}
 	return 0;
 }

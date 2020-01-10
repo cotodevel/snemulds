@@ -54,7 +54,6 @@ extern void HblankUser();
 extern void VblankUser();
 extern void VcounterUser();
 extern void ScreenlidhandlerUser();
-extern bool handleInputVcount;
 
 #ifdef __cplusplus
 }

@@ -449,9 +449,11 @@ int GUI_update()
 		
 		else if((held & KEY_TOUCH) && !(released & KEY_TOUCH))
 		{
+			/*
 			if (penIRQread() == false){
 				return 0;
 			}
+			*/
 			
 			g_event.event = EVENT_STYLUS_DRAGGED;
 
