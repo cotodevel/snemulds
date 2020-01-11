@@ -3,9 +3,8 @@
 #include "apu.h"
 #include "dsp.h"
 #include "main.h"
-#include "InterruptsARMCores_h.h"	//new
-#include "interrupts.h"	//ori
-
+#include "InterruptsARMCores_h.h"
+#include "interrupts.h"	
 #include "ipcfifoTGDSUser.h"
 #include "wifi_arm7.h"
 #include "usrsettingsTGDS.h"
@@ -13,6 +12,8 @@
 #include "dmaTGDS.h"
 #include "CPUARMTGDS.h"
 #include "utilsTGDS.h"
+#include "biosTGDS.h"
+#include "dldi.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
 uint16 *playBuffer;
@@ -117,6 +118,7 @@ int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.5 Standard ARM7 Init code start	*/
 	installWifiFIFO();		//use DSWIFI
+	setDLDIARM7Address((u32*)ARM7_DLDI_BASE);
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
 	//wait for VRAM Block to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
