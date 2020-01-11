@@ -10,8 +10,7 @@
 #include "wifi_arm7.h"
 #include "usrsettingsTGDS.h"
 #include "timerTGDS.h"
-
-#include "timerTGDS.h"
+#include "dmaTGDS.h"
 #include "CPUARMTGDS.h"
 #include "utilsTGDS.h"
 
@@ -123,7 +122,7 @@ int main(int _argc, sint8 **_argv) {
 	//wait for VRAM Block to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
 	while (!(*((vuint8*)0x04000240) & 0x2));
 	
-    playBuffer = (uint16*)0x6000000;
+    playBuffer = (uint16*)ARM7_SOUNDWORK_BASE;
     int i   = 0;
     for (i = 0; i < MIXBUFSIZE * 4; i++) {
         playBuffer[i] = 0;
@@ -134,6 +133,8 @@ int main(int _argc, sint8 **_argv) {
     DspReset();
     SetupSound();
     struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+	
+	dmaFillHalfWord(3, 0xFF, (uint32)ARM7_SOUNDWORK_BASE, (uint32)(128*1024));
 	
     while (1) {
 		if(SPC_disable == false){

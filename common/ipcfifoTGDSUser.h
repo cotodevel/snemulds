@@ -73,7 +73,9 @@ struct sIPCSharedTGDSSpecific{
 #define SNEMULDS_APUCMD_LOADSPC 0xffff00a7
 
 //Standardized SnemulDS defs
-#define APU_RAM_ADDRESS     ((uint8*)(0x6010000))	//uses VRAM Block as APU WORK RAM
+#define ARM7_SOUNDWORK_BASE     ((uint8*)(0x6000000))
+#define ARM7_DLDI_BASE			((uint8*)(ARM7_SOUNDWORK_BASE + 0x10000 - 0x4000))	//These 16K are unused by sound code, so, reserved for DLDI ARM7 code
+#define APU_RAM_ADDRESS     	((uint8*)(ARM7_SOUNDWORK_BASE + 0x10000))			//uses VRAM Block as APU WORK RAM
 
 //GDB stub support
 //#define GDB_ENABLE
