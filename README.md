@@ -1,4 +1,7 @@
 # SnemulDS
+
+Branch: Master. This uses ARM7 DLDI (future DSi compatibility). Use ARM9DLDI branch if you want a stable build.
+
 SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes)... 
 This is based from real 0.6.a sources archeide left years ago and I managed to find.
 

@@ -462,10 +462,24 @@ int main(int argc, char ** argv){
 	{
 		printf(_STR(IDS_FS_FAILED));
 	}
+	
 	switch_dswnifi_mode(dswifi_idlemode);
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
 	DisableIrq(IRQ_VCOUNT);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
+	
+	/*
+	//debug
+	printf(" - ");
+	printf(" - ");
+	printf(" - ");
+	printf(" - ");
+	printf("wait");
+	
+	while(1==1){
+		IRQVBlankWait();
+	}
+	*/
 	
 	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
 	TGDSUSERIPC->APU_ADDR_CNT = 0;

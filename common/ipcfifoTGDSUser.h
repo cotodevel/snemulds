@@ -1,6 +1,4 @@
-
 /*
-
 			Copyright (C) 2017  Coto
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -33,6 +31,17 @@ USA
 #include "ipcfifoTGDS.h"
 #include "dswnifi.h"
 #include "apu_shared.h"
+
+//Enable for an ARM7DLDI build. Disable for an ARM9DLDI build
+//#define SNEMULDS_ARM7_DLDI
+
+#if defined(SNEMULDS_ARM7_DLDI) && defined(ARM9_DLDI)
+#error "ToolchainGenericDS SDK builds ARM9DLDI TGDS Binaries! Make sure it builds ARM7DLDI TGDS Binaries!"
+#endif
+
+#if !defined(SNEMULDS_ARM7_DLDI) && defined(ARM7_DLDI)
+#error "ToolchainGenericDS SDK builds ARM7DLDI TGDS Binaries! Make sure it builds ARM9DLDI TGDS Binaries!"
+#endif
 
 struct s_apu2
 {

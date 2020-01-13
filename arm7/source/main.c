@@ -118,11 +118,15 @@ int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.5 Standard ARM7 Init code start	*/
 	installWifiFIFO();		//use DSWIFI
-	setDLDIARM7Address((u32*)ARM7_DLDI_BASE);
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
-	//wait for VRAM Block to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
+	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
 	while (!(*((vuint8*)0x04000240) & 0x2));
+	
+	#ifdef SNEMULDS_ARM7_DLDI
+	dmaFillHalfWord(3, 0x0, (uint32)ARM7_SOUNDWORK_BASE, (uint32)(128*1024));
+	TGDSDLDIARM7SetupStage0((u32)ARM7_DLDI_BASE);
+	#endif
 	
     playBuffer = (uint16*)ARM7_SOUNDWORK_BASE;
     int i   = 0;
@@ -136,7 +140,6 @@ int main(int _argc, sint8 **_argv) {
     SetupSound();
     struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
 	
-	dmaFillHalfWord(3, 0xFF, (uint32)ARM7_SOUNDWORK_BASE, (uint32)(128*1024));
 	
     while (1) {
 		if(SPC_disable == false){
