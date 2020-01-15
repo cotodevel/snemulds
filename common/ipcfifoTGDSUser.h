@@ -33,7 +33,7 @@ USA
 #include "apu_shared.h"
 
 //Enable for an ARM7DLDI build. Disable for an ARM9DLDI build
-//#define SNEMULDS_ARM7_DLDI
+#define SNEMULDS_ARM7_DLDI
 
 #if defined(SNEMULDS_ARM7_DLDI) && defined(ARM9_DLDI)
 #error "ToolchainGenericDS SDK builds ARM9DLDI TGDS Binaries! Make sure it builds ARM7DLDI TGDS Binaries!"

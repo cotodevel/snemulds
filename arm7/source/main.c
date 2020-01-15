@@ -125,7 +125,7 @@ int main(int _argc, sint8 **_argv) {
 	
 	#ifdef SNEMULDS_ARM7_DLDI
 	dmaFillHalfWord(3, 0x0, (uint32)ARM7_SOUNDWORK_BASE, (uint32)(128*1024));
-	TGDSDLDIARM7SetupStage0((u32)ARM7_DLDI_BASE);
+	TGDSDLDIARM7SetupStage0((u32)0x06000000 + (64*1024) - (0x4000));
 	#endif
 	
     playBuffer = (uint16*)ARM7_SOUNDWORK_BASE;

@@ -23,26 +23,8 @@
 __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
-void IpcSynchandlerUser(){
-	uint8 ipcByte = receiveByteIPC();
+void IpcSynchandlerUser(uint8 ipcByte){
 	switch(ipcByte){
-		//External ARM Core's sendMultipleByteIPC(uint8 inByte0, uint8 inByte1, uint8 inByte2, uint8 inByte3) received bytes:
-		case(IPC_SEND_MULTIPLE_CMDS):{
-			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
-			uint8 * ipcMsg = (uint8 *)&TGDSIPC->ipcMesaggingQueue[0];
-			#ifdef ARM9
-			coherent_user_range_by_size((uint32)ipcMsg, sizeof(TGDSIPC->ipcMesaggingQueue));
-			#endif
-			uint8 inByte0 = (u8)ipcMsg[0];
-			uint8 inByte1 = (u8)ipcMsg[1];
-			uint8 inByte2 = (u8)ipcMsg[2];
-			uint8 inByte3 = (u8)ipcMsg[3];
-			
-			//Do stuff.
-			ipcMsg[3] = ipcMsg[2] = ipcMsg[1] = ipcMsg[0] = 0;
-		}
-		break;
-		
 		//Update VCOUNT through ARM7
 		case(SNEMULDS_HANDLE_VCOUNT):{
 			//GUI_update();			//Works! But sadly this breaks DSWNIFI, thus, it can't be called here

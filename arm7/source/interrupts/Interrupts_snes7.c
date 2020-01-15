@@ -19,31 +19,8 @@
 __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
-void IpcSynchandlerUser(){
-	uint8 ipcByte = receiveByteIPC();
-	switch(ipcByte){
-		//External ARM Core's sendMultipleByteIPC(uint8 inByte0, uint8 inByte1, uint8 inByte2, uint8 inByte3) received bytes:
-		case(IPC_SEND_MULTIPLE_CMDS):{
-			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
-			uint8 * ipcMsg = (uint8 *)&TGDSIPC->ipcMesaggingQueue[0];
-			#ifdef ARM9
-			coherent_user_range_by_size((uint32)ipcMsg, sizeof(TGDSIPC->ipcMesaggingQueue));
-			#endif
-			uint8 inByte0 = (u8)ipcMsg[0];
-			uint8 inByte1 = (u8)ipcMsg[1];
-			uint8 inByte2 = (u8)ipcMsg[2];
-			uint8 inByte3 = (u8)ipcMsg[3];
-			
-			//Do stuff.
-			ipcMsg[3] = ipcMsg[2] = ipcMsg[1] = ipcMsg[0] = 0;
-		}
-		break;
-		
-		default:{
-			//ipcByte should be the byte you sent from external ARM Core through sendByteIPC(ipcByte);
-		}
-		break;
-	}
+void IpcSynchandlerUser(uint8 ipcByte){
+	
 }
 
 #ifdef ARM9
@@ -138,6 +115,8 @@ void HblankUser(){
 		}
 		
 	}
+	
+	handleARM7SVC();	/* Do not remove, handles TGDS services */
 }
 
 #ifdef ARM9
@@ -163,7 +142,6 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void VcounterUser(){
-	handleARM7SVC();	/* Do not remove, handles TGDS services */
 	//sendByteIPC(SNEMULDS_HANDLE_VCOUNT);	//Works! But it is unused
 }
 
