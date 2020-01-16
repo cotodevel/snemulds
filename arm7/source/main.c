@@ -123,10 +123,7 @@ int main(int _argc, sint8 **_argv) {
 	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
 	while (!(*((vuint8*)0x04000240) & 0x2));
 	
-	#ifdef SNEMULDS_ARM7_DLDI
 	dmaFillHalfWord(3, 0x0, (uint32)ARM7_SOUNDWORK_BASE, (uint32)(128*1024));
-	TGDSDLDIARM7SetupStage0((u32)0x06000000 + (64*1024) - (0x4000));
-	#endif
 	
     playBuffer = (uint16*)ARM7_SOUNDWORK_BASE;
     int i   = 0;
@@ -140,6 +137,8 @@ int main(int _argc, sint8 **_argv) {
     SetupSound();
     struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
 	
+	//Init DLDI.
+	ARM7DLDIInit();
 	
     while (1) {
 		if(SPC_disable == false){

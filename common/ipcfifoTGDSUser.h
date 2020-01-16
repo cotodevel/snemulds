@@ -92,6 +92,11 @@ struct sIPCSharedTGDSSpecific{
 //IPC Cmd
 #define SNEMULDS_HANDLE_VCOUNT (u8)(0x2)
 
+#ifdef ARM9
+//Used by ARM9. Required internally by ARM7
+#define TGDSDLDI_ARM7_ADDRESS (int)(0x06000000 + (64*1024) - (0x4000))
+#endif
+
 #endif
 
 #ifdef __cplusplus
