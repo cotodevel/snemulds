@@ -137,8 +137,10 @@ int main(int _argc, sint8 **_argv) {
     SetupSound();
     struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
 	
-	//Init DLDI.
+	#ifdef SNEMULDS_ARM7_DLDI
+	//Init DLDI ARM7
 	ARM7DLDIInit();
+	#endif
 	
     while (1) {
 		if(SPC_disable == false){

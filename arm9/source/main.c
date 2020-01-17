@@ -452,7 +452,9 @@ int main(int argc, char ** argv){
 	GUI_setLanguage(fwlanguage);
 	
 	printf(_STR(IDS_INITIALIZATION));
+	#ifdef SNEMULDS_ARM7_DLDI
 	setDLDIARM7Address((u32 *)TGDSDLDI_ARM7_ADDRESS);	//Required by ARM7DLDI!
+	#endif
 	int ret=FS_init();
 	if (ret == 0)
 	{
