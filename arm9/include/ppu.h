@@ -68,6 +68,7 @@ typedef struct
 	int		used;	
 } t_TileZone;
 
+
 #define CONVERT_SPR_TILE(tn) (((tn)&0xF)|(((tn)>>4)<<5))
 //#define CONVERT_SPR_TILE(tn) (tn)
 #define SNES_VRAM_OFFSET ((SNES_Port[0x01]&0x03) << 14)

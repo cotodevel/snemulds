@@ -16,6 +16,7 @@ GNU General Public License for more details.
 */
 
 #ifndef __snes_h__
+#define __snes_h__
 
 #include <stdio.h>
 #include "common.h"
@@ -64,6 +65,10 @@ struct s_snescore
 //#define MAP SNES.Map
 
 extern struct s_snescore	SNESC;
+extern struct s_snes	SNES;
+//#define SNES	((struct s_snes *)(0x23E0000))
+extern uint16	PPU_PORT[0x90]; // 2100 -> 2183
+extern uint16	DMA_PORT[0x180]; // 4200 -> 437F
 
 struct s_snes
 {
@@ -122,10 +127,6 @@ struct s_snes
   int		stat_OPC_cnt[256];*/
 };
 
-extern struct s_snes	SNES;
-//#define SNES	((struct s_snes *)(0x23E0000))
-extern uint16	PPU_PORT[0x90]; // 2100 -> 2183
-extern uint16	DMA_PORT[0x180]; // 4200 -> 437F
 
 // DS->Snes Memory
 #define DS_SRAM          ((uint8*)0x0A000000)
@@ -163,7 +164,5 @@ void	reset_SNES();
 int		get_joypad();
 void	HDMA_write();
 void	load_ROM(char *ROM, int ROM_size);
-
-
 
 #endif

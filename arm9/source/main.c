@@ -447,8 +447,8 @@ int main(int argc, char ** argv){
 	/*			TGDS 1.5 Standard ARM9 Init code start	*/
 	bool project_specific_console = true;	//set default console or custom console: custom console
 	GUI_init(project_specific_console);
+	GUI_clear();
 	
-	clrscr();
 	sint32 fwlanguage = (sint32)getLanguage();
 	GUI_setLanguage(fwlanguage);
 	
@@ -460,7 +460,6 @@ int main(int argc, char ** argv){
 	if (ret == 0)
 	{
 		printf(_STR(IDS_FS_SUCCESS));
-		//FRESULT res = FS_chdir("0:/");
 	}
 	else if(ret == -1)
 	{
@@ -472,20 +471,9 @@ int main(int argc, char ** argv){
 	
 	DisableIrq(IRQ_VCOUNT);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	
-	/*
-	//debug
-	printf(" - ");
-	printf(" - ");
-	printf(" - ");
-	printf(" - ");
-	printf("wait");
-	
-	while(1==1){
-		IRQVBlankWait();
-	}
-	*/
-	
 	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+	coherent_user_range_by_size((u32)TGDSUSERIPC, sizeof(struct sIPCSharedTGDSSpecific));
+	
 	TGDSUSERIPC->APU_ADDR_CNT = 0;
 	TGDSUSERIPC->APU_ADDR_ANS = TGDSUSERIPC->APU_ADDR_CMD = 0;
 	screen_mode = 0;
@@ -565,9 +553,6 @@ int main(int argc, char ** argv){
 
 	//char *ROMfile = GUI_getROM(CFG.ROMPath);
 	//clrscr();
-	
-	//single player:
-	switch_dswnifi_mode(dswifi_idlemode);
 	
 	char bufstr[0x100];
 	sprintf(bufstr,"%s",getfatfsPath("snes"));	//0:/snes

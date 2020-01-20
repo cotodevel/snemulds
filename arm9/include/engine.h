@@ -20,8 +20,25 @@ GNU General Public License for more details.
 
 #include "dsregs.h"
 #include "typedefsTGDS.h"
-
-#endif
+#include "opcodes.h"
+#include "common.h"
+#include "fs.h"
+#include "gfx.h"
+#include "cpu.h"
+#include "apu.h"
+#include "cfg.h"
+#include "core.h"
+#include "ppu.h"
+#include "conf.h"
+#include "memmap.h"
+#include "guiTGDS.h"
+#include "ipcfifoTGDSUser.h"
+#include "nds_cp15_misc.h"
+#include "fatfslayerTGDS.h"
+#include "about.h"
+#include "utilsTGDS.h"
+#include "clockTGDS.h"
+#include "dswnifi_lib.h"
 
 
 #ifdef __cplusplus
@@ -39,7 +56,6 @@ extern int saveSRAM();
 extern uint8 interrupted;
 
 extern int initSNESEmpty();
-extern int go();
 extern void show_opcode(sint8 *buf, uint8 opcode, int pc, int pb, unsigned short flags);
 extern int trace_CPU();
 extern void trace_CPUFast();
@@ -50,4 +66,6 @@ extern bool nifiVblankEndWait;
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

@@ -34,31 +34,6 @@ GNU General Public License for more details.
 #include "dmaTGDS.h"
 #include "engine.h"
 
-extern int		screen_mode; // NDS MAIN screen mode
-
-/* should be 64 bytes long */
-typedef struct s_OAM_entry
-{
-	uint8 Y;
-	uint8 rot_data:2;
-	uint8 mode:2;
-	uint8 mosaic:1;
-	uint8 color_depth:1;
-	uint8 shape:2;
-	
-	uint16 X:9;
-	uint8 rot_data2:3;
-	uint8 flip:2;
-	uint8 size:2;
-	
-	uint16 tile_index:10;
-	uint8 pr:2;
-	uint8 palette:4;
-	
-	uint16 rot_data3;
-} t_OAM_entry;
-
-
 
 __attribute__((section(".dtcm")))
 uint32 bittab[256];
@@ -133,16 +108,6 @@ void check_tile_addr()
 {
 //	GFX.tiles_dirty = 1;	
 }
-
-/* Testing stuff... */
-
-typedef struct
-{
-	int 	base;	// SNES base address
-	int		depth;  // Bpp depth: 2 4 8
-	uint16	*DSVRAMAddress;
-	int		used;	
-} t_TileZone;
 
 int			NeedUpdate2b;
 int			NeedUpdate4b;
