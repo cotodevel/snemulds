@@ -466,6 +466,17 @@ int main(int argc, char ** argv){
 		printf(_STR(IDS_FS_FAILED));
 	}
 	
+	clrscr();
+	printf(" - - - - ");
+	printf(" - - - - ");
+	printf(" - - - - ");
+	printf(" - - - - ");
+	printf(" - - - - ");
+	printf(" - - - - ");
+	printf(" - - - - ");
+	printf(" - - - - ");
+	clrscr();
+	
 	switch_dswnifi_mode(dswifi_idlemode);
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
