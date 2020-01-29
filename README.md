@@ -5,6 +5,20 @@ Branch: Master. This uses ARM7 DLDI (future DSi compatibility). Use ARM9DLDI bra
 SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes)... 
 This is based from real 0.6.a sources archeide left years ago and I managed to find.
 
+End-users:
+
+Instructions:
+
+How to get the latest working version:
+
+    - Download latest sources from Master branch: https://bitbucket.org/Coto88/SnemulDS/get/HEAD.zip
+    - Download and copy, either /arm7dldi -> SnemulDS.nds or /arm9dldi -> SnemulDS.nds from /release folder, snemul.cfg as well, in SD:/ root folder. If it prompts for overwrite: Yes to All. 
+	  arm7dldi and/or arm9dldi may work in your card. The one working will emit emulation sound.
+    
+	- Then run SNEmulDS.nds
+
+
+Programmers:
 /release folder has precompiled binaries for you to enjoy
 
 Compile Toolchain: To compile this project you will need to follow the steps at https://bitbucket.org/Coto88/toolchaingenericds : Then simply extract the project somewhere.
