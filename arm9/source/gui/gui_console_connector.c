@@ -219,6 +219,9 @@ bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst){
 	
 	GUI.Palette[39] = RGB8(255, 255, 255); // White
 	
+	GUI.consoleAtTopScreen = false;	//GUI console at bottom screen
+	GUI.consoleBacklightOn = true;	//Backlight On for console
+	
 	UpdateConsoleSettings(ConsoleInstanceInst);
 	return true;
 }
@@ -1122,7 +1125,7 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		{
 			GUI.hide = 1;
 			powerOFF(POWER_2D_B);
-			setBacklight(PM_BACKLIGHT_TOP);
+			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
 		}
 		return 1;
 	}

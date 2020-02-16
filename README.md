@@ -17,6 +17,11 @@ How to get the latest working version:
     
 	- Then run SNEmulDS.nds
 
+Hotkeys:
+
+	While SnemulDS runs a game, it is possible to perform the following hotkeys:
+	- L + R + START + Right: 	Swap Menu Screen/Emulator framebuffer between Top / Bottom Screen. When framebuffer is set to bottom screen, the top screen will turn off.
+	
 
 Programmers:
 /release folder has precompiled binaries for you to enjoy

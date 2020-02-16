@@ -77,10 +77,6 @@ GNU General Public License for more details.
 #include "keypadTGDS.h"
 #include "videoTGDS.h"
 
-
-
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif

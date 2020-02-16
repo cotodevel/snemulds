@@ -33,15 +33,27 @@ int	setBacklight(int flags)
 	SendArm7Command(8 | (flags << 16));
 }
 */
-int myLCDSwap()
-{
+
+int myLCDSwap(){
+	
+	//Update the console location register, and with it, the backlight setting
+	if(GUI.consoleAtTopScreen == true){
+		GUI.consoleAtTopScreen = false;
+	}
+	else{
+		GUI.consoleAtTopScreen = true;
+	}
+	
 	SWAP_LCDS();
+	ToggleOnOffConsoleBacklight();
+	
+	
 	if (GUI.hide)
 	{
 		if (REG_POWERCNT & POWER_SWAP_LCDS)
-			setBacklight(PM_BACKLIGHT_TOP);
+			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
 		else
-			setBacklight(PM_BACKLIGHT_BOTTOM);
+			setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 	}
 	return 0;
 }
@@ -89,11 +101,8 @@ int get_joypad()
 			if (joypad_conf_mode)
 				return 0;			
 			CFG.mouse ^= 1;
-/*			lcdSwap();
-			if (GUI.hide)
-				setBacklight(CFG.mouse ? PM_BACKLIGHT_BOTTOM : PM_BACKLIGHT_TOP);*/
-			myLCDSwap();
 			joypad_conf_mode = 1;
+			
 			return 0;			
 		}
 		if (keys & KEY_RIGHT)
@@ -101,9 +110,6 @@ int get_joypad()
 			if (joypad_conf_mode)
 				return 0;			
 			CFG.mouse = 0;
-/*			lcdSwap();
-			if (GUI.hide)
-				setBacklight(CFG.mouse ? PM_BACKLIGHT_BOTTOM : PM_BACKLIGHT_TOP);*/
 			myLCDSwap();			
 			joypad_conf_mode = 1;
 			return 0;				

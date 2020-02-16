@@ -54,9 +54,6 @@ GNU General Public License for more details.
 	#undef SRAM
 #endif
 
-#define PM_BACKLIGHT_BOTTOM  (1<<2)    // Enable the top backlight if set
-#define PM_BACKLIGHT_TOP     (1<<3)    // Enable the bottom backlight if set
-
 #ifdef WIN32
 #define STATIC_INLINE static _inline
 #else
