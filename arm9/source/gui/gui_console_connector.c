@@ -1233,6 +1233,7 @@ void GUI_createMainMenu(){
 void GUI_getConfig(){
 	CFG.GUISort = get_config_int("GUI", "FileChooserSort", 1);
 	CFG.Language = get_config_int("GUI", "Language", -1);
+	CFG.TopScreenEmu = get_config_int("GUI", "TopScreen", 1);
 	
 	if (CFG.Language != -1)
 		GUI_setLanguage(CFG.Language);

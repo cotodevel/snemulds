@@ -89,6 +89,7 @@ struct s_cfg
 // GUI  
   sint8		GUISort;
   sint16	Language;
+  int TopScreenEmu;	//0: emulator renders at Bottom Screen -- 1: emulator renders at Top Screen (default)
 };
 
 #endif

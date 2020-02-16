@@ -163,7 +163,8 @@ void readOptionsFromConfig(char *section)
 	CFG.SpritePr[2] = (SpritePriority>>6) & 3;
 	CFG.SpritePr[3] = (SpritePriority>>9) & 3;
 	
-	//CFG.MapExtMem = get_config_int(section, "MapExtMem", CFG.MapExtMem);
+	//CFG.MapExtMem = get_config_int(section, "MapExtMem", CFG.MapExtMem);	//SLOT-2 external memory is disabled
+	CFG.AutoSRAM = get_config_int(section, "AutoSRAM", CFG.AutoSRAM);
 	
 	CFG.AutoSRAM = get_config_int(section, "AutoSRAM", CFG.AutoSRAM);
 }
@@ -389,7 +390,12 @@ int loadROM(char *name, int confirm)
 	changeROM(ROM-ROMheader, size);
 
 	checkConfiguration(name, crc);
-
+	
+	//Apply topScreen / bottomScreen setting
+	if(CFG.TopScreenEmu == 0){
+		SnemulDSLCDSwap();
+	}
+	
 	return 0;
 }
 
