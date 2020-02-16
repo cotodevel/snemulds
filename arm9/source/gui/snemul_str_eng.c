@@ -89,7 +89,7 @@ sint8*  g_snemulds_str_eng[] =
 		"9",						/* 79 */
 		" ",						/* 80 */
 		"X",						/* 81 */
-		"Automatic SRAM saving",	/* 82 */
+		"SRAM saving",				/* 82 */
 		"",							/* 83 */
 		"",							/* 84 */
 		"Use memory pak",			/* 85 */

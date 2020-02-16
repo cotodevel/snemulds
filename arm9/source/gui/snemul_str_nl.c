@@ -89,7 +89,7 @@ sint8*  g_snemulds_str_nl[] =
     "9",            /* 79 */
     " ",            /* 80 */
     "X",            /* 81 */
-    "SRAM automatisch opslaan",  /* 82 */
+    "SRAM opslaan",  /* 82 */
     "",             /* 83 */
     "",             /* 84 */
     "Gebruik het memory pak",     /* 85 */

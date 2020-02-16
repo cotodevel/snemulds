@@ -89,7 +89,7 @@ sint8*  g_snemulds_str_cat[] =
 		"9",						/* 79 */
 		" ",						/* 80 */
 		"X",						/* 81 */
-		"Guardar SRAM automàticament",	/* 82 */
+		"Guardar SRAM",	/* 82 */
 		"",							/* 83 */
 		"",							/* 84 */
 		"Usar memory pak",			/* 85 */

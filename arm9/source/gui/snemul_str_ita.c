@@ -89,7 +89,7 @@ sint8*  g_snemulds_str_ita[] =
         "9",                        /* 79 */
         " ",                        /* 80 */
         "X",                        /* 81 */
-        "Salvataggio automatico SRAM",    /* 82 */
+        "Salvataggio SRAM",    /* 82 */
         "",                            /* 83 */
         "",                            /* 84 */
         "Usa espansione di memoria",            /* 85 */

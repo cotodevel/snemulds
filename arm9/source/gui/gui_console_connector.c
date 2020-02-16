@@ -906,7 +906,7 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			CFG.CPU_speedhack = (int)arg >> 24;
 			return 1;	
 		case 5: // Automatic SRAM saving
-			CFG.AutoSRAM = (int)arg >> 24;
+			CFG.EnableSRAM = (int)arg >> 24;
 			return 1;
 		
 		case 6: //multiplayer
@@ -979,7 +979,7 @@ t_GUIScreen *buildOptionsMenu(){
 	GUI_setZone   (scr, 11, 24, 144, 256, 144+16); // Auto order static
 	GUI_linkObject(scr, 11, GUI_STATIC_LEFT(IDS_AUTO_SRAM, 0), GUIStaticEx_handler);
 	GUI_setZone   (scr, 5, 0, 144, 16, 144+16); // Automatic SRAM saving
-	GUI_linkObject(scr, 5, GUI_CHOICE(IDS_CHECK, 2, CFG.AutoSRAM), GUIChoiceButton_handler);
+	GUI_linkObject(scr, 5, GUI_CHOICE(IDS_CHECK, 2, CFG.EnableSRAM), GUIChoiceButton_handler);
 
 	//GUI_setZone   (scr, 6, 100, 84, 100+16, 84+16); // Memory pak extension
 	//GUI_linkObject(scr, 6, GUI_CHOICE(IDS_CHECK, 2, 0 > 0), GUIChoiceButton_handler);

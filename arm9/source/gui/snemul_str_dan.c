@@ -89,7 +89,7 @@ sint8*  g_snemulds_str_dan[] =
 		"9",						/* 79 */
 		" ",						/* 80 */
 		"X",						/* 81 */
-		"Automatisk SRAM gemning",	/* 82 */
+		"SRAM gemning",	/* 82 */
 		"",							/* 83 */
 		"",							/* 84 */
 		"Brug hukommelses modul",			/* 85 */

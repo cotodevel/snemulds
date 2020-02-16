@@ -164,9 +164,8 @@ void readOptionsFromConfig(char *section)
 	CFG.SpritePr[3] = (SpritePriority>>9) & 3;
 	
 	//CFG.MapExtMem = get_config_int(section, "MapExtMem", CFG.MapExtMem);	//SLOT-2 external memory is disabled
-	CFG.AutoSRAM = get_config_int(section, "AutoSRAM", CFG.AutoSRAM);
+	CFG.EnableSRAM = get_config_int(section, "EnableSRAM", CFG.EnableSRAM);
 	
-	CFG.AutoSRAM = get_config_int(section, "AutoSRAM", CFG.AutoSRAM);
 }
 
 void saveOptionsToConfig(char *section)
@@ -204,7 +203,7 @@ void saveOptionsToConfig(char *section)
 	 set_config_int(section, "BlankTileNumber", CFG.Debug2);
 	 set_config_oct(section, "SpritePriority", 01123);*/
 	
-	set_config_int(section, "AutoSRAM", CFG.AutoSRAM);
+	set_config_int(section, "EnableSRAM", CFG.EnableSRAM);
 	save_config_file();
 }
 

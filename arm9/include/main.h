@@ -213,10 +213,10 @@ static inline int go()
 
           GFX.nb_frames = 0;
           
-          if (CFG.AutoSRAM && SNES.SRAMWritten)
+          if (CFG.EnableSRAM && SNES.SRAMWritten)
           {
         	  saveSRAM();
-        	  printf("Auto SRAM written");
+        	  printf("SRAM written");
         	  SNES.SRAMWritten = 0;
           }
       }

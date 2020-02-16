@@ -89,7 +89,7 @@ sint8*  g_snemulds_str_spa[] =
 		"9",						/* 79 */
 		" ",						/* 80 */
 		"X",						/* 81 */
-		"Guardado automático de SRAM",	/* 82 */
+		"Guardado de SRAM",	/* 82 */
 		"",							/* 83 */
 		"",							/* 84 */
 		"Utiliza la expansión de memoria",			/* 85 */

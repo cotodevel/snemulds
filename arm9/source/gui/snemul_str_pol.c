@@ -89,7 +89,7 @@ sint8*  g_snemulds_str_pol[] =
       "9",                  /* 79 */
       " ",                  /* 80 */
       "X",                  /* 81 */
-      "Automatyczne zapisywanie SRAM",   /* 82 */
+      "zapisywanie SRAM",   /* 82 */
       "",                     /* 83 */
       "",                     /* 84 */
       "Uzywaj Memoru paku",         /* 85 */
