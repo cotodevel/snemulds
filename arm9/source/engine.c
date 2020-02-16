@@ -164,44 +164,44 @@ int	changeROM(char *ROM, int size)
     loadSRAM();	
 }
 
-int initSNESEmpty()
-{
-  CFG.BG3Squish = 0;
-  CFG.WaitVBlank = 0;
-  CFG.YScroll = 0;
-  CFG.CPU_speedhack = 1;
-  CFG.LocalPlayMode = 0; //0 == idle / 1 == local: host / 2 == local: guest
-  //CFG.TileMode = 1;
-  CFG.Scaled = 0;
-  CFG.LayersConf = 0;
-  
-  CFG.frame_rate = 1;
-  CFG.DSP1 = CFG.SuperFX = 0;
-  CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
-  CFG.Sound_output = 1;
-  //CFG.Sound_output = 0;
-  CFG.FastDMA = 1;
-  CFG.Transparency = 1;
+int initSNESEmpty(){
+	CFG.BG3Squish = 0;
+	CFG.WaitVBlank = 0;
+	CFG.YScroll = 0;
+	CFG.CPU_speedhack = 1;
+	CFG.LocalPlayMode = 0; //0 == idle / 1 == local: host / 2 == local: guest
+	//CFG.TileMode = 1;
+	CFG.Scaled = 0;
+	CFG.LayersConf = 0;
 
-  memset(&SNES, 0, sizeof(SNES));
-  memset(&SNESC, 0, sizeof(SNESC));
+	CFG.frame_rate = 1;
+	CFG.DSP1 = CFG.SuperFX = 0;
+	CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
+	CFG.Sound_output = 1;
+	//CFG.Sound_output = 0;
+	CFG.FastDMA = 1;
+	CFG.Transparency = 1;
 
-//  SNES.flog = fopen("snemul.log", "w");
-//	SNES.flog = stdout;
+	memset(&SNES, 0, sizeof(SNES));
+	memset(&SNESC, 0, sizeof(SNESC));
 
-/* allocate memory */
-  SNESC.ROM = NULL;  /* Should be a fixed allocation */
-  //SNESC.RAM = (uchar *)malloc(0x020000);
-  SNESC.RAM = (uchar *)SNES_RAM_ADDRESS;
-  SNESC.VRAM = (uchar *)malloc(0x010000);
-  //SNESC.BSRAM = (uchar *)malloc(0x8000);
-  SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
-  init_GFX();
+	//  SNES.flog = fopen("snemul.log", "w");
+	//	SNES.flog = stdout;
 
-  GFX.Graph_enabled = 1;
+	/* allocate memory */
+	SNESC.ROM = NULL;  /* Should be a fixed allocation */
+	//SNESC.RAM = (uchar *)malloc(0x020000);
+	SNESC.RAM = (uchar *)SNES_RAM_ADDRESS;
+	SNESC.VRAM = (uchar *)malloc(0x010000);
+	//SNESC.BSRAM = (uchar *)malloc(0x8000);
+	SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
+	init_GFX();
 
-//  printf("Init OK...\n");
-  return 0;
+	GFX.Graph_enabled = 1;
+	setTouchScreenEnabled(true);	//Enable TSC
+	
+	//  printf("Init OK...\n");
+	return 0;
 }
 
 __attribute__((section(".dtcm")))

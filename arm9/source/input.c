@@ -17,8 +17,6 @@
 #include "videoTGDS.h"
 #include "keypadTGDS.h"
 
-//extern touchPosition superTouchReadXY();
-
 extern u32 keys;
 
 uint32	joypad_conf_mode = 0;
@@ -34,20 +32,18 @@ int	setBacklight(int flags)
 }
 */
 
-int myLCDSwap(){
-	
+int SnemulDSLCDSwap(){
 	//Update the console location register, and with it, the backlight setting
 	if(GUI.consoleAtTopScreen == true){
 		GUI.consoleAtTopScreen = false;
+		setTouchScreenEnabled(true);	//Enable TSC
 	}
 	else{
 		GUI.consoleAtTopScreen = true;
+		setTouchScreenEnabled(false);	//Disable TSC
 	}
-	
 	SWAP_LCDS();
 	ToggleOnOffConsoleBacklight();
-	
-	
 	if (GUI.hide)
 	{
 		if (REG_POWERCNT & POWER_SWAP_LCDS)
@@ -110,7 +106,7 @@ int get_joypad()
 			if (joypad_conf_mode)
 				return 0;			
 			CFG.mouse = 0;
-			myLCDSwap();			
+			SnemulDSLCDSwap();			
 			joypad_conf_mode = 1;
 			return 0;				
 		}		
@@ -216,11 +212,8 @@ int get_joypad()
 			}  
 		}
 
-		//touchPosition touchXY;
-		//touchXY = superTouchReadXY();
-		
-		if (keysHeld() & KEY_TOUCH)
-		{		
+		//Touchscreen Events
+		if (keysHeld() & KEY_TOUCH){
 			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 			int tx, ty;
 			tx = TGDSIPC->touchXpx;
@@ -257,7 +250,6 @@ int get_joypad()
 			}
 			else
 				SNES.mouse_b =  mouse_cur_b;
-		
 		}
 		else
 		SNES.mouse_b =  0;

@@ -29,28 +29,10 @@
 #include "dswnifi_lib.h"
 #include "global_settings.h"
 
-//#define USE_EMUL
-
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
-
 uint32 screen_mode;
 int APU_MAX = 262;
-//volatile int h_blank;
-
-
 u32 keys;
-
-typedef struct s_Options
-{
-	uint8 BG3Squish :2;
-	uint8 SoundOutput :1;
-	uint8 LayersConf :6;
-	uint8 TileMode :1;
-	uint8 BG_Layer :8;
-	uint8 YScroll :2;
-	uint8 WaitVBlank :1;
-	uint8 SpeedHack :3;
-} t_Options;
 
 void applyOptions()
 {
@@ -411,8 +393,6 @@ int loadROM(char *name, int confirm)
 	return 0;
 }
 
-#define DEBUG_BUF ((char *)0x27FE200)
-
 int selectSong(char *name)
 {
 	char spcname[100];
@@ -438,9 +418,6 @@ int selectSong(char *name)
 	return 0;
 }
 
-
-
-
 //---------------------------------------------------------------------------------
 __attribute__((section(".itcm")))
 int main(int argc, char ** argv){
@@ -451,6 +428,12 @@ int main(int argc, char ** argv){
 	
 	sint32 fwlanguage = (sint32)getLanguage();
 	GUI_setLanguage(fwlanguage);
+	
+	clrscr();
+	printf("----");
+	printf("----");
+	printf("----");
+	printf("----");
 	
 	printf(_STR(IDS_INITIALIZATION));
 	#ifdef ARM7_DLDI
@@ -466,25 +449,12 @@ int main(int argc, char ** argv){
 		printf(_STR(IDS_FS_FAILED));
 	}
 	
-	clrscr();
-	printf(" - - - - ");
-	printf(" - - - - ");
-	printf(" - - - - ");
-	printf(" - - - - ");
-	printf(" - - - - ");
-	printf(" - - - - ");
-	printf(" - - - - ");
-	printf(" - - - - ");
-	clrscr();
-	
 	switch_dswnifi_mode(dswifi_idlemode);
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
 	DisableIrq(IRQ_VCOUNT);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
-	
 	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
 	coherent_user_range_by_size((u32)TGDSUSERIPC, sizeof(struct sIPCSharedTGDSSpecific));
-	
 	TGDSUSERIPC->APU_ADDR_CNT = 0;
 	TGDSUSERIPC->APU_ADDR_ANS = TGDSUSERIPC->APU_ADDR_CMD = 0;
 	screen_mode = 0;
@@ -499,7 +469,7 @@ int main(int argc, char ** argv){
 	
 	update_spc_ports();
 	initSNESEmpty();
-
+	
 	// Clear "HDMA"
 	int i = 0;
 	for (i = 0; i < 192; i++){
@@ -507,43 +477,12 @@ int main(int argc, char ** argv){
 		t_GFX_lineInfo *l = &GFX.lineInfo[i];
 		memset((u8*)l, 0, sizeof(GFX.lineInfo));
 	}
-#if 0
-	{	char *p = malloc(10);
-		printf("RAM = %p last malloc = %p", SNESC.RAM, p);
-	}
-	/* TOUCH SCREEN TEST */
-	while (1)
-	{
-		int i;
 
-		mytouchPosition mytouchXY;
-
-		keys = keysPressed();
-		//		mytouchXY=mytouchReadXY();
-
-		printf("keys = %x %d ", keys, SNES.h_blank);
-		if (keys & KEY_TOUCH)
-		{
-			touchXY=superTouchReadXY();
-			printf("x = %d y = %d       ", touchXY.px, touchXY.py);
-			//		waitReleaseTouch();	
-		}
-
-		if ((keys & KEY_START))
-		break;
-	}
-#endif	
-
-
-#ifndef	DSEMUL_BUILD	
-	//for (i = 0; i < 100; i++)
-	//	IRQVBlankWait();
-#endif	
 	printf("Load conf1");
 	// Load SNEMUL.CFG
 	set_config_file(getfatfsPath("snemul.cfg"));	//set_config_file("snemul.cfg");
 	
-	//removed
+	//ext support removed for now
 	/*
 	{
 		FILE *f=fopen("/moonshl2/extlink.dat","rb");
@@ -553,7 +492,6 @@ int main(int argc, char ** argv){
 		if(extlink.ID!=ExtLinkBody_ID){printf("Not valid extlink.");while(1);}//__swiSleep();}
 	}
 	*/
-	
 	//CFG.ROMPath = get_config_string(NULL, "ROMPath", GAMES_DIR);
 	
 	printf("Load conf2");
@@ -562,14 +500,8 @@ int main(int argc, char ** argv){
 	GUI_getConfig();	
 	printf("Load conf4");
 
-	//char *ROMfile = GUI_getROM(CFG.ROMPath);
-	//clrscr();
-	
-	char bufstr[0x100];
-	sprintf(bufstr,"%s",getfatfsPath("snes"));	//0:/snes
-	sprintf(CFG.ROMPath,"%s",bufstr);
-	
-	GUI_getROM(bufstr);	//read rom from (path)touchscreen:output rom -> CFG.ROMFile
+	strcpy(CFG.ROMPath, getfatfsPath("snes"));	//0:/snes	-> old: //char *ROMfile = GUI_getROM(CFG.ROMPath);
+	GUI_getROM(CFG.ROMPath);	//read rom from (path)touchscreen:output rom -> CFG.ROMFile
 	
 	loadROM(CFG.ROMFile, 0);
 	GUI_deleteROMSelector(); // Should also free ROMFile
@@ -580,7 +512,6 @@ int main(int argc, char ** argv){
 	printf("CPU_init=%p ", CPU_init);
 	printf("CPU_goto=%p ", CPU_goto2);
 	printf("logbuf=%p ", logbuf);
-
 	while (1)
 	{
 		keys = keysPressed();
@@ -589,12 +520,10 @@ int main(int argc, char ** argv){
 	}
 #endif	
 	
-	while (1)
-	{
+	while (1){
 		if(REG_DISPSTAT & DISP_VBLANK_IRQ){
 			GUI_update();
 		}
-		
 		go();
 		
 		#ifdef GDB_ENABLE
@@ -630,6 +559,5 @@ int main(int argc, char ** argv){
 		//else should be connected and GDB running at desired IP/port
 		#endif
 	}
-
 	return 0;
 }

@@ -43,6 +43,8 @@ USA
 #error "ToolchainGenericDS SDK builds ARM7DLDI TGDS Binaries! Make sure it builds ARM9DLDI TGDS Binaries!"
 #endif
 
+
+//Coto: If your snemulDS build has no sound, the culprit is a mis-aligned struct s_apu2 + struct sIPCSharedTGDSSpecific, so fill in there int stubX (X = number) until it works.
 struct s_apu2
 {
 	/* timers */
@@ -55,21 +57,23 @@ struct s_apu2
 	int	    skipper_cnt3;
 	int	    skipper_cnt4;
 	int		counter;
+	int stub1;
+	int stub2;
+	int stub3;
+	int stub4;
 };
 
 struct sIPCSharedTGDSSpecific{
-	uint32 * IPC_ADDR;
-    uint8 * ROM;   		//pointer to ROM page
-    int rom_size;   	//rom total size
-	struct s_apu2 APU2;
 	uint8	PORT_SNES_TO_SPC[4];
 	uint8	PORT_SPC_TO_SNES[4];
 	uint32	APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
 	uint32	APU_ADDR_CMD;	//SNEMUL_CMD / APU_ADDR_CMD ((volatile uint32*)(0x2800000-16))	//0x027FFFE8
 	uint32	APU_ADDR_ANS;	//SNEMUL_ANS / ADDR_SNEMUL_ANS : //#define APU_ADDR_ANS ((volatile uint32*)(0x2800000-20))
 	uint32	APU_ADDR_BLK;	//APU_ADDR_BLK / SNEMUL_BLK ((volatile uint32*)(0x2800000-24))
-	volatile uint8 * APU_ADDR_BLKP;	//#define (vuint8*)APU_ADDR_BLKP == APU_ADDR_BLK
+	uint8 * APU_ADDR_BLKP;	//#define (vuint8*)APU_ADDR_BLKP == APU_ADDR_BLK
 	uint32	APU_ADDR_CNT;	//#define APU_ADDR_CNT ((volatile uint32*)(0x2800000-60))	/ 0x27fffc4 // used a SNES SCanline counter, unused by snemulds
+	bool touchScreenEnabled;
+	struct s_apu2 APU2;
 };
 
 // Project Specific
@@ -96,6 +100,18 @@ struct sIPCSharedTGDSSpecific{
 //Used by ARM9. Required internally by ARM7
 #define TGDSDLDI_ARM7_ADDRESS (int)(0x06000000 + (64*1024) - (0x4000))
 #endif
+
+//Enables / Disables the touchscreen
+static inline void setTouchScreenEnabled(bool status){
+	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+	TGDSUSERIPC->touchScreenEnabled = status;
+}
+
+static inline bool getTouchScreenEnabled(){
+	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+	return (bool)TGDSUSERIPC->touchScreenEnabled;
+}
+
 
 #endif
 

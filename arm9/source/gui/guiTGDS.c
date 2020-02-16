@@ -439,37 +439,31 @@ int GUI_update()
 		}
 	}
 	else{
-		if((pressed & KEY_TOUCH) && !(held & KEY_TOUCH))
-		{
-			g_event.event = EVENT_STYLUS_PRESSED;
-			g_event.stl.x = TGDSIPC->touchXpx;
-			g_event.stl.y = TGDSIPC->touchYpx;		
-			new_event = GUI_EVENT_STYLUS;
+		int px=0, py=0; 
+		if(getTouchScreenEnabled() == true){
+			px = TGDSIPC->touchXpx;
+			py = TGDSIPC->touchYpx;
 		}
-		
-		else if((held & KEY_TOUCH) && !(released & KEY_TOUCH))
-		{
-			/*
-			if (penIRQread() == false){
-				return 0;
-			}
-			*/
 			
-			g_event.event = EVENT_STYLUS_DRAGGED;
-
-			g_event.stl.dx = TGDSIPC->touchXpx - g_event.stl.x;
-			g_event.stl.dy = TGDSIPC->touchYpx - g_event.stl.y;
-			g_event.stl.x = TGDSIPC->touchXpx;
-			g_event.stl.y = TGDSIPC->touchYpx;
+		if((pressed & KEY_TOUCH) && !(held & KEY_TOUCH)){
+			g_event.event = EVENT_STYLUS_PRESSED;
+			g_event.stl.x = px;
+			g_event.stl.y = py;		
 			new_event = GUI_EVENT_STYLUS;
-		
 		}
-		else if (!(held & KEY_TOUCH) && (released & KEY_TOUCH)) //too much fast: (penIRQread() == false)
-		{
+		else if((held & KEY_TOUCH) && !(released & KEY_TOUCH)){
+			g_event.event = EVENT_STYLUS_DRAGGED;
+			g_event.stl.dx = px - g_event.stl.x;
+			g_event.stl.dy = py - g_event.stl.y;
+			g_event.stl.x = px;
+			g_event.stl.y = py;
+			new_event = GUI_EVENT_STYLUS;
+		}
+		else if (!(held & KEY_TOUCH) && (released & KEY_TOUCH)){ //too much fast: (penIRQread() == false)
 			g_event.event = EVENT_STYLUS_RELEASED;
 			new_event = GUI_EVENT_STYLUS;
-		}	
-
+		}
+		
 		else if((TGDSIPC->buttons7 != 0) && GUI.ScanJoypad){
 				g_event.event = EVENT_BUTTON_ANY;
 				new_event = GUI_EVENT_BUTTON;
