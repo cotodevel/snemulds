@@ -90,7 +90,7 @@ int guest_framecount = 0;
 //volatile uint8 somebuf[128];
 //sprintf((char*)somebuf,"DSTime:%d:%d:%d",getTime()->tm_hour,getTime()->tm_min,getTime()->tm_sec);
 //if(!FrameSenderUser){
-//				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	//make room for crc16 frame
+//				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	
 //}
 
 __attribute__((section(".dtcm")))
@@ -98,21 +98,10 @@ bool waitforhblank = false;
 
 //Example Receiver Code
 __attribute__((section(".itcm")))
-void HandleRecvUserspace(struct frameBlock * frameBlockRecv){
+bool TGDSRecvHandlerUser(struct frameBlock * frameBlockRecv, int DSWnifiMode){
 	//frameBlockRecv->framebuffer	//Pointer to received Frame
 	//frameBlockRecv->frameSize		//Size of received Frame
-	do_multi(frameBlockRecv);		
-}
-
-//Multiplayer key binding/buffer shared code. For DS-DS multiplayer emu core stuff.
-__attribute__((section(".itcm")))
-bool do_multi(struct frameBlock * frameBlockRecv)
-{
-	//frameBlockRecv->framebuffer	//Pointer to received Frame
-	//frameBlockRecv->frameSize		//Size of received Frame
-	
-	switch(getMULTIMode()){
-		
+	switch(DSWnifiMode){
 		//single player, has no access to shared buffers.
 		case(dswifi_idlemode):{
 			plykeys1 = get_joypad() | 0x80000000;	//bit15 (second half word) is for ready bit, required by emu		
@@ -220,9 +209,7 @@ bool do_multi(struct frameBlock * frameBlockRecv)
 			return true;
 		}
 		break;
-	
 	}
-	
 	return false;
 }
 

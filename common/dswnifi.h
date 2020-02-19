@@ -75,7 +75,7 @@ extern int guest_vcount;		//guest generated REG_VCOUNT
 //volatile uint8 somebuf[128];
 //sprintf((char*)somebuf,"DSTime:%d:%d:%d",getTime()->tm_hour,getTime()->tm_min,getTime()->tm_sec);
 //if(!FrameSenderUser){
-//				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	//make room for crc16 frame
+//				FrameSenderUser = HandleSendUserspace((uint8*)somebuf,sizeof(somebuf));	
 //}
 
 extern bool SendRawEmuFrame(int keys, int DS_VCOUNT, bool host, int ExtSnesFrameCount, uint32 cmdIssued,u8 DMA_PORT_EXTInst, struct tm DSEXTTime);
