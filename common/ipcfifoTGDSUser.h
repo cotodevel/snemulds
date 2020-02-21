@@ -72,7 +72,6 @@ struct sIPCSharedTGDSSpecific{
 	uint32	APU_ADDR_BLK;	//APU_ADDR_BLK / SNEMUL_BLK ((volatile uint32*)(0x2800000-24))
 	uint8 * APU_ADDR_BLKP;	//#define (vuint8*)APU_ADDR_BLKP == APU_ADDR_BLK
 	uint32	APU_ADDR_CNT;	//#define APU_ADDR_CNT ((volatile uint32*)(0x2800000-60))	/ 0x27fffc4 // used a SNES SCanline counter, unused by snemulds
-	bool touchScreenEnabled;
 	struct s_apu2 APU2;
 };
 
@@ -100,18 +99,6 @@ struct sIPCSharedTGDSSpecific{
 //Used by ARM9. Required internally by ARM7
 #define TGDSDLDI_ARM7_ADDRESS (int)(0x06000000 + (64*1024) - (0x4000))
 #endif
-
-//Enables / Disables the touchscreen
-static inline void setTouchScreenEnabled(bool status){
-	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-	TGDSUSERIPC->touchScreenEnabled = status;
-}
-
-static inline bool getTouchScreenEnabled(){
-	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-	return (bool)TGDSUSERIPC->touchScreenEnabled;
-}
-
 
 #endif
 

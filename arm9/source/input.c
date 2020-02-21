@@ -33,16 +33,7 @@ int	setBacklight(int flags)
 */
 
 int SnemulDSLCDSwap(){
-	//Update the console location register, and with it, the backlight setting
-	if(GUI.consoleAtTopScreen == true){
-		GUI.consoleAtTopScreen = false;
-		setTouchScreenEnabled(true);	//Enable TSC
-	}
-	else{
-		GUI.consoleAtTopScreen = true;
-		setTouchScreenEnabled(false);	//Disable TSC
-	}
-	SWAP_LCDS();
+	ToggleTGDSConsole();
 	ToggleOnOffConsoleBacklight();
 	if (GUI.hide)
 	{

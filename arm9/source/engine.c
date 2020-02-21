@@ -198,7 +198,6 @@ int initSNESEmpty(){
 	init_GFX();
 
 	GFX.Graph_enabled = 1;
-	setTouchScreenEnabled(true);	//Enable TSC
 	
 	//  printf("Init OK...\n");
 	return 0;
