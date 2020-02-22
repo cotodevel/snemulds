@@ -14,6 +14,7 @@
 #include "utilsTGDS.h"
 #include "biosTGDS.h"
 #include "dldi.h"
+#include "spifwTGDS.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
 uint16 *playBuffer;
@@ -178,4 +179,9 @@ int main(int _argc, sint8 **_argv) {
 	}
    
 	return 0;
+}
+
+//Custom Button Mapping Handler implementation: IRQ Driven
+void CustomInputMappingHandler(uint32 readKeys){
+	
 }
