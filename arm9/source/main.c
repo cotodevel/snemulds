@@ -28,6 +28,7 @@
 #include "conf.h"
 #include "dswnifi_lib.h"
 #include "global_settings.h"
+#include "eventsTGDS.h"
 
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
 uint32 screen_mode;
@@ -458,6 +459,8 @@ int main(int argc, char ** argv){
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
 	DisableIrq(IRQ_VCOUNT);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
+	disableSleepMode();	//Disable timeout-based sleep mode
+	
 	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
 	coherent_user_range_by_size((u32)TGDSUSERIPC, sizeof(struct sIPCSharedTGDSSpecific));
 	TGDSUSERIPC->APU_ADDR_CNT = 0;
