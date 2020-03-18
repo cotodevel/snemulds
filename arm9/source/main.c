@@ -428,8 +428,8 @@ int selectSong(char *name)
 __attribute__((section(".itcm")))
 int main(int argc, char ** argv){
 	/*			TGDS 1.5 Standard ARM9 Init code start	*/
-	bool project_specific_console = true;	//set default console or custom console: custom console
-	GUI_init(project_specific_console);
+	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
+	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
 	
 	sint32 fwlanguage = (sint32)getLanguage();

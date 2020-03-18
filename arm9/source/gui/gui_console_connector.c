@@ -56,13 +56,13 @@ GNU General Public License for more details.
 	//Which provides the console init code, example below.
 
 //After that you can call :
-	//bool project_specific_console = true;
-	//GUI_init(project_specific_console);
+	//bool isTGDSCustomConsole = true;
+	//GUI_init(isTGDSCustomConsole);
 
 
 ////////[For default Console implementation simply call]:////////
-	//bool project_specific_console = false;
-	//GUI_init(project_specific_console);
+	//bool isTGDSCustomConsole = false;
+	//GUI_init(isTGDSCustomConsole);
 
 
 
@@ -76,8 +76,7 @@ ConsoleInstance * getProjectSpecificVRAMSetup(){
 
 //1) VRAM Layout
 ConsoleInstance * SNEMULDS_2DVRAM_SETUP(){
-	
-	ConsoleInstance * CustomSessionConsoleInst = (ConsoleInstance *)(&CustomConsole);
+	ConsoleInstance * CustomSessionConsoleInst = (ConsoleInstance *)(&ConsoleHandle[1]);
 	memset (CustomSessionConsoleInst, 0, sizeof(CustomSessionConsoleInst));
 	vramSetup * vramSetupDefault = (vramSetup *)&CustomSessionConsoleInst->thisVRAMSetupConsole;
 	
