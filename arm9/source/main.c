@@ -430,16 +430,12 @@ int main(int argc, char ** argv){
 	/*			TGDS 1.5 Standard ARM9 Init code start	*/
 	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
 	GUI_init(isTGDSCustomConsole);
-	GUI_clear();
+	clrscr();
+	printf("%d",rand()&0xff1fffff);
 	
 	sint32 fwlanguage = (sint32)getLanguage();
 	GUI_setLanguage(fwlanguage);
 	
-	clrscr();
-	printf("----");
-	printf("----");
-	printf("----");
-	printf("----");
 	
 	printf(_STR(IDS_INITIALIZATION));
 	#ifdef ARM7_DLDI
