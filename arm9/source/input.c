@@ -35,7 +35,9 @@ int	setBacklight(int flags)
 int SnemulDSLCDSwap(){
 	bool isDirectFramebuffer = true;
 	bool disableTSCWhenTGDSConsoleTop = true;
-	TGDSLCDSwap(disableTSCWhenTGDSConsoleTop, isDirectFramebuffer);
+	bool SaveConsoleContext = false;	//no effect because directFB == true
+	u8 * FBSaveContext = NULL;			//no effect because directFB == true
+	TGDSLCDSwap(disableTSCWhenTGDSConsoleTop, isDirectFramebuffer, SaveConsoleContext, FBSaveContext);
 	ToggleOnOffConsoleBacklight();
 	if (GUI.hide)
 	{
