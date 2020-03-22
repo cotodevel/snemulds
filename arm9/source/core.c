@@ -627,7 +627,7 @@ uint32	R2141(uint32 addr)
 {
 	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
 	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSUSERIPC->APU2);
-	int newapupc = ((*(uint32*)(0x27E0000)) & 0xFFFF);
+	//int newapupc = ((*(uint32*)(0x27E0000)) & 0xFFFF);
 	
 /*	 if (TGDSUSERIPC->PORT_SPC_TO_SNES[1] == 0x33 || TGDSUSERIPC->PORT_SPC_TO_SNES[1] == 0x11 && 
 	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f)

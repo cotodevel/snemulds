@@ -431,11 +431,9 @@ int main(int argc, char ** argv){
 	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
 	GUI_init(isTGDSCustomConsole);
 	clrscr();
-	printf("%d",rand()&0xff1fffff);
 	
 	sint32 fwlanguage = (sint32)getLanguage();
 	GUI_setLanguage(fwlanguage);
-	
 	
 	printf(_STR(IDS_INITIALIZATION));
 	#ifdef ARM7_DLDI
@@ -456,6 +454,8 @@ int main(int argc, char ** argv){
 	
 	DisableIrq(IRQ_VCOUNT);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	disableSleepMode();	//Disable timeout-based sleep mode
+	
+	swiDelay(888);
 	
 	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
 	coherent_user_range_by_size((u32)TGDSUSERIPC, sizeof(struct sIPCSharedTGDSSpecific));

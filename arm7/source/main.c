@@ -15,6 +15,7 @@
 #include "biosTGDS.h"
 #include "dldi.h"
 #include "spifwTGDS.h"
+#include "posixHandleTGDS.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
 uint16 *playBuffer;
@@ -119,10 +120,12 @@ int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.5 Standard ARM7 Init code start	*/
 	installWifiFIFO();		//use DSWIFI
-	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
 	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
 	while (!(*((vuint8*)0x04000240) & 0x2));
+	
+	writePrintfBuffer7("TGDS ARM7.bin Boot OK!");
+	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
 	dmaFillHalfWord(3, 0x0, (uint32)ARM7_SOUNDWORK_BASE, (uint32)(128*1024));
 	

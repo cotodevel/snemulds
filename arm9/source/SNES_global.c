@@ -40,7 +40,7 @@ GNU General Public License for more details.
 #include "snes.h"
 
 
-__attribute__((section(".dtcm")))
+__attribute__((section(".itcm")))
 __attribute__ ((aligned (4))) struct s_cpu	CPU;
 
 __attribute__((section(".arm9sharedwram")))
@@ -54,9 +54,9 @@ __attribute__ ((aligned (4))) struct s_snescore	SNESC;
 
 __attribute__ ((aligned (4))) struct s_cfg	CFG;
 
-
-__attribute__((section(".dtcm")))
+__attribute__((section(".itcm")))
 uint16	PPU_PORT[0x90]; // 2100 -> 2183
-__attribute__((section(".dtcm")))
+
+__attribute__((section(".itcm")))
 uint16	DMA_PORT[0x180]; // 4200 -> 437F
 

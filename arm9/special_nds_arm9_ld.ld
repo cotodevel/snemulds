@@ -172,6 +172,8 @@ SECTIONS
 	
 	PROVIDE (__lib__end__ = __fini_end__ + 0x40);
 	
+	. = ALIGN(4);
+	
 	__itcm_vma_start = .;
 	.itcm : {
 		_vectors_start = .;
@@ -183,10 +185,12 @@ SECTIONS
 	} > ITCM AT > EWRAM
 	__itcm_vma_end__ = .;
 	
+	. = ALIGN(4);
 	
 	__dtcm_vma_start = .;
-	.dtcm : ALIGN(4) {
+	.dtcm :  {
 		KEEP (*(.dtcm*))
+		. = ALIGN(4);
 	} > DTCM AT > EWRAM
 	__dtcm_vma_end__ = .;
 	
