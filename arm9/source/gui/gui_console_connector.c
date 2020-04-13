@@ -222,6 +222,11 @@ bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst){
 	GUI.consoleBacklightOn = true;	//Backlight On for console
 	
 	UpdateConsoleSettings(ConsoleInstanceInst);
+	
+	
+	initARM7Malloc((u32)0x06000000, (u32)128*1024);	//Since the default console setup allocates ARM7 @ 0x06000000, 128K, initialize a malloc for ARM7. 
+													//Otherwise if custom console, this routine is custom impl.
+	
 	return true;
 }
 
