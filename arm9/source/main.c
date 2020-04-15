@@ -29,6 +29,8 @@
 #include "dswnifi_lib.h"
 #include "global_settings.h"
 #include "eventsTGDS.h"
+#include "posixHandleTGDS.h"
+#include "TGDSMemoryAllocator.h"
 
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
 uint32 screen_mode;
@@ -431,7 +433,7 @@ int main(int argc, char ** argv){
 	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
 	GUI_init(isTGDSCustomConsole);
 	clrscr();
-	
+	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup());
 	sint32 fwlanguage = (sint32)getLanguage();
 	GUI_setLanguage(fwlanguage);
 	
