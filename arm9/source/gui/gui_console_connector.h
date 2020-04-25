@@ -77,12 +77,33 @@ GNU General Public License for more details.
 #include "keypadTGDS.h"
 #include "videoTGDS.h"
 
+//SnemulDS GUI Colors
 
+#define GUI_PAL			0
+#define GUI_BLACK		(GUI_PAL+0)
+#define GUI_DARKGREY2	(GUI_PAL+1)
+#define GUI_DARKGREY	(GUI_PAL+2)
+#define GUI_GREY		(GUI_PAL+3)
 
+#define GUI_DARKRED		(GUI_PAL+4)
+#define GUI_RED			(GUI_PAL+5)
+#define GUI_LIGHTRED	(GUI_PAL+6)
 
-#define IDS_INITIALIZATION	0
-#define IDS_FS_FAILED		1
-#define IDS_FS_SUCCESS		2
+#define GUI_DARKGREEN	(GUI_PAL+12)
+#define GUI_GREEN		(GUI_PAL+13)
+#define GUI_LIGHTGREEN	(GUI_PAL+14)
+
+#define GUI_DARKBLUE	(GUI_PAL+8)
+#define GUI_BLUE		(GUI_PAL+9)
+#define GUI_LIGHTBLUE	(GUI_PAL+10)
+
+#define GUI_DARKYELLOW	(GUI_PAL+17)
+#define GUI_YELLOW		(GUI_PAL+18)
+#define GUI_LIGHTYELLOW	(GUI_PAL+19)
+
+#define GUI_LIGHTGREY	(GUI_WHITE-2)
+#define GUI_LIGHTGREY2	(GUI_WHITE-1)
+#define GUI_WHITE		255
 
 #define IDS_OK				10
 #define IDS_CANCEL			11
@@ -151,7 +172,6 @@ GNU General Public License for more details.
 #define IDS_GC_SPRITES		108
 
 #define IDS_MULTIPLAYER_MODE		109
-
 
 
 #endif

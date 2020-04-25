@@ -6,6 +6,7 @@
 #include "dsregs.h"
 #include "gui_widgets.h"
 #include "guiTGDS.h"
+#include "gui_console_connector.h"
 #include "consoleTGDS.h"
 #include "keypadTGDS.h"
 

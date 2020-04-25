@@ -1,4 +1,4 @@
-#include "consoleTGDS.h"
+#include "gui_console_connector.h"
 
 //used by gui_printf
 static t_GUIGlyph16 ft9_A032 =  { 4, 14, 1, 0, {

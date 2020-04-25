@@ -158,13 +158,10 @@ bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst){
 	GUI.DSBack = (uint16 *)BG_MAP_RAM_SUB(30);
 	GUI.DSTileMemory = (uint16 *)BG_TILE_RAM_SUB(7);
 	
-	BG_PALETTE_SUB[0] = RGB15(0,0,0);			//back-ground tile color
-	BG_PALETTE_SUB[255] = RGB15(26,26,26);		//tile color
-	
-	GUI.Palette = &BG_PALETTE_SUB[216];
+	GUI.Palette = &BG_PALETTE_SUB[0];
 	GUI.ScanJoypad = 0;
 	
-	GUI.Palette[0] = RGB8(0, 0, 0); // Black
+	GUI.Palette[0] = RGB8(0, 0, 0); // Black / back-ground tile color
 	GUI.Palette[1] = RGB8(32, 32, 32); // Dark Grey 2
 	GUI.Palette[2] = RGB8(64, 64, 64); // Dark Grey
 	GUI.Palette[3] = RGB8(128, 128, 128); // Grey
