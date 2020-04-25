@@ -101,9 +101,9 @@ GNU General Public License for more details.
 #define GUI_YELLOW		(GUI_PAL+18)
 #define GUI_LIGHTYELLOW	(GUI_PAL+19)
 
+#define GUI_WHITE		39
 #define GUI_LIGHTGREY	(GUI_WHITE-2)
 #define GUI_LIGHTGREY2	(GUI_WHITE-1)
-#define GUI_WHITE		255
 
 #define IDS_OK				10
 #define IDS_CANCEL			11

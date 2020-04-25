@@ -215,6 +215,13 @@ bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst){
 	
 	GUI.Palette[39] = RGB8(255, 255, 255); // White
 	
+	//Fill the Pallette
+	int i = 0;
+	for(i=0;i < (256 - 39); i++){
+		GUI.Palette[i + 40] = GUI.Palette[39];
+	}
+	
+	
 	GUI.consoleAtTopScreen = false;	//GUI console at bottom screen
 	GUI.consoleBacklightOn = true;	//Backlight On for console
 	
