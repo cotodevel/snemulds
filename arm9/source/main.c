@@ -459,10 +459,10 @@ int main(int argc, char ** argv){
 	
 	swiDelay(888);
 	
-	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-	coherent_user_range_by_size((u32)TGDSUSERIPC, sizeof(struct sIPCSharedTGDSSpecific));
-	TGDSUSERIPC->APU_ADDR_CNT = 0;
-	TGDSUSERIPC->APU_ADDR_ANS = TGDSUSERIPC->APU_ADDR_CMD = 0;
+	
+	coherent_user_range_by_size((u32)IPC6, sizeof(struct sIPCSharedTGDSSpecific));
+	IPC6->APU_ADDR_CNT = 0;
+	IPC6->APU_ADDR_ANS = IPC6->APU_ADDR_CMD = 0;
 	screen_mode = 0;
 	
 #ifndef DSEMUL_BUILD	

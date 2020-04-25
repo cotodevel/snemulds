@@ -598,9 +598,8 @@ uint32	R213F(uint32 addr)
 __attribute__((section(".itcm")))      
 uint32	R2140(uint32 addr)
 {
-	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSUSERIPC->APU2);
-	//	LOG("0 %02x (%04x, %04x)\n", TGDSUSERIPC->PORT_SPC_TO_SNES[0], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
+	//	LOG("0 %02x (%04x, %04x)\n", IPC6->PORT_SPC_TO_SNES[0], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
       if (!CFG.Sound_output)
       { /* APU Skipper */
         switch ((APU2->skipper_cnt1++)%11) {
@@ -617,7 +616,7 @@ uint32	R2140(uint32 addr)
           case 10: return 0x09;
         }
       }
-      return TGDSUSERIPC->PORT_SPC_TO_SNES[0];      
+      return IPC6->PORT_SPC_TO_SNES[0];      
 }
 
 static int oldapupc;
@@ -625,21 +624,20 @@ static int oldapupc;
 __attribute__((section(".itcm")))      
 uint32	R2141(uint32 addr)
 {
-	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSUSERIPC->APU2);
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
 	//int newapupc = ((*(uint32*)(0x27E0000)) & 0xFFFF);
 	
-/*	 if (TGDSUSERIPC->PORT_SPC_TO_SNES[1] == 0x33 || TGDSUSERIPC->PORT_SPC_TO_SNES[1] == 0x11 && 
+/*	 if (IPC6->PORT_SPC_TO_SNES[1] == 0x33 || IPC6->PORT_SPC_TO_SNES[1] == 0x11 && 
 	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f)
 	 APU_printLog();*/
 #if 0	 
-	 if (TGDSUSERIPC->PORT_SPC_TO_SNES[1] == 0x33 /*&& 
+	 if (IPC6->PORT_SPC_TO_SNES[1] == 0x33 /*&& 
 	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f*/)
 	 LOG(".");
 
-	 if (/*TGDSUSERIPC->PORT_SPC_TO_SNES[1] == 0x33 || */TGDSUSERIPC->PORT_SPC_TO_SNES[1] == 0x11 /*&& 
+	 if (/*IPC6->PORT_SPC_TO_SNES[1] == 0x33 || */IPC6->PORT_SPC_TO_SNES[1] == 0x11 /*&& 
 	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f*/)
-	//LOG("1 %02x (%04x, %04x)", TGDSUSERIPC->PORT_SPC_TO_SNES[1], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
+	//LOG("1 %02x (%04x, %04x)", IPC6->PORT_SPC_TO_SNES[1], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
 #endif	
 	
 /*	if (newapupc != 0)
@@ -668,13 +666,12 @@ uint32	R2141(uint32 addr)
           case 12: return REAL_A >> 8;        
         }
       }
-      return TGDSUSERIPC->PORT_SPC_TO_SNES[1];       
+      return IPC6->PORT_SPC_TO_SNES[1];       
 }
 __attribute__((section(".itcm")))      
 uint32	R2142(uint32 addr)
 {
-      struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-	  struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSUSERIPC->APU2);
+      struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
 	  if (!CFG.Sound_output)
 	  {
         switch ((APU2->skipper_cnt3++)%7) {
@@ -687,13 +684,13 @@ uint32	R2142(uint32 addr)
           case 6: return 0xBB;
         }
       }
-      return TGDSUSERIPC->PORT_SPC_TO_SNES[2];      
+      return IPC6->PORT_SPC_TO_SNES[2];      
 }
 __attribute__((section(".itcm")))
 uint32	R2143(uint32 addr)
 {     
-	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSUSERIPC->APU2);
+	
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
 
       if (!CFG.Sound_output)
 	  {
@@ -709,7 +706,7 @@ uint32	R2143(uint32 addr)
           case 8: return REAL_A>>8;
         }
       }
-      return TGDSUSERIPC->PORT_SPC_TO_SNES[3];      
+      return IPC6->PORT_SPC_TO_SNES[3];      
 }
 __attribute__((section(".itcm")))
 uint32	R2180(uint32 addr)
@@ -1159,7 +1156,6 @@ void	W2133(uint32 addr, uint32 value)
 
 /*
  * #if 0	
-	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
 	if (value == 0x55 && (newapupc & 0xf000) == 0xf000)
 	LOG("%02x 1 (%04x, %04x)\n", value, newapupc, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
 #else
@@ -1170,10 +1166,10 @@ void	W2133(uint32 addr, uint32 value)
 		dummy++;
 	}
 #endif		          		
-	if (TGDSUSERIPC->APU_ADDR_BLKP[1])
+	if (IPC6->APU_ADDR_BLKP[1])
 	{
 		//LOG("1 b %04x\n", newapupc);
-		while (TGDSUSERIPC->APU_ADDR_BLKP[1]);
+		while (IPC6->APU_ADDR_BLKP[1]);
 #if 0
   		LOG("1 w %02x %04x\n", value, *(uint16 *)(APU_RAM_ADDRESS+0x18));
 #else  		
@@ -1201,21 +1197,21 @@ void	W2140(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {    	
-		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+		
 //   		LOG("0<-%02x\n", value); 
     	if (CFG.SoundPortSync & 0x10)
     		pseudoSleep(SYNC_TIME);
 		if (CFG.SoundPortSync & 1)
 		{
-			if (TGDSUSERIPC->APU_ADDR_BLKP[0])
+			if (IPC6->APU_ADDR_BLKP[0])
 			{
-				while (TGDSUSERIPC->APU_ADDR_BLKP[0]);
+				while (IPC6->APU_ADDR_BLKP[0]);
 			}
 		}    	
-    	TGDSUSERIPC->PORT_SNES_TO_SPC[0] = value;
+    	IPC6->PORT_SNES_TO_SPC[0] = value;
     	
 		if ((CFG.SoundPortSync & 1) && value) 
-			TGDSUSERIPC->APU_ADDR_BLKP[0] = 1;    	
+			IPC6->APU_ADDR_BLKP[0] = 1;    	
     }
     else
         PPU_PORT[0x40] = value; 
@@ -1226,15 +1222,14 @@ void	W2141(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {
-		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-    	//LOG("1<-%02x\n", value);    	
+		//LOG("1<-%02x\n", value);    	
     	if (CFG.SoundPortSync & 0x20)
     		pseudoSleep(SYNC_TIME);
 		if (CFG.SoundPortSync & 2)
 		{
-			if (TGDSUSERIPC->APU_ADDR_BLKP[1])
+			if (IPC6->APU_ADDR_BLKP[1])
 			{
-				while (TGDSUSERIPC->APU_ADDR_BLKP[1]);
+				while (IPC6->APU_ADDR_BLKP[1]);
 			}
 		}
 /*				    	
@@ -1242,17 +1237,17 @@ void	W2141(uint32 addr, uint32 value)
 		int newapupc = (*(uint32*)(0x27E0000)) & 0xFFFF;
 		if (value == 0x55 && (newapupc & 0xf000) == 0x1000)
 			pseudoSleep(2000);	
-		if (TGDSUSERIPC->APU_ADDR_BLKP[1])
+		if (IPC6->APU_ADDR_BLKP[1])
 		{
-			while (TGDSUSERIPC->APU_ADDR_BLKP[1]);
+			while (IPC6->APU_ADDR_BLKP[1]);
 			pseudoSleep(2000);
 		}
 #endif
 */
-    	TGDSUSERIPC->PORT_SNES_TO_SPC[1] = value;
+    	IPC6->PORT_SNES_TO_SPC[1] = value;
     	
 		if ((CFG.SoundPortSync & 2) && value) 
-			TGDSUSERIPC->APU_ADDR_BLKP[1] = 1;			    	
+			IPC6->APU_ADDR_BLKP[1] = 1;			    	
     }
     else
         PPU_PORT[0x41] = value;
@@ -1263,22 +1258,22 @@ void	W2142(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {    
-		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+		
 //    	LOG("2<-%02x\n", value);    	
     	if (CFG.SoundPortSync & 0x40)
     		pseudoSleep(SYNC_TIME);    	
 		if (CFG.SoundPortSync & 4)
 		{
-			if (TGDSUSERIPC->APU_ADDR_BLKP[2])
+			if (IPC6->APU_ADDR_BLKP[2])
 			{
-				while (TGDSUSERIPC->APU_ADDR_BLKP[2]);
+				while (IPC6->APU_ADDR_BLKP[2]);
 			}
 		}
 
-    	TGDSUSERIPC->PORT_SNES_TO_SPC[2] = value;
+    	IPC6->PORT_SNES_TO_SPC[2] = value;
     	
 		if ((CFG.SoundPortSync & 4) && value) 
-			TGDSUSERIPC->APU_ADDR_BLKP[2] = 1;			    	
+			IPC6->APU_ADDR_BLKP[2] = 1;			    	
     }
     else
         PPU_PORT[0x42] = value;    	     
@@ -1289,22 +1284,22 @@ void	W2143(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {  
-		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+		
 //    	LOG("3<-%02x\n", value);    	
     	if (CFG.SoundPortSync & 0x80)
     		pseudoSleep(SYNC_TIME);    	
 		if (CFG.SoundPortSync & 8)
 		{	
-			if (TGDSUSERIPC->APU_ADDR_BLKP[3])
+			if (IPC6->APU_ADDR_BLKP[3])
 			{
-				while (TGDSUSERIPC->APU_ADDR_BLKP[3]);
+				while (IPC6->APU_ADDR_BLKP[3]);
 			}
 		}
 
-    	TGDSUSERIPC->PORT_SNES_TO_SPC[3] = value;
+    	IPC6->PORT_SNES_TO_SPC[3] = value;
    	
 		if ((CFG.SoundPortSync & 8) && value) 
-			TGDSUSERIPC->APU_ADDR_BLKP[3] = 1;			    	
+			IPC6->APU_ADDR_BLKP[3] = 1;			    	
     }
     else
         PPU_PORT[0x43] = value; 

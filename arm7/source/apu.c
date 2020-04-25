@@ -63,8 +63,7 @@ void SetStateFromRawPSW(uint32 state[16], uint8 psw) {
 }
 
 void  ApuReset() {
-    struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-	apuSleeping = 0;
+    apuSleeping = 0;
     APU_MEM = (uint8*)APU_RAM_ADDRESS;
 	APU_MEM_ZEROPAGEREAD = (uint8*)&MemZeroPageReadTable;
     APU_MEM_ZEROPAGEWRITE = (uint8*)&MemZeroPageWriteTable;
@@ -109,8 +108,8 @@ void  ApuReset() {
     for (i = 0; i < 4; i++) {
         ((uint32*)APU_MEM_ZEROPAGEREAD)[0xF4 + i] = (uint32)(&MemReadApuPort);
         ((uint32*)APU_MEM_ZEROPAGEWRITE)[0xF4 + i + 0x40]= (uint32)(&MemWriteApuPort);
-        TGDSUSERIPC->PORT_SNES_TO_SPC[i] = 0;
-        TGDSUSERIPC->PORT_SPC_TO_SNES[i] = 0;
+        IPC6->PORT_SNES_TO_SPC[i] = 0;
+        IPC6->PORT_SPC_TO_SNES[i] = 0;
     }
 	
     for (i = 0; i < 0x40; i++) {
@@ -132,7 +131,7 @@ void  ApuReset() {
     APU_STATE[8] = 0;
     APU_SP = 0x1FF;
 	
-	TGDSUSERIPC->APU2.TIM0 = 0;
-	TGDSUSERIPC->APU2.TIM1 = 0;
-	TGDSUSERIPC->APU2.TIM2 = 0;
+	IPC6->APU2.TIM0 = 0;
+	IPC6->APU2.TIM1 = 0;
+	IPC6->APU2.TIM2 = 0;
 }

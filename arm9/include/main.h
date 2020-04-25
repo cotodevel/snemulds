@@ -67,8 +67,8 @@ static inline int go()
 		return 0;
 	}
 	
-	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSUSERIPC->APU2);
+	
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
 	CPU.HCycles = SNES.UsedCycles;	
     if (DMA_PORT[0x00]&0x10) 
     {

@@ -21,7 +21,7 @@ USA
 
 //IPC FIFO Description: 
 //		struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 														// Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
-//		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;		// Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
+//		struct sIPCSharedTGDSSpecific * IPC6 = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;		// Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
 
 
 #include "ipcfifoTGDS.h"
@@ -85,8 +85,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			StopSound();
 
 			memset(playBuffer, 0, MIXBUFSIZE * 8);
-			struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-			TGDSUSERIPC->APU_ADDR_CNT = 0; 
+			IPC6->APU_ADDR_CNT = 0; 
 			ApuReset();
 			DspReset();
 
@@ -111,8 +110,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC 	
 			LoadSpc(APU_RAM_ADDRESS);
 			SetupSound();   	
-			struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-			TGDSUSERIPC->APU_ADDR_CNT = 0;             	
+			IPC6->APU_ADDR_CNT = 0;             	
 			paused = false;
 			SPC_freedom = true;
 			SPC_disable = false;
@@ -121,8 +119,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			
 		case SNEMULDS_APUCMD_SPCDISABLE:{ //case 0x00000004:{ // DISABLE 
 			SPC_disable = true;
-			struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-			TGDSUSERIPC->APU_ADDR_CNT = 0;
+			IPC6->APU_ADDR_CNT = 0;
 		}
 		break;        
 		
@@ -138,8 +135,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			
 		case SNEMULDS_APUCMD_LOADSPC:{ //case 0x00000007:{ // LOAD state 
 			LoadSpc(APU_RAM_ADDRESS);
-			struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-			TGDSUSERIPC->APU_ADDR_CNT = 0; 
+			IPC6->APU_ADDR_CNT = 0; 
 		}
 		break;
 		#endif
@@ -157,8 +153,7 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
-	struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSUSERIPC->APU2);
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
 	APU_T0_ASM_ADDR = (uint32)&APU2->T0;
 	APU_T1_ASM_ADDR = (uint32)&APU2->T1;
 	APU_T2_ASM_ADDR = (uint32)&APU2->T2;
@@ -172,14 +167,14 @@ void update_spc_ports(){
 	APU_CNT2_ASM_ADDR = (uint32)&APU2->CNT2;
 	
 	//must reflect to ipcfifoTGDSUser.h defs
-	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&TGDSUSERIPC->PORT_SPC_TO_SNES[0];
-	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)&TGDSUSERIPC->PORT_SNES_TO_SPC[0]; 
-	ADDR_APU_PROGRAM_COUNTER=	(uint32)(volatile uint32*)&TGDSUSERIPC->APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
+	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&IPC6->PORT_SPC_TO_SNES[0];
+	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)&IPC6->PORT_SNES_TO_SPC[0]; 
+	ADDR_APU_PROGRAM_COUNTER=	(uint32)(volatile uint32*)&IPC6->APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
 	
-	ADDR_SNEMUL_CMD	=	(uint32)(volatile uint32*)&TGDSUSERIPC->APU_ADDR_CMD;	//0x027FFFE8	// SNEMUL_CMD
-	ADDR_SNEMUL_ANS	=	(uint32)(volatile uint32*)&TGDSUSERIPC->APU_ADDR_ANS;	//0x027fffec	// SNEMUL_ANS
-	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)&TGDSUSERIPC->APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
-	TGDSUSERIPC->APU_ADDR_BLKP = (volatile uint8 *)ADDR_SNEMUL_BLK;
+	ADDR_SNEMUL_CMD	=	(uint32)(volatile uint32*)&IPC6->APU_ADDR_CMD;	//0x027FFFE8	// SNEMUL_CMD
+	ADDR_SNEMUL_ANS	=	(uint32)(volatile uint32*)&IPC6->APU_ADDR_ANS;	//0x027fffec	// SNEMUL_ANS
+	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)&IPC6->APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
+	IPC6->APU_ADDR_BLKP = (volatile uint8 *)ADDR_SNEMUL_BLK;
 	
 	//todo: APU_ADDR_CNT: is unused by Assembly APU Core?
 }

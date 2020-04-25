@@ -57,13 +57,17 @@ struct s_apu2
 	int	    skipper_cnt3;
 	int	    skipper_cnt4;
 	int		counter;
+};
+
+struct sIPCSharedTGDSSpecific{
 	int stub1;
 	int stub2;
 	int stub3;
 	int stub4;
 };
 
-struct sIPCSharedTGDSSpecific{
+typedef struct sTransferRegion6 {
+	struct s_apu2 APU2;
 	uint8	PORT_SNES_TO_SPC[4];
 	uint8	PORT_SPC_TO_SNES[4];
 	uint32	APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
@@ -72,8 +76,10 @@ struct sIPCSharedTGDSSpecific{
 	uint32	APU_ADDR_BLK;	//APU_ADDR_BLK / SNEMUL_BLK ((volatile uint32*)(0x2800000-24))
 	uint8 * APU_ADDR_BLKP;	//#define (vuint8*)APU_ADDR_BLKP == APU_ADDR_BLK
 	uint32	APU_ADDR_CNT;	//#define APU_ADDR_CNT ((volatile uint32*)(0x2800000-60))	/ 0x27fffc4 // used a SNES SCanline counter, unused by snemulds
-	struct s_apu2 APU2;
-};
+} TransferRegion6, * pTransferRegion6;
+
+
+#define IPC6 ((TransferRegion6 volatile *)((TGDSIPCUserStartAddress)+sizeof(struct sIPCSharedTGDSSpecific)))
 
 // Project Specific
 #define SNEMULDS_APUCMD_RESET 0xffff00a1

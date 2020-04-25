@@ -142,7 +142,7 @@ int main(int _argc, sint8 **_argv) {
     ApuReset();
     DspReset();
     SetupSound();
-    struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;
+    
 	
 	#ifdef SNEMULDS_ARM7_DLDI
 	//Init DLDI ARM7
@@ -179,7 +179,7 @@ int main(int _argc, sint8 **_argv) {
 			}			
         }
 		else{
-			TGDSUSERIPC->APU_ADDR_ANS = (uint32)0xFF00FF00;
+			IPC6->APU_ADDR_ANS = (uint32)0xFF00FF00;
 		}
 		
 	}
