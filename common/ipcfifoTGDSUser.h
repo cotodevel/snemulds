@@ -121,6 +121,8 @@ extern uint32 ADDR_PORT_SNES_TO_SPC;
 extern uint32 ADDR_PORT_SPC_TO_SNES;
 extern void update_spc_ports();
 
+extern void SnemulDSdmaFillHalfWord(sint32 dmachannel,uint32 value, uint32 dest, uint32 word_count);
+
 #ifdef __cplusplus
 }
 #endif

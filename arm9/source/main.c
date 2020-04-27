@@ -340,7 +340,7 @@ int loadROM(char *name, int confirm)
 
 	mem_clear_paging(); // FIXME: move me...
 	ROM = (char *) SNES_ROM_ADDRESS;
-	dmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE);	//Clear memory: ZIP Will use this as malloc
+	SnemulDSdmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE);	//Clear memory: ZIP Will use this as malloc
 	
 	bool zipFileLoaded = false;
 	if(strstr (_FS_getFileExtension(name),"ZIP")){	
@@ -363,7 +363,7 @@ int loadROM(char *name, int confirm)
 		int stat = load_gz((char*)CFG.ROMFile, (char*)outFile);
 	}
 	
-	dmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE);	////Clear memory: ROM will use it
+	SnemulDSdmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE);	////Clear memory: ROM will use it
 	
 	size = FS_getFileSize(romname);
 	ROMheader = size & 8191;

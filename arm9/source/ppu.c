@@ -1776,15 +1776,6 @@ void renderMode7(){
 	}
 }
 
-/*
-static inline void dmaFillWords(const void* src, void* dest, uint32 size) {
-	DMA_SRC(3)  = (uint32)src;
-	DMA_DEST(3) = (uint32)dest;
-	DMA_CR(3)   = DMA_COPY_WORDS | DMA_SRC_FIX | (size>>2);
-	while(DMA_CR(3) & DMA_BUSY);
-}
-*/
-
 void PPU_reset()
 {
   int i;
@@ -1796,13 +1787,7 @@ void PPU_reset()
 	((uint32 *)OAM)[i*2] = 0x0200;
 	((uint32 *)OAM)[i*2+1] = 0;
   }
-  GFX.brightness = 0;
-  
-  // Clear DS VRAM
-  i = 0;
-  //dmaFillWords(&i, (void*)0x6000000,  256*1024); // FIX: clear only bank A!!
-  //dmaFillWords(&i, (void*)0x6400000,  64*1024); // FIX: clear only bank A!!
-  
+  GFX.brightness = 0;  
   memset((void*)0x6000000,0,256*1024);
   memset((void*)0x6400000,0,64*1024);
   

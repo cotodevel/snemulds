@@ -26,11 +26,11 @@ USA
 
 #include "ipcfifoTGDS.h"
 #include "ipcfifoTGDSUser.h"
+#include "dmaTGDS.h"
 #include "apu_shared.h"
 
 #ifdef ARM7
 #include <string.h>
-
 #include "pocketspc.h"
 #include "apu.h"
 #include "dsp.h"
@@ -177,4 +177,12 @@ void update_spc_ports(){
 	IPC6->APU_ADDR_BLKP = (volatile uint8 *)ADDR_SNEMUL_BLK;
 	
 	//todo: APU_ADDR_CNT: is unused by Assembly APU Core?
+}
+
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void SnemulDSdmaFillHalfWord(sint32 dmachannel,uint32 value, uint32 dest, uint32 word_count){
+	dmaFillHalfWord(dmachannel,value, dest, word_count);
 }
