@@ -426,7 +426,7 @@ int GUI_update()
 	int released = keysReleased();
 	int held = keysHeld();				//touch screen
 	int repeated = keysRepeated();
-	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
+	
 	
 	if (GUI.hide)
 	{

@@ -20,11 +20,11 @@ USA
 //TGDS required version: IPC Version: 1.3
 
 //IPC FIFO Description: 
-//		struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress; 														// Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
-//		struct sIPCSharedTGDSSpecific * TGDSUSERIPC = (struct sIPCSharedTGDSSpecific *)TGDSIPCUserStartAddress;		// Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
+//		TGDSIPC 		= 	Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
+//		TGDSUSERIPC		=	Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
 
-#ifndef __specific_shared_h__
-#define __specific_shared_h__
+#ifndef __ipcfifoTGDSUser_h__
+#define __ipcfifoTGDSUser_h__
 
 #include "dsregs.h"
 #include "dsregs_asm.h"
@@ -59,12 +59,14 @@ struct s_apu2
 	int		counter;
 };
 
-struct sIPCSharedTGDSSpecific{
+typedef struct sIPCSharedTGDSSpecific{
 	int stub1;
 	int stub2;
 	int stub3;
 	int stub4;
-};
+}  IPCSharedTGDSSpecific	__attribute__((aligned (4)));
+
+#define TGDSUSERIPC ((IPCSharedTGDSSpecific volatile *)(0x027FF000 + TGDSIPCSize))
 
 typedef struct sTransferRegion6 {
 	struct s_apu2 APU2;
@@ -79,7 +81,7 @@ typedef struct sTransferRegion6 {
 } TransferRegion6, * pTransferRegion6;
 
 
-#define IPC6 ((TransferRegion6 volatile *)((TGDSIPCUserStartAddress)+sizeof(struct sIPCSharedTGDSSpecific)))
+#define IPC6 ((TransferRegion6 volatile *)(((u32)TGDSIPC + TGDSIPCSize)+sizeof(struct sIPCSharedTGDSSpecific)))
 
 // Project Specific
 #define SNEMULDS_APUCMD_RESET 0xffff00a1

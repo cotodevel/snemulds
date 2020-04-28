@@ -73,7 +73,7 @@ int get_joypad()
 			}
 			if ((keys & KEY_RIGHT))
 			{
-				struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
+				
 				/* LOG("%04x %04x %02x %02x %04x %04x\n", CPU.PC,
 				(uint32)((sint32)PCptr+(sint32)SnesPCOffset),
 				TGDSIPC->PORT_SNES_TO_SPC[1], PORT_SPC_TO_SNES[1],
@@ -209,7 +209,7 @@ int get_joypad()
 
 		//Touchscreen Events
 		if (keysHeld() & KEY_TOUCH){
-			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
+			
 			int tx, ty;
 			tx = TGDSIPC->touchXpx;
 			
