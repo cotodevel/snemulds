@@ -147,7 +147,7 @@ __attribute__((section(".itcm")))
 #endif
 inline __attribute__((always_inline)) 
 void VcounterUser(){
-	//sendByteIPC(SNEMULDS_HANDLE_VCOUNT);	//Works! But it is unused
+	//sendByteIPCIndirect(SNEMULDS_HANDLE_VCOUNT);	sendIPCIRQOnly();	//Works! But it is unused
 }
 
 
