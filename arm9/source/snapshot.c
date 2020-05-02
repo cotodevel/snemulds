@@ -17,8 +17,8 @@ GNU General Public License for more details.
 
 #include "ipcfifoTGDSUser.h"
 #include "utilsTGDS.h"
-
 #include "common.h"
+#include <stdio.h>
 
 #ifdef USE_GBA_FAT_LIB
 #include "fat/gba_nds_fat.h"
@@ -27,14 +27,12 @@ GNU General Public License for more details.
 #define fwrite FAT_fwrite
 #define fread FAT_fread
 #define fclose FAT_fclose 
-
-#elif defined(USE_LIBFAT)
-#include <stdio.h>
 #endif
+
 #include <malloc.h>
 #include <string.h>
 
-#include "cpu.h"
+#include "core.h"
 #include "snes.h"
 #include "apu.h"
 #include "gfx.h"

@@ -23,7 +23,6 @@ GNU General Public License for more details.
 #include "opcodes.h"
 #include "fs.h"
 #include "gfx.h"
-#include "cpu.h"
 #include "apu.h"
 #include "snes.h"
 #include "cfg.h"

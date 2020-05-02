@@ -33,7 +33,6 @@ GNU General Public License for more details.
 #include "common.h"
 #include "fs.h"
 #include "gfx.h"
-#include "cpu.h"
 #include "apu.h"
 #include "cfg.h"
 #include "core.h"

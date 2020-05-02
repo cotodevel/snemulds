@@ -15,6 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
+#include "core.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -32,8 +33,6 @@ GNU General Public License for more details.
 #include <allegro.h>
 #endif
 
-
-#include "cpu.h"
 #include "apu.h"
 #include "snes.h"
 #include "gfx.h"
@@ -44,17 +43,26 @@ GNU General Public License for more details.
 //#include "superfx.h"
 //#include "sfxinst.h"
 
-uchar   mem_getbyte(uint32 offset, uchar bank);
-void	mem_setbyte(uint32 offset, uchar bank, uchar byte);
-ushort  mem_getword(uint32 offset, uchar bank);
-void    mem_setword(uint32 offset, uchar bank, ushort word);
+//Snes Hardware
+__attribute__((section(".dtcm")))
+__attribute__ ((aligned (4))) struct s_cpu	CPU;
 
+__attribute__((section(".arm9sharedwram")))
+__attribute__ ((aligned (4))) struct s_gfx	GFX;
 
+__attribute__((section(".arm9sharedwram")))
+__attribute__ ((aligned (4))) struct s_snes	SNES;
 
-int	SPC700_emu;
+__attribute__((section(".dtcm")))
+__attribute__ ((aligned (4))) struct s_snescore	SNESC;
 
-void	PPU_port_write(uint32 address, uint8 value);
-uchar	PPU_port_read(uint32 address);
+__attribute__ ((aligned (4))) struct s_cfg	CFG;
+
+__attribute__((section(".dtcm")))
+uint16	PPU_PORT[0x90]; // 2100 -> 2183
+
+__attribute__((section(".dtcm")))
+uint16	DMA_PORT[0x180]; // 4200 -> 437F
 
 // A OPTIMISER
 static inline 
@@ -291,27 +299,6 @@ inline void		HDMA_transfert(unsigned char port){
 
 /* ============================ I/O registers ========================== */
 
-__attribute__((section(".itcm")))
-uint32	IONOP_DMA_READ(uint32 addr)
-{
-	return (DMA_PORT[addr]);
-}
-__attribute__((section(".itcm")))
-uint32	IONOP_PPU_READ(uint32 addr)
-{
-	return (PPU_PORT[addr]);
-}
-
-__attribute__((section(".itcm")))
-void	IONOP_PPU_WRITE(uint32 addr, uint32 byte)
-{
-	PPU_PORT[addr] = byte;
-}
-__attribute__((section(".itcm")))
-void	IONOP_DMA_WRITE(uint32 addr, uint32 byte)
-{
-	DMA_PORT[addr] = byte;
-}
 __attribute__((section(".itcm")))
 void	W4016(uint32 addr, uint32 value)
 {
@@ -1783,55 +1770,6 @@ void read_scope()
     }
 }
 
-void	update_joypads(){
-
-	switch(getMULTIMode()){
-		case(dswifi_idlemode):{
-			//  read_joypads();	
-			int joypad = get_joypad();
-			//      read_joypads();
-			SNES.joypads[0] = joypad;
-			SNES.joypads[0] |= 0x80000000;
-			if (CFG.mouse)
-				read_mouse();
-			if (CFG.scope)
-				read_scope();
-
-			if (DMA_PORT[0x00]&1){
-				SNES.Joy1_cnt = 16;    	
-				DMA_PORT[0x18] = SNES.joypads[0];
-				DMA_PORT[0x19] = SNES.joypads[0]>>8;
-				DMA_PORT[0x1A] = SNES.joypads[1];
-				DMA_PORT[0x1B] = SNES.joypads[1]>>8;
-			}
-		}
-		break;
-		
-		case(dswifi_localnifimode):{
-			//guest update from remote host, host joypad
-			if(nifiHost == false){
-				SNES.joypads[0] = plykeys1;
-				SNES.joypads[0] |= 0x80000000;
-				
-				//todo: p2
-				if (DMA_PORT[0x00]&1){
-					SNES.Joy1_cnt = 16;    	
-					DMA_PORT[0x18] = SNES.joypads[0];
-					DMA_PORT[0x19] = SNES.joypads[0]>>8;
-					DMA_PORT[0x1A] = SNES.joypads[1];
-					DMA_PORT[0x1B] = SNES.joypads[1]>>8;
-				}
-			}
-			//host update from remote guest, guest joypad
-			else{
-				SNES.joypads[1] = plykeys2;
-				SNES.joypads[1] |= 0x80000000;
-			}
-			
-		}
-		break;
-	}
-}
 void SNES_update()
 { 
   int value;
@@ -1852,49 +1790,4 @@ void SNES_update()
   GFX.map_slot[1] = (PPU_PORT[0x08]&0x7C)>>2;
   GFX.map_slot[2] = (PPU_PORT[0x09]&0x7C)>>2;
   GFX.map_slot[3] = (PPU_PORT[0x0A]&0x7C)>>2;
-}
-
-__attribute__((section(".itcm")))
-void GoNMI()
-{
-  CPU_pack();
-
-  if (CPU.WAI_state) {
-    CPU.WAI_state = 0; CPU.PC++;
-  };
-
-  pushb(CPU.PB);
-  pushw(CPU.PC);
-  pushb(CPU.P);
-  CPU.PC = CPU.NMI;
-  CPU.PB = 0;
-  CPU.P &= ~P_D;
-  
-  CPU.unpacked = 0; // ASM registers to update
-
-//  if (CFG.CPU_log) fprintf(SNES.flog, "--> NMI\n");
-}
-
-__attribute__((section(".itcm")))
-void GoIRQ()
-{
-  CPU_pack();
-
-  if (CPU.WAI_state) {
-    CPU.WAI_state = 0; CPU.PC++;
-  };
-
-  if (!(CPU.P&P_I)) {
-    pushb(CPU.PB);
-    pushw(CPU.PC);
-    pushb(CPU.P);
-    CPU.PC = CPU.IRQ; 
-    CPU.PB = 0;
-    CPU.P |= P_I;
-    CPU.P &= ~P_D;
-  }
-  CPU.unpacked = 0; // ASM registers to update  
-  
-  DMA_PORT[0x11] = 0x80;
-//  if (CFG.CPU_log) fprintf(SNES.flog, "--> IRQ\n");
 }

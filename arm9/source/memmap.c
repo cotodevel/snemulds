@@ -17,28 +17,13 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "cpu.h"
+#include "core.h"
 #include "opcodes.h"
 #include "common.h"
 #include "snes.h"
 #include "cfg.h"
 #include "memmap.h"
 #include "utilsTGDS.h"
-
-extern char *ROM_Image;
-
-#define NOT_LARGE	0
-#define USE_PAGING	1
-#define USE_EXTMEM	2
-
-
-extern uchar DMA_port_read(long address);
-extern void DMA_port_write(long address, unsigned short value);
-extern void PPU_port_write(long address, unsigned short value);
-extern uchar PPU_port_read(long address);
-
-#define SPECIAL_MAP(p) ((int)(p) & 0x80000000)
-#define REGULAR_MAP(p) (!((int)(p) & 0x80000000))  	
 
 void WriteProtectROM()
 {
@@ -107,15 +92,7 @@ void InitLoROMMap(int mode)
 		// Only a part of RAM is used static
 		maxRAM = ROM_STATIC_SIZE;
 	}
-	if (mode == USE_EXTMEM)
-	{
-		// Extended RAM mode...
-		// All RAM available is used static
-		// the remaining of mapping use extended RAM
-		maxRAM = ROM_MAX_SIZE;
-		largeROM = (uint8 *)0x8000000 + SNES.ROMHeader;
-	}
-
+	
 	for (c = 0; c < 0x200; c += 8)
 	{
 		MAP[c+0] = MAP[c+0x400] = SNESC.RAM;
@@ -224,14 +201,6 @@ void InitHiROMMap(int mode)
 		// Use Paging system... 
 		// Only a part of RAM is used static
 		maxRAM = ROM_STATIC_SIZE;
-	}
-	if (mode == USE_EXTMEM)
-	{
-		// Extended RAM mode...
-		// All RAM available is used static
-		// the remaining of mapping use extended RAM
-		maxRAM = ROM_MAX_SIZE;
-		largeROM = (uint8 *)0x8000000 + SNES.ROMHeader;
 	}
 	
 	for (c = 0; c < 0x200; c += 8)

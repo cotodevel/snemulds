@@ -18,7 +18,7 @@ GNU General Public License for more details.
 #include <malloc.h>
 #include <string.h>
 
-#include "cpu.h"
+#include "core.h"
 #include "snes.h"
 #include "apu.h"
 #include "gfx.h"

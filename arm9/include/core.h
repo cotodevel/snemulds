@@ -23,6 +23,11 @@ USA
 
 #include "dsregs.h"
 #include "typedefsTGDS.h"
+#include "dswnifi_lib.h"
+#include "dswnifi.h"
+#include "snes.h"
+#include "common.h"
+#include "cfg.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -36,7 +41,6 @@ USA
 #define MAP_HIROM_SRAM  0x85000000
 #define MAP_NONE        0x86000000
 #define MAP_LAST        0x8F000000
-
 
 #define bzero(p, s)	memset(p, 0, s)
 
@@ -62,7 +66,6 @@ USA
 //7     VBlank NMI Enable  (0=Disable, 1=Enable) (Initially disabled on reset)
 #define VBLANK_NMI_IRQENABLE          (0x80)
 
-
 typedef int (*intfuncptr)();
 typedef uint32 (*u32funcptr)();
 typedef void (*voidfuncptr)();
@@ -71,17 +74,60 @@ typedef void (*voidfuncptr)();
 typedef void (*IOWriteFunc)(uint32 addr, uint32 byte);
 typedef uint32 (*IOReadFunc)(uint32 addr);
 
+#define NB_CYCLES 180
+
+struct s_cpu
+{
+  uint16	IRQ, NMI, BRK, COP; /* interruption address */
+  int		cycles_tot;
+  int		NMIActive;
+  uchar		WAI_state;
+
+/* debug */
+  int		Trace_flag;
+  int		Trace;
+  int		Cycles2;
+
+/* registers */
+#define P_C  0x01
+#define P_Z  0x02
+#define P_I  0x04
+#define P_D  0x08
+#define P_X  0x10
+#define P_M  0x20
+#define P_V  0x40
+#define P_N  0x80
+#define P_E  0x100
+  uint16        P; /* Flags Register */
+  uint16        PC; /* Program Counter */
+  uint16        PB, DB; /* Bank Registers */
+  uint16        A, X, Y, D, S;
+
+  int           Cycles;
+
+#define IRQ_GSU	1
+  int		IRQState;
+
+/* speed hack */
+  int           LastAddress;
+  int           WaitAddress;
+  int           WaitCycles;
+  uint32		HCycles;
+  
+  int 			IsBreak;
+  
+  int			unpacked;
+  int			packed;
+};
+
+
 //masked bits from a joypad port
 
 //Old Style Joypad Registers	$4016	JOYSER0	single (write)	read/write	any time that is not auto-joypad
 //Old Style Joypad Registers	$4017	JOYSER1	many (read)	read	any time that is not auto-joypad
 
-
 //int get_joypad() is the source for these write joypad callbacks. (any DS source)
 //the whole emulator will read always from read_joypad1 and read_joypad2 same for write_joypad1 and write_joypad2
-
-#endif
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -91,8 +137,8 @@ extern void fillMemory( void * addr, uint32 count, uint32 value );
 extern void zeroMemory( void * addr, uint32 count );
 
 //Snes Hardware
+extern struct s_cpu	CPU;
 //extern struct s_snes	SNES;
-//extern struct s_cpu	CPU;
 //extern struct s_snescore	SNESC;
 //extern struct s_gfx	GFX;
 //extern struct s_cfg	CFG;
@@ -102,11 +148,6 @@ extern uint32 screen_mode;
 extern int APU_MAX;
 extern uint32 keys;
 extern int	SPC700_emu;
-
-extern uint32	IONOP_DMA_READ(uint32 addr);
-extern uint32	IONOP_PPU_READ(uint32 addr);
-extern void	IONOP_PPU_WRITE(uint32 addr, uint32 byte);
-extern void	IONOP_DMA_WRITE(uint32 addr, uint32 byte);
 extern void	W4016(uint32 addr, uint32 value);
 extern void	W4017(uint32 addr, uint32 value);
 extern void	W4200(uint32 addr, uint32 value);
@@ -203,26 +244,13 @@ extern void HDMA_write_port(uchar port, uint8 *data);
 extern void	HDMA_write();
 extern void	read_mouse();
 extern void read_scope();
-extern void	update_joypads();
 extern void SNES_update();
-extern void GoNMI();
-extern void GoIRQ();
-extern void setirq(uint32 irqs_to_set);
-extern void clear_irq_source (uint32 M);
-extern void CHECK_FOR_IRQ();
-
-extern uint32 snes_ram_address;
-extern void CHECK_FOR_IRQ();
-extern void clear_irq_source (uint32 M);
-extern void setirq(uint32 irqs_to_set);
-
 
 //snes.c
 extern void	init_GFX();
 extern void	reset_GFX();
 extern void	reset_CPU();
 extern void	reset_SNES();
-extern int cnt_alphachar(const sint8 str_buf[]);
 extern void	UnInterleaveROM();
 extern void	load_ROM(sint8 *ROM, int ROM_size);
 
@@ -236,4 +264,118 @@ extern void write_joypad2(uint16 bits);
 
 #ifdef __cplusplus
 }
+#endif
+
+static inline uint32	IONOP_DMA_READ(uint32 addr)
+{
+	return (DMA_PORT[addr]);
+}
+
+static inline uint32	IONOP_PPU_READ(uint32 addr)
+{
+	return (PPU_PORT[addr]);
+}
+
+static inline void	IONOP_PPU_WRITE(uint32 addr, uint32 byte)
+{
+	PPU_PORT[addr] = byte;
+}
+
+static inline void	IONOP_DMA_WRITE(uint32 addr, uint32 byte)
+{
+	DMA_PORT[addr] = byte;
+}
+
+static inline void update_joypads(){
+	switch(getMULTIMode()){
+		case(dswifi_idlemode):{
+			//  read_joypads();	
+			int joypad = get_joypad();
+			//      read_joypads();
+			SNES.joypads[0] = joypad;
+			SNES.joypads[0] |= 0x80000000;
+			if (CFG.mouse)
+				read_mouse();
+			if (CFG.scope)
+				read_scope();
+
+			if (DMA_PORT[0x00]&1){
+				SNES.Joy1_cnt = 16;    	
+				DMA_PORT[0x18] = SNES.joypads[0];
+				DMA_PORT[0x19] = SNES.joypads[0]>>8;
+				DMA_PORT[0x1A] = SNES.joypads[1];
+				DMA_PORT[0x1B] = SNES.joypads[1]>>8;
+			}
+		}
+		break;
+		
+		case(dswifi_localnifimode):{
+			//guest update from remote host, host joypad
+			if(nifiHost == false){
+				SNES.joypads[0] = plykeys1;
+				SNES.joypads[0] |= 0x80000000;
+				
+				//todo: p2
+				if (DMA_PORT[0x00]&1){
+					SNES.Joy1_cnt = 16;    	
+					DMA_PORT[0x18] = SNES.joypads[0];
+					DMA_PORT[0x19] = SNES.joypads[0]>>8;
+					DMA_PORT[0x1A] = SNES.joypads[1];
+					DMA_PORT[0x1B] = SNES.joypads[1]>>8;
+				}
+			}
+			//host update from remote guest, guest joypad
+			else{
+				SNES.joypads[1] = plykeys2;
+				SNES.joypads[1] |= 0x80000000;
+			}
+			
+		}
+		break;
+	}
+}
+
+static inline void GoNMI()
+{
+  CPU_pack();
+
+  if (CPU.WAI_state) {
+    CPU.WAI_state = 0; CPU.PC++;
+  };
+
+  pushb(CPU.PB);
+  pushw(CPU.PC);
+  pushb(CPU.P);
+  CPU.PC = CPU.NMI;
+  CPU.PB = 0;
+  CPU.P &= ~P_D;
+  
+  CPU.unpacked = 0; // ASM registers to update
+
+//  if (CFG.CPU_log) fprintf(SNES.flog, "--> NMI\n");
+}
+
+static inline void GoIRQ()
+{
+  CPU_pack();
+
+  if (CPU.WAI_state) {
+    CPU.WAI_state = 0; CPU.PC++;
+  };
+
+  if (!(CPU.P&P_I)) {
+    pushb(CPU.PB);
+    pushw(CPU.PC);
+    pushb(CPU.P);
+    CPU.PC = CPU.IRQ; 
+    CPU.PB = 0;
+    CPU.P |= P_I;
+    CPU.P &= ~P_D;
+  }
+  CPU.unpacked = 0; // ASM registers to update  
+  
+  DMA_PORT[0x11] = 0x80;
+//  if (CFG.CPU_log) fprintf(SNES.flog, "--> IRQ\n");
+}
+
 #endif

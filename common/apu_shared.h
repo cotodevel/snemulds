@@ -36,11 +36,6 @@ extern uint32 ADDR_SNEMUL_CMD;				//APU_ADDR_CMD	//0x027FFFE8
 extern uint32 ADDR_SNEMUL_ANS;				//APU_ADDR_ANS	//0x027fffec
 extern uint32 ADDR_SNEMUL_BLK;				//APU_ADDR_BLK	//0x027fffe8
 
-
-#ifdef ARM9
-extern uint32 snes_ram_address;
-#endif
-
 #ifdef __cplusplus
 }
 #endif

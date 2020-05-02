@@ -22,10 +22,8 @@ GNU General Public License for more details.
 
 #define NOT_LARGE	0
 #define USE_PAGING	1
-
 #define SPECIAL_MAP(p) ((int)(p) & 0x80000000)
 #define REGULAR_MAP(p) (!((int)(p) & 0x80000000))  	
-
 
 #endif /*MEMMAP_H_*/
 
@@ -33,6 +31,7 @@ GNU General Public License for more details.
 extern "C" {
 #endif
 
+extern char *ROM_Image;
 extern void WriteProtectROM();
 extern void FixMap();
 extern void MapRAM();

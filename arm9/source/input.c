@@ -6,13 +6,12 @@
 #include <string.h>
 
 #include "common.h"
+#include "core.h"
 #include "gfx.h"
 #include "snes.h"
 #include "cfg.h"
-
 #include "apu.h"
 #include "opcodes.h"
-#include "cpu.h"
 #include "gui_console_connector.h"
 #include "videoTGDS.h"
 #include "keypadTGDS.h"

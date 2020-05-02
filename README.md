@@ -58,7 +58,7 @@ c) The compressed file must use  .zip (deflate) or .gz, and the compressed .zip 
 
 
 Optional)
-GDB Remote debugging is now possible, to enable GDB Remote Debugging you will head to: common/ipcfifoTGDSUser.h and remove the trailing "//" (without commas):
+GDB Remote debugging is now possible, to enable GDB Remote Debugging you need: common/ipcfifoTGDSUser.h and remove the trailing "//" (without commas):
 //#define GDB_ENABLE
 
 1.  Then recompile the project. Run SnemulDS and games won´t boot while GDB Remote debugging is running, this is normal. 

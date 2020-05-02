@@ -71,15 +71,5 @@ ADDR_SNEMUL_ANS:
 ADDR_SNEMUL_BLK:
     .word 0x0
 
-
-@to deprecate:
-
-#ifdef ARM9
-
-.global snes_ram_address    @wram memory
-snes_ram_address:
-    .word   0x00000000      @r0     a1
-
-#endif
 .pool
 .end

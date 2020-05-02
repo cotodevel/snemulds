@@ -69,6 +69,7 @@ extern struct s_snes	SNES;
 //#define SNES	((struct s_snes *)(0x23E0000))
 extern uint16	PPU_PORT[0x90]; // 2100 -> 2183
 extern uint16	DMA_PORT[0x180]; // 4200 -> 437F
+extern int cnt_alphachar(char *str);
 
 struct s_snes
 {
@@ -145,24 +146,5 @@ struct s_snes
 #define ROM_STATIC_SIZE	(sint32)(64*1024)
 #define ROM_PAGING_SIZE	(sint32)(ROM_MAX_SIZE-ROM_STATIC_SIZE)
 #define SNES_ROM_PAGING_ADDRESS (SNES_ROM_ADDRESS+ROM_STATIC_SIZE)
-
-void	pushb(uint8 value);
-void	pushw(uint16 value);
-
-uchar   mem_getbyte(uint32 offset, uchar bank);
-void	mem_setbyte(uint32 offset, uchar bank, uchar byte);
-ushort  mem_getword(uint32 offset, uchar bank);
-void    mem_setword(uint32 offset, uchar bank, ushort word);
-void	*map_memory(uint16 offset, uchar bank);
-void	*mem_getbaseaddress(uint16 offset, uchar bank);
-
-void	GoNMI();
-void	GoIRQ();
-
-
-void	reset_SNES();
-int		get_joypad();
-void	HDMA_write();
-void	load_ROM(char *ROM, int ROM_size);
 
 #endif

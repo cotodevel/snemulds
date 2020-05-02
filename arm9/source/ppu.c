@@ -18,18 +18,15 @@ GNU General Public License for more details.
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
-
 #include <malloc.h>
 #include <string.h>
-
 #include "common.h"
 #include "gfx.h"
 #include "snes.h"
 #include "cfg.h"
-
 #include "apu.h"
 #include "opcodes.h"
-#include "cpu.h"
+#include "core.h"
 #include "consoleTGDS.h"
 #include "dmaTGDS.h"
 #include "engine.h"
