@@ -85,17 +85,6 @@ int loadSRAM()
   	
   if (SNESC.SRAMMask > 0)
     {
-#ifdef USE_GBFS
-/*		char header[16];
-		
-		readSRAM(0, (uint8 *)header, 16);
-		if (!strcmp(header, "SNEmulDS SRAM"))
-		{
-			printf("Found SRAM header!\n");
-			readSRAM(16, SNESC.SRAM, SNESC.SRAMMask+1);
-			return 0;
-		}*/ 
-#endif    	
     	strcpy(sramFile, CFG.ROMFile);
 		strcpy(strrchr(sramFile, '.'), ".SRM");
     	FS_loadFile(sramFile, SNESC.SRAM, SNESC.SRAMMask+1);
@@ -110,19 +99,9 @@ int saveSRAM()
   	
   if (SNESC.SRAMMask > 0)
     {
-#ifndef USE_GBFS    	
     	strcpy(sramFile, CFG.ROMFile);
-		strcpy(strrchr(sramFile, '.'), ".SRM");
-		
+		strcpy(strrchr(sramFile, '.'), ".SRM");		
     	FS_saveFile(sramFile, SNESC.SRAM, SNESC.SRAMMask+1,false);	//force_file_creation == false here (we could destroy or corrupt saves..)
-#else
-/*		char header[16];
-		
-		memset(header, 0, 16);
-		strcpy(header, "SNEmulDS SRAM");
-		writeSRAM(0, (uint8 *)header, 16);
-		writeSRAM(16, SNESC.SRAM, SNESC.SRAMMask+1);*/
-#endif    	    	
     }	
 }
 
@@ -167,7 +146,7 @@ int initSNESEmpty(){
 	CFG.BG3Squish = 0;
 	CFG.WaitVBlank = 0;
 	CFG.YScroll = 0;
-	CFG.CPU_speedhack = 1;
+	CFG.CPU_speedhack = 0;
 	CFG.LocalPlayMode = 0; //0 == idle / 1 == local: host / 2 == local: guest
 	//CFG.TileMode = 1;
 	CFG.Scaled = 0;

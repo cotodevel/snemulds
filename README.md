@@ -12,9 +12,10 @@ Instructions:
 How to get the latest working version:
 
     - Download latest sources from Master branch: https://bitbucket.org/Coto88/SnemulDS/get/HEAD.zip
-    - Download and copy, either /arm7dldi -> SnemulDS.nds or /arm9dldi -> SnemulDS.nds from /release folder, snemul.cfg as well, in SD:/ root folder. If it prompts for overwrite: Yes to All. 
+    - Download and copy, either /arm7dldi -> SnemulDS.nds or /arm9dldi -> SnemulDS.nds from /release folder, snemul.cfg as well, in SD:/ root . If it prompts for overwrite: Yes to All. 
 	  arm7dldi and/or arm9dldi may work in your card. The one working will emit emulation sound.
-    
+    - Create a /snes folder in SD: root, and put your homebrew games on it
+	- SPC Playback: Optionally, create a /spc folder in SD: root, and put your SPC files on it. You can choose and play a SPC File in the "SPC Jukebox" option. 
 	- Then run SNEmulDS.nds
 
 Hotkeys:
@@ -23,7 +24,7 @@ Hotkeys:
 	- L + R + START + Right: 	Swap Menu Screen/Emulator framebuffer between Top / Bottom Screen. When framebuffer is set to bottom screen, the top screen will turn off.
 	
 
-Programmers:
+Notes:
 /release folder has precompiled binaries for you to enjoy
 
 Compile Toolchain: To compile this project you will need to follow the steps at https://bitbucket.org/Coto88/toolchaingenericds : Then simply extract the project somewhere.

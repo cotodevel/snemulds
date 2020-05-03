@@ -453,8 +453,12 @@ int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		if (param == 3)
 		{
 			sint8 *sel = GUISelector_getSelected(GUI.screen, NULL);
-			selectSong(sel);
-			
+			int retVal = selectSong(sel);
+			GUI_deleteSelector(GUI.screen);
+			GUI_switchScreen(scr_main);
+			if(retVal != 0){
+				printf("SPC read error.");
+			}
 		}
 		if (param == 4)
 		{
@@ -1100,7 +1104,7 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		{
 			// Get ROMs list
   		    int		cnt;
-  		    sint8 **dir_list = FS_getDirectoryList(CFG.ROMPath, "SPC", &cnt);
+  		    sint8 **dir_list = FS_getDirectoryList(CFG.SPCPath, "SPC", &cnt);
 
   		    // Alphabetical sort
   		    if (CFG.GUISort){
@@ -1161,12 +1165,10 @@ int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 
 //read rom from (path)touchscreen:output rom -> CFG.ROMFile
 void GUI_getROM(sint8 *rompath){
-	//snprintf (CFG.ROMPath, strlen(rompath)+1, "%s/",rompath);	//path:/test/
-	
     GUI.ScanJoypad = 1;
 	GUI_clearScreen(0);
 
-		// Get ROMs list
+	// Get ROMs list
 	int		cnt;
     sint8 **dir_list = FS_getDirectoryList(rompath, "SMC|SFC|SWC|FIG|ZIP|GZ", &cnt);
 	
@@ -1187,10 +1189,6 @@ void GUI_getROM(sint8 *rompath){
 	sint8 *sel = GUISelector_getSelected(scr, NULL);
 
     GUI.ScanJoypad = 0;
-	
-	//sprintf(CFG.ROMPath,"%s/%s",buf,sel);	//rets path+rom.smc	/ok
-	//printf("rom:%s",sel);
-	
 	sprintf(CFG.ROMFile,"%s",sel);	//filename.ext -> CFG.ROMFile;
 }
 

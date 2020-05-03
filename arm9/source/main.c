@@ -18,7 +18,6 @@
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
-
 #include "fs.h"
 #include "snes.h"
 #include "gfx.h"
@@ -31,6 +30,7 @@
 #include "eventsTGDS.h"
 #include "posixHandleTGDS.h"
 #include "TGDSMemoryAllocator.h"
+#include "ipcfifoTGDS.h"
 
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
 uint32 screen_mode;
@@ -74,6 +74,14 @@ void PPU_ChangeLayerConf(int i)
 
 void readOptionsFromConfig(char *section)
 {
+	
+	char romPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
+	char spcPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
+	strcpy(romPath, get_config_string("Global", "ROMPath", ""));
+	strcpy(spcPath, get_config_string("Global", "SPCPath", ""));
+	strcpy(CFG.ROMPath, getfatfsPath(romPath));
+	strcpy(CFG.SPCPath, getfatfsPath(spcPath));
+	
 	CFG.BG3Squish = get_config_int(section, "BG3Squish", CFG.BG3Squish) & 3;
 	// FIXME 
 	GFX.YScroll = get_config_int(section, "YScroll", GFX.YScroll);
@@ -333,7 +341,6 @@ int loadROM(char *name, int confirm)
 	clrscr();
 	
 	printf("Loading %s... ", romname);
-
 	void *ptr = malloc(4);
 	printf("ptr=%p... ", ptr);
 	free(ptr);
@@ -370,7 +377,6 @@ int loadROM(char *name, int confirm)
 	if (ROMheader != 0&& ROMheader != 512)
 		ROMheader = 512;
 
-#ifndef USE_GBFS	
 	if (size-ROMheader > ROM_MAX_SIZE)
 	{
 		FS_loadROMForPaging(ROM-ROMheader, romname, ROM_STATIC_SIZE+ROMheader);
@@ -379,7 +385,6 @@ int loadROM(char *name, int confirm)
 		printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
 	}
 	else
-#endif	
 	{
 		FS_loadROM(ROM-ROMheader, romname);
 		CFG.LargeROM = 0;
@@ -403,26 +408,30 @@ int loadROM(char *name, int confirm)
 
 int selectSong(char *name)
 {
-	char spcname[100];
-
-	strcpy(spcname, CFG.ROMPath);
-	if (CFG.ROMPath[strlen(CFG.ROMPath)-1] != '/')
-		strcat(spcname, "/");
+	char spcname[MAX_TGDSFILENAME_LENGTH+1];
+	memset(spcname, 0, sizeof(spcname));
+	strcpy(spcname, CFG.SPCPath);
 	strcat(spcname, "/");
 	strcat(spcname, name);
 	strcpy(CFG.Playlist, spcname);
 	CFG.Jukebox = 1;
 	CFG.Sound_output = 0;
 	APU_stop();
-	if (FS_loadFile(spcname, APU_RAM_ADDRESS, 0x10200) < 0)
+	
+	u8 * spcFile = malloc(0x10200);
+	if(spcFile == NULL){
 		return -1;
-	APU_playSpc();
-	// Wait APU init
-	IRQVBlankWait();
-	IRQVBlankWait();
-	IRQVBlankWait();
-	IRQVBlankWait();
-	//	printf("\nDBG: %s", DEBUG_BUF);	
+	}
+	if(FS_loadFile(spcname, spcFile, 0x10200) < 0){
+		printf("selectSong(): Load error: %s", spcname);
+		while(1==1){
+			
+		}
+		free(spcFile);
+		return -1;
+	}
+	APU_playSpc(spcFile);	//blocking, wait APU init
+	free(spcFile);
 	return 0;
 }
 
@@ -456,10 +465,7 @@ int main(int argc, char ** argv){
 	
 	DisableIrq(IRQ_VCOUNT);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	disableSleepMode();	//Disable timeout-based sleep mode
-	
 	swiDelay(888);
-	
-	
 	coherent_user_range_by_size((u32)IPC6, sizeof(struct sIPCSharedTGDSSpecific));
 	IPC6->APU_ADDR_CNT = 0;
 	IPC6->APU_ADDR_ANS = IPC6->APU_ADDR_CMD = 0;
@@ -484,9 +490,9 @@ int main(int argc, char ** argv){
 		memset((u8*)l, 0, sizeof(GFX.lineInfo));
 	}
 
-	printf("Load conf1");
 	// Load SNEMUL.CFG
-	set_config_file(getfatfsPath("snemul.cfg"));	//set_config_file("snemul.cfg");
+	printf("Load conf1");
+	set_config_file(getfatfsPath("snemul.cfg"));
 	
 	//ext support removed for now
 	/*
@@ -498,17 +504,13 @@ int main(int argc, char ** argv){
 		if(extlink.ID!=ExtLinkBody_ID){printf("Not valid extlink.");while(1);}//__swiSleep();}
 	}
 	*/
-	//CFG.ROMPath = get_config_string(NULL, "ROMPath", GAMES_DIR);
 	
 	printf("Load conf2");
 	readOptionsFromConfig("Global");
 	printf("Load conf3");
 	GUI_getConfig();	
 	printf("Load conf4");
-
-	strcpy(CFG.ROMPath, getfatfsPath("snes"));	//0:/snes	-> old: //char *ROMfile = GUI_getROM(CFG.ROMPath);
 	GUI_getROM(CFG.ROMPath);	//read rom from (path)touchscreen:output rom -> CFG.ROMFile
-	
 	loadROM(CFG.ROMFile, 0);
 	GUI_deleteROMSelector(); // Should also free ROMFile
 	GUI_createMainMenu();	//Start GUI

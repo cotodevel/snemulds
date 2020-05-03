@@ -62,9 +62,18 @@ void	APU_stop()
 #endif	
 }
 
-void	APU_playSpc()
+void	APU_playSpc(u8 * inSPCBuffer)
 {
-    APU_command(SNEMULDS_APUCMD_PLAYSPC); //APU_command(0x00000003);
+	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
+	fifomsg[10] = (uint32)ARM7FS_IOSTATUS_BUSY;
+	
+	//prevent APU from desync
+	SendFIFOWords(SNEMULDS_APUCMD_PLAYSPC, (u32)inSPCBuffer);	//APU_command(0x00000003);
+	
+	while((uint32)fifomsg[10] == (uint32)ARM7FS_IOSTATUS_BUSY){
+		swiDelay(2);
+	}
+	
 }
 
 void	APU_saveSpc()
@@ -88,7 +97,8 @@ void	APU_clear()
 	IPC6->APU_ADDR_CNT = 0;
 }
 
-
+//Unimplemented
+/*
 void APU_playSong(uint8 *data, int size)
 {
 	CFG.Sound_output = 0; // Disable Sound emulation
@@ -99,7 +109,7 @@ void APU_playSong(uint8 *data, int size)
     memcpy(APU_RAM_ADDRESS, data, size);
     APU_playSpc();    // Put APU in PLAY MODE	
 }
-
+*/
 
 void APU_command(uint32 command){
 	//prevent APU from desync

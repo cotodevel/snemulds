@@ -106,13 +106,24 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			paused = !paused;
 		}
 		break;
-		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC 	
-			LoadSpc(APU_RAM_ADDRESS);
-			SetupSound();   	
-			IPC6->APU_ADDR_CNT = 0;             	
+		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC
+			//Reset APU
+			StopSound();
+			memset(playBuffer, 0, MIXBUFSIZE * 8);
+			IPC6->APU_ADDR_CNT = 0; 
+			ApuReset();
+			DspReset();
+			SetupSound();
+			
+			//Load APU payload
+			LoadSpc(cmd2);
+			
+			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
+			fifomsg[10] = (uint32)ARM7FS_IOSTATUS_IDLE;	//release ARM9 APU_playSpc()
+			
 			paused = false;
-			SPC_freedom = true;
 			SPC_disable = false;
+			SPC_freedom = false;
 		}
 		break;
 			
