@@ -221,12 +221,11 @@ bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst){
 		GUI.Palette[i + 40] = GUI.Palette[39];
 	}
 	
-	
+	//TGDS Console defaults
 	GUI.consoleAtTopScreen = false;	//GUI console at bottom screen
 	GUI.consoleBacklightOn = true;	//Backlight On for console
 	
 	UpdateConsoleSettings(ConsoleInstanceInst);
-	
 	
 	initARM7Malloc((u32)0x06000000, (u32)128*1024);	//Since the default console setup allocates ARM7 @ 0x06000000, 128K, initialize a malloc for ARM7. 
 													//Otherwise if custom console, this routine is custom impl.
@@ -450,22 +449,31 @@ int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	}
 	if (msg == GUI_COMMAND && (param == 3|| param == 4)) // OK ou cancel
 	{
+		//A press
 		if (param == 3)
 		{
 			sint8 *sel = GUISelector_getSelected(GUI.screen, NULL);
 			int retVal = selectSong(sel);
-			GUI_deleteSelector(GUI.screen);
-			GUI_switchScreen(scr_main);
 			if(retVal != 0){
 				printf("SPC read error.");
 			}
+			GUI_clearScreen(0);
+			
+			//No need to restore apu because SPC reloading
 		}
+		
+		//B press
 		if (param == 4)
-		{
-			GUI_deleteSelector(GUI.screen);
-			GUI_switchScreen(scr_main);
+		{			
+			//Play APU
+			if (CFG.Sound_output || CFG.Jukebox)
+				APU_pause();
 		}
-		return 1;
+		
+	    GUI.ScanJoypad = 0;
+		SNES.Stopped = 0;
+		GUI_deleteSelector(GUI.screen);
+		GUI_switchScreen(scr_main);	
 	}
 	return 0;
 }
@@ -1102,6 +1110,14 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		}
 		if (param == 4) // Jukebox
 		{
+			//////////////////////////Halt emu, give control to GUI, and wait for A/B events//////////////////////////
+			SNES.Stopped = 1;
+		    GUI.ScanJoypad = 1;		    
+	    	
+			//Pause APU
+			if (CFG.Sound_output || CFG.Jukebox)
+				APU_pause();	
+			
 			// Get ROMs list
   		    int		cnt;
   		    sint8 **dir_list = FS_getDirectoryList(CFG.SPCPath, "SPC", &cnt);
@@ -1111,13 +1127,14 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
   		    	qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);  		    
   		    }
 		    // Create ROM selector
-  		    t_GUIScreen *scr = 
-  		    	GUI_newSelector(cnt, dir_list, IDS_JUKEBOX, &trebuchet_9_font);
+  		    t_GUIScreen *scr =  GUI_newSelector(cnt, dir_list, IDS_JUKEBOX, &trebuchet_9_font);
 			scr->handler = SPCSelectorHandler;		    
 		    
 			// Switch GUI Screen
 		    GUI_switchScreen(scr);
-		    return 1;		    
+			////////////////////////Halt emu, give control to GUI, and wait for A/B events end////////////////////////
+		    
+			return 1;		    
 		}		
 		if (param == 5) // Advanced
 		{
