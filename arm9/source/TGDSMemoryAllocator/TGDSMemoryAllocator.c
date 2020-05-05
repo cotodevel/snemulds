@@ -30,6 +30,6 @@ USA
 
 
 //Definition that overrides the weaksymbol expected from toolchain to init ARM9's TGDS memory allocation
-AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(){
+struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(){
 	return NULL;
 }

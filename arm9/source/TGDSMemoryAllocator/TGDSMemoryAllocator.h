@@ -32,7 +32,7 @@ extern "C" {
 	////////[Default Memory implementation is selected, thus stubs are implemented here]////////
 
 //Definition that overrides the weaksymbol expected from toolchain to init ARM9's TGDS memory allocation
-extern AllocatorInstance * getProjectSpecificMemoryAllocatorSetup();
+extern struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup();
 
 #ifdef __cplusplus
 }
