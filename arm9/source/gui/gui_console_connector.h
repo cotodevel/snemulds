@@ -204,13 +204,10 @@ extern int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg);
 extern t_GUIScreen *buildOptionsMenu();
 extern int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg);
 extern int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg);
-//read rom from (path)touchscreen:output rom -> CFG.ROMFile
-extern void GUI_getROM(sint8 *rompath);
 extern void GUI_deleteROMSelector();
 extern void GUI_createMainMenu();
 extern void GUI_getConfig();
 extern void	GUI_showROMInfos(int size);
-
 
 //Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
 extern ConsoleInstance * getProjectSpecificVRAMSetup();
@@ -238,7 +235,6 @@ extern sint8*  g_snemulds_str_dan[];
 extern int selectSong(sint8 *name);	//Jukebox load SPC method
 extern void	CPU_unpack();
 extern void	PPU_update();
-extern void	CPU_pack();
 extern int loadSRAM();
 extern int saveSRAM();
 extern void PPU_ChangeLayerConf(int i);
@@ -250,6 +246,10 @@ extern int		GUI_getZoneTextHeight(t_GUIZone *zone);
 extern int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text);
 extern void		GUI_align_printf(int flags, sint8 *fmt, ...);
 extern t_GUIFont trebuchet_9_font;
+
+extern void GUI_getROMFirstTime(sint8 *rompath);
+extern void GUI_getROMIterable(sint8 *rompath);
+extern void GUI_getSPCIterable(sint8 *rompath);
 
 #ifdef __cplusplus
 }

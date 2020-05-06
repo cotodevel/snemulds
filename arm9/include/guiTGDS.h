@@ -20,17 +20,17 @@ GNU General Public License for more details.
 
 #include "typedefsTGDS.h"
 #include "consoleTGDS.h"
-
-
-/* --------------------------------------------------------------------------- */
-
-#endif /*GUI_H_*/
-
+#include "gui_console_connector.h"
+#include "gui_widgets.h"
+#include <stdio.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+extern char startFilePath[MAX_TGDSFILENAME_LENGTH+1];
+extern char startSPCFilePath[MAX_TGDSFILENAME_LENGTH+1];
 
 extern	void	LOG(sint8 *fmt, ...);
 extern t_GUIScreen	*GUI_newScreen(int nb_elems);
@@ -54,7 +54,6 @@ extern void	GUI_clearFocus(t_GUIScreen *scr);
 extern int		GUI_dispatchEvent(t_GUIScreen *scr, int event, void *param);
 extern void		GUI_drawScreen(t_GUIScreen *scr, void *param);
 extern t_GUIEvent	g_event;
-extern int GUI_update();
 extern int		GUI_start();
 extern t_GUIImgList	*GUI_newImageList(int nb);
 extern int		GUI_switchScreen(t_GUIScreen *scr);
@@ -68,9 +67,11 @@ extern t_GUIScreen *buildMenu(int nb_elems, int flags, t_GUIFont *font, t_GUIFon
 
 //simple hook for writing values to volatile config file loaded earlier from setting file. Updates config file.
 extern void GUI_setConfigStrUpdateFile(sint8 *objname, sint8 *field, sint8 *value);
-
 extern void GUI_setLanguage(int lang);
-
+extern struct sGUISelectorItem guiSelItem;
+extern int GUI_update();	
 #ifdef __cplusplus
 }
+#endif
+
 #endif

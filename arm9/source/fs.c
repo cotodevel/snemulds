@@ -136,7 +136,7 @@ void	FS_flog(sint8 *fmt, ...)
 	#endif
 }
 
-int	FS_loadROM(sint8 *ROM, sint8 *filename)
+int FS_loadROM(sint8 *ROM, sint8 *filename)
 {
 	FILE	*f;
 	FS_lock();
@@ -213,9 +213,16 @@ int	FS_shouldFreeROM()
 }
 
 //This method uses opendir(); and readdir(); to iterate through dir/file contents.
+//if DIR is detected, the name is app
 sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
 	int	size = 0;
 	*cnt = size;
+	
+	// add ".." because fatfs removes it
+	char * leaveDirDirectory = "..";
+	(*cnt)++;
+	size += strlen(leaveDirDirectory)+1;
+	
 	FS_lock();
 	DIR *dir = opendir(path);
 	if( NULL != dir ){
@@ -224,24 +231,30 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
 			if(pent != NULL){
 				struct fd * fdinst = getStructFD(pent->d_ino);	//struct stat st is generated at the moment readdir(); is called, so get access to it through fdinst->stat
 				if(fdinst){
-					if(!S_ISDIR(fdinst->stat.st_mode)){
-						continue;
-					}
-					if(!strcmp(pent->d_name, ".")){
-						continue;
-					}
 					if(mask){
 						sint8 *ext = _FS_getFileExtension(pent->d_name);
-						if (ext && strstr(mask, ext)){
-							//filecount Increase
-							(*cnt)++;
-							size += strlen(pent->d_name)+1;
+						if ((ext && strstr(mask, ext)) || (fdinst->StructFDType == FT_DIR)){
+							//Count files and directories
+							if(fdinst->StructFDType == FT_FILE){
+								(*cnt)++;
+								size += strlen(pent->d_name)+1;
+							}
+							else if(fdinst->StructFDType == FT_DIR){
+								(*cnt)++;
+								size += strlen(pent->d_name)+2;	//add trailing "/"
+							}
 						}
 					}
 					else{
-						//filecount Increase
-						(*cnt)++;
-						size += strlen(pent->d_name)+1;
+						//Count files and directories
+						if(fdinst->StructFDType == FT_FILE){
+							(*cnt)++;
+							size += strlen(pent->d_name)+1;
+						}
+						else if(fdinst->StructFDType == FT_DIR){
+							(*cnt)++;
+							size += strlen(pent->d_name)+2;	//add trailing "/"
+						}
 					}
 				}
 			}
@@ -254,34 +267,58 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
 	
 	sint8	**list = (sint8	**)malloc((*cnt)*sizeof(sint8 *)+size);
 	sint8	*ptr = ((sint8 *)list) + (*cnt)*sizeof(sint8 *);
-	
 	int i = 0; 
+	
+	// add ".." because fatfs removes it
+	strcpy(ptr, leaveDirDirectory);
+	list[i++] = ptr;
+	ptr += strlen(leaveDirDirectory)+1;
+	
 	if(NULL != dir){
 		while (1){
 			struct dirent* pent = readdir(dir);	//if NULL already not a dir
 			if(pent != NULL){
 				struct fd * fdinst = getStructFD(pent->d_ino);
 				if(fdinst){
-					if(!S_ISDIR(fdinst->stat.st_mode)){
-						continue;
-					}
-					if(!strcmp(pent->d_name, ".")){
-						continue;
-					}
 					if(mask){
 						sint8 *ext = _FS_getFileExtension(pent->d_name);
-						if (ext && strstr(mask, ext)){
-							strcpy(ptr, pent->d_name);
-							list[i++] = ptr;
-							ptr += strlen(pent->d_name)+1;  
+						if ((ext && strstr(mask, ext)) || (fdinst->StructFDType == FT_DIR)){
+							if(fdinst->StructFDType == FT_FILE){
+								strcpy(ptr, pent->d_name);
+								list[i++] = ptr;
+								ptr += strlen(pent->d_name)+1;
+							}
+							else if(fdinst->StructFDType == FT_DIR){
+								char dirName[MAX_TGDSFILENAME_LENGTH+1];
+								memset(dirName, 0, sizeof(dirName));
+								strcpy(dirName, (pent->d_name));
+								strcat(dirName, "/");
+								
+								strcpy(ptr, dirName);
+								list[i++] = ptr;
+								ptr += strlen(dirName)+1;
+							}
 						}
 					}
 					else{
-						strcpy(ptr, pent->d_name);
-						list[i++] = ptr;
-						ptr += strlen(pent->d_name)+1;
+						if(fdinst->StructFDType == FT_FILE){
+							strcpy(ptr, pent->d_name);
+							list[i++] = ptr;
+							ptr += strlen(pent->d_name)+1;
+						}
+						else if(fdinst->StructFDType == FT_DIR){
+							char dirName[MAX_TGDSFILENAME_LENGTH+1];
+							memset(dirName, 0, sizeof(dirName));
+							strcpy(dirName, (pent->d_name));
+							strcat(dirName, "/");
+							
+							strcpy(ptr, dirName);
+							list[i++] = ptr;
+							ptr += strlen(dirName)+1;
+						}
 					}
 				}
+				
 			}
 			else{
 				break;

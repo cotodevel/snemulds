@@ -39,7 +39,7 @@ GNU General Public License for more details.
 #include "utilsTGDS.h"
 #include "clockTGDS.h"
 #include "dswnifi_lib.h"
-
+#include "gui_console_connector.h"
 
 static inline int go()
 {
@@ -240,6 +240,9 @@ extern "C" {
 extern int argc;
 extern sint8 **argv;
 extern int main(int _argc, sint8 **_argv);
+extern int loadROM(struct sGUISelectorItem *name);
+extern bool handleROMSelect;
+extern bool handleSPCSelect;
 
 #ifdef __cplusplus
 }

@@ -44,6 +44,7 @@ GNU General Public License for more details.
 #include "snes.h"
 #include "core.h"
 #include "engine.h"
+#include "main.h"
 #include "dswnifi_lib.h"
 
 ////////[For custom Console implementation]:////////
@@ -412,69 +413,117 @@ t_GUIScreen *buildMainMenu()
 
 
 int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
-	if (msg == GUI_DRAW){
-		GUI_clearScreen(0);
-	}
-	if (msg == GUI_COMMAND && (param == 3|| param == 4)) // OK ou cancel
+	switch (msg)
 	{
-		//minimal file select parts taken from GUI_getROM
-		if (param == 3)
-		{
-			sint8 *sel = GUISelector_getSelected(GUI.screen, NULL);
-			//clrscr();
-			//printf("ROMSelectorHandler:");	//filename.smc
-			//printf("romfile:%s",sel);
-			//while(1);
-			loadROM(sel, 0);
+		case GUI_DRAW:{
 			GUI_clearScreen(0);
-		}
-		if (param == 4)
-		{
-			if (CFG.Sound_output || CFG.Jukebox)
-				APU_pause();			
-		}
-	    GUI.ScanJoypad = 0;
-		SNES.Stopped = 0;
-		GUI_deleteSelector(GUI.screen);
-		GUI_switchScreen(scr_main);
-		return 1;
+		}	
+		break;
+		case GUI_COMMAND:
+			if (param == 3)
+			{
+				struct sGUISelectorItem sel = GUISelector_getSelected(GUI.screen, NULL);
+				if(sel.StructFDFromFS_getDirectoryListMethod == FT_FILE){
+					GUI_clearScreen(0);
+					char fname[256+1];
+					memset(fname, 0, sizeof(fname));
+					int matchCount = str_split((char*)sel.filenameFromFS_getDirectoryListMethod, "/", NULL);
+					char * file = (char*)&outSplitBuf[matchCount][0];
+					if(strlen(file) > 0){						
+						strcpy(fname, "0:");
+						strcat(fname, startFilePath);
+						strcat(fname, "/");
+						strcat(fname, file);
+						strcpy((char*)&CFG.ROMFile[0], fname);
+						sel.StructFDFromFS_getDirectoryListMethod = FT_FILE;
+						sel.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
+						loadROM(&sel);
+					}
+					else
+						printf("ROM read error.");
+					GUI_clearScreen(0);
+				}
+				
+				GUI.ScanJoypad = 0;
+				SNES.Stopped = 0;
+				GUI.exit = 1;
+				return 1;
+			}
+			//B press
+			if (param == 4)
+			{		
+				if (CFG.Sound_output || CFG.Jukebox)
+					APU_pause();
+				
+				GUI.ScanJoypad = 0;
+				SNES.Stopped = 0;
+				GUI.exit = 1;
+				return 1;
+			}
+		break;
 	}
+	
+	//Play/Pause APU
+	if (CFG.Sound_output || CFG.Jukebox)
+		APU_pause();
 	return 0;
 }
 
 
 int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
-	if (msg == GUI_DRAW){
-		GUI_clearScreen(0);	
-	}
-	if (msg == GUI_COMMAND && (param == 3|| param == 4)) // OK ou cancel
+	switch (msg)
 	{
-		//A press
-		if (param == 3)
-		{
-			sint8 *sel = GUISelector_getSelected(GUI.screen, NULL);
-			int retVal = selectSong(sel);
-			if(retVal != 0){
-				printf("SPC read error.");
-			}
+		case GUI_DRAW:{
 			GUI_clearScreen(0);
-			
-			//No need to restore apu because SPC reloading
-		}
-		
-		//B press
-		if (param == 4)
-		{			
-			//Play APU
-			if (CFG.Sound_output || CFG.Jukebox)
-				APU_pause();
-		}
-		
-	    GUI.ScanJoypad = 0;
-		SNES.Stopped = 0;
-		GUI_deleteSelector(GUI.screen);
-		GUI_switchScreen(scr_main);	
+		}	
+		break;
+		case GUI_COMMAND:
+			if (param == 3)
+			{
+				struct sGUISelectorItem sel = GUISelector_getSelected(GUI.screen, NULL);
+				if(sel.StructFDFromFS_getDirectoryListMethod == FT_FILE){
+					GUI_clearScreen(0);
+					char fname[256+1];
+					memset(fname, 0, sizeof(fname));
+					int matchCount = str_split((char*)sel.filenameFromFS_getDirectoryListMethod, "/", NULL);
+					char * file = (char*)&outSplitBuf[matchCount][0];
+					if(strlen(file) > 0){						
+						strcpy(fname, "0:");
+						strcat(fname, startSPCFilePath);
+						strcat(fname, "/");
+						strcat(fname, file);
+						int retVal = selectSong(fname);
+						if(retVal != 0){
+							printf("SPC read error.");
+						}
+					}
+					else
+						printf("SPC read error.");
+					GUI_clearScreen(0);
+				}
+				
+				GUI.ScanJoypad = 0;
+				SNES.Stopped = 0;
+				GUI.exit = 1;
+				return 1;
+			}
+			//B press
+			if (param == 4)
+			{		
+				if (CFG.Sound_output || CFG.Jukebox)
+					APU_pause();
+				
+				GUI.ScanJoypad = 0;
+				SNES.Stopped = 0;
+				GUI.exit = 1;
+				return 1;
+			}
+		break;
 	}
+	
+	//Play/Pause APU
+	if (CFG.Sound_output || CFG.Jukebox)
+		APU_pause();
 	return 0;
 }
 
@@ -487,7 +536,7 @@ int LoadStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		if (param == 3)
 		{
 			int id;
-			GUISelector_getSelected(GUI.screen, &id);
+			GUISelector_getSelected(GUI.screen, &id);	//takes current romfilename chosen
 
 			sint8 stateFile[100];
 			strcpy(stateFile, CFG.ROMFile);
@@ -518,7 +567,7 @@ int SaveStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		if (param == 3)
 		{
 			int id;
-			GUISelector_getSelected(GUI.screen, &id);
+			GUISelector_getSelected(GUI.screen, &id);	//takes current romfilename chosen
 
 			sint8 stateName[64];
 			sint8 stateFile[100];
@@ -1054,27 +1103,15 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		//GUI_console_printf(0, 0, "Command %d", param);		
 		if (param == 0) // ROM list
 		{
-		    SNES.Stopped = 1;
+			//////////////////////////Halt emu, give control to GUI, and wait for A/B events//////////////////////////
+			SNES.Stopped = 1;
 		    GUI.ScanJoypad = 1;
 		    if (CFG.Sound_output || CFG.Jukebox)
 		    	APU_pause();
-			
-			// Get ROMs list
-  		    int		cnt;
-  		    sint8 **dir_list = FS_getDirectoryList(CFG.ROMPath, "SMC|SFC|SWC|FIG|ZIP|GZ", &cnt);
-  		    
-  		    // Alphabetical sort
-  		    if (CFG.GUISort){
-  		    	qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);
-			}
-		    // Create ROM selector
-  		    t_GUIScreen *scr = 
-  		    	GUI_newSelector(cnt, dir_list, IDS_SELECT_ROM, &trebuchet_9_font);
-			scr->handler = ROMSelectorHandler;		    
-		    
-			// Switch GUI Screen
-		    GUI_switchScreen(scr);
-		    return 1;
+				
+			handleROMSelect=true;
+			////////////////////////Halt emu, give control to GUI, and wait for A/B events end////////////////////////
+			return 1;
 		}
 		if (param == 1 || param == 2) // Load / Save
 		{
@@ -1112,28 +1149,12 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		{
 			//////////////////////////Halt emu, give control to GUI, and wait for A/B events//////////////////////////
 			SNES.Stopped = 1;
-		    GUI.ScanJoypad = 1;		    
-	    	
-			//Pause APU
-			if (CFG.Sound_output || CFG.Jukebox)
-				APU_pause();	
-			
-			// Get ROMs list
-  		    int		cnt;
-  		    sint8 **dir_list = FS_getDirectoryList(CFG.SPCPath, "SPC", &cnt);
-
-  		    // Alphabetical sort
-  		    if (CFG.GUISort){
-  		    	qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);  		    
-  		    }
-		    // Create ROM selector
-  		    t_GUIScreen *scr =  GUI_newSelector(cnt, dir_list, IDS_JUKEBOX, &trebuchet_9_font);
-			scr->handler = SPCSelectorHandler;		    
-		    
-			// Switch GUI Screen
-		    GUI_switchScreen(scr);
+		    GUI.ScanJoypad = 1;
+		    if (CFG.Sound_output || CFG.Jukebox)
+		    	APU_pause();
+				
+			handleSPCSelect=true;
 			////////////////////////Halt emu, give control to GUI, and wait for A/B events end////////////////////////
-		    
 			return 1;		    
 		}		
 		if (param == 5) // Advanced
@@ -1179,34 +1200,140 @@ int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	return 0;
 }
 
+//Synchronous - Reentrant GUI handlers
 
-//read rom from (path)touchscreen:output rom -> CFG.ROMFile
-void GUI_getROM(sint8 *rompath){
-    GUI.ScanJoypad = 1;
+//First time GUI File Handler.
+void GUI_getROMFirstTime(sint8 *rompath){
+	GUI.ScanJoypad = 1;
 	GUI_clearScreen(0);
-
 	// Get ROMs list
 	int		cnt;
     sint8 **dir_list = FS_getDirectoryList(rompath, "SMC|SFC|SWC|FIG|ZIP|GZ", &cnt);
-	
 	// Alphabetical sort
 	if (CFG.GUISort){
 		qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);
 	}
-
 	// Create ROM selector
 	t_GUIScreen *scr = GUI_newSelector(cnt, dir_list, IDS_SELECT_ROM, &trebuchet_9_font);
     scr->zones[4].handler = NULL; // Remove CANCEL button
 	scr->handler = FirstROMSelectorHandler;
-	
 	GUI_drawScreen(scr, NULL);
-	
 	GUI_start();
-	
-	sint8 *sel = GUISelector_getSelected(scr, NULL);
-
+	struct sGUISelectorItem sel = GUISelector_getSelected(scr, NULL);
+	if(sel.StructFDFromFS_getDirectoryListMethod == FT_NONE){
+		//Leave dir
+		char curDir[256+1];
+		memset(curDir, 0, sizeof(curDir));
+		strcpy(curDir, startFilePath);
+		leaveDir(&curDir);
+		strcpy(startFilePath, curDir);
+		
+		//release GUI events manually
+		GUI.exit = 1;
+		g_event.event = 0;
+		GUI_getROMFirstTime(startFilePath);
+		return ;
+	}
+	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){	
+		//Enter new dir
+		strcat((char*)startFilePath, (char*)"/"); 
+		strcat((char*)startFilePath, (char*)sel.filenameFromFS_getDirectoryListMethod); 
+		startFilePath[strlen(startFilePath)-1]='\0'; //remove last "/"
+		return GUI_getROMFirstTime(startFilePath);
+	}
     GUI.ScanJoypad = 0;
-	sprintf(CFG.ROMFile,"%s",sel);	//filename.ext -> CFG.ROMFile;
+	strcpy(CFG.ROMFile, sel.filenameFromFS_getDirectoryListMethod);
+}
+
+void GUI_getROMIterable(sint8 *rompath){
+	SNES.Stopped = 1;
+	GUI.ScanJoypad = 1;
+	GUI_clearScreen(0);
+	//Pause APU
+	if (CFG.Sound_output || CFG.Jukebox)
+		APU_pause();
+	// Get ROMs list
+	int		cnt;
+    sint8 **dir_list = FS_getDirectoryList(rompath, "SMC|SFC|SWC|FIG|ZIP|GZ", &cnt);
+	// Alphabetical sort
+	if (CFG.GUISort){
+		qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);
+	}
+	// Create ROM selector
+	t_GUIScreen *scr = GUI_newSelector(cnt, dir_list, IDS_SELECT_ROM, &trebuchet_9_font);
+    scr->handler = ROMSelectorHandler;
+	GUI_drawScreen(scr, NULL);
+	GUI_start();
+	struct sGUISelectorItem sel = GUISelector_getSelected(scr, NULL);
+	
+	if(sel.StructFDFromFS_getDirectoryListMethod == FT_NONE){
+		//Leave dir
+		char curDir[256+1];
+		memset(curDir, 0, sizeof(curDir));
+		strcpy(curDir, startFilePath);
+		leaveDir(&curDir);
+		strcpy(startFilePath, curDir);
+		
+		//release GUI events manually
+		GUI.exit = 1;
+		g_event.event = 0;
+		GUI_getROMIterable(startFilePath);
+		return ;
+	}
+	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){
+		//Enter new dir
+		strcat((char*)startFilePath, (char*)"/"); 
+		strcat((char*)startFilePath, (char*)sel.filenameFromFS_getDirectoryListMethod); 
+		startFilePath[strlen(startFilePath)-1]='\0'; //remove last "/"			
+		return GUI_getROMIterable(startFilePath);
+	}
+    GUI.ScanJoypad = 0;
+	strcpy(CFG.ROMFile, sel.filenameFromFS_getDirectoryListMethod);
+}
+
+void GUI_getSPCIterable(sint8 *rompath){
+	SNES.Stopped = 1;
+	GUI.ScanJoypad = 1;
+	GUI_clearScreen(0);
+	//Pause APU
+	if (CFG.Sound_output || CFG.Jukebox)
+		APU_pause();
+	// Get ROMs list
+	int		cnt;
+    sint8 **dir_list = FS_getDirectoryList(rompath, "SPC", &cnt);
+	// Alphabetical sort
+	if (CFG.GUISort){
+		qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);
+	}
+	// Create ROM selector
+	t_GUIScreen *scr =  GUI_newSelector(cnt, dir_list, IDS_JUKEBOX, &trebuchet_9_font);
+	scr->handler = SPCSelectorHandler;
+	GUI_drawScreen(scr, NULL);
+	GUI_start();
+	struct sGUISelectorItem sel = GUISelector_getSelected(scr, NULL);
+	if(sel.StructFDFromFS_getDirectoryListMethod == FT_NONE){
+		//Leave dir
+		char curDir[256+1];
+		memset(curDir, 0, sizeof(curDir));
+		strcpy(curDir, startSPCFilePath);
+		leaveDir(&curDir);
+		strcpy(startSPCFilePath, curDir);
+		
+		//release GUI events manually
+		GUI.exit = 1;
+		g_event.event = 0;
+		GUI_getSPCIterable(startSPCFilePath);
+		return ;
+	}
+	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){
+		//Enter new dir
+		strcat((char*)startSPCFilePath, (char*)"/"); 
+		strcat((char*)startSPCFilePath, (char*)sel.filenameFromFS_getDirectoryListMethod); 
+		startSPCFilePath[strlen(startSPCFilePath)-1]='\0'; //remove last "/"
+		return GUI_getSPCIterable(startSPCFilePath);
+	}
+    GUI.ScanJoypad = 0;
+	strcpy(CFG.SPCFile, sel.filenameFromFS_getDirectoryListMethod);
 }
 
 void GUI_deleteROMSelector(){

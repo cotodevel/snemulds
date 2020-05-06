@@ -32,6 +32,12 @@
 #include "TGDSMemoryAllocator.h"
 #include "ipcfifoTGDS.h"
 
+__attribute__((section(".dtcm")))
+bool handleROMSelect=false;
+
+__attribute__((section(".dtcm")))
+bool handleSPCSelect=false;
+
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
 uint32 screen_mode;
 int APU_MAX = 262;
@@ -74,11 +80,17 @@ void PPU_ChangeLayerConf(int i)
 
 void readOptionsFromConfig(char *section)
 {
-	
 	char romPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
 	char spcPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
 	strcpy(romPath, get_config_string("Global", "ROMPath", ""));
 	strcpy(spcPath, get_config_string("Global", "SPCPath", ""));
+	
+	strcpy(startFilePath, "/");	//Init var
+	strcat(startFilePath, romPath); //Init var
+	
+	strcpy(startSPCFilePath, "/");
+	strcat(startSPCFilePath, spcPath);
+	
 	strcpy(CFG.ROMPath, getfatfsPath(romPath));
 	strcpy(CFG.SPCPath, getfatfsPath(spcPath));
 	
@@ -319,88 +331,108 @@ int checkConfiguration(char *name, int crc)
 	}
 }
 
-int loadROM(char *name, int confirm)
+int loadROM(struct sGUISelectorItem * name)
 {
-	int size;
-	char romname[100];
-	int ROMheader;
-	char *ROM;
-	int crc;
-
-	// Save SRAM of previous game first
-	saveSRAM();
-
-	/*	if (ROM && FS_shouldFreeROM())
-	 free(ROM);*/
-	CFG.LargeROM = 0;
-	strcpy(romname, CFG.ROMPath);
-	if (CFG.ROMPath[strlen(CFG.ROMPath)-1] != '/')
-		strcat(romname, "/");
-	strcat(romname, name);
-	strcpy(CFG.ROMFile, romname);
-	clrscr();
-	
-	printf("Loading %s... ", romname);
-	void *ptr = malloc(4);
-	printf("ptr=%p... ", ptr);
-	free(ptr);
-
-	mem_clear_paging(); // FIXME: move me...
-	ROM = (char *) SNES_ROM_ADDRESS;
-	SnemulDSdmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE);	//Clear memory: ZIP Will use this as malloc
-	
-	bool zipFileLoaded = false;
-	if(strstr (_FS_getFileExtension(name),"ZIP")){	
-		zipFileLoaded = true;
+	//wait until release A button
+	scanKeys();
+	u32 keys = keysPressed();
+	while (keys&KEY_A){
+		scanKeys();
+		keys = keysPressed();
 	}
 	
-	if(zipFileLoaded == true){
-		//build into tmpFile2, filename.smc out of passed filename.ext compressed
-		char outFile[MAX_TGDSFILENAME_LENGTH+1] = {0};
-		char inFile[MAX_TGDSFILENAME_LENGTH+1] = {0};
-		char temp1[MAX_TGDSFILENAME_LENGTH+1] = {0};
-		char temp2[MAX_TGDSFILENAME_LENGTH+1] = {0};
-		int sizeExt=strlen(_FS_getFileExtension(CFG.ROMFile))+1;
-		strncpy(temp1, CFG.ROMFile, strlen(CFG.ROMFile) - sizeExt);	//"filename" (no extension)
-		sprintf(outFile,"%s%s",temp1,".smc");
-		printf("decompressing:%s",CFG.ROMFile);
-		printf("->%s",outFile);
-		sprintf(romname,"%s",outFile);
-		//Decompress File for reload later
-		int stat = load_gz((char*)CFG.ROMFile, (char*)outFile);
-	}
-	
-	SnemulDSdmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE);	////Clear memory: ROM will use it
-	
-	size = FS_getFileSize(romname);
-	ROMheader = size & 8191;
-	if (ROMheader != 0&& ROMheader != 512)
-		ROMheader = 512;
-
-	if (size-ROMheader > ROM_MAX_SIZE)
-	{
-		FS_loadROMForPaging(ROM-ROMheader, romname, ROM_STATIC_SIZE+ROMheader);
-		CFG.LargeROM = 1;
-		crc = crc32(0, ROM, ROM_STATIC_SIZE);
-		printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
-	}
-	else
-	{
-		FS_loadROM(ROM-ROMheader, romname);
+	//file
+	if(name->StructFDFromFS_getDirectoryListMethod == FT_FILE){
+		int size;
+		char romname[MAX_TGDSFILENAME_LENGTH+1] = {0};
+		int ROMheader;
+		char *ROM;
+		int crc;
+		
+		// Save SRAM of previous game first
+		saveSRAM();
 		CFG.LargeROM = 0;
-		crc = crc32(0, ROM, size-ROMheader);
-		printf("CRC = %08x ", crc);
-	}
+		
+		//filename already has correct format
+		if (
+			(name->filenameFromFS_getDirectoryListMethod[0] == '0')
+			&&
+			(name->filenameFromFS_getDirectoryListMethod[1] == ':')
+			&&
+			(name->filenameFromFS_getDirectoryListMethod[2] == '/')
+		){
+				strcpy(romname, name->filenameFromFS_getDirectoryListMethod);
+				strcpy(CFG.ROMFile, romname);
+		}
+		//otherwise build format
+		else{
+			strcpy(romname, getfatfsPath(startFilePath));
+			if (startFilePath[strlen(startFilePath)-1] != '/'){
+				strcat(romname, "/");
+			}
+			strcat(romname, name->filenameFromFS_getDirectoryListMethod);
+			strcpy(CFG.ROMFile, romname);
+		}
+		clrscr();
+		
+		void *ptr = malloc(4);
+		printf("ptr=%p... ", ptr);
+		free(ptr);
 
-	//ROM += 0x400000; // Protected ROM
+		mem_clear_paging(); // FIXME: move me...
+		ROM = (char *) SNES_ROM_ADDRESS;
+		SnemulDSdmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE);	//Clear memory: ZIP Will use this as malloc
+		
+		bool zipFileLoaded = false;
+		if(strstr (_FS_getFileExtension(name->filenameFromFS_getDirectoryListMethod),"ZIP")){	
+			zipFileLoaded = true;
+		}
+		
+		if(zipFileLoaded == true){
+			//build into tmpFile2, filename.smc out of passed filename.ext compressed
+			char outFile[MAX_TGDSFILENAME_LENGTH+1] = {0};
+			char inFile[MAX_TGDSFILENAME_LENGTH+1] = {0};
+			char temp1[MAX_TGDSFILENAME_LENGTH+1] = {0};
+			char temp2[MAX_TGDSFILENAME_LENGTH+1] = {0};
+			int sizeExt=strlen(_FS_getFileExtension(CFG.ROMFile))+1;
+			strncpy(temp1, CFG.ROMFile, strlen(CFG.ROMFile) - sizeExt);	//"filename" (no extension)
+			sprintf(outFile,"%s%s",temp1,".smc");
+			printf("decompressing:%s",CFG.ROMFile);
+			printf("->%s",outFile);
+			sprintf(romname,"%s",outFile);
+			//Decompress File for reload later
+			int stat = load_gz((char*)CFG.ROMFile, (char*)outFile);
+		}
+		
+		SnemulDSdmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE);	////Clear memory: ROM will use it
+		
+		size = FS_getFileSize(romname);
+		ROMheader = size & 8191;
+		if (ROMheader != 0&& ROMheader != 512)
+			ROMheader = 512;
 
-	changeROM(ROM-ROMheader, size);
-
-	checkConfiguration(name, crc);
-	
-	//Apply topScreen / bottomScreen setting
-	if(CFG.TopScreenEmu == 0){
-		SnemulDSLCDSwap();
+		if (size-ROMheader > ROM_MAX_SIZE)
+		{
+			FS_loadROMForPaging(ROM-ROMheader, romname, ROM_STATIC_SIZE+ROMheader);
+			CFG.LargeROM = 1;
+			crc = crc32(0, ROM, ROM_STATIC_SIZE);
+			printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
+		}
+		else
+		{
+			FS_loadROM(ROM-ROMheader, romname);
+			CFG.LargeROM = 0;
+			crc = crc32(0, ROM, size-ROMheader);
+			printf("CRC = %08x ", crc);
+		}
+		
+		changeROM(ROM-ROMheader, size);
+		checkConfiguration(name->filenameFromFS_getDirectoryListMethod, crc);
+		
+		//Apply topScreen / bottomScreen setting
+		if(CFG.TopScreenEmu == 0){
+			SnemulDSLCDSwap();
+		}
 	}
 	
 	return 0;
@@ -410,8 +442,6 @@ int selectSong(char *name)
 {
 	char spcname[MAX_TGDSFILENAME_LENGTH+1];
 	memset(spcname, 0, sizeof(spcname));
-	strcpy(spcname, CFG.SPCPath);
-	strcat(spcname, "/");
 	strcat(spcname, name);
 	strcpy(CFG.Playlist, spcname);
 	CFG.Jukebox = 1;
@@ -462,6 +492,8 @@ int main(int argc, char ** argv){
 	
 	switch_dswnifi_mode(dswifi_idlemode);
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
+	memset(&startFilePath, 0, sizeof(startFilePath));
+	memset(&startSPCFilePath, 0, sizeof(startSPCFilePath));
 	
 	DisableIrq(IRQ_VCOUNT);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	disableSleepMode();	//Disable timeout-based sleep mode
@@ -508,12 +540,16 @@ int main(int argc, char ** argv){
 	printf("Load conf2");
 	readOptionsFromConfig("Global");
 	printf("Load conf3");
-	GUI_getConfig();	
+	GUI_getConfig();
 	printf("Load conf4");
-	GUI_getROM(CFG.ROMPath);	//read rom from (path)touchscreen:output rom -> CFG.ROMFile
-	loadROM(CFG.ROMFile, 0);
-	GUI_deleteROMSelector(); // Should also free ROMFile
-	GUI_createMainMenu();	//Start GUI
+	
+	GUI_getROMFirstTime(CFG.ROMPath);	//Output rom -> CFG.ROMFile
+	memset(&guiSelItem, 0, sizeof(guiSelItem));
+	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
+	guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
+	loadROM(&guiSelItem);
+	GUI_deleteROMSelector(); 	//Should also free ROMFile
+	GUI_createMainMenu();		//Start GUI
 	
 //trace code
 #if 0
@@ -529,7 +565,22 @@ int main(int argc, char ** argv){
 #endif	
 	
 	while (1){
+		
 		if(REG_DISPSTAT & DISP_VBLANK_IRQ){
+			//Sync Events
+			if(handleROMSelect==true){
+				handleROMSelect=false;
+				GUI_getROMIterable(startFilePath);
+				GUI_deleteROMSelector(); // Should also free lst
+				GUI_createMainMenu();	//	Start GUI
+			}
+			
+			if(handleSPCSelect==true){
+				handleSPCSelect=false;
+				GUI_getSPCIterable(startSPCFilePath);
+				GUI_deleteROMSelector(); // Should also free ROMFile
+				GUI_createMainMenu();	//Start GUI
+			}
 			GUI_update();
 		}
 		go();

@@ -28,6 +28,7 @@ USA
 #include "snes.h"
 #include "common.h"
 #include "cfg.h"
+#include "opcodes.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -261,6 +262,9 @@ extern uint16 read_joypad1();
 extern uint16 read_joypad2();
 extern void write_joypad1(uint16 bits);
 extern void write_joypad2(uint16 bits);
+
+extern void CPU_pack();
+extern void CPU_unpack();
 
 #ifdef __cplusplus
 }

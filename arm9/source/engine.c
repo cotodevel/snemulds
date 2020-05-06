@@ -181,10 +181,6 @@ int initSNESEmpty(){
 	return 0;
 }
 
-__attribute__((section(".dtcm")))
-bool nifiVblankEndWait = false;	//true == nifi awaits in VblankEnd, false = nifi running N vcounter lines and hasn't reached vblankEnd yet
-
-
 void show_opcode(char *buf, unsigned char opcode, int pc, int pb, unsigned short flags)
 {
   switch(opcode) {
