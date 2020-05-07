@@ -38,7 +38,7 @@ void SetupSound() {
     TIMERXDATA(0) = TIMER_FREQ(MIXRATE);
     TIMERXCNT(0) = TIMER_DIV_1 | TIMER_ENABLE;
 
-    TIMERXDATA(1) = 0x10000 - MIXBUFSIZE;
+    TIMERXDATA(1) = 0x10000 - (MIXBUFSIZE);
     TIMERXCNT(1) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
 
     // Debug
@@ -160,22 +160,19 @@ int main(int _argc, sint8 **_argv) {
 			//	samplesToMix = 16;
 			//	cyclesToExecute = spcCyclesPerSec / (32000 / 2);
 			//}
-			cyclesToExecute = spcCyclesPerSec / (32000 / 2);
+			cyclesToExecute = spcCyclesPerSec / (32000 / 8);
 			ApuExecute(cyclesToExecute);
 			
-			if (scanlineCount >= 16) {
-				scanlineCount -= 16;		
-				samplesToMix = 32;
-				if (apuMixPosition + samplesToMix > MIXBUFSIZE * 2) {
-					int tmp = (apuMixPosition + samplesToMix) - (MIXBUFSIZE * 2);
-					if (tmp != samplesToMix) {
-						DspMixSamplesStereo(samplesToMix - tmp, &playBuffer[apuMixPosition]);
-					}
-					samplesToMix = tmp;
-					apuMixPosition = 0;
+			if (scanlineCount >= 8) {
+				scanlineCount = 0;
+				samplesToMix = 16;
+				if (apuMixPosition + samplesToMix < (MIXBUFSIZE * 2)) {
+					DspMixSamplesStereo(samplesToMix, &playBuffer[apuMixPosition]);
+					apuMixPosition += samplesToMix;
 				}
-				DspMixSamplesStereo(samplesToMix, &playBuffer[apuMixPosition]);
-				apuMixPosition += samplesToMix;								
+				else{
+					apuMixPosition = 0;
+				}								
 			}			
         }
 		else{
