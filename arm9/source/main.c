@@ -495,8 +495,9 @@ int main(int argc, char ** argv){
 	memset(&startFilePath, 0, sizeof(startFilePath));
 	memset(&startSPCFilePath, 0, sizeof(startSPCFilePath));
 	
-	DisableIrq(IRQ_VCOUNT);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
+	DisableIrq(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	disableSleepMode();	//Disable timeout-based sleep mode
+	DisableSoundSampleContext();
 	swiDelay(888);
 	coherent_user_range_by_size((u32)IPC6, sizeof(struct sIPCSharedTGDSSpecific));
 	IPC6->APU_ADDR_CNT = 0;

@@ -28,14 +28,14 @@ bool paused = true;
 bool SPC_disable = true;
 bool SPC_freedom = false;
 
-void SetupSound() {
+void SetupSoundSnemulDS() {
     soundCursor = 0;
 	apuMixPosition = 0;
 
     powerON(POWER_SOUND);
     REG_SOUNDCNT = SOUND_ENABLE | SOUND_VOL(0x7F);
-
-    TIMERXDATA(0) = TIMER_FREQ(MIXRATE);
+	
+	TIMERXDATA(0) = TIMER_FREQ(MIXRATE);
     TIMERXCNT(0) = TIMER_DIV_1 | TIMER_ENABLE;
 
     TIMERXDATA(1) = 0x10000 - (MIXBUFSIZE);
@@ -51,7 +51,7 @@ void SetupSound() {
 	#endif    
 }
  
-void StopSound() {
+void StopSoundSnemulDS() {
     powerOFF(POWER_SOUND);
     REG_SOUNDCNT = 0;
     TIMERXCNT(0) = 0;
@@ -141,9 +141,8 @@ int main(int _argc, sint8 **_argv) {
 	update_spc_ports(); //APU Ports from SnemulDS properly binded with Assembly APU Core
     ApuReset();
     DspReset();
-    SetupSound();
+    SetupSoundSnemulDS();
     
-	
 	#ifdef SNEMULDS_ARM7_DLDI
 	//Init DLDI ARM7
 	ARM7DLDIInit();
@@ -187,4 +186,14 @@ int main(int _argc, sint8 **_argv) {
 //Custom Button Mapping Handler implementation: IRQ Driven
 void CustomInputMappingHandler(uint32 readKeys){
 	
+}
+
+//Project specific: ARM7 Setup for TGDS sound stream
+void initSoundStreamUser(){
+	//Buffers must be provided here. 
+	//Format: s16 buffer[WAV_READ_SIZE];
+	//strpcmL0 = (s16*)&strpcmL0Buf[0];
+	//strpcmL1 = (s16*)&strpcmL1Buf[0];
+	//strpcmR0 = (s16*)&strpcmR0Buf[0];
+	//strpcmR1 = (s16*)&strpcmR1Buf[0];
 }

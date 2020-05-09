@@ -81,14 +81,14 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		case SNEMULDS_APUCMD_RESET: //case 0x00000001:
 		{
 			// Reset
-			StopSound();
+			StopSoundSnemulDS();
 
 			memset(playBuffer, 0, MIXBUFSIZE * 8);
 			IPC6->APU_ADDR_CNT = 0; 
 			ApuReset();
 			DspReset();
 
-			SetupSound();
+			SetupSoundSnemulDS();
 			paused = false;
 			SPC_disable = false;
 			SPC_freedom = false;
@@ -97,9 +97,9 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		case SNEMULDS_APUCMD_PAUSE:{ //case 0x00000002:{
 			// Pause/unpause
 			if (!paused) {
-				StopSound();
+				StopSoundSnemulDS();
 			} else {
-				SetupSound();
+				SetupSoundSnemulDS();
 			}
 			if (SPC_disable)
 				SPC_disable = false;        
@@ -108,12 +108,12 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		break;
 		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC
 			//Reset APU
-			StopSound();
+			StopSoundSnemulDS();
 			memset(playBuffer, 0, MIXBUFSIZE * 8);
 			IPC6->APU_ADDR_CNT = 0; 
 			ApuReset();
 			DspReset();
-			SetupSound();
+			SetupSoundSnemulDS();
 			
 			//Load APU payload
 			LoadSpc(cmd2);
