@@ -59,16 +59,7 @@ struct s_apu2
 	int		counter;
 };
 
-typedef struct sIPCSharedTGDSSpecific{
-	int stub1;
-	int stub2;
-	int stub3;
-	int stub4;
-}  IPCSharedTGDSSpecific	__attribute__((aligned (4)));
-
-#define TGDSUSERIPC ((IPCSharedTGDSSpecific volatile *)(0x027FF000 + TGDSIPCSize))
-
-typedef struct sTransferRegion6 {
+struct sIPCSharedTGDSSpecific{
 	struct s_apu2 APU2;
 	uint8	PORT_SNES_TO_SPC[4];
 	uint8	PORT_SPC_TO_SNES[4];
@@ -78,19 +69,18 @@ typedef struct sTransferRegion6 {
 	uint32	APU_ADDR_BLK;	//APU_ADDR_BLK / SNEMUL_BLK ((volatile uint32*)(0x2800000-24))
 	uint8 * APU_ADDR_BLKP;	//#define (vuint8*)APU_ADDR_BLKP == APU_ADDR_BLK
 	uint32	APU_ADDR_CNT;	//#define APU_ADDR_CNT ((volatile uint32*)(0x2800000-60))	/ 0x27fffc4 // used a SNES SCanline counter, unused by snemulds
-} TransferRegion6, * pTransferRegion6;
+}  __attribute__((aligned (4)));
 
-
-#define IPC6 ((TransferRegion6 volatile *)(((u32)TGDSIPC + TGDSIPCSize)+sizeof(struct sIPCSharedTGDSSpecific)))
+#define IPC6 ((volatile struct sIPCSharedTGDSSpecific *)(0x027FF000 + sizeof(struct sIPCSharedTGDS)))
 
 // Project Specific
-#define SNEMULDS_APUCMD_RESET 0xffff00a1
-#define SNEMULDS_APUCMD_PAUSE 0xffff00a2
-#define SNEMULDS_APUCMD_PLAYSPC 0xffff00a3
-#define SNEMULDS_APUCMD_SPCDISABLE 0xffff00a4
-#define SNEMULDS_APUCMD_CLRMIXERBUF 0xffff00a5
-#define SNEMULDS_APUCMD_SAVESPC 0xffff00a6
-#define SNEMULDS_APUCMD_LOADSPC 0xffff00a7
+#define SNEMULDS_APUCMD_RESET (u32)(0xffffffa1)
+#define SNEMULDS_APUCMD_PAUSE (u32)(0xffffffa2)
+#define SNEMULDS_APUCMD_PLAYSPC (u32)(0xffffffa3)
+#define SNEMULDS_APUCMD_SPCDISABLE (u32)(0xffffffa4)
+#define SNEMULDS_APUCMD_CLRMIXERBUF (u32)(0xffffffa5)
+#define SNEMULDS_APUCMD_SAVESPC (u32)(0xffffffa6)
+#define SNEMULDS_APUCMD_LOADSPC (u32)(0xffffffa7)
 
 //Standardized SnemulDS defs
 #define ARM7_SOUNDWORK_BASE     ((uint8*)(0x6000000))

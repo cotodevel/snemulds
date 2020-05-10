@@ -59,35 +59,32 @@ sp_USR	= sp_UND - 0x200;	/* usr / sys stacks */
 ENTRY (_start)
 SECTIONS
 {
-	.init : ALIGN(4) { 			/* Entrypoint */
+	.init : { 			/* Entrypoint */
 		PROVIDE (__init_start__ = ABSOLUTE(.));
 		KEEP(*(.init*))
 		PROVIDE (__init_end__ = ABSOLUTE(.));
+		. = ALIGN(4);
 	} > EWRAM = 0xff
 	
-	. = ALIGN(4);
-	
-	.data : ALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
+	.data : {				/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__data_start__ = ABSOLUTE(.));
 		*(.data)
 		*(.data.*)
 		*(.gnu.linkonce.d*)
 		*(.gnu.linkonce.t*)
 		PROVIDE (__data_end__ = ABSOLUTE(.));
+		. = ALIGN(4);
 	} > EWRAM = 0xff
 	
-	. = ALIGN(4);
-	
-	.rodata : ALIGN(4) {			/* used by TGDS-Newlib C/C++ code */
+	.rodata : {			/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__rodata_start__ = ABSOLUTE(.));
 		*(.rdata)
 		*(.rodata)
 		*(.rodata.*)
     	*(.gnu.linkonce.r.*)
 		PROVIDE (__rodata_end__ = ABSOLUTE(.));
+		. = ALIGN(4);
 	} > EWRAM = 0xff
-	
-	. = ALIGN(4);
 	
 	.bss (NOLOAD): {				/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__bss_vma_start = ABSOLUTE(.));
@@ -96,29 +93,26 @@ SECTIONS
 		*(.bss)
 		*(.gnu.linkonce.b*.)
 		PROVIDE (__bss_vma_end = ABSOLUTE(.));
+		. = ALIGN(4);
 	} > EWRAM = 0xff
 	
-	. = ALIGN(4);
-	
-	.text : ALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
+	.text : {				/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__text_start__ = ABSOLUTE(.));
 		KEEP(*(.text*))
 		KEEP(*(COMMON))					/* libc requires these for uninitialized objects, include any heap uninit vars*/
 		PROVIDE (__text_end__ = ABSOLUTE(.));
+		. = ALIGN(4);
 	} > EWRAM = 0xff
 	
-	. = ALIGN(4);
-	
-	.ARM.exidx : ALIGN(4) {			/* not used at all, but some code rely on ARM debugging symbols */
+	.ARM.exidx : {			/* not used at all, but some code rely on ARM debugging symbols */
 		PROVIDE (__exidx_start = ABSOLUTE(.));
 		*(.ARM.exidx)
 		*(.ARM.exidx*)
 		*(.gnu.linkonce.armexidx.)
 		*(.gnu.linkonce.armexidx.*)
 		PROVIDE (__exidx_end = ABSOLUTE(.));	
+		. = ALIGN(4);
 	} > EWRAM = 0xff
-	
-	. = ALIGN(4);
 	
 	/*
      * Stabs le debugging sections.
@@ -158,7 +152,6 @@ SECTIONS
     .debug_typenames 0 : { *(.debug_typenames) }
     .debug_varnames  0 : { *(.debug_varnames) }
 	
-	. = ALIGN(4);
 	
 	.fini : ALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__fini_start__ = ABSOLUTE(.));
@@ -166,13 +159,10 @@ SECTIONS
 		*(.fini*)
 		PROVIDE (__fini_end__ = ABSOLUTE(.));
 		FILL(0x40);
+		. = ALIGN(4);
 	} > EWRAM = 0xff
 	
-	. = ALIGN(4);
-	
 	PROVIDE (__lib__end__ = __fini_end__ + 0x40);
-	
-	. = ALIGN(4);
 	
 	__itcm_vma_start = .;
 	.itcm : {
@@ -185,8 +175,6 @@ SECTIONS
 	} > ITCM AT > EWRAM
 	__itcm_vma_end__ = .;
 	
-	. = ALIGN(4);
-	
 	__dtcm_vma_start = .;
 	.dtcm :  {
 		KEEP (*(.dtcm*))
@@ -194,13 +182,12 @@ SECTIONS
 	} > DTCM AT > EWRAM
 	__dtcm_vma_end__ = .;
 	
-	. = ALIGN(4);
-	
 	___arm9sharedwram_vma_start = .;
-	.arm9sharedwram : ALIGN(4) {
+	.arm9sharedwram : {
 		KEEP (*(.arm9sharedwram*))
+		. = ALIGN(4);
 	} > ARM9SHAREDWRAM AT > EWRAM
 	___arm9sharedwram_vma_end__ = .;
 	
-	PROVIDE (__vma_stub_end__ = __lib__end__ + SIZEOF(.itcm) + SIZEOF(.dtcm) + SIZEOF(.arm9sharedwram));
+	PROVIDE (__vma_stub_end__ = __lib__end__ + SIZEOF(.itcm) + SIZEOF(.dtcm) + SIZEOF(.arm9sharedwram) + 16);
 }
