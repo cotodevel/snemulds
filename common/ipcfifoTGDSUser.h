@@ -58,9 +58,14 @@ struct s_apu2
 	u32 T1Count;
 	u32 T2Count;
 	
-	u32 target;
-    u32 cycles;
+	u32 T0Target;
+    u32 T1Target;
+    u32 T2Target;
     
+	u32 T0Cycles;
+    u32 T1Cycles;
+	u32 T2Cycles;
+	
 	u8 T0Enabled;
     u8 T1Enabled;
     u8 T2Enabled;
