@@ -45,7 +45,7 @@ CheckBranch:
 	
 	cmp	r0, APU_PC @ If PC = WaitAddres We have detected an timer loop
 	
-	@ldreq r1, =0x27E0004	@APU2.T1
+	@ldreq r1, =0x27E0004	@APU2.T1Count
 	ldreq r1,=APU_T1_ASM_ADDR
 	ldreq r1,[r1]
 	

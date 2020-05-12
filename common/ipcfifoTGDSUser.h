@@ -47,15 +47,26 @@ USA
 //Coto: If your snemulDS build has no sound, the culprit is a mis-aligned struct s_apu2 + struct sIPCSharedTGDSSpecific, so fill in there int stubX (X = number) until it works.
 struct s_apu2
 {
-	/* timers */
-	uint32    T0, T1, T2;
-	uint32	CNT0, CNT1, CNT2;
 	//skipper is a hack depending on port access, will redirect to other hardware
 	int	    skipper_cnt1;
 	int	    skipper_cnt2;
 	int	    skipper_cnt3;
 	int	    skipper_cnt4;
-};
+	
+	/* Timers */
+	u32 T0Count;
+	u32 T1Count;
+	u32 T2Count;
+	
+	u32 target;
+    u32 cycles;
+    
+	u8 T0Enabled;
+    u8 T1Enabled;
+    u8 T2Enabled;
+
+} __attribute__((aligned (4)));
+
 
 struct sIPCSharedTGDSSpecific{
 	struct s_apu2 APU2;

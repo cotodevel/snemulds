@@ -16,13 +16,6 @@
 extern "C" {
 #endif
 
-extern uint32 APU_T0_ASM_ADDR;
-extern uint32 APU_T1_ASM_ADDR;
-extern uint32 APU_T2_ASM_ADDR;
-
-extern uint32 APU_CNT0_ASM_ADDR;
-extern uint32 APU_CNT1_ASM_ADDR;
-extern uint32 APU_CNT2_ASM_ADDR;
 
 extern uint32 ADDRPORT_SPC_TO_SNES;
 extern uint32 ADDRPORT_SNES_TO_SPC;

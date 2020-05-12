@@ -152,13 +152,6 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
 	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
-	APU_T0_ASM_ADDR = (uint32)&APU2->T0;//unused (at least for now)
-	APU_T1_ASM_ADDR = (uint32)&APU2->T1;//used
-	APU_T2_ASM_ADDR = (uint32)&APU2->T2;//unused (at least for now)
-	
-	APU_CNT0_ASM_ADDR = (uint32)&APU2->CNT0;
-	APU_CNT1_ASM_ADDR = (uint32)&APU2->CNT1;
-	APU_CNT2_ASM_ADDR = (uint32)&APU2->CNT2;
 	
 	//must reflect to ipcfifoTGDSUser.h defs
 	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&IPC6->PORT_SPC_TO_SNES[0];
@@ -170,7 +163,7 @@ void update_spc_ports(){
 	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)&IPC6->APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
 	IPC6->APU_ADDR_BLKP = (volatile uint8 *)ADDR_SNEMUL_BLK;
 	
-	//todo: APU_ADDR_CNT: is unused by Assembly APU Core?
+	//todo: APU_ADDR_CNT: is unused by APU Core?
 }
 
 

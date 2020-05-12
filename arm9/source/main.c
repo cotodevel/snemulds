@@ -31,6 +31,7 @@
 #include "posixHandleTGDS.h"
 #include "TGDSMemoryAllocator.h"
 #include "ipcfifoTGDS.h"
+#include "nds_cp15_misc.h"
 
 __attribute__((section(".dtcm")))
 bool handleROMSelect=false;
@@ -489,9 +490,12 @@ int main(int argc, char ** argv){
 	{
 		printf(_STR(IDS_FS_FAILED));
 	}
-	
 	switch_dswnifi_mode(dswifi_idlemode);
+	asm("mcr	p15, 0, r0, c7, c10, 4");
+	flush_icache_all();
+	flush_dcache_all();
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
+	
 	memset(&startFilePath, 0, sizeof(startFilePath));
 	memset(&startSPCFilePath, 0, sizeof(startSPCFilePath));
 	
@@ -526,17 +530,6 @@ int main(int argc, char ** argv){
 	// Load SNEMUL.CFG
 	printf("Load conf1");
 	set_config_file(getfatfsPath("snemul.cfg"));
-	
-	//ext support removed for now
-	/*
-	{
-		FILE *f=fopen("/moonshl2/extlink.dat","rb");
-		if(!f){printf("Extlink cannot open.");while(1);}//__swiSleep();}
-		fread(&extlink,1,sizeof(extlink),f);
-		fclose(f);
-		if(extlink.ID!=ExtLinkBody_ID){printf("Not valid extlink.");while(1);}//__swiSleep();}
-	}
-	*/
 	
 	printf("Load conf2");
 	readOptionsFromConfig("Global");
