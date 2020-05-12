@@ -131,7 +131,7 @@ void  ApuReset() {
     APU_STATE[8] = 0;
     APU_SP = 0x1FF;
 	
-	IPC6->APU2.TIM0 = 0;
-	IPC6->APU2.TIM1 = 0;
-	IPC6->APU2.TIM2 = 0;
+	IPC6->APU2.T0 = 0;
+	IPC6->APU2.T1 = 0;
+	IPC6->APU2.T2 = 0;
 }

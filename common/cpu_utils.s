@@ -23,18 +23,6 @@ APU_T1_ASM_ADDR:
 APU_T2_ASM_ADDR:
     .word 0x0
 
-.global APU_TIM0_ASM_ADDR
-APU_TIM0_ASM_ADDR:
-    .word 0x0
-
-.global APU_TIM1_ASM_ADDR
-APU_TIM1_ASM_ADDR:
-    .word 0x0
-
-.global APU_TIM2_ASM_ADDR
-APU_TIM2_ASM_ADDR:
-    .word 0x0
-
 .global APU_CNT0_ASM_ADDR
 APU_CNT0_ASM_ADDR:
     .word 0x0

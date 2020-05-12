@@ -152,13 +152,9 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
 	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
-	APU_T0_ASM_ADDR = (uint32)&APU2->T0;
-	APU_T1_ASM_ADDR = (uint32)&APU2->T1;
-	APU_T2_ASM_ADDR = (uint32)&APU2->T2;
-	
-	APU_TIM0_ASM_ADDR = (uint32)&APU2->TIM0;
-	APU_TIM1_ASM_ADDR = (uint32)&APU2->TIM1;
-	APU_TIM2_ASM_ADDR = (uint32)&APU2->TIM2;
+	APU_T0_ASM_ADDR = (uint32)&APU2->T0;//unused (at least for now)
+	APU_T1_ASM_ADDR = (uint32)&APU2->T1;//used
+	APU_T2_ASM_ADDR = (uint32)&APU2->T2;//unused (at least for now)
 	
 	APU_CNT0_ASM_ADDR = (uint32)&APU2->CNT0;
 	APU_CNT1_ASM_ADDR = (uint32)&APU2->CNT1;

@@ -12,15 +12,15 @@ void ApuWriteControlByte(uint8 byte) {
 	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
 	uint8 orig = APU_MEM[APU_CONTROL_REG];
     if ((orig & 0x1) == 0 && (byte & 0x1) != 0) {
-        APU2->TIM0 = 0;
+        APU2->T0 = 0;
         APU_MEM[APU_COUNTER0] = 0;
 	}
     if ((orig & 0x2) == 0 && (byte & 0x2) != 0) {
-        APU2->TIM1 = 0;    	
+        APU2->T1 = 0;    	
         APU_MEM[APU_COUNTER1] = 0;
 	}
     if ((orig & 0x4) == 0 && (byte & 0x4) != 0) {
-        APU2->TIM2 = 0;    	
+        APU2->T2 = 0;    	
         APU_MEM[APU_COUNTER2] = 0;
 	}
 
@@ -70,9 +70,9 @@ void ApuPrepareStateAfterReload() {
     for (i = 0; i < 4; i++) IPC6->PORT_SNES_TO_SPC[i] = APU_MEM[0xF4 + i];
 
 	// archeide
-	APU2->TIM0 = 0;
-	APU2->TIM1 = 0;
-	APU2->TIM2 = 0;	
+	APU2->T0 = 0;
+	APU2->T1 = 0;
+	APU2->T2 = 0;	
 
 	apuShowRom = APU_MEM[APU_CONTROL_REG] >> 7;
     if (apuShowRom) {

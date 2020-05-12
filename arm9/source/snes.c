@@ -163,7 +163,6 @@ void	reset_SNES()
   SPC700_reset();
 */
   struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
-  APU2->counter = 0;
 //  if (CFG.Sound_output) 
   	APU_nice_reset();
 

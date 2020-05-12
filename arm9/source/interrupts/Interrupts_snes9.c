@@ -105,14 +105,10 @@ void VblankUser(){
 	
 	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
 	// FIX APU cycles
-#if 0	
-	if (/*CFG.Sound_output && */APU2->counter > 100 && APU2->counter < 261)
-	IPC6->APU_ADDR_CNT += 261 - APU2->counter;
-#endif		
+	
 	//*APU_ADDR_CNT += 262;
 	if (CFG.Sound_output)
 	IPC6->APU_ADDR_CNT = APU_MAX;
-	APU2->counter = 0;
 	
 	//printf("vblank! \n");	
 }

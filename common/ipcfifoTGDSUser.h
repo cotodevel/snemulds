@@ -49,14 +49,12 @@ struct s_apu2
 {
 	/* timers */
 	uint32    T0, T1, T2;
-	uint32 	TIM0, TIM1, TIM2;
 	uint32	CNT0, CNT1, CNT2;
-  
+	//skipper is a hack depending on port access, will redirect to other hardware
 	int	    skipper_cnt1;
 	int	    skipper_cnt2;
 	int	    skipper_cnt3;
 	int	    skipper_cnt4;
-	int		counter;
 };
 
 struct sIPCSharedTGDSSpecific{
