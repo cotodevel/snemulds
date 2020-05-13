@@ -122,7 +122,7 @@ int main(int _argc, sint8 **_argv) {
 	installWifiFIFO();		//use DSWIFI
 	
 	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
-	while (!(*((vuint8*)0x04000240) & 0x2));
+	while (!(*((vuint8*)0x04000240) & (1<<1)));
 	
 	int argBuffer[MAXPRINT7ARGVCOUNT];
 	memset((unsigned char *)&argBuffer[0], 0, sizeof(argBuffer));
