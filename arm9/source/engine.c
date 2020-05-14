@@ -81,13 +81,15 @@ void readSRAM(int offset, uint8* dest, int size) {
 
 int loadSRAM()
 {
-  char sramFile[100];
+  char sramFile[MAX_TGDSFILENAME_LENGTH+1];
   	
   if (SNESC.SRAMMask > 0)
     {
     	strcpy(sramFile, CFG.ROMFile);
 		strcpy(strrchr(sramFile, '.'), ".SRM");
-    	FS_loadFile(sramFile, SNESC.SRAM, SNESC.SRAMMask+1);
+    	if(FS_loadFile(sramFile, SNESC.SRAM, SNESC.SRAMMask+1) != 0){
+			return -1;
+		}
     }	
 	return 0;    
 }
@@ -95,14 +97,15 @@ int loadSRAM()
 
 int saveSRAM()
 {
-  char sramFile[100];
+  char sramFile[MAX_TGDSFILENAME_LENGTH+1];
   	
   if (SNESC.SRAMMask > 0)
     {
     	strcpy(sramFile, CFG.ROMFile);
 		strcpy(strrchr(sramFile, '.'), ".SRM");		
-    	FS_saveFile(sramFile, SNESC.SRAM, SNESC.SRAMMask+1,false);	//force_file_creation == false here (we could destroy or corrupt saves..)
-    }	
+    	return FS_saveFile(sramFile, SNESC.SRAM, SNESC.SRAMMask+1,false);	//force_file_creation == false here (we could destroy or corrupt saves..)
+    }
+	return -1; 
 }
 
 unsigned char interrupted;
