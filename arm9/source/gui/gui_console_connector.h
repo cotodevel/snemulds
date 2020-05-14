@@ -235,8 +235,6 @@ extern sint8*  g_snemulds_str_dan[];
 extern int selectSong(sint8 *name);	//Jukebox load SPC method
 extern void	CPU_unpack();
 extern void	PPU_update();
-extern int loadSRAM();
-extern int saveSRAM();
 extern void PPU_ChangeLayerConf(int i);
 extern void saveOptionsToConfig(sint8 *section);
 extern void	APU_clear();
