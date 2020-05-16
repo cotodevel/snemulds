@@ -126,7 +126,7 @@ int main(int _argc, sint8 **_argv) {
 	
 	int argBuffer[MAXPRINT7ARGVCOUNT];
 	memset((unsigned char *)&argBuffer[0], 0, sizeof(argBuffer));
-	writeDebugBuffer7("TGDS ARM7.bin Boot OK! ", 0, (int)&argBuffer[0]);
+	writeDebugBuffer7("TGDS ARM7.bin Boot OK! ", 0, (int*)&argBuffer[0]);
 	
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
