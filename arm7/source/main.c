@@ -129,8 +129,7 @@ int main(int _argc, sint8 **_argv) {
 	writeDebugBuffer7("TGDS ARM7.bin Boot OK! ", 0, (int*)&argBuffer[0]);
 	
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
-	
-	dmaFillHalfWord(3, 0x0, (uint32)ARM7_SOUNDWORK_BASE, (uint32)(128*1024));
+	memset(ARM7_SOUNDWORK_BASE, 0, (128*1024));
 	
     playBuffer = (uint16*)ARM7_SOUNDWORK_BASE;
     int i   = 0;

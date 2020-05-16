@@ -183,5 +183,5 @@ void update_spc_ports(){
 __attribute__((section(".itcm")))
 #endif
 void SnemulDSdmaFillHalfWord(sint32 dmachannel,uint32 value, uint32 dest, uint32 word_count){
-	dmaFillHalfWord(dmachannel,value, dest, word_count);
+	memset(dest, value, word_count);
 }
