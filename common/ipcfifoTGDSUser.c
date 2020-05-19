@@ -147,19 +147,31 @@ __attribute__((section(".itcm")))
 void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 }
 
-//Callback update sample implementation
 #ifdef ARM9
-void updateSoundContextStreamPlaybackUser(u32 srcFrmt){
-	
-}
+//Callback update sample implementation
 
-void freeSound()
-{
-	
+__attribute__((section(".itcm")))
+void updateSoundContextStreamPlaybackUser(u32 srcFrmt){
 }
 #endif
 
-//project specific stuff:
+void setupSoundUser(u32 srcFrmtInst){
+	#ifdef ARM7
+	#endif
+	
+	#ifdef ARM9
+	#endif
+}
+
+void stopSoundUser(u32 srcFrmt){
+	#ifdef ARM7
+	#endif
+	
+	#ifdef ARM9
+	#endif
+}
+
+//project specific stuff
 
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
