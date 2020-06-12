@@ -107,7 +107,7 @@ void	reset_CPU()
   CPU.S = 0x1ff;
 
   CPU_init();	
-  PCptr = map_memory(CPU.PC, CPU.PB);
+  PCptr = (u8*)map_memory(CPU.PC, CPU.PB);
   SnesPCOffset = -((sint32)mem_getbaseaddress(CPU.PC, CPU.PB));
   //printf("PCptr = %08x\n", PCptr);
   CPU.IsBreak = 0;

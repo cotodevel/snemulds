@@ -72,6 +72,7 @@ typedef struct
 #define CONVERT_SPR_TILE(tn) (((tn)&0xF)|(((tn)>>4)<<5))
 //#define CONVERT_SPR_TILE(tn) (tn)
 #define SNES_VRAM_OFFSET ((SNES_Port[0x01]&0x03) << 14)
+
 #define DRAW_TILE(I, J, TILENB, BG, P, F) PPU_setMap(I, J, (TILENB)&1023, BG, P, F) 
 #define ADD_TILE(TILE_BASE, TILENB, BG_MODE) \
   switch (BG_MODE) { \
@@ -85,10 +86,6 @@ typedef struct
 
 #define SPRITE_ADD_X(INDEX) -(((GFX.spr_info_ext[INDEX>>2]&(1<<((INDEX&0x3)<<1))) != 0)<<8)
 #define SPRITE_POS_Y(INDEX) (GFX.spr_info[INDEX].pos_y > 239 ? (sint8)GFX.spr_info[INDEX].pos_y : GFX.spr_info[INDEX].pos_y)
-
-
-#endif
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -125,7 +122,6 @@ extern int		PPU_AddTile2InCache(t_TileZone *tilezone, int addr);
 extern int		PPU_AddTile4InCache(t_TileZone *tilezone, int addr);
 extern void check_tile();
 extern void	PPU_updateCache();
-extern void     add_sprite_tile_4(uint16 tilenb, int pos);
 extern void	PPU_setMap(int i, int j, int tilenb, int bg, int p, int f);
 extern void update_scroll();
 extern void	draw_plane(int bg, int bg_mode, int nb_tilex, int nb_tiley, int tile_size);
@@ -137,7 +133,6 @@ extern void draw_plane_32_30(uint8 bg, uint8 bg_mode);
 extern void draw_plane_64_30(uint8 bg, uint8 bg_mode);
 extern void draw_plane_32_60(uint8 bg, uint8 bg_mode);
 extern void draw_plane_64_60(uint8 bg, uint8 bg_mode);
-extern void draw_tile_sprite(int TILENB, int X, int Y, int SIZEX);
 extern void PPU_set_sprites_bank(int bank);
 extern void draw_sprites();
 extern void renderMode1(int NB_BG, int MODE_1, int MODE_2, int MODE_3, int MODE_4);
@@ -160,4 +155,43 @@ extern void	PPU_line_handle_BG3();
 	
 #ifdef __cplusplus
 }
+#endif
+
+
+static inline void     add_sprite_tile_4(uint16 tilenb, int pos)
+{
+  uint8		a;
+  int		k;
+  uint8		*tile_ptr;
+  uint32	tile_addr;
+  uint32	*VRAM_ptr;
+
+  if (tilenb&0x100)
+    tile_addr = (tilenb+pos)*32+GFX.spr_addr_base+GFX.spr_addr_select;
+  else
+    tile_addr = (tilenb+pos)*32+GFX.spr_addr_base;
+/*  if (!GFX.tiles4b_def[tile_addr/32])
+  	return;*/
+
+  VRAM_ptr = (u32*)(SPRITE_GFX + (CONVERT_SPR_TILE(tilenb+pos)+(GFX.spr_bank<<4))*16);    
+  tile_ptr = SNESC.VRAM+tile_addr;
+
+  for (k=0;k<8;k++,tile_ptr+=2)
+    {
+	  uint32	c;
+      c =  bittab[tile_ptr[0x00]];
+      c |= bittab[tile_ptr[0x01]]<<1;
+      c |= bittab[tile_ptr[0x10]]<<2;
+      c |= bittab[tile_ptr[0x11]]<<3;
+	  *VRAM_ptr++ = c;            
+    }
+//  GFX.tiles4b_def[tile_addr/32] = (GFX.spr_addr_base>>13)+1;
+//  GFX.tiles4b_def[tile_addr/32] |= 4;     
+}
+
+static inline void draw_tile_sprite(int TILENB, int X, int Y, int SIZEX)
+{
+    add_sprite_tile_4(GFX.spr_info[TILENB].fst_tile, (Y*16+X));
+}
+
 #endif

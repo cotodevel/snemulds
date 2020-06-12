@@ -21,14 +21,6 @@ GNU General Public License for more details.
 #include <stdio.h>
 #include "common.h"
 
-#define MAP_RELOAD      0x80000000
-#define MAP_PPU         0x81000000
-#define MAP_CPU         0x82000000
-#define MAP_DSP         0x83000000
-#define MAP_LOROM_SRAM  0x84000000
-#define MAP_HIROM_SRAM  0x85000000
-#define MAP_NONE        0x86000000
-#define MAP_LAST        0x8F000000
 
 typedef
        struct {

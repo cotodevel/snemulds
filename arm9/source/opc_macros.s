@@ -476,7 +476,7 @@ GNU General Public License for more details.
 .macro  Indirect
 	SetRead
     TranslateAddress    0
-/*    tsts		r0, #0x80000000						@ reload
+/*    tst		r0, #0x80000000						@ reload
     blne		MemReload2*/   
     ReadAddr16
     AddDBR
@@ -488,7 +488,7 @@ GNU General Public License for more details.
 .macro  IndirectPBR
 	SetRead
     TranslateAddress    0
-/*    tsts		r0, #0x80000000						@ reload
+/*    tst		r0, #0x80000000						@ reload
     blne		MemReload2*/    
     ReadAddr16
     AddPBR
@@ -500,7 +500,7 @@ GNU General Public License for more details.
 .macro  IndirectLong
 	SetRead
     TranslateAddress    0
-/*    tsts		r0, #0x80000000						@ reload
+/*    tst		r0, #0x80000000						@ reload
     blne		MemReload2*/  
     ReadAddr24
 .endm
@@ -867,7 +867,7 @@ GNU General Public License for more details.
     .endif
     SetRead
     TranslateAddress        0
-    tsts		r0, #0x80000000						@ reload
+    tst		r0, #0x80000000						@ reload
     blne		MemReloadPC
     
     Debug2
@@ -895,12 +895,12 @@ GNU General Public License for more details.
 /*
 .macro OpADCD mode, pcinc, cycles
     
-    tsts    SnesMXDI, #SnesFlagM
+    tst    SnesMXDI, #SnesFlagM
     bne     ADCD_m1
 
 ADCD_m0:    @ r1 = 0000XXxx, SnesA = AAaa0000
     @ 16-bit add
-    tsts    SnesCV, #SnesFlagC
+    tst    SnesCV, #SnesFlagC
 
     and     r0, r1, #0xff                       @ r0 = 000000xx
     addne   r0, r0, #1                          @ r0 = r0 + 1 (if carry flag set)
@@ -931,7 +931,7 @@ ADCD_m0:    @ r1 = 0000XXxx, SnesA = AAaa0000
 
 ADCD_m1:
     @ 8-bit add
-    tsts    SnesCV, #SnesFlagC
+    tst    SnesCV, #SnesFlagC
     add     r1, r1, SnesA, lsr #16
     addne   r1, r1, #1                          @ r0 = r0 + 1 (if carry flag set)
     adr     r2, decimalAdd
@@ -949,7 +949,7 @@ ADCD_m1:
 
 .macro OpADCD mode, pcinc, cycles
     
-    tsts    SnesMXDI, #SnesFlagM
+    tst    SnesMXDI, #SnesFlagM
     bne     ADCD_m1
 
 ADCD_m0:    @ r1 = 0000XXxx, SnesA = AAaa0000
@@ -1034,7 +1034,7 @@ ADCD_m1: @ Took from SnesAdvance
 
     AddPCNoJump   \pcinc, \cycles
 
-    tsts    SnesMXDI, #SnesFlagD
+    tst    SnesMXDI, #SnesFlagD
     bne     OpADCDCode
 
     @ elegant ADC from Snes Advance
@@ -1094,20 +1094,20 @@ ADCD_m1: @ Took from SnesAdvance
     .ifeq   immMode-0
         mov     SnesNZ, #0
     
-        tsts    SnesA, r1, ror #mBit
+        tst    SnesA, r1, ror #mBit
         orrne   SnesNZ, SnesNZ, #0x1
 
-        tsts    r1, #(1 << (mBit-1))
+        tst    r1, #(1 << (mBit-1))
         orrne   SnesNZ, SnesNZ, #SnesFlagNH
         
-        tsts    r1, #(1 << (mBit-2))
+        tst    r1, #(1 << (mBit-2))
         biceq   SnesCV, SnesCV, #SnesFlagV
         orrne   SnesCV, SnesCV, #SnesFlagV
     .else
         and     r0, SnesNZ, #SnesFlagNL
         orr     SnesNZ, SnesNZ, r0, lsl #1
         
-        tsts    SnesA, r1, ror #mBit
+        tst    SnesA, r1, ror #mBit
         biceq   SnesNZ, SnesNZ, #0x00ff
         biceq   SnesNZ, SnesNZ, #0xff00
         orrne   SnesNZ, SnesNZ, #0x1
@@ -1302,7 +1302,7 @@ ADCD_m1: @ Took from SnesAdvance
     biccc   SnesCV, SnesCV, #SnesFlagC
     orrcs   SnesCV, SnesCV, #SnesFlagC
     
-    tsts    r2, #SnesFlagC
+    tst    r2, #SnesFlagC
     orrne   SnesA, SnesA, #(1 << (32-mBit))
     mov     SnesNZ, SnesA, lsr #16
 
@@ -1321,7 +1321,7 @@ ADCD_m1: @ Took from SnesAdvance
     orrcs   SnesCV, SnesCV, #SnesFlagC
     mov     r1, r1, ror #(32-mBit)
 
-    tsts    r2, #SnesFlagC
+    tst    r2, #SnesFlagC
     orrne   r1, r1, #1
     mov     SnesNZ, r1, lsl #(16-mBit)
     
@@ -1341,7 +1341,7 @@ ADCD_m1: @ Took from SnesAdvance
     orrcs   SnesCV, SnesCV, #SnesFlagC
     mov     SnesA, SnesA, ror #mBit
 
-    tsts    r2, #SnesFlagC
+    tst    r2, #SnesFlagC
     orrne   SnesA, SnesA, #0x80000000
     mov     SnesNZ, SnesA, lsr #16
 
@@ -1359,7 +1359,7 @@ ADCD_m1: @ Took from SnesAdvance
     biccc   SnesCV, SnesCV, #SnesFlagC
     orrcs   SnesCV, SnesCV, #SnesFlagC
 
-    tsts    r2, #SnesFlagC
+    tst    r2, #SnesFlagC
     orrne   r1, r1, #(1<<(mBit-1))
     mov     SnesNZ, r1, lsl #(16-mBit)
     
@@ -1370,7 +1370,7 @@ ADCD_m1: @ Took from SnesAdvance
 .endm
 
 .macro OpSBCD mode, pcinc, cycles
-    tsts    SnesMXDI, #SnesFlagM
+    tst    SnesMXDI, #SnesFlagM
     bne     SBCD_m1
 
     @ another elegant solution from Snes Advance
@@ -1449,7 +1449,7 @@ SBCD_m1:
 
     AddPCNoJump   \pcinc, \cycles
 
-    tsts    SnesMXDI, #SnesFlagD
+    tst    SnesMXDI, #SnesFlagD
     bne     OpSBCDCode
 
     @ elegant SBC from SNES Advance
@@ -1561,7 +1561,7 @@ SBCD_m1:
 	
     \mode
     mov     SnesX, SnesSP, lsr #16
-    tsts    SnesMXDI, #SnesFlagX
+    tst    SnesMXDI, #SnesFlagX
     bicne   SnesX, SnesX, #0xff00           @ clear the high byte for 8-bit X
     movne   SnesNZ, SnesX, lsl #8           @ 8-bit
     moveq   SnesNZ, SnesX                   @ 16-bit
@@ -1921,12 +1921,12 @@ SBCD_m1:
 .macro ComposeP
     mov     r1, #0                      @ r1 = 00000000
     
-    tsts    SnesCV, #SnesFlagC
+    tst    SnesCV, #SnesFlagC
     orrne   r1, r1, #SnesP_C            @ r1 = 0000000C
-    tsts    SnesCV, #SnesFlagV
+    tst    SnesCV, #SnesFlagV
     orrne   r1, r1, #SnesP_V            @ r1 = 0V00000C
 
-    tsts    SnesNZ, #SnesFlagN          
+    tst    SnesNZ, #SnesFlagN          
     orrne   r1, r1, #SnesP_N            @ r1 = NV00000C
     movs    r0, SnesNZ, lsl #16
     orreq   r1, r1, #SnesP_Z            @ r1 = NV0000ZC
@@ -1961,12 +1961,12 @@ SBCD_m1:
     orr     SnesMXDI, SnesMXDI, r1, lsl #2  @ SnesMXDI = cccccccc cccccccc 0000-e00 MXDI----
 
     @ check X bit
-    tsts    SnesMXDI, #SnesFlagX            @ 00mxdi00 & 00010000
+    tst    SnesMXDI, #SnesFlagX            @ 00mxdi00 & 00010000
     bicne   SnesX, SnesX, #0x0000ff00       @ clear the high byte if X/Y=8bit
     bicne   SnesY, SnesY, #0x0000ff00       @ clear the high byte if X/Y=8bit
 
     @ check M bit
-    tsts    r0, #SnesFlagM                  @ 00mxdi00 (prev) & 00100000
+    tst    r0, #SnesFlagM                  @ 00mxdi00 (prev) & 00100000
     
     .ifeq   \fast-1
     ldrne   r0, SnesB
@@ -1978,7 +1978,7 @@ SBCD_m1:
     addne   SnesA, r0, SnesA, lsr #8        @ rotate right by 8 if A=8bit
                                             @ SnesA = xxAA0000
 
-    tsts    SnesMXDI, #SnesFlagM            @ 00mxdi00 (new) & 00100000
+    tst    SnesMXDI, #SnesFlagM            @ 00mxdi00 (new) & 00100000
     andne   r1, SnesA, #0xFF000000          @ r1 = BB000000    if A=8bit
     .ifeq   \fast-1
     ldrne   r0, SnesB
@@ -2002,15 +2002,15 @@ SBCD_m1:
 @-------------------------------------------------------------------------
 .macro DecomposeP   fast = 1
     bic     SnesCV, SnesCV, #0xF
-    tsts    r1, #SnesP_C
+    tst    r1, #SnesP_C
     orrne   SnesCV, SnesCV, #SnesFlagC
-    tsts    r1, #SnesP_V
+    tst    r1, #SnesP_V
     orrne   SnesCV, SnesCV, #SnesFlagV
 
     mov     SnesNZ, #0
-    tsts    r1, #SnesP_N
+    tst    r1, #SnesP_N
     orrne   SnesNZ, SnesNZ, #SnesFlagNH
-    tsts    r1, #SnesP_Z
+    tst    r1, #SnesP_Z
     orreq   SnesNZ, SnesNZ, #1
                                             @ r1 = nvmxdizc
     bic     r1, r1, #0xffffffc3             @ r1 = 00mxdi00
@@ -2056,10 +2056,10 @@ SBCD_m1:
 
 .macro OpXCE mode, pcinc, cycles
     mov     r1, SnesMXDI 
-    tsts    SnesCV, #SnesFlagC
+    tst    SnesCV, #SnesFlagC
     biceq   SnesMXDI, SnesMXDI, #SnesFlagE
     orrne   SnesMXDI, SnesMXDI, #SnesFlagE
-    tsts    r1, #SnesFlagE
+    tst    r1, #SnesFlagE
     biceq   SnesCV, SnesCV, #SnesFlagC
     orrne   SnesCV, SnesCV, #SnesFlagC
     AddPC   \pcinc, \cycles
@@ -2338,7 +2338,7 @@ SBCD_m1:
         .endif
     .endif
     .ifeq \bitToTest-SnesFlagN
-        tsts    SnesNZ, #SnesFlagN
+        tst    SnesNZ, #SnesFlagN
         .ifeq \set-1
             addne     SnesPC, SnesPC, r1
             CheckWaitAddress
@@ -2348,7 +2348,7 @@ SBCD_m1:
         .endif
     .endif
     .ifeq \bitToTest-SnesFlagC
-        tsts    SnesCV, #SnesFlagC
+        tst    SnesCV, #SnesFlagC
         .ifeq \set-1
             addne     SnesPC, SnesPC, r1
             CheckWaitAddress
@@ -2358,7 +2358,7 @@ SBCD_m1:
         .endif
     .endif
     .ifeq \bitToTest-SnesFlagV
-        tsts    SnesCV, #SnesFlagV
+        tst    SnesCV, #SnesFlagV
         .ifeq \set-1
             addne     SnesPC, SnesPC, r1
             CheckWaitAddress
@@ -2538,7 +2538,7 @@ SBCD_m1:
 .macro ExecuteInterrupt address, nonMaskable=1
     .ifeq \nonMaskable-0
         @ version 0.22 fix
-        tsts    SnesMXDI, #SnesFlagI
+        tst    SnesMXDI, #SnesFlagI
         bne     1f
     .endif
 
@@ -2546,7 +2546,7 @@ SBCD_m1:
     
     @ version 0.22 fix for WAI
     @
-    tsts    SnesWAI, #SnesFlagWAI
+    tst    SnesWAI, #SnesFlagWAI
     addne   SnesPC, SnesPC, #1
     bicne   SnesWAI, SnesWAI, #SnesFlagWAI
     

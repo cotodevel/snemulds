@@ -71,7 +71,7 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 	int i;
 	uint8	*ptr;
 
-	ptr = map_memory(offs, bank);
+	ptr = (uint8*)map_memory(offs, bank);
 
 	if (PPU_PORT[0x15]&0x80) {
 		if (!GFX.FS_incr && GFX.SC_incr == 1)
@@ -219,7 +219,7 @@ inline void		HDMA_transfert(unsigned char port){
 
   //START_PROFILE(DMA, 4);
   SNES.HDMA_nblines[port] = 0;
-  ptr = map_memory((DMA_PORT[0x102+port*0x10])+(DMA_PORT[0x103+port*0x10]<<8),
+  ptr = (uchar*)map_memory((DMA_PORT[0x102+port*0x10])+(DMA_PORT[0x103+port*0x10]<<8),
                     DMA_PORT[0x104+port*0x10]);
 
   if (!ptr) {
@@ -242,7 +242,7 @@ inline void		HDMA_transfert(unsigned char port){
       repeat = !(*(ptr-1)&0x80);
     }
     if (DMA_PORT[0x100+port*0x10]&0x40) {
-      ptr2 = map_memory(*ptr+(*(ptr+1)<<8), DMA_PORT[0x107+port*0x10]);
+      ptr2 = (uchar*)map_memory(*ptr+(*(ptr+1)<<8), DMA_PORT[0x107+port*0x10]);
       ptr += 2;
       switch (DMA_PORT[0x100+port*0x10]&7) {
         case 0x00 :
@@ -1825,7 +1825,7 @@ void CPU_unpack()
 	}
 	
 	SnesPCOffset = -(sint32)mem_getbaseaddress(CPU.PC, CPU.PB);
-	PCptr = map_memory(CPU.PC, CPU.PB);
+	PCptr = (uint8*)map_memory(CPU.PC, CPU.PB);
 	
 	S = CPU.PB;
 	S |= CPU.S << 16;

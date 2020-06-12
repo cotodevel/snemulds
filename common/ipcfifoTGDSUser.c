@@ -104,7 +104,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			SetupSoundSnemulDS();
 			
 			//Load APU payload
-			LoadSpc(cmd2);
+			LoadSpc((const u8*)cmd2);
 			
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 			fifomsg[10] = (uint32)ARM7FS_IOSTATUS_IDLE;	//release ARM9 APU_playSpc()
@@ -185,7 +185,7 @@ void update_spc_ports(){
 	ADDR_SNEMUL_CMD	=	(uint32)(volatile uint32*)&IPC6->APU_ADDR_CMD;	//0x027FFFE8	// SNEMUL_CMD
 	ADDR_SNEMUL_ANS	=	(uint32)(volatile uint32*)&IPC6->APU_ADDR_ANS;	//0x027fffec	// SNEMUL_ANS
 	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)&IPC6->APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
-	IPC6->APU_ADDR_BLKP = (volatile uint8 *)ADDR_SNEMUL_BLK;
+	IPC6->APU_ADDR_BLKP = (uint8 *)ADDR_SNEMUL_BLK;
 	
 	//todo: APU_ADDR_CNT: is unused by APU Core?
 }
@@ -195,5 +195,5 @@ void update_spc_ports(){
 __attribute__((section(".itcm")))
 #endif
 void SnemulDSdmaFillHalfWord(sint32 dmachannel,uint32 value, uint32 dest, uint32 word_count){
-	memset(dest, value, word_count);
+	memset((u8*)dest, value, (int)word_count);
 }

@@ -35,7 +35,7 @@ void WriteProtectROM()
 	for (c = 0; c < 0x800; c++)
 	{
 		if (SNES.BlockIsROM[c])
-			WMAP[c] = (uchar *)MAP_NONE;
+			WMAP[c] = (uchar*)MAP_NONE;
 	}
 }
 
@@ -45,7 +45,7 @@ void FixMap()
 
 	for (c = 0; c < 0x800; c++)
 	{
-		if (MAP[c] != MAP_RELOAD && REGULAR_MAP(MAP[c]))
+		if ( (MAP[c] != (uchar*)MAP_RELOAD) && REGULAR_MAP(MAP[c]))
 		{
 			MAP[c] -= ((c << 13)&0xFF0000);
 		}
@@ -336,12 +336,12 @@ void mem_removeCacheBlock(int block)
 
 		if ((block & 7) >= 4)
 		{
-			MAP[block] = MAP_RELOAD;
-			MAP[block+0x400] = MAP_RELOAD;
+			MAP[block] = (uchar*)MAP_RELOAD;
+			MAP[block+0x400] = (uchar*)MAP_RELOAD;
 		}
 		if (SNES.BlockIsROM[block+0x200])
-			MAP[block+0x200] = MAP_RELOAD;
-		MAP[block+0x600] = MAP_RELOAD;
+			MAP[block+0x200] = (uchar*)MAP_RELOAD;
+		MAP[block+0x600] = (uchar*)MAP_RELOAD;
 	}
 }
 
@@ -581,7 +581,7 @@ uchar mem_getbyte(uint32 offset,uchar bank)
 	block = (address>>13)&0x7FF;
 	addr = MAP[block];
 
-	if (addr == MAP_RELOAD)
+	if (addr == (uchar*)MAP_RELOAD)
 	addr = mem_checkReload(block);
 
 	if (REGULAR_MAP(addr))
@@ -601,7 +601,7 @@ void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 
 	block = (address>>13)&0x7FF;
 	addr = WMAP[block];
-	if (addr == MAP_RELOAD)
+	if (addr == (uchar*)MAP_RELOAD)
 	addr = mem_checkReload(block);
 	if (REGULAR_MAP(addr))
 	{
@@ -621,7 +621,7 @@ ushort mem_getword(uint32 offset,uchar bank)
 	block = (address>>13)&0x7FF;
 	addr = MAP[block];
 
-	if (addr == MAP_RELOAD)
+	if (addr == (uchar*)MAP_RELOAD)
 	addr = mem_checkReload(block);
 	if (REGULAR_MAP(addr))
 	{
@@ -641,7 +641,7 @@ void mem_setword(uint32 offset, uchar bank, ushort word)
 	//  CPU.WaitAddress = -1;
 	block = (address>>13)&0x7FF;
 	addr = WMAP[block];
-	if (addr == MAP_RELOAD)
+	if (addr == (uchar*)MAP_RELOAD)
 	addr = mem_checkReload(block);
 
 	if (REGULAR_MAP(addr))
@@ -661,7 +661,7 @@ void *mem_getbaseaddress(uint16 offset, uchar bank)
 	block = (address>>13)&0x7FF;
 	ptr = MAP[block];
 
-	if (ptr == MAP_RELOAD)
+	if (ptr == (uchar*)MAP_RELOAD)
 		ptr = mem_checkReload(block);
 
 	if (REGULAR_MAP(ptr))
@@ -692,7 +692,7 @@ void *map_memory(uint16 offset, uchar bank)
 	block = (address>>13)&0x7FF;
 	ptr = MAP[block];
 
-	if (ptr == MAP_RELOAD)
+	if (ptr == (uchar*)MAP_RELOAD)
 		ptr = mem_checkReload(block);
 
 	if (REGULAR_MAP(ptr))

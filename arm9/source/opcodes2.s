@@ -577,7 +577,7 @@ OpMVP_Code:
     bne     9b
 
 OpMVP_Code_End:
-    tsts    SnesA, SnesA
+    tst    SnesA, SnesA
     sub     SnesA, SnesA, #0x00010000       @ make SnesA = 0xffff
 
     ldrb    r0, [SnesPC, #1]
@@ -625,7 +625,7 @@ OpMVN_Code:
     bne     9b
     
 OpMVN_Code_End:
-    tsts    SnesA, SnesA
+    tst    SnesA, SnesA
     sub     SnesA, SnesA, #0x00010000       @ make SnesA = 0xffff
 
     ldrb    r0, [SnesPC, #1]

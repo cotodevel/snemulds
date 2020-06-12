@@ -16,6 +16,8 @@
 #include "dldi.h"
 #include "spifwTGDS.h"
 #include "posixHandleTGDS.h"
+#include "eventsTGDS.h"
+#include "powerTGDS.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
 uint16 *playBuffer;

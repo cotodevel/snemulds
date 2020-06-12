@@ -12,6 +12,7 @@
 #include "apu_shared.h"
 #include "interrupts.h"
 #include "biosTGDS.h"
+#include "eventsTGDS.h"
 
 //User Handler Definitions
 

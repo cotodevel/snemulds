@@ -1227,7 +1227,7 @@ void GUI_getROMFirstTime(sint8 *rompath){
 		char curDir[256+1];
 		memset(curDir, 0, sizeof(curDir));
 		strcpy(curDir, startFilePath);
-		leaveDir(&curDir);
+		leaveDir((char*)&curDir[0]);
 		strcpy(startFilePath, curDir);
 		
 		//release GUI events manually
@@ -1273,7 +1273,7 @@ void GUI_getROMIterable(sint8 *rompath){
 		char curDir[256+1];
 		memset(curDir, 0, sizeof(curDir));
 		strcpy(curDir, startFilePath);
-		leaveDir(&curDir);
+		leaveDir((char*)&curDir[0]);
 		strcpy(startFilePath, curDir);
 		
 		//release GUI events manually
@@ -1318,7 +1318,7 @@ void GUI_getSPCIterable(sint8 *rompath){
 		char curDir[256+1];
 		memset(curDir, 0, sizeof(curDir));
 		strcpy(curDir, startSPCFilePath);
-		leaveDir(&curDir);
+		leaveDir((char*)&curDir[0]);
 		strcpy(startSPCFilePath, curDir);
 		
 		//release GUI events manually

@@ -31,13 +31,11 @@ GNU General Public License for more details.
 #include "dmaTGDS.h"
 #include "engine.h"
 
-
 __attribute__((section(".dtcm")))
 uint32 bittab[256];
 //__attribute__((section(".dtcm")))
 uint32 bittab8[16];
- 
- 
+
 void    init_render()
 {
   int  PixelOdd = 1;
@@ -341,8 +339,8 @@ void     add_tile_2(int tile_addr_base, uint16 *vram_addr, int tilenb)
 
   tile_addr = tile_addr_base+tilenb*16;
   //VRAM_ptr = ((uint16 *)0x06010000)+tile_addr_base+tilenb*16;
-  VRAM_ptr = vram_addr+tilenb*16;
-  tile_ptr = SNESC.VRAM+tile_addr;    
+  VRAM_ptr = (u32*)(vram_addr+(tilenb*16));
+  tile_ptr = (u8*)(SNESC.VRAM+tile_addr);    
 
   for (k=0;k<8;k++,tile_ptr+=2)
     {
@@ -363,10 +361,10 @@ void     add_tile_4(int tile_addr_base, uint16 *vram_addr, int tilenb)
   uint32	tile_addr;  
   uint32	*VRAM_ptr;
 
-  tile_addr = tile_addr_base+tilenb*32;
-  tile_ptr = SNESC.VRAM+tile_addr;    
+  tile_addr = (u32)(tile_addr_base+(tilenb*32));
+  tile_ptr = (u8*)(SNESC.VRAM+tile_addr);    
   //VRAM_ptr = ((uint16 *)0x06010000)+tile_addr_base+tilenb*16;
-  VRAM_ptr = vram_addr+tilenb*16;
+  VRAM_ptr = (u32*)(vram_addr+(tilenb*16));
   
   for (k=0;k<8;k++,tile_ptr+=2)
     {
@@ -397,10 +395,10 @@ void     add_tile_8(int tile_addr_base, uint16 *vram_addr, int tilenb)
   uint32	tile_addr;  
   uint32	*VRAM_ptr;
 
-  tile_addr = tile_addr_base+tilenb*64;
-  tile_ptr = SNESC.VRAM+tile_addr;    
+  tile_addr = (u32)(tile_addr_base+(tilenb*64));
+  tile_ptr = (u8*)(SNESC.VRAM+tile_addr);    
   //VRAM_ptr = ((uint16 *)0x06010000)+tile_addr_base+tilenb*32;
-  VRAM_ptr = vram_addr+tilenb*32;    
+  VRAM_ptr = (u32*)(vram_addr+(tilenb*32));
 
   for (k=0;k<8;k++,tile_ptr+=2)
     {
@@ -622,43 +620,6 @@ void	PPU_updateCache()
 	PPU_add_tile_address(1);
 	PPU_add_tile_address(2);
 }
-
-#define CONVERT_SPR_TILE(tn) (((tn)&0xF)|(((tn)>>4)<<5))
-//#define CONVERT_SPR_TILE(tn) (tn)
-
-#define SNES_VRAM_OFFSET ((SNES_Port[0x01]&0x03) << 14)
-
-void     add_sprite_tile_4(uint16 tilenb, int pos)
-{
-  uint8		a;
-  int		k;
-  uint8		*tile_ptr;
-  uint32	tile_addr;
-  uint32	*VRAM_ptr;
-
-  if (tilenb&0x100)
-    tile_addr = (tilenb+pos)*32+GFX.spr_addr_base+GFX.spr_addr_select;
-  else
-    tile_addr = (tilenb+pos)*32+GFX.spr_addr_base;
-/*  if (!GFX.tiles4b_def[tile_addr/32])
-  	return;*/
-
-  VRAM_ptr = SPRITE_GFX + (CONVERT_SPR_TILE(tilenb+pos)+(GFX.spr_bank<<4))*16;    
-  tile_ptr = SNESC.VRAM+tile_addr;
-
-  for (k=0;k<8;k++,tile_ptr+=2)
-    {
-	  uint32	c;
-      c =  bittab[tile_ptr[0x00]];
-      c |= bittab[tile_ptr[0x01]]<<1;
-      c |= bittab[tile_ptr[0x10]]<<2;
-      c |= bittab[tile_ptr[0x11]]<<3;
-	  *VRAM_ptr++ = c;            
-    }
-//  GFX.tiles4b_def[tile_addr/32] = (GFX.spr_addr_base>>13)+1;
-//  GFX.tiles4b_def[tile_addr/32] |= 4;     
-}
-
 
 
 void	PPU_setMap(int i, int j, int tilenb, int bg, int p, int f)
@@ -1303,17 +1264,9 @@ void draw_plane_64_60(unsigned char bg, unsigned char bg_mode)
 
 
 
-#define SPRITE_ADD_X(INDEX) \
-  -(((GFX.spr_info_ext[INDEX>>2]&(1<<((INDEX&0x3)<<1))) != 0)<<8)
-
-#define SPRITE_POS_Y(INDEX) \
-  (GFX.spr_info[INDEX].pos_y > 239 ? (char)GFX.spr_info[INDEX].pos_y : GFX.spr_info[INDEX].pos_y)
 
 
-inline void draw_tile_sprite(int TILENB, int X, int Y, int SIZEX)
-{
-    add_sprite_tile_4(GFX.spr_info[TILENB].fst_tile, (Y*16+X));
-}
+
 
 void PPU_set_sprites_bank(int bank)
 {
@@ -1996,6 +1949,7 @@ void	PPU_line_handle_BG3()
 	l->lBG2_Y0 = PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll;
   }
 }
+
 
 void	PPU_line_render()
 {
