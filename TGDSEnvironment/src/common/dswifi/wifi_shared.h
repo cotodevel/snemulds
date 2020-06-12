@@ -1,0 +1,296 @@
+// DS Wifi interface code
+// Copyright (C) 2005-2006 Stephen Stair - sgstair@akkit.org - http://www.akkit.org
+// wifi_shared.h - Shared structures to be used by arm9 and arm7
+/****************************************************************************** 
+DSWifi Lib and test materials are licenced under the MIT open source licence:
+Copyright (c) 2005-2006 Stephen Stair
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+******************************************************************************/
+
+#ifndef WIFI_SHARED_H
+#define WIFI_SHARED_H
+
+
+//#include <nds.h>
+
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+#define WIFIINIT_OPTION_USELED		   (uint16)(0x0002)
+
+// on spinlock contention, the side unsuccessfully attempting the lock reverts the lock.
+// if the unlocking side sees the lock incorrectly set, the unlocking side will delay until it has reverted to the correct value, then continue unlocking.
+// there should be a delay of at least about ~10-20 cycles between a lock and unlock, to prevent contention.
+#define SPINLOCK_NOBODY			(uint16)(0x0000)
+#define SPINLOCK_ARM7			(uint16)(0x0001)
+#define SPINLOCK_ARM9			(uint16)(0x0002)
+
+#define SPINLOCK_OK		(uint16)(0x0000)
+#define SPINLOCK_INUSE	(uint16)(0x0001)
+#define SPINLOCK_ERROR	(uint16)(0x0002)
+
+#ifdef ARM7
+#define SPINLOCK_VALUE SPINLOCK_ARM7
+#endif
+#ifdef ARM9
+#define SPINLOCK_VALUE SPINLOCK_ARM9
+#endif
+
+
+#define Spinlock_Acquire(structtolock) SLasm_Acquire(&((structtolock).spinlock),SPINLOCK_VALUE)
+#define Spinlock_Release(structtolock) SLasm_Release(&((structtolock).spinlock),SPINLOCK_VALUE)
+#define Spinlock_Check(structtolock) (((structtolock).spinlock)!=SPINLOCK_NOBODY)
+
+
+// If for whatever reason you want to ditch SGIP and use your own stack, comment out the following line.
+#define WIFI_USE_TCP_SGIP	1
+
+#define WIFI_RXBUFFER_SIZE	(1024*12)
+#define WIFI_TXBUFFER_SIZE	(1024*24)
+#define WIFI_MAX_AP			32
+#define WIFI_MAX_ASSOC_RETRY	30
+#define WIFI_PS_POLL_CONST  2
+
+#define WIFI_MAX_PROBE		4
+
+#define WIFI_AP_TIMEOUT    40
+
+#define WFLAG_PACKET_DATA		0x0001
+#define WFLAG_PACKET_MGT		0x0002
+#define WFLAG_PACKET_BEACON		0x0004
+#define WFLAG_PACKET_CTRL		0x0008
+
+
+#define WFLAG_PACKET_ALL		0xFFFF
+
+#define WFLAG_ARM7_ACTIVE		0x0001
+#define WFLAG_ARM7_RUNNING		0x0002
+
+#define WFLAG_ARM9_ACTIVE		0x0001
+#define WFLAG_ARM9_USELED		0x0002
+#define WFLAG_ARM9_ARM7READY	0x0004
+#define WFLAG_ARM9_NETUP		0x0008
+#define WFLAG_ARM9_NETREADY		0x0010
+
+#define WFLAG_ARM9_INITFLAGMASK	0x0002
+
+#define WFLAG_IP_GOTDHCP		0x0001
+
+// request - request flags
+#define WFLAG_REQ_APCONNECT			0x0001
+#define WFLAG_REQ_APCOPYVALUES		0x0002
+#define WFLAG_REQ_APADHOC			0x0008
+#define WFLAG_REQ_PROMISC			0x0010
+#define WFLAG_REQ_USEWEP			0x0020
+
+// request - informational flags
+#define WFLAG_REQ_APCONNECTED		0x8000
+
+#define WFLAG_APDATA_ADHOC			0x0001
+#define WFLAG_APDATA_WEP			0x0002
+#define WFLAG_APDATA_WPA			0x0004
+#define WFLAG_APDATA_COMPATIBLE		0x0008
+#define WFLAG_APDATA_EXTCOMPATIBLE	0x0010
+#define WFLAG_APDATA_SHORTPREAMBLE	0x0020
+#define WFLAG_APDATA_ACTIVE			0x8000
+
+
+enum WIFI_RETURN {
+	WIFI_RETURN_OK =				0, // Everything went ok
+	WIFI_RETURN_LOCKFAILED  =		1, // the spinlock attempt failed (it wasn't retried cause that could lock both cpus- retry again after a delay.
+	WIFI_RETURN_ERROR =				2, // There was an error in attempting to complete the requested task.
+	WIFI_RETURN_PARAMERROR =		3, // There was an error in the parameters passed to the function.
+};
+
+enum WIFI_STATS {
+	// software stats
+	WSTAT_RXQUEUEDPACKETS, // number of packets queued into the rx fifo
+	WSTAT_TXQUEUEDPACKETS, // number of packets queued into the tx fifo
+	WSTAT_RXQUEUEDBYTES, // number of bytes queued into the rx fifo
+	WSTAT_TXQUEUEDBYTES, // number of bytes queued into the tx fifo
+	WSTAT_RXQUEUEDLOST, // number of packets lost due to space limitations in queuing
+	WSTAT_TXQUEUEDREJECTED, // number of packets rejected due to space limitations in queuing
+	WSTAT_RXPACKETS,
+	WSTAT_RXBYTES,
+	WSTAT_RXDATABYTES,
+	WSTAT_TXPACKETS,
+	WSTAT_TXBYTES,
+	WSTAT_TXDATABYTES,
+	WSTAT_ARM7_UPDATES,
+	WSTAT_DEBUG,
+	// harware stats (function mostly unknown.)
+	WSTAT_HW_1B0,WSTAT_HW_1B1,WSTAT_HW_1B2,WSTAT_HW_1B3,WSTAT_HW_1B4,WSTAT_HW_1B5,WSTAT_HW_1B6,WSTAT_HW_1B7,	
+	WSTAT_HW_1B8,WSTAT_HW_1B9,WSTAT_HW_1BA,WSTAT_HW_1BB,WSTAT_HW_1BC,WSTAT_HW_1BD,WSTAT_HW_1BE,WSTAT_HW_1BF,	
+	WSTAT_HW_1C0,WSTAT_HW_1C1,WSTAT_HW_1C4,WSTAT_HW_1C5,
+	WSTAT_HW_1D0,WSTAT_HW_1D1,WSTAT_HW_1D2,WSTAT_HW_1D3,WSTAT_HW_1D4,WSTAT_HW_1D5,WSTAT_HW_1D6,WSTAT_HW_1D7,	
+	WSTAT_HW_1D8,WSTAT_HW_1D9,WSTAT_HW_1DA,WSTAT_HW_1DB,WSTAT_HW_1DC,WSTAT_HW_1DD,WSTAT_HW_1DE,WSTAT_HW_1DF,	
+
+	NUM_WIFI_STATS
+};
+
+
+enum WIFI_MODE {
+	WIFIMODE_DISABLED,
+	WIFIMODE_NORMAL,
+	WIFIMODE_SCAN,
+	WIFIMODE_ASSOCIATE,
+	WIFIMODE_ASSOCIATED,
+	WIFIMODE_DISASSOCIATE,
+	WIFIMODE_CANNOTASSOCIATE,
+};
+enum WIFI_AUTHLEVEL {
+	WIFI_AUTHLEVEL_DISCONNECTED,
+	WIFI_AUTHLEVEL_AUTHENTICATED,
+	WIFI_AUTHLEVEL_ASSOCIATED,
+	WIFI_AUTHLEVEL_DEASSOCIATED,
+};
+
+enum WEPMODES {
+	WEPMODE_NONE = 0,
+	WEPMODE_40BIT = 1,
+	WEPMODE_128BIT = 2
+};
+
+enum WIFI_ASSOCSTATUS {
+    ASSOCSTATUS_DISCONNECTED, // not *trying* to connect
+    ASSOCSTATUS_SEARCHING, // data given does not completely specify an AP, looking for AP that matches the data.
+    ASSOCSTATUS_AUTHENTICATING, // connecting...
+    ASSOCSTATUS_ASSOCIATING, // connecting...
+    ASSOCSTATUS_ACQUIRINGDHCP, // connected to AP, but getting IP data from DHCP
+    ASSOCSTATUS_ASSOCIATED,	// Connected! (COMPLETE if Wifi_ConnectAP was called to start)
+    ASSOCSTATUS_CANNOTCONNECT, // error in connecting... (COMPLETE if Wifi_ConnectAP was called to start)
+};
+
+typedef struct WIFI_TXHEADER {
+	uint16 enable_flags;
+	uint16 unknown;
+	uint16 countup;
+	uint16 beaconfreq;
+	uint16 tx_rate;
+	uint16 tx_length;
+} Wifi_TxHeader;
+
+typedef struct WIFI_RXHEADER {
+	uint16 a;
+	uint16 b;
+	uint16 c;
+	uint16 d;
+	uint16 byteLength;
+	uint16 rssi_;
+} Wifi_RxHeader;
+
+// WIFI_ACCESSPOINT is an important structure in that it defines how to connect to an access point.
+// listed inline are information about the members and their function
+// if a field is not necessary for Wifi_ConnectAP it will be marked as such
+// *only* 4 fields are absolutely required to be filled in correctly for the connection to work, they are:
+// ssid, ssid_len, bssid, and channel - all others can be ignored (though flags should be set to 0)
+typedef struct WIFI_ACCESSPOINT {
+	char ssid[33]; // the AP's SSID - zero terminated is not necessary.. if ssid[0] is zero, the ssid will be ignored in trying to find an AP to connect to. [REQUIRED]
+	char ssid_len; // number of valid bytes in the ssid field (0-32) [REQUIRED]
+	uint8 bssid[6]; // BSSID is the AP's SSID - setting it to all 00's indicates this is not known and it will be ignored [REQUIRED]
+	uint8 macaddr[6]; // mac address of the "AP" is only necessary in ad-hoc mode. [generally not required to connect]
+	uint16 maxrate; // max rate is measured in steps of 1/2Mbit - 5.5Mbit will be represented as 11, or 0x0B [not required to connect]
+	uint32 timectr; // internal information about how recently a beacon has been received [not required to connect]
+	uint16 rssi; // running average of the recent RSSI values for this AP, will be set to 0 after not receiving beacons for a while. [not required to connect]
+	uint16 flags; // flags indicating various parameters for the AP [not required, but the WFLAG_APDATA_ADHOC flag will be used]
+	uint32 spinlock; // internal data word used to lock the record to guarantee data coherence [not required to connect]
+	uint8 channel; // valid channels are 1-13, setting the channel to 0 will indicate the system should search. [REQUIRED]
+	uint8 rssi_past[8]; // rssi_past indicates the RSSI values for the last 8 beacons received ([7] is the most recent) [not required to connect]
+	uint8 base_rates[16]; // list of the base rates "required" by the AP (same format as maxrate) - zero-terminated list [not required to connect]
+} Wifi_AccessPoint;
+
+
+typedef struct WIFI_MAINSTRUCT {
+	unsigned long dummy1[8];
+	// wifi status
+	uint16 curChannel, reqChannel;
+	uint16 curMode, reqMode;
+	uint16 authlevel,authctr;
+	vuint32 flags9, flags7;
+	uint32 reqPacketFlags;
+	uint16 curReqFlags, reqReqFlags;
+	uint32 counter7,bootcounter7;
+	uint16 MacAddr[3];
+	uint16 authtype;
+	uint16 iptype,ipflags;
+	uint32 ip,snmask,gateway;
+
+	// current AP data
+	char ssid7[34],ssid9[34];
+	uint16 bssid7[3], bssid9[3];
+	uint8 apmac7[6], apmac9[6];
+	char wepmode7, wepmode9;
+	char wepkeyid7, wepkeyid9;
+	uint8 wepkey7[20],wepkey9[20];
+	uint8 baserates7[16], baserates9[16];
+	uint8 apchannel7, apchannel9;
+	uint8 maxrate7;
+	uint16 ap_rssi;
+	uint16 pspoll_period;
+
+	// AP data
+	Wifi_AccessPoint aplist[WIFI_MAX_AP];
+
+	// probe stuff
+	uint8 probe9_numprobe;
+	uint8 probe9_ssidlen[WIFI_MAX_PROBE];
+	char probe9_ssid[WIFI_MAX_PROBE][32];
+
+	// WFC data
+	uint8 wfc_enable[4]; // wep mode, or 0x80 for "enabled"
+	Wifi_AccessPoint wfc_ap[3];
+	unsigned long wfc_config[3][5]; // ip, snmask, gateway, primarydns, 2nddns
+	uint8 wfc_wepkey[3][16];
+	
+
+	// wifi data
+	uint32 rxbufIn, rxbufOut; // bufIn/bufOut have 2-byte granularity.
+	uint16 rxbufData[WIFI_RXBUFFER_SIZE/2]; // send raw 802.11 data through! rxbuffer is for rx'd data, arm7->arm9 transfer
+
+	uint32 txbufIn, txbufOut;
+	uint16 txbufData[WIFI_TXBUFFER_SIZE/2]; // tx buffer is for data to tx, arm9->arm7 transfer
+
+	// stats data
+	uint32 stats[NUM_WIFI_STATS];
+   
+	uint16 debug_dswifi[30];
+
+	uint32 random; // semirandom number updated at the convenience of the arm7. use for initial seeds & such.
+
+	unsigned long dummy2[8];
+
+} Wifi_MainStruct;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern uint32 SLasm_Acquire(volatile uint32 * lockaddr, uint32 lockvalue);
+extern uint32 SLasm_Release(volatile uint32 * lockaddr, uint32 lockvalue);
+
+extern void DeInitWIFI();
+
+#ifdef __cplusplus
+};
+#endif
+
+#endif
+

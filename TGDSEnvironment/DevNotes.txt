@@ -1,0 +1,3 @@
+When accessing timing dependant memory such as the shared region, the API must implement atomic functions. 
+If otherwise you access it directly, there could be optimized code, and broken, non functional API components.
+

@@ -1,0 +1,11 @@
+C:\devkitPro\msys\home\nesds13d-dswnifi\ds_server\udp\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe.config
+C:\devkitPro\msys\home\nesds13d-dswnifi\ds_server\udp\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe
+C:\devkitPro\msys\home\nesds13d-dswnifi\ds_server\udp\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.pdb
+C:\devkitPro\msys\home\nesds13d-dswnifi\ds_server\udp\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.exe
+C:\devkitPro\msys\home\nesds13d-dswnifi\ds_server\udp\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.pdb
+C:\devkitPro\msys\home\nesds13d-dswnifi\ds_server\udp\serverudp\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe.config
+C:\devkitPro\msys\home\nesds13d-dswnifi\ds_server\udp\serverudp\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe
+C:\devkitPro\msys\home\nesds13d-dswnifi\ds_server\udp\serverudp\ConsoleApplication1\bin\Debug\ConsoleApplication1.pdb
+C:\devkitPro\msys\home\nesds13d-dswnifi\ds_server\udp\serverudp\ConsoleApplication1\obj\Debug\ConsoleApplication1.csprojResolveAssemblyReference.cache
+C:\devkitPro\msys\home\nesds13d-dswnifi\ds_server\udp\serverudp\ConsoleApplication1\obj\Debug\ConsoleApplication1.exe
+C:\devkitPro\msys\home\nesds13d-dswnifi\ds_server\udp\serverudp\ConsoleApplication1\obj\Debug\ConsoleApplication1.pdb
