@@ -145,8 +145,6 @@ void readOptionsFromConfig(char *section)
 	CFG.Transparency
 			= get_config_int(section, "Transparency", CFG.Transparency);
 	CFG.WaitVBlank = get_config_int(section, "Vblank", CFG.WaitVBlank);
-	CFG.CPU_speedhack
-			= get_config_int(section, "SpeedHacks", CFG.CPU_speedhack);
 	CFG.FastDMA = get_config_int(section, "FastDMA", CFG.FastDMA);
 
 	CFG.MouseXAddr = get_config_hex(section, "MouseXAddr", 0);
@@ -211,7 +209,6 @@ void saveOptionsToConfig(char *section)
 
 	//	set_config_int(section, "Transparency", CFG.Transparency);
 	set_config_int(section, "Vblank", CFG.WaitVBlank);
-	set_config_int(section, "SpeedHacks", CFG.CPU_speedhack);
 	//	set_config_int(section, "FastDMA", CFG.FastDMA);
 
 	/*	set_config_hex(section, "MouseXAddr", 0);
@@ -248,7 +245,6 @@ void packOptions(uint8 *ptr)
 	opt->BG_Layer = CFG.BG_Layer;
 	opt->YScroll = CFG.YScroll;
 	opt->WaitVBlank = CFG.WaitVBlank;
-	opt->SpeedHack = CFG.CPU_speedhack;
 }
 
 void unpackOptions(int version, uint8 *ptr)
@@ -284,7 +280,6 @@ void unpackOptions(int version, uint8 *ptr)
 	CFG.BG_Layer = opt->BG_Layer;
 	CFG.YScroll = opt->YScroll;
 	CFG.WaitVBlank = opt->WaitVBlank;
-	CFG.CPU_speedhack = opt->SpeedHack;
 
 	applyOptions();
 }
@@ -467,6 +462,7 @@ int selectSong(char *name)
 //---------------------------------------------------------------------------------
 __attribute__((section(".itcm")))
 int main(int argc, char ** argv){
+	
 	/*			TGDS 1.5 Standard ARM9 Init code start	*/
 	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
 	GUI_init(isTGDSCustomConsole);
@@ -479,6 +475,12 @@ int main(int argc, char ** argv){
 	#ifdef ARM7_DLDI
 	setDLDIARM7Address((u32 *)TGDSDLDI_ARM7_ADDRESS);	//Required by ARM7DLDI!
 	#endif
+	
+	asm("mcr	p15, 0, r0, c7, c10, 4");
+	switch_dswnifi_mode(dswifi_idlemode);
+	flush_icache_all();
+	flush_dcache_all();
+	
 	int ret=FS_init();
 	if (ret == 0)
 	{
@@ -488,10 +490,7 @@ int main(int argc, char ** argv){
 	{
 		printf(_STR(IDS_FS_FAILED));
 	}
-	switch_dswnifi_mode(dswifi_idlemode);
-	asm("mcr	p15, 0, r0, c7, c10, 4");
-	flush_icache_all();
-	flush_dcache_all();
+	
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
 	memset(&startFilePath, 0, sizeof(startFilePath));
@@ -500,7 +499,8 @@ int main(int argc, char ** argv){
 	DisableIrq(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	disableSleepMode();	//Disable timeout-based sleep mode
 	DisableSoundSampleContext();
-	swiDelay(888);
+	swiDelay(1000);
+	
 	coherent_user_range_by_size((u32)IPC6, sizeof(struct sIPCSharedTGDSSpecific));
 	IPC6->APU_ADDR_CNT = 0;
 	IPC6->APU_ADDR_ANS = IPC6->APU_ADDR_CMD = 0;

@@ -36,9 +36,6 @@ struct s_cfg
   int	mouse;
   int	scope;
 
-
-  int	CPU_speedhack;
-
   int	Timing;
 
   int	Debug, Debug2;

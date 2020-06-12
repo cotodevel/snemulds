@@ -973,9 +973,6 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		case 3: // Speed
 			CFG.WaitVBlank = !((int)arg >> 24);			
 			return 1;
-		case 4: // Speed hacks
-			CFG.CPU_speedhack = (int)arg >> 24;
-			return 1;	
 		case 5: // Automatic SRAM saving
 			CFG.EnableSRAM = (int)arg >> 24;
 			return 1;
@@ -1042,10 +1039,6 @@ t_GUIScreen *buildOptionsMenu(){
 	GUI_setZone   (scr, 3, 80, 104, 256, 104+16); // Speed
 	GUI_linkObject(scr, 3, GUI_CHOICE(IDS_SPEED+1, 2, !CFG.WaitVBlank), GUIChoiceButton_handler);
 	
-	GUI_setZone   (scr, 10, 0, 124, 80, 124+16); // static
-	GUI_linkObject(scr, 10, GUI_STATIC_LEFT(IDS_HACKS, 0), GUIStaticEx_handler);
-	GUI_setZone   (scr, 4, 80, 124, 256, 124+16); // Hacks
-	GUI_linkObject(scr, 4, GUI_CHOICE(IDS_HACKS+1, 4, CFG.CPU_speedhack), GUIChoiceButton_handler);
 
 	GUI_setZone   (scr, 11, 24, 144, 256, 144+16); // Auto order static
 	GUI_linkObject(scr, 11, GUI_STATIC_LEFT(IDS_AUTO_SRAM, 0), GUIStaticEx_handler);

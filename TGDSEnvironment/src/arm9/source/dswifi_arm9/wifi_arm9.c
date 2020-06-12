@@ -1090,7 +1090,7 @@ void wifiValue32Handler(u32 value, void* data) {
 }
 */
 
-
+__attribute__((section(".itcm")))
 bool Wifi_InitDefault(bool useFirmwareSettings) {
 	
 	uint32 wifi_pass = Wifi_Init(WIFIINIT_OPTION_USELED|WIFIINIT_OPTION_USEHEAP_96);	//use 96K DSWIFI stack
@@ -1108,7 +1108,7 @@ bool Wifi_InitDefault(bool useFirmwareSettings) {
 	SendFIFOWords(WIFI_INIT, (uint32)wifi_pass);
 	
 	while(Wifi_CheckInit()==0) {
-		IRQWait(IRQ_VBLANK);
+		swiDelay(1);
 	}
 
 	if(useFirmwareSettings) {  
@@ -1119,7 +1119,7 @@ bool Wifi_InitDefault(bool useFirmwareSettings) {
 		while(wifiStatus != ASSOCSTATUS_ASSOCIATED) {
 			wifiStatus = Wifi_AssocStatus(); // check status
 			if(wifiStatus == ASSOCSTATUS_CANNOTCONNECT) return false;
-			IRQWait(IRQ_VBLANK);
+			swiDelay(1);
 		}  
 	}
 	
