@@ -107,7 +107,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			LoadSpc((const u8*)cmd2);
 			
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
-			fifomsg[10] = (uint32)ARM7FS_IOSTATUS_IDLE;	//release ARM9 APU_playSpc()
+			fifomsg[10] = (uint32)0;	//release ARM9 APU_playSpc()
 			
 			paused = false;
 			SPC_disable = false;

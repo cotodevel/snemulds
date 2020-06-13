@@ -65,12 +65,12 @@ void	APU_stop()
 void	APU_playSpc(u8 * inSPCBuffer)
 {
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
-	fifomsg[10] = (uint32)ARM7FS_IOSTATUS_BUSY;
+	fifomsg[10] = (uint32)0xFAFAFAFA;
 	
 	//prevent APU from desync
 	SendFIFOWords(SNEMULDS_APUCMD_PLAYSPC, (u32)inSPCBuffer);	//APU_command(0x00000003);
 	
-	while((uint32)fifomsg[10] == (uint32)ARM7FS_IOSTATUS_BUSY){
+	while((uint32)fifomsg[10] == (uint32)0xFAFAFAFA){
 		swiDelay(2);
 	}
 	
