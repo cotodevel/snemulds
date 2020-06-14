@@ -25,6 +25,7 @@ GNU General Public License for more details.
 #include "InterruptsARMCores_h.h"
 #include "core.h"
 #include "apu_shared.h"
+#include "soundTGDS.h"
 
 ////////////////////////////////////////////////////////////////////////////
 // Definitions
