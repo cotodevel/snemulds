@@ -228,9 +228,7 @@ bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst){
 	
 	UpdateConsoleSettings(ConsoleInstanceInst);
 	
-	initARM7Malloc((u32)0x06000000, (u32)128*1024);	//Since the default console setup allocates ARM7 @ 0x06000000, 128K, initialize a malloc for ARM7. 
-													//Otherwise if custom console, this routine is custom impl.
-	
+	//No need to enable Malloc ARM7 code here. This program does not use nor requires it.
 	while (!(*((vuint8*)0x04000243) & (VRAM_D_0x06000000_ARM7)));	//Wait for ARM7 until VRAM is rdy.
 	
 	return true;

@@ -191,27 +191,5 @@ void CustomInputMappingHandler(uint32 readKeys){
 
 //Project specific: ARM7 Setup for TGDS sound stream
 void initSoundStreamUser(u32 srcFmt){
-	if(srcFmt == SRC_WAV){
-		//Buffers must be provided here. 
-		/*
-		//Format: s16 buffer[WAV_READ_SIZE];
-		strpcmL0 = (s16*)&strpcmL0Buf[0];
-		strpcmL1 = (s16*)&strpcmL1Buf[0];
-		strpcmR0 = (s16*)&strpcmR0Buf[0];
-		strpcmR1 = (s16*)&strpcmR1Buf[0];
-		
-		// clear vram d bank to not have sound leftover
-		int i = 0;
-		
-		for(i=0;i<(WAV_READ_SIZE);++i)
-		{
-			strpcmL0[i] = 0;
-		}
-		
-		for(i=0;i<(WAV_READ_SIZE);++i)
-		{
-			strpcmR0[i] = 0;
-		}
-		*/
-	}
+	
 }
