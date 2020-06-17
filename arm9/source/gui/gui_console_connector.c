@@ -429,8 +429,9 @@ int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 					GUI_clearScreen(0);
 					char fname[256+1];
 					memset(fname, 0, sizeof(fname));
-					int matchCount = str_split((char*)sel.filenameFromFS_getDirectoryListMethod, "/", NULL);
-					char * file = (char*)&outSplitBuf[matchCount][0];
+					char * outBuf = (char *)malloc(256*10);
+					int matchCount = str_split((char*)sel.filenameFromFS_getDirectoryListMethod, "/", outBuf, 10, 256);
+					char * file = (char*)((char*)outBuf + (matchCount*256));
 					if(strlen(file) > 0){						
 						strcpy(fname, "0:");
 						strcat(fname, startFilePath);
@@ -441,8 +442,10 @@ int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 						sel.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
 						loadROM(&sel);
 					}
-					else
+					else{
 						printf("ROM read error.");
+					}
+					free(outBuf);
 					GUI_clearScreen(0);
 				}
 				
@@ -487,8 +490,9 @@ int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 					GUI_clearScreen(0);
 					char fname[256+1];
 					memset(fname, 0, sizeof(fname));
-					int matchCount = str_split((char*)sel.filenameFromFS_getDirectoryListMethod, "/", NULL);
-					char * file = (char*)&outSplitBuf[matchCount][0];
+					char * outBuf = (char *)malloc(256*10);
+					int matchCount = str_split((char*)sel.filenameFromFS_getDirectoryListMethod, "/", outBuf, 10, 256);
+					char * file = (char*)((char*)outBuf + (matchCount*256));
 					if(strlen(file) > 0){						
 						strcpy(fname, "0:");
 						strcat(fname, startSPCFilePath);
@@ -499,8 +503,10 @@ int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 							printf("SPC read error.");
 						}
 					}
-					else
+					else{
 						printf("SPC read error.");
+					}
+					free(outBuf);
 					GUI_clearScreen(0);
 				}
 				
