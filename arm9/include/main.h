@@ -215,7 +215,7 @@ extern "C" {
 
 extern int argc;
 extern sint8 **argv;
-extern int main(int _argc, sint8 **_argv);
+extern int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]);
 extern int loadROM(struct sGUISelectorItem *name);
 extern bool handleROMSelect;
 extern bool handleSPCSelect;

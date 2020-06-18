@@ -154,13 +154,15 @@ _start:
 	bl IRQInit
 	bl __libc_init_array
 	
-	#ifdef ARM9
-	bl DrainWriteBuffer
+	ldr	lr, =exception_sysexit
+	
+	#ifdef ARM7
+	b	main		@entrypoint
 	#endif
 	
-	ldr	r3, =main
-	ldr	lr, =exception_sysexit
-	bx	r3			@entrypoint
+	#ifdef ARM9
+	b 	mainARGV	@ARGV Support: entrypoint
+	#endif
 
 @format:	r0 = src_vma, r1 = dest_vma 
 clear:

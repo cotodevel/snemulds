@@ -32,6 +32,8 @@
 #include "TGDSMemoryAllocator.h"
 #include "ipcfifoTGDS.h"
 #include "nds_cp15_misc.h"
+#include "fatfslayerTGDS.h"
+#include "utilsTGDS.h"
 
 __attribute__((section(".dtcm")))
 bool handleROMSelect=false;
@@ -461,7 +463,7 @@ int selectSong(char *name)
 
 //---------------------------------------------------------------------------------
 __attribute__((section(".itcm")))
-int main(int argc, char ** argv){
+int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	
 	/*			TGDS 1.5 Standard ARM9 Init code start	*/
 	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
