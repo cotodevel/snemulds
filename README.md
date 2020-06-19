@@ -18,6 +18,10 @@ How to get the latest working version:
 	- SPC Playback: Optionally, create a /spc folder in SD: root, and put your SPC files on it. You can choose and play a SPC File in the "SPC Jukebox" option. 
 	- Then run SNEmulDS.nds
 
+ARGV Support:
+	- SnemulDS now supports ARGV, same standard as used in devkitARM. 
+		The vector 0 ARGument can be whatever (usually 0:/dir/dir2/dirwhatever/SnemulDS.nds)
+		The vector 1 ARGument must be the fullfilepath string (Format: 0:/dir/dir2/dirwhatever/file.smc)
 Hotkeys:
 
 	While SnemulDS runs a game, it is possible to perform the following hotkeys:

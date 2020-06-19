@@ -286,6 +286,7 @@ void unpackOptions(int version, uint8 *ptr)
 	applyOptions();
 }
 
+__attribute__((optimize("-O0")))
 int checkConfiguration(char *name, int crc)
 {
 	// Check configuration file
@@ -329,6 +330,7 @@ int checkConfiguration(char *name, int crc)
 	}
 }
 
+__attribute__((optimize("-O0")))
 int loadROM(struct sGUISelectorItem * name)
 {
 	//wait until release A button
@@ -342,11 +344,12 @@ int loadROM(struct sGUISelectorItem * name)
 	//file
 	if(name->StructFDFromFS_getDirectoryListMethod == FT_FILE){
 		int size;
-		char romname[MAX_TGDSFILENAME_LENGTH+1] = {0};
+		char romname[MAX_TGDSFILENAME_LENGTH+1];
+		memset((char*)&romname[0], 0, sizeof(romname));
+		
 		int ROMheader;
 		char *ROM;
 		int crc;
-		
 		CFG.LargeROM = 0;
 		
 		//filename already has correct format
@@ -377,7 +380,7 @@ int loadROM(struct sGUISelectorItem * name)
 
 		mem_clear_paging(); // FIXME: move me...
 		ROM = (char *) SNES_ROM_ADDRESS;
-		SnemulDSdmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE);	//Clear memory: ZIP Will use this as malloc
+		SnemulDSdmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE - (512*1024));	//Clear memory: ZIP Will use this as malloc
 		
 		bool zipFileLoaded = false;
 		if(strstr (_FS_getFileExtension(name->filenameFromFS_getDirectoryListMethod),"ZIP")){	
@@ -400,13 +403,19 @@ int loadROM(struct sGUISelectorItem * name)
 			int stat = load_gz((char*)CFG.ROMFile, (char*)outFile);
 		}
 		
-		SnemulDSdmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE);	////Clear memory: ROM will use it
+		swiDelay(1);
+		SnemulDSdmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE - (512*1024));	////Clear memory: ROM will use it
 		
-		size = FS_getFileSize(romname);
+		size = FS_getFileSize((char*)&CFG.ROMFile[0]);	//may segfault
 		ROMheader = size & 8191;
-		if (ROMheader != 0&& ROMheader != 512)
+		if (ROMheader != 0&& ROMheader != 512){
 			ROMheader = 512;
-
+		}
+		
+		clrscr();
+		printf(" - - ");
+		printf(" - - ");
+		printf("File:% - Size:%d", (char*)&CFG.ROMFile[0], size);
 		if (size-ROMheader > ROM_MAX_SIZE)
 		{
 			FS_loadROMForPaging(ROM-ROMheader, romname, ROM_STATIC_SIZE+ROMheader);
@@ -537,12 +546,22 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	GUI_getConfig();
 	printf("Load conf4");
 	
-	GUI_getROMFirstTime(CFG.ROMPath);	//Output rom -> CFG.ROMFile
+	//ARGV Support: 
+	if (argc > 1) {
+		strcpy(&CFG.ROMFile[0], (const char *)argv[1]);
+	}
+	else{
+		GUI_getROMFirstTime(CFG.ROMPath);	//Output rom -> CFG.ROMFile
+	}
+	
 	memset(&guiSelItem, 0, sizeof(guiSelItem));
 	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
 	guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
 	loadROM(&guiSelItem);
-	GUI_deleteROMSelector(); 	//Should also free ROMFile
+
+	if (!(argc > 1)) {
+		GUI_deleteROMSelector(); 	//Should also free ROMFile
+	}
 	GUI_createMainMenu();		//Start GUI
 	
 //trace code
