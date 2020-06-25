@@ -19,7 +19,7 @@
 #TGDS1.5 compatible Makefile
 
 #ToolchainGenericDS specific: Use Makefiles from either TGDS, or custom
-export SOURCE_MAKEFILE7 = default
+export SOURCE_MAKEFILE7 = custom
 export SOURCE_MAKEFILE9 = custom
 
 #Non FPIC Code: Use Makefiles from either TGDS, or custom

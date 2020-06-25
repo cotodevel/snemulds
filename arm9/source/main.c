@@ -361,7 +361,6 @@ int loadROM(struct sGUISelectorItem * name)
 			(name->filenameFromFS_getDirectoryListMethod[2] == '/')
 		){
 				strcpy(romname, name->filenameFromFS_getDirectoryListMethod);
-				strcpy(CFG.ROMFile, romname);
 		}
 		//otherwise build format
 		else{
@@ -370,10 +369,9 @@ int loadROM(struct sGUISelectorItem * name)
 				strcat(romname, "/");
 			}
 			strcat(romname, name->filenameFromFS_getDirectoryListMethod);
-			strcpy(CFG.ROMFile, romname);
 		}
 		clrscr();
-		
+		strcpy(CFG.ROMFile, romname);
 		void *ptr = malloc(4);
 		printf("ptr=%p... ", ptr);
 		free(ptr);
@@ -397,10 +395,11 @@ int loadROM(struct sGUISelectorItem * name)
 			strncpy(temp1, CFG.ROMFile, strlen(CFG.ROMFile) - sizeExt);	//"filename" (no extension)
 			sprintf(outFile,"%s%s",temp1,".smc");
 			printf("decompressing:%s",CFG.ROMFile);
-			printf("->%s",outFile);
+			printf("%s",outFile);
 			sprintf(romname,"%s",outFile);
 			//Decompress File for reload later
 			int stat = load_gz((char*)CFG.ROMFile, (char*)outFile);
+			strcpy(CFG.ROMFile, outFile);
 		}
 		
 		swiDelay(1);
@@ -415,17 +414,17 @@ int loadROM(struct sGUISelectorItem * name)
 		clrscr();
 		printf(" - - ");
 		printf(" - - ");
-		printf("File:% - Size:%d", (char*)&CFG.ROMFile[0], size);
+		printf("File:%s - Size:%d", CFG.ROMFile, size);
 		if (size-ROMheader > ROM_MAX_SIZE)
 		{
-			FS_loadROMForPaging(ROM-ROMheader, romname, ROM_STATIC_SIZE+ROMheader);
+			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, ROM_STATIC_SIZE+ROMheader);
 			CFG.LargeROM = 1;
 			crc = crc32(0, ROM, ROM_STATIC_SIZE);
 			printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
 		}
 		else
 		{
-			FS_loadROM(ROM-ROMheader, romname);
+			FS_loadROM(ROM-ROMheader, CFG.ROMFile);
 			CFG.LargeROM = 0;
 			crc = crc32(0, ROM, size-ROMheader);
 			printf("CRC = %08x ", crc);

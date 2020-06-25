@@ -38,14 +38,14 @@ d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_
 #ARM9 specific definitions.	-fno-common so we force initialized data to rodata
 MAPFILE = $(DIR_ARM9).map
 AS_ASFLAGS		=	-march=armv5te	-mthumb-interwork	-defsym	ARM9='1'	-defsym		NDS='1'	-defsym debug=0
-CC_ASFLAGS		=	-march=armv5te -marm	-Os	-s	-mthumb-interwork	-DARM9	-Dappver='$(EXECUTABLE_VERSION)'	-fno-common
-CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	-shared	-fno-common
+CC_ASFLAGS		=	-march=armv5te -marm	-Os	-s	-mthumb-interwork	-DARM9		-fno-exceptions
+CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++
 BUILD			= 	$(BUILD_ARM9)
 DIR_SRC			=	$(DIRS_ARM9_SRC)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	=	-specs=special_nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE)
+LDFLAGS	=	-specs=special_nds_arm9_ld.specs	-Wl,--gc-sections,-Map,$(MAPFILE)
 LIBRARIES =	-l$(TARGET_LIBRARY_NAME_9)	-lcnano9	
 
 ################################################################################################
