@@ -171,7 +171,6 @@ _start:
 	#endif
 	
 	bl initHardware
-	bl IRQInit
 	bl __libc_init_array
 	
 	ldr	lr, =exception_sysexit
