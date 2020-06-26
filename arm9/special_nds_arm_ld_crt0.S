@@ -74,11 +74,11 @@ _start:
 	mov r1,#0
 	str r1,[r0]
 	
-	
+
 	#ifdef ARM9
 	mov	r0, #0xdf		@ sys
 	msr	cpsr, r0
-	ldr 	sp, =(0x027FF000 + 0x1000 - 0x800)
+	ldr 	sp, =(0x027FF000 + 0x1000)
 	
 	push {r0-r3,lr}
 	bl setSnemulDSSpecial0xFFFF0000MPUSettings
@@ -116,38 +116,58 @@ _start:
 	ldr	sp, =sp_USR
 	
 	#ifdef ARM9
+	bl DrainWriteBuffer
 	/* copy the VMA sections to each LMA sections for hardware RAM not initialized at self boot crt0 stage*/
 	ldr                 r1,=__itcm_vma_start                 /* point our source register to the start of the .itcm section (VMA)*/
 	ldr                 r2,=_itcm_start                 /* point our destination register to the I-TCM dedicated to our writable data (LMA)*/
 	ldr                 r3,=_itcm_end                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy  
 	
+	bl DrainWriteBuffer
 	ldr                 r1,=__dtcm_vma_start                /* point our source register to the start of the .dtcm section (VMA)*/
 	ldr                 r2,=_dtcm_start                 /* point our destination register to the D-TCM dedicated to our writable data (LMA)*/
 	ldr                 r3,=_dtcm_end                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy
-
+	
+	bl DrainWriteBuffer
 	/* set WRAM9 from vma to lma (must be before clearing up our relocated area) */
 	ldr                 r0,=___arm9sharedwram_vma_start
 	ldr                 r1,=___arm9sharedwram_vma_end__
 	bl clear
 	
+	bl DrainWriteBuffer
 	ldr                 r1,=___arm9sharedwram_vma_start                /* point our source register to the start of the .arm9sharedwram section (VMA)*/
 	ldr                 r2,=_arm9sharedwram_start                 /* point our destination register to the ARM9 SHARED WRAM dedicated to our writable data (LMA)*/
 	ldr                 r3,=_arm9sharedwram_end                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy
-	#endif
 	
 	/*  Clear BSS */
-	#ifdef ARM9
 	ldr                 r0,=__bss_vma_start
 	ldr                 r1,=__bss_vma_end
 	bl clear
 	
-	/*  Clear old VMA section used earlier for hardware RAM initialization*/
+	@Clear vma sections used before
 	ldr                 r0,=__lib__end__
 	ldr                 r1,=__vma_stub_end__
 	bl clear
+	
+	bl DrainWriteBuffer
+	/* Wait until ARM7 reads firmware and we initialize ARM9 from this flag */
+	ldr r1,=(0x027FF000 + 0x5D)	@(uint8)Console Type: 
+	waitForFirmwareARM7Setup:
+		ldrb r0, [r1]
+		cmp r0, #0xFF		@DS Phat
+		beq FirmwareARM7OK
+		cmp r0, #0x20		@DS Lite
+		beq FirmwareARM7OK
+		cmp r0, #0x57		@DSi
+		beq FirmwareARM7OK
+		cmp r0, #0x43		@iQueDS
+		beq FirmwareARM7OK
+		cmp r0, #0x63		@iQueDS Lite
+		beq FirmwareARM7OK
+		b waitForFirmwareARM7Setup
+	FirmwareARM7OK:
 	#endif
 	
 	bl initHardware
