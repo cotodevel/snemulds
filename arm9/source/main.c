@@ -386,20 +386,12 @@ int loadROM(struct sGUISelectorItem * name)
 		}
 		
 		if(zipFileLoaded == true){
-			//build into tmpFile2, filename.smc out of passed filename.ext compressed
-			char outFile[MAX_TGDSFILENAME_LENGTH+1] = {0};
-			char inFile[MAX_TGDSFILENAME_LENGTH+1] = {0};
-			char temp1[MAX_TGDSFILENAME_LENGTH+1] = {0};
-			char temp2[MAX_TGDSFILENAME_LENGTH+1] = {0};
-			int sizeExt=strlen(_FS_getFileExtension(CFG.ROMFile))+1;
-			strncpy(temp1, CFG.ROMFile, strlen(CFG.ROMFile) - sizeExt);	//"filename" (no extension)
-			sprintf(outFile,"%s%s",temp1,".smc");
-			printf("decompressing:%s",CFG.ROMFile);
-			printf("%s",outFile);
-			sprintf(romname,"%s",outFile);
-			//Decompress File for reload later
-			int stat = load_gz((char*)CFG.ROMFile, (char*)outFile);
-			strcpy(CFG.ROMFile, outFile);
+			printf("Unzipping: %s", CFG.ROMFile);
+			//Decompress File and get internal ZIP name for use later
+			char unzippedFile[MAX_TGDSFILENAME_LENGTH+1];
+			load_gz((char*)CFG.ROMFile, (char*)unzippedFile);
+			strcpy(CFG.ROMFile, unzippedFile);
+			printf("Unzip OK: %s", unzippedFile);
 		}
 		
 		swiDelay(1);
