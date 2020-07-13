@@ -1,6 +1,7 @@
 # SnemulDS
 
-Branch: Master. This uses ARM9 DLDI. 
+TGDS Version: 1.6
+Branch: Master. This uses ARM9 DLDI
 
 SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes)... 
 This is based from real 0.6.a sources archeide left years ago and I managed to find.
