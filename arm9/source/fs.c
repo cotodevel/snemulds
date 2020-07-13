@@ -27,18 +27,20 @@ GNU General Public License for more details.
 #include "utilsTGDS.h"
 
 #include "fs.h"
-#include "guiTGDS.h"
+#include "consoleTGDS.h"
 #include "nds_cp15_misc.h"
 
 #include <unistd.h>
 #include <sys/dir.h>
 #include <fcntl.h>
 #include "fatfslayerTGDS.h"
-#include "xenofunzip.h"
+
 #include "gfx.h"
 #include "cfg.h"
 #include "apu.h"
+//#include "ram.h"
 #include "conf.h"
+//#include "frontend.h"
 #include "main.h"
 #include "ppu.h"
 #include "InterruptsARMCores_h.h"
@@ -51,166 +53,12 @@ GNU General Public License for more details.
 #include "dsregs_asm.h"
 #include "typedefsTGDS.h"
 #include "consoleTGDS.h"
+//#include "api_wrapper.h"
+//#include "apu_jukebox.h"
 #include "about.h"
+#include "xenofunzip.h"
 
 /* *********************** FAT ************************ */
-
-//#define ENABLE_LOGGING
-
-#ifdef ENABLE_LOGGING
-sint8 logbuf[32000];
-static int logcnt = 0;
-#endif
-void	FS_printlogBufOnly(sint8 *buf)
-{
-	#ifdef ENABLE_LOGGING
-	if (logcnt == 0)
-	{
-		// first call
-		strcpy(logbuf, buf);
-		logcnt = 1;
-		return;
-	}	
-	if( strlen(buf)+strlen(logbuf) >= 32000)
-	{
-		strcpy(logbuf, buf);
-		logcnt++;
-	}
-	else
-		strcat(logbuf, buf);
-	#endif
-}
-
-void	FS_printlog(sint8 *buf)
-{
-	#ifdef ENABLE_LOGGING
-	static FILE *f_log = NULL;
-	if (logcnt == 0)
-	{
-		// first call
-		strcpy(logbuf, buf);
-		logcnt = 1;
-		return;
-	}	
-	if( strlen(buf)+strlen(logbuf) >= 32000)
-	{
-		// Flush buffer
-		sint8 name[30];
-		sprintf(name,"snemul%d.log", logcnt%100);
-		
-		FS_lock();
-		
-		f_log = fopen(name, "w");
-		if(f_log){
-			//FILE handle ok
-		}
-		else{
-			//FILE handle error
-		}
-		fwrite(logbuf, 1, strlen(logbuf), f_log);
-		fclose(f_log);
-		FS_unlock();
-		
-		strcpy(logbuf, buf);
-		logcnt++;
-	}
-	else{
-		strcat(logbuf, buf);
-	}
-	#endif
-}
-
-//printf that instead stores on Filesystem
-void	FS_flog(sint8 *fmt, ...)
-{
-	#ifdef ENABLE_LOGGING
-	char * printfBuf = (char*)&ConsolePrintfBuf[0];
-	va_list ap;
-    va_start(ap, fmt);
-    vsnprintf((sint8*)printfBuf, 100, fmt, ap);
-    va_end(ap);
-	FS_printlog((sint8*)printfBuf);
-	#endif
-	#ifndef ENABLE_LOGGING
-	return;
-	#endif
-}
-
-int FS_loadROM(sint8 *ROM, sint8 *filename)
-{
-	FILE	*f;
-	FS_lock();
-	f = fopen(filename, "r");
-	fseek(f, 0, SEEK_END);
-	int size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	//Prevent Cache problems.
-	coherent_user_range_by_size((uint32)ROM, (int)size);
-	
-	fread(ROM, 1, size, f);
-	printf("Read done\n");
-	fclose(f);
-	FS_unlock();
-
-	return 1;
-}
-
-
-FILE * fPaging ;
-
-int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
-{
-	FS_lock();
-	
-	if (fPaging){
-		fclose(fPaging);
-	}
-	fPaging = fopen(filename, "r");
-	sint32 fd = fileno(fPaging);
-	if(fd < 0){
-		FS_unlock();
-		return -1;
-	}
-	//Prevent Cache problems.
-	coherent_user_range_by_size((uint32)ROM, (int)size);
-	
-	int ret = fread(ROM, 1, size, fPaging);
-	FS_unlock();
-	
-	if(ret != size){
-		return -1;
-	}
-	
-	return 0;
-}
-
-
-int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
-	int ret;	
-	FS_lock();
-	
-	if(!fPaging){
-		return -1;
-	}
-	
-	//Prevent Cache problems.
-	coherent_user_range_by_size((uint32)buf, (int)size);
-	
-	ret = fseek(fPaging, pos, SEEK_SET);
-	
-	if (ret < 0)
-	{
-		FS_unlock();
-		return -1;
-	}
-	return fread(buf, 1, size, fPaging);
-}
-
-int	FS_shouldFreeROM()
-{
-	return 1;
-}
 
 //This method uses opendir(); and readdir(); to iterate through dir/file contents.
 //if DIR is detected, the name is app
@@ -223,7 +71,6 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
 	(*cnt)++;
 	size += strlen(leaveDirDirectory)+1;
 	
-	FS_lock();
 	DIR *dir = opendir(path);
 	if( NULL != dir ){
 		while (1){
@@ -326,6 +173,84 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
 		}
 	}
 	closedir(dir);
-	FS_unlock();
 	return list;
+}
+
+int	FS_loadROM(sint8 *ROM, sint8 *filename)
+{
+	FILE	*f;
+	FS_lock();
+	f = fopen(filename, "r");
+	fseek(f, 0, SEEK_END);
+	int size = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	//Prevent Cache problems.
+	coherent_user_range_by_size((uint32)ROM, (int)size);
+	
+	fread(ROM, 1, size, f);
+	GUI_printf("Read done\n");
+	fclose(f);
+	FS_unlock();
+
+	return 1;
+}
+
+
+FILE * fPaging ;
+
+int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
+{
+	FS_lock();
+	
+	if (fPaging){
+		fclose(fPaging);
+	}
+	fPaging = fopen(filename, "r");
+	sint32 fd = fileno(fPaging);
+	if(fd < 0){
+		FS_unlock();
+		return -1;
+	}
+	//Prevent Cache problems.
+	coherent_user_range_by_size((uint32)ROM, (int)size);
+	
+	int ret = fread(ROM, 1, size, fPaging);
+	FS_unlock();
+	
+	if(ret != size){
+		return -1;
+	}
+	
+	return 0;
+}
+
+
+int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
+	
+	int ret;	
+	FS_lock();
+	
+	if(!fPaging){
+		return -1;
+	}
+	
+	//Prevent Cache problems.
+	coherent_user_range_by_size((uint32)buf, (int)size);
+	
+	ret = fseek(fPaging, pos, SEEK_SET);
+	
+	if (ret < 0)
+	{
+		FS_unlock();
+		return -1;
+	}
+	
+	
+	return fread(buf, 1, size, fPaging);
+}
+
+int	FS_shouldFreeROM()
+{
+	return 1;
 }

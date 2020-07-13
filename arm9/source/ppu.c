@@ -18,24 +18,54 @@ GNU General Public License for more details.
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
+
 #include <malloc.h>
 #include <string.h>
+
 #include "common.h"
 #include "gfx.h"
 #include "snes.h"
 #include "cfg.h"
+
 #include "apu.h"
 #include "opcodes.h"
-#include "core.h"
+#include "cpu.h"
 #include "consoleTGDS.h"
 #include "dmaTGDS.h"
-#include "engine.h"
+
+
+extern int		screen_mode; // NDS MAIN screen mode
+
+/* should be 64 bytes long */
+typedef struct s_OAM_entry
+{
+	uint8 Y;
+	uint8 rot_data:2;
+	uint8 mode:2;
+	uint8 mosaic:1;
+	uint8 color_depth:1;
+	uint8 shape:2;
+	
+	uint16 X:9;
+	uint8 rot_data2:3;
+	uint8 flip:2;
+	uint8 size:2;
+	
+	uint16 tile_index:10;
+	uint8 pr:2;
+	uint8 palette:4;
+	
+	uint16 rot_data3;
+} t_OAM_entry;
+
+
 
 __attribute__((section(".dtcm")))
 uint32 bittab[256];
 //__attribute__((section(".dtcm")))
 uint32 bittab8[16];
-
+ 
+ 
 void    init_render()
 {
   int  PixelOdd = 1;
@@ -103,6 +133,16 @@ void check_tile_addr()
 {
 //	GFX.tiles_dirty = 1;	
 }
+
+/* Testing stuff... */
+
+typedef struct
+{
+	int 	base;	// SNES base address
+	int		depth;  // Bpp depth: 2 4 8
+	uint16	*DSVRAMAddress;
+	int		used;	
+} t_TileZone;
 
 int			NeedUpdate2b;
 int			NeedUpdate4b;
@@ -339,8 +379,8 @@ void     add_tile_2(int tile_addr_base, uint16 *vram_addr, int tilenb)
 
   tile_addr = tile_addr_base+tilenb*16;
   //VRAM_ptr = ((uint16 *)0x06010000)+tile_addr_base+tilenb*16;
-  VRAM_ptr = (u32*)(vram_addr+(tilenb*16));
-  tile_ptr = (u8*)(SNESC.VRAM+tile_addr);    
+  VRAM_ptr = vram_addr+tilenb*16;
+  tile_ptr = SNESC.VRAM+tile_addr;    
 
   for (k=0;k<8;k++,tile_ptr+=2)
     {
@@ -361,10 +401,10 @@ void     add_tile_4(int tile_addr_base, uint16 *vram_addr, int tilenb)
   uint32	tile_addr;  
   uint32	*VRAM_ptr;
 
-  tile_addr = (u32)(tile_addr_base+(tilenb*32));
-  tile_ptr = (u8*)(SNESC.VRAM+tile_addr);    
+  tile_addr = tile_addr_base+tilenb*32;
+  tile_ptr = SNESC.VRAM+tile_addr;    
   //VRAM_ptr = ((uint16 *)0x06010000)+tile_addr_base+tilenb*16;
-  VRAM_ptr = (u32*)(vram_addr+(tilenb*16));
+  VRAM_ptr = vram_addr+tilenb*16;
   
   for (k=0;k<8;k++,tile_ptr+=2)
     {
@@ -395,10 +435,10 @@ void     add_tile_8(int tile_addr_base, uint16 *vram_addr, int tilenb)
   uint32	tile_addr;  
   uint32	*VRAM_ptr;
 
-  tile_addr = (u32)(tile_addr_base+(tilenb*64));
-  tile_ptr = (u8*)(SNESC.VRAM+tile_addr);    
+  tile_addr = tile_addr_base+tilenb*64;
+  tile_ptr = SNESC.VRAM+tile_addr;    
   //VRAM_ptr = ((uint16 *)0x06010000)+tile_addr_base+tilenb*32;
-  VRAM_ptr = (u32*)(vram_addr+(tilenb*32));
+  VRAM_ptr = vram_addr+tilenb*32;    
 
   for (k=0;k<8;k++,tile_ptr+=2)
     {
@@ -620,6 +660,43 @@ void	PPU_updateCache()
 	PPU_add_tile_address(1);
 	PPU_add_tile_address(2);
 }
+
+#define CONVERT_SPR_TILE(tn) (((tn)&0xF)|(((tn)>>4)<<5))
+//#define CONVERT_SPR_TILE(tn) (tn)
+
+#define SNES_VRAM_OFFSET ((SNES_Port[0x01]&0x03) << 14)
+
+void     add_sprite_tile_4(uint16 tilenb, int pos)
+{
+  uint8		a;
+  int		k;
+  uint8		*tile_ptr;
+  uint32	tile_addr;
+  uint32	*VRAM_ptr;
+
+  if (tilenb&0x100)
+    tile_addr = (tilenb+pos)*32+GFX.spr_addr_base+GFX.spr_addr_select;
+  else
+    tile_addr = (tilenb+pos)*32+GFX.spr_addr_base;
+/*  if (!GFX.tiles4b_def[tile_addr/32])
+  	return;*/
+
+  VRAM_ptr = SPRITE_GFX + (CONVERT_SPR_TILE(tilenb+pos)+(GFX.spr_bank<<4))*16;    
+  tile_ptr = SNESC.VRAM+tile_addr;
+
+  for (k=0;k<8;k++,tile_ptr+=2)
+    {
+	  uint32	c;
+      c =  bittab[tile_ptr[0x00]];
+      c |= bittab[tile_ptr[0x01]]<<1;
+      c |= bittab[tile_ptr[0x10]]<<2;
+      c |= bittab[tile_ptr[0x11]]<<3;
+	  *VRAM_ptr++ = c;            
+    }
+//  GFX.tiles4b_def[tile_addr/32] = (GFX.spr_addr_base>>13)+1;
+//  GFX.tiles4b_def[tile_addr/32] |= 4;     
+}
+
 
 
 void	PPU_setMap(int i, int j, int tilenb, int bg, int p, int f)
@@ -960,7 +1037,7 @@ void	draw_plane_withpriority(int bg, int bg_mode, int nb_tilex, int nb_tiley, in
   	return;
 	
 	//discard any VRAM writes that aren't handled correctly by the emu
-	if( (((uint32)vram_addr) < 0x06000000) || ((uint32)vram_addr > ((uint32)0x06000000 + (256*1024)) ) ){
+	if(isValidMap((uint32)(uint16 *)vram_addr) == false){
 		return;
 	}
 	
@@ -1264,9 +1341,17 @@ void draw_plane_64_60(unsigned char bg, unsigned char bg_mode)
 
 
 
+#define SPRITE_ADD_X(INDEX) \
+  -(((GFX.spr_info_ext[INDEX>>2]&(1<<((INDEX&0x3)<<1))) != 0)<<8)
+
+#define SPRITE_POS_Y(INDEX) \
+  (GFX.spr_info[INDEX].pos_y > 239 ? (char)GFX.spr_info[INDEX].pos_y : GFX.spr_info[INDEX].pos_y)
 
 
-
+inline void draw_tile_sprite(int TILENB, int X, int Y, int SIZEX)
+{
+    add_sprite_tile_4(GFX.spr_info[TILENB].fst_tile, (Y*16+X));
+}
 
 void PPU_set_sprites_bank(int bank)
 {
@@ -1693,38 +1778,47 @@ void PPU_RenderLineMode7(t_GFX_lineInfo *l)
 	l->CY = l->C*(-X0+HOffset)+l->D*(SNES.V_Count-Y0+VOffset)+(Y0<<8);
 }
 
-__attribute__((section(".itcm")))
-void renderMode7(){
+void renderMode7()
+{
+	static int Mode7FrameSkip = 0;
 
-	//skip 6 frames + last frame
-	if (
-		((ThisSNESFrameCount % 10) == 0)
-		||
-		(ThisSNESFrameCount == 59)
-	)
-		return;
-	
 	if (!(CFG.BG_Layer & 0x1))
 		return;
 		
+	// Update one frame on 4
+	// FIXME : find a better method to speed up MODE 7
+	if ((Mode7FrameSkip++ & 3) == 0)
+		return;
+
     // Copy map
 	uint16	*map_addr = (uint16*)BG_MAP_RAM(0);
 	uint8	*VRAM = SNESC.VRAM;
 	uint8	*VRAM1 = SNESC.VRAM+1;
 	int		i, j;
-	for (i = 0, j = 0; i < 128*128*2; i+=4, j++){
+	for (i = 0, j = 0; i < 128*128*2; i+=4, j++)
+	{
 		uint16	t;
 		t = VRAM[i]+(VRAM[i+2]<<8); 
 		map_addr[j] = t;
 	}
 	// Copy tile data
 	uint16	*tile_addr = (uint16*)BG_TILE_RAM(GFX.tile_slot[0]);
-	for (i = 0, j = 0; i < 128*128*2; i+=4, j++){
+	for (i = 0, j = 0; i < 128*128*2; i+=4, j++)
+	{
 		uint16	t;
 		t = VRAM1[i]+(VRAM1[i+2]<<8); 
 		tile_addr[j] = t;
 	}
 }
+
+/*
+static inline void dmaFillWords(const void* src, void* dest, uint32 size) {
+	DMA_SRC(3)  = (uint32)src;
+	DMA_DEST(3) = (uint32)dest;
+	DMA_CR(3)   = DMA_COPY_WORDS | DMA_SRC_FIX | (size>>2);
+	while(DMA_CR(3) & DMA_BUSY);
+}
+*/
 
 void PPU_reset()
 {
@@ -1737,7 +1831,13 @@ void PPU_reset()
 	((uint32 *)OAM)[i*2] = 0x0200;
 	((uint32 *)OAM)[i*2+1] = 0;
   }
-  GFX.brightness = 0;  
+  GFX.brightness = 0;
+  
+  // Clear DS VRAM
+  i = 0;
+  //dmaFillWords(&i, (void*)0x6000000,  256*1024); // FIX: clear only bank A!!
+  //dmaFillWords(&i, (void*)0x6400000,  64*1024); // FIX: clear only bank A!!
+  
   memset((void*)0x6000000,0,256*1024);
   memset((void*)0x6400000,0,64*1024);
   
@@ -1802,42 +1902,44 @@ void	update_scrollx(int bg)
 }
 #endif
 
-
-
+//extern char *logbuf;
 
 __attribute__((section(".itcm")))
 void	PPU_updateGFX(int line)
 {
 	t_GFX_lineInfo *l = &GFX.lineInfo[line];
 	
-	switch(l->mode & 0xff){
-		case(-1):{
-			// Blank line
-			DISPCNT |= DISPLAY_SCREEN_OFF;
-		}
-		break;
-		case(0x10):{
-			PPU_set_sprites_bank(0);
-			return;
-		}
-		break;
-		case(0x20):{
-			PPU_set_sprites_bank(1);
-			return;
-		}
-		break;
+	if (l->mode & 0xf8)
+	{
+	if (l->mode == -1)
+	{
+		// Blank line
+		DISPCNT |= DISPLAY_SCREEN_OFF;
+		return;
+	}	
+	if (l->mode & 0x10)
+	{
+		PPU_set_sprites_bank(0);
+		return;
+	}
+	if (l->mode & 0x20)
+	{
+		PPU_set_sprites_bank(1);
+		return;
+	}
+	if (l->mode & 0x40) // bi-linear filtering
+	{
+		l->lBG0_Y0 += GFX.DSFrame&1;
+		l->lBG1_Y0 += GFX.DSFrame&1;
+		l->lBG2_Y0 += GFX.DSFrame&1;
+		l->lBG3_Y0 += GFX.DSFrame&1;
+		l->mode &= 7;
+	}
+	}
 		
-		case(0x40):{	// bi-linear filtering
-			l->lBG0_Y0 += GFX.DSFrame&1;
-			l->lBG1_Y0 += GFX.DSFrame&1;
-			l->lBG2_Y0 += GFX.DSFrame&1;
-			l->lBG3_Y0 += GFX.DSFrame&1;
-			l->mode &= 7;
-		}
-		break;
-		
-		case(7):{
-			asm("ldr  	r2, [%1, #12];"
+	if (l->mode == 7)
+	{	
+		asm("ldr  	r2, [%1, #12];"
 			"str  	r2, [%0, #12];"
 			"ldr	r2, [%1, #8];"
 			"str 	r2, [%0, #8];"
@@ -1846,20 +1948,18 @@ void	PPU_updateGFX(int line)
 			"ldr	r2, [%1, #0];"
 			"str 	r2, [%0, #0]" : :
 			"r"(0x04000030), "r"(&l->A) : "r2");	
-			/*BG3_XDX = l->A; 
-			BG3_XDY = l->B;
-			BG3_YDX = l->C; 
-			BG3_YDY = l->D;
-			BG3_CX = l->CX;
-			BG3_CY = l->CY;*/
+/*	   	BG3_XDX = l->A; 
+	   	BG3_XDY = l->B;
+	  	BG3_YDX = l->C; 
+	  	BG3_YDY = l->D;
+		BG3_CX = l->CX;
+		BG3_CY = l->CY;*/
 		
-			DISPCNT = l->lDISPLAY_CR;
-			REG_BG3CNT = l->lBG3_CR;		
-			return;
-		}
-		break;
+		DISPCNT = l->lDISPLAY_CR;
+		REG_BG3CNT = l->lBG3_CR;		
+		return;		
 	}
-	
+
 	DISPCNT = l->lDISPLAY_CR;
 	BG_PALETTE[0] = l->lBACK_color;
 	
@@ -1895,11 +1995,13 @@ void	PPU_updateGFX(int line)
 
 	// BLEND
 	(*(vuint32*)0x04000050) = l->lBLEND; 
+		
+
 	
 //	BRIGHTNESS = l->lBRIGHTNESS;
 }
 
-void	PPU_line_handle_BG3()
+inline void	PPU_line_handle_BG3()
 { 
   int 			  y;
   t_GFX_lineInfo *l;
@@ -1949,7 +2051,6 @@ void	PPU_line_handle_BG3()
 	l->lBG2_Y0 = PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll;
   }
 }
-
 
 void	PPU_line_render()
 {
@@ -2168,9 +2269,8 @@ void draw_screen()
 		
     GFX.was_not_blanked = 0; 			
     GFX.Blank_Screen = 0;   
-    if (CFG.WaitVBlank/* && GFX.speed > 95*/) {
+    if (CFG.WaitVBlank/* && GFX.speed > 95*/) 
     	IRQVBlankWait();
-	}
 #if 1    	
     else
     {

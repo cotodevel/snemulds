@@ -18,8 +18,6 @@ GNU General Public License for more details.
 #ifndef __common_h__
 #define __common_h__
 
-//change environment to ds emu
-//#define USE_EMUL
 
 //count/time VCOUNT
 //#define SNEMUL_LOGGING
@@ -56,6 +54,9 @@ GNU General Public License for more details.
 	#undef SRAM
 #endif
 
+#define PM_BACKLIGHT_BOTTOM  (1<<2)    // Enable the top backlight if set
+#define PM_BACKLIGHT_TOP     (1<<3)    // Enable the bottom backlight if set
+
 #ifdef WIN32
 #define STATIC_INLINE static _inline
 #else
@@ -68,21 +69,9 @@ GNU General Public License for more details.
 #undef FALSE
 #define FALSE   0
 
+
 #define GET_WORD16(a) (*((uint8 *)(a)) | (*(((uint8 *)(a))+1) << 8)) 
 #define SET_WORD16(a, v) { *((uint8 *)(a)) = (v) & 0xFF; *(((uint8 *)(a))+1) = (v) >> 8; } 
-
-typedef struct s_Options
-{
-	uint8 BG3Squish :2;
-	uint8 SoundOutput :1;
-	uint8 LayersConf :6;
-	uint8 TileMode :1;
-	uint8 BG_Layer :8;
-	uint8 YScroll :2;
-	uint8 WaitVBlank :1;
-} t_Options;
-
-#define DEBUG_BUF ((char *)0x27FE200)
 
 #endif
 
@@ -90,7 +79,7 @@ typedef struct s_Options
 extern "C" {
 #endif
 
-// ...
+int	setBacklight(int flags);
 
 #ifdef __cplusplus
 }

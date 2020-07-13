@@ -16,10 +16,10 @@
 #USA
 #
 
-#TGDS1.5 compatible Makefile
+#TGDS1.6 compatible Makefile
 
 #ToolchainGenericDS specific: Use Makefiles from either TGDS, or custom
-export SOURCE_MAKEFILE7 = custom
+export SOURCE_MAKEFILE7 = default
 export SOURCE_MAKEFILE9 = custom
 
 #Non FPIC Code: Use Makefiles from either TGDS, or custom
@@ -77,6 +77,7 @@ export DIRS_ARM9_SRC = data/	\
 			source/	\
 			source/interrupts/	\
 			source/gui/	\
+			source/gui/gui_draw/	\
 			source/TGDSMemoryAllocator/	\
 			source/wnifilib/	\
 			../common/	\
@@ -87,6 +88,7 @@ export DIRS_ARM9_HEADER = data/	\
 			build/	\
 			include/	\
 			source/gui/	\
+			source/gui/gui_draw/	\
 			source/TGDSMemoryAllocator/	\
 			source/wnifilib/	\
 			../common/	\

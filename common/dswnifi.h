@@ -67,6 +67,8 @@ extern int guest_framecount;	//emulator framecount:guest
 extern int host_vcount;		//host generated REG_VCOUNT
 extern int guest_vcount;		//guest generated REG_VCOUNT
 
+extern int ThisSNESFrameCount;
+extern int guestSNESFrameCount;
 
 #endif
 

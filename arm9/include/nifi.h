@@ -48,6 +48,29 @@ USA
 extern "C"{
 #endif
 
+//DSWNIFI: NIFI
+extern void Handler(int packetID, int readlength);
+extern int Wifi_RawTxFrame_NIFI(uint16 datalen, uint16 rate, uint16 * data);
+extern bool NiFiHandler(int packetID, int readlength, uint8 * data);
+extern void initNiFi();
+extern void Timer_10ms(void);
+extern void initNiFi();
+
+//DSWNIFI: nifi buffer IO
+extern volatile uint8	 data[4096];		//data[32] + is recv TX'd frame nfdata[128]
+extern volatile uint8	 nfdata[128];	//sender frame, recv as data[4096]
+
+//DSWNIFI: message for nifi beacons
+extern volatile const uint8 nifitoken[32];
+extern volatile const uint8 nificonnect[32];
+extern volatile uint8 nificrc[32];
+
+//DSWNIFI: WIFI specific
+extern int Wifi_RawTxFrame_WIFI(uint8 datalen, uint8 * data);
+extern int nifi_stat;
+extern int nifi_cmd;
+extern int nifi_keys;		//holds the keys for players.
+extern int nifi_keys_sync;	//(guestnifikeys & hostnifikeys)
 
 #ifdef __cplusplus
 }

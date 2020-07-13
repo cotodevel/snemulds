@@ -36,7 +36,7 @@ USA
 #include "conf.h"
 #include "fs.h"
 #include "memmap.h"
-#include "guiTGDS.h"
+#include "consoleTGDS.h"
 #include "opcodes.h"
 #include "common.h"
 #include "ipcfifoTGDSUser.h"
@@ -57,6 +57,10 @@ sint8*  READ_GAME_DIR[] = {
 
 volatile char versionBuf[0x100];
 sint8 * RetTitleCompiledVersion(){
-	sprintf((char*)&versionBuf[0],"%s %s %s",(sint8*)SNEMULDS_TITLE[0],(sint8*)"0.6b",(sint8*)SNEMULDS_TITLE[1]);
+	addAppVersiontoCompiledCode((VERSION_DESCRIPTOR *)&Version,(char *)appver,64);
+	Version[0].app_version[63] = '0';
+	//Update info + toolchain version
+	updateVersionfromCompiledCode((VERSION_DESCRIPTOR *)&Version);
+	sprintf((char*)&versionBuf[0],"%s %s %s",(sint8*)SNEMULDS_TITLE[0],(sint8*)Version[0].app_version,(sint8*)SNEMULDS_TITLE[1]);
 	return (char*)&versionBuf[0];
 }

@@ -33,6 +33,8 @@ USA
 extern "C" {
 #endif
 
+extern int selectSong(sint8 *name);
+
 #ifdef __cplusplus
 }
 #endif

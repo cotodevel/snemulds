@@ -30,9 +30,9 @@ GNU General Public License for more details.
 
 #include "guiTGDS.h"
 #include "biosTGDS.h"
-#include "gui_console_connector.h"
 
 #include "gui_widgets.h"
+#include "console_str.h"
 #include "InterruptsARMCores_h.h"
 #include "dmaTGDS.h"
 
@@ -41,8 +41,7 @@ GNU General Public License for more details.
 #include "keypadTGDS.h"
 #include "utilsTGDS.h"
 #include "spifwTGDS.h"
-#include "powerTGDS.h"
-#include "videoTGDS.h"
+#include "gui_console_connector.h"
 
 t_GUIScreen	*GUI_newScreen(int nb_elems)
 {
@@ -220,7 +219,7 @@ void		GUI_drawImage(t_GUIZone *zone, t_GUIImage *image, int x, int y)
 	FILE		*f = NULL;
 	
 	//FIL fhandler;
-//	printf("XXX %p %d %d %d %p\n", image, image->width, image->height, image->flags, image->data);
+//	GUI_printf("XXX %p %d %d %d %p\n", image, image->width, image->height, image->flags, image->data);
 
 	ptr = GUI.DSFrameBuffer;
 	ptr += (zone->x1 + x) / 2 + ((zone->y1 + y) * 128);
@@ -417,9 +416,89 @@ void		GUI_drawScreen(t_GUIScreen *scr, void *param)
 
 t_GUIEvent	g_event;
 
-char startFilePath[MAX_TGDSFILENAME_LENGTH+1];
-char startSPCFilePath[MAX_TGDSFILENAME_LENGTH+1];
-struct sGUISelectorItem guiSelItem;
+
+int GUI_update()
+{
+	//Async events
+	scanKeys();
+	int new_event = 0;
+	int pressed = keysPressed(); 	// buttons pressed this loop
+	int released = keysReleased();
+	int held = keysHeld();				//touch screen
+	int repeated = keysRepeated();
+	
+	if (GUI.hide)
+	{
+		if (penIRQread() == false)
+		{
+			// Show GUI
+			GUI.hide = 0;
+			powerON(POWER_2D_B);
+			setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT); 
+		}
+	}
+	else{
+		if((pressed & KEY_TOUCH) && !(held & KEY_TOUCH))
+		{
+			g_event.event = EVENT_STYLUS_PRESSED;
+			g_event.stl.x = getsIPCSharedTGDS()->touchXpx;
+			g_event.stl.y = getsIPCSharedTGDS()->touchYpx;		
+			new_event = GUI_EVENT_STYLUS;
+		}
+		
+		else if((held & KEY_TOUCH) && !(released & KEY_TOUCH))
+		{
+			if (penIRQread() == false){
+				return 0;
+			}
+			
+			g_event.event = EVENT_STYLUS_DRAGGED;
+
+			g_event.stl.dx = getsIPCSharedTGDS()->touchXpx - g_event.stl.x;
+			g_event.stl.dy = getsIPCSharedTGDS()->touchYpx - g_event.stl.y;
+			g_event.stl.x = getsIPCSharedTGDS()->touchXpx;
+			g_event.stl.y = getsIPCSharedTGDS()->touchYpx;
+			new_event = GUI_EVENT_STYLUS;
+		
+		}
+		else if (!(held & KEY_TOUCH) && (released & KEY_TOUCH)) //too much fast: (penIRQread() == false)
+		{
+			g_event.event = EVENT_STYLUS_RELEASED;
+			new_event = GUI_EVENT_STYLUS;
+		}	
+
+		else if((getsIPCSharedTGDS()->buttons7 != 0) && GUI.ScanJoypad){
+				g_event.event = EVENT_BUTTON_ANY;
+				new_event = GUI_EVENT_BUTTON;
+				g_event.joy.buttons = getsIPCSharedTGDS()->buttons7;
+				g_event.joy.pressed = pressed;
+				g_event.joy.repeated = repeated;
+				g_event.joy.released = released;
+		}
+			
+		//serve & dispatch (destroys) events
+		if (new_event)
+		{
+			GUI_dispatchEvent(GUI.screen, new_event, &g_event);
+		}
+		
+		if (PendingMessage.msg != 0)
+		{
+			int ret = 0;
+			if (PendingMessage.scr->handler)
+				ret = PendingMessage.scr->handler(NULL, 
+						PendingMessage.msg, PendingMessage.param, PendingMessage.arg);
+			
+			if (ret == 0)
+			{
+				ret = GUI_dispatchMessageNow(PendingMessage.scr,
+						PendingMessage.msg, PendingMessage.param, PendingMessage.arg);
+			}
+			memset(&PendingMessage, 0, sizeof(PendingMessage));
+		}
+	}
+	return 0;
+}
 
 int		GUI_start()
 {
@@ -431,7 +510,6 @@ int		GUI_start()
 	}
 	return 0;
 }
-
 
 t_GUIImgList	*GUI_newImageList(int nb)
 {
@@ -579,84 +657,4 @@ void GUI_setLanguage(int lang)
 		GUI.string = (sint8 **)&g_snemulds_str_eng; // ENGLISH
 		break;		
 	}		
-}
-
-int GUI_update()
-{
-	//Async events
-	scanKeys();
-	int new_event = 0;
-	int pressed = keysPressed(); 	// buttons pressed this loop
-	int released = keysReleased();
-	int held = keysHeld();				//touch screen
-	int repeated = keysRepeated();
-	
-	if (GUI.hide)
-	{
-		if (penIRQread() == false)
-		{
-			// Show GUI
-			GUI.hide = 0;
-			powerON(POWER_2D_B);
-			setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT); 
-		}
-	}
-	else{
-		int px=0, py=0; 
-		if(getTouchScreenEnabled() == true){
-			px = TGDSIPC->touchXpx;
-			py = TGDSIPC->touchYpx;
-		}
-			
-		if((pressed & KEY_TOUCH) && !(held & KEY_TOUCH)){
-			g_event.event = EVENT_STYLUS_PRESSED;
-			g_event.stl.x = px;
-			g_event.stl.y = py;		
-			new_event = GUI_EVENT_STYLUS;
-		}
-		else if((held & KEY_TOUCH) && !(released & KEY_TOUCH)){
-			g_event.event = EVENT_STYLUS_DRAGGED;
-			g_event.stl.dx = px - g_event.stl.x;
-			g_event.stl.dy = py - g_event.stl.y;
-			g_event.stl.x = px;
-			g_event.stl.y = py;
-			new_event = GUI_EVENT_STYLUS;
-		}
-		else if (!(held & KEY_TOUCH) && (released & KEY_TOUCH)){ //too much fast: (penIRQread() == false)
-			g_event.event = EVENT_STYLUS_RELEASED;
-			new_event = GUI_EVENT_STYLUS;
-		}
-		
-		else if((TGDSIPC->buttons7 != 0) && GUI.ScanJoypad){
-				g_event.event = EVENT_BUTTON_ANY;
-				new_event = GUI_EVENT_BUTTON;
-				g_event.joy.buttons = TGDSIPC->buttons7;
-				g_event.joy.pressed = pressed;
-				g_event.joy.repeated = repeated;
-				g_event.joy.released = released;
-		}
-			
-		//serve & dispatch (destroys) events
-		if (new_event)
-		{
-			GUI_dispatchEvent(GUI.screen, new_event, &g_event);
-		}
-		
-		if (PendingMessage.msg != 0)
-		{
-			int ret = 0;
-			if (PendingMessage.scr->handler)
-				ret = PendingMessage.scr->handler(NULL, 
-						PendingMessage.msg, PendingMessage.param, PendingMessage.arg);
-			
-			if (ret == 0)
-			{
-				ret = GUI_dispatchMessageNow(PendingMessage.scr,
-						PendingMessage.msg, PendingMessage.param, PendingMessage.arg);
-			}
-			memset(&PendingMessage, 0, sizeof(PendingMessage));
-		}
-	}
-	
-	return 0;
 }

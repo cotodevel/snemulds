@@ -30,6 +30,12 @@ USA
 
 
 //Definition that overrides the weaksymbol expected from toolchain to init ARM9's TGDS memory allocation
-struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(){
-	return NULL;
+struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7MallocStartAddress, int ARM7MallocSize, bool isCustomTGDSMalloc){
+	struct AllocatorInstance * customMemoryAllocator = &CustomAllocatorInstance;
+	memset((u8*)customMemoryAllocator, 0, sizeof(CustomAllocatorInstance));
+	customMemoryAllocator->customMalloc = isCustomTGDSMalloc;
+	customMemoryAllocator->ARM7MallocStartAddress = ARM7MallocStartAddress;
+	customMemoryAllocator->ARM7MallocSize = ARM7MallocSize;
+	
+	return customMemoryAllocator;
 }

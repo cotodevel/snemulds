@@ -18,33 +18,53 @@
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
+
+#include <stdio.h>
+#include <malloc.h>
+#include <string.h>
+#include "gui_console_connector.h"
 #include "fs.h"
 #include "snes.h"
 #include "gfx.h"
 #include "cfg.h"
 #include "apu.h"
-#include "interrupts.h"
 #include "conf.h"
-#include "dswnifi_lib.h"
-#include "global_settings.h"
-#include "eventsTGDS.h"
-#include "posixHandleTGDS.h"
-#include "TGDSMemoryAllocator.h"
-#include "ipcfifoTGDS.h"
-#include "nds_cp15_misc.h"
+#include "spifwTGDS.h"
+#include "main.h"
+#include "timerTGDS.h"
+#include "guiTGDS.h"
+#include "console_str.h"
 #include "fatfslayerTGDS.h"
 #include "utilsTGDS.h"
+#include "dmaTGDS.h"
 
-__attribute__((section(".dtcm")))
-bool handleROMSelect=false;
+//wnifilib: multiplayer
+#include "dswnifi_lib.h"
+#include "dswnifi.h"
+#include "ipcfifoTGDSUser.h"
 
-__attribute__((section(".dtcm")))
-bool handleSPCSelect=false;
+//#define USE_EMUL
 
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
+
 uint32 screen_mode;
 int APU_MAX = 262;
+//volatile int h_blank;
+
+
 u32 keys;
+
+typedef struct s_Options
+{
+	uint8 BG3Squish :2;
+	uint8 SoundOutput :1;
+	uint8 LayersConf :6;
+	uint8 TileMode :1;
+	uint8 BG_Layer :8;
+	uint8 YScroll :2;
+	uint8 WaitVBlank :1;
+	uint8 SpeedHack :3;
+} t_Options;
 
 void applyOptions()
 {
@@ -83,20 +103,6 @@ void PPU_ChangeLayerConf(int i)
 
 void readOptionsFromConfig(char *section)
 {
-	char romPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
-	char spcPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
-	strcpy(romPath, get_config_string("Global", "ROMPath", ""));
-	strcpy(spcPath, get_config_string("Global", "SPCPath", ""));
-	
-	strcpy(startFilePath, "/");	//Init var
-	strcat(startFilePath, romPath); //Init var
-	
-	strcpy(startSPCFilePath, "/");
-	strcat(startSPCFilePath, spcPath);
-	
-	strcpy(CFG.ROMPath, getfatfsPath(romPath));
-	strcpy(CFG.SPCPath, getfatfsPath(spcPath));
-	
 	CFG.BG3Squish = get_config_int(section, "BG3Squish", CFG.BG3Squish) & 3;
 	// FIXME 
 	GFX.YScroll = get_config_int(section, "YScroll", GFX.YScroll);
@@ -147,6 +153,8 @@ void readOptionsFromConfig(char *section)
 	CFG.Transparency
 			= get_config_int(section, "Transparency", CFG.Transparency);
 	CFG.WaitVBlank = get_config_int(section, "Vblank", CFG.WaitVBlank);
+	CFG.CPU_speedhack
+			= get_config_int(section, "SpeedHacks", CFG.CPU_speedhack);
 	CFG.FastDMA = get_config_int(section, "FastDMA", CFG.FastDMA);
 
 	CFG.MouseXAddr = get_config_hex(section, "MouseXAddr", 0);
@@ -187,9 +195,9 @@ void readOptionsFromConfig(char *section)
 	CFG.SpritePr[2] = (SpritePriority>>6) & 3;
 	CFG.SpritePr[3] = (SpritePriority>>9) & 3;
 	
-	//CFG.MapExtMem = get_config_int(section, "MapExtMem", CFG.MapExtMem);	//SLOT-2 external memory is disabled
-	CFG.EnableSRAM = get_config_int(section, "EnableSRAM", CFG.EnableSRAM);
+	//CFG.MapExtMem = get_config_int(section, "MapExtMem", CFG.MapExtMem);
 	
+	CFG.AutoSRAM = get_config_int(section, "AutoSRAM", CFG.AutoSRAM);
 }
 
 void saveOptionsToConfig(char *section)
@@ -211,6 +219,7 @@ void saveOptionsToConfig(char *section)
 
 	//	set_config_int(section, "Transparency", CFG.Transparency);
 	set_config_int(section, "Vblank", CFG.WaitVBlank);
+	set_config_int(section, "SpeedHacks", CFG.CPU_speedhack);
 	//	set_config_int(section, "FastDMA", CFG.FastDMA);
 
 	/*	set_config_hex(section, "MouseXAddr", 0);
@@ -226,7 +235,7 @@ void saveOptionsToConfig(char *section)
 	 set_config_int(section, "BlankTileNumber", CFG.Debug2);
 	 set_config_oct(section, "SpritePriority", 01123);*/
 	
-	set_config_int(section, "EnableSRAM", CFG.EnableSRAM);
+	set_config_int(section, "AutoSRAM", CFG.AutoSRAM);
 	save_config_file();
 }
 
@@ -247,6 +256,7 @@ void packOptions(uint8 *ptr)
 	opt->BG_Layer = CFG.BG_Layer;
 	opt->YScroll = CFG.YScroll;
 	opt->WaitVBlank = CFG.WaitVBlank;
+	opt->SpeedHack = CFG.CPU_speedhack;
 }
 
 void unpackOptions(int version, uint8 *ptr)
@@ -282,6 +292,7 @@ void unpackOptions(int version, uint8 *ptr)
 	CFG.BG_Layer = opt->BG_Layer;
 	CFG.YScroll = opt->YScroll;
 	CFG.WaitVBlank = opt->WaitVBlank;
+	CFG.CPU_speedhack = opt->SpeedHack;
 
 	applyOptions();
 }
@@ -325,151 +336,138 @@ int checkConfiguration(char *name, int crc)
 
 	if (section != NULL)
 	{
-		printf("Section : %s ", section);
+		GUI_printf("Section : %s ", section);
 		readOptionsFromConfig(section);
 	}
 }
 
 __attribute__((optimize("-O0")))
-int loadROM(struct sGUISelectorItem * name)
+int loadROM(char *name, int confirm)
 {
-	//wait until release A button
-	scanKeys();
-	u32 keys = keysPressed();
-	while (keys&KEY_A){
-		scanKeys();
-		keys = keysPressed();
+	int size;
+	char romname[MAX_TGDSFILENAME_LENGTH+1];
+	memset((char*)&romname[0], 0, sizeof(romname));
+	
+	int ROMheader;
+	char *ROM;
+	int crc;
+	CFG.LargeROM = 0;
+	
+	//filename already has correct format
+	if (
+		(name[0] == '0')
+		&&
+		(name[1] == ':')
+		&&
+		(name[2] == '/')
+	){
+		strcpy(romname, name);
+	}
+	//otherwise build format
+	else{
+		strcpy(romname, getfatfsPath(CFG.ROMPath));
+		if (romname[strlen(romname)-1] != '/'){
+			strcat(romname, "/");
+		}
+		strcat(romname, name);
+	}
+	clrscr();
+	memset(CFG.ROMFile, 0, sizeof(CFG.ROMFile));
+	strcpy(CFG.ROMFile, romname);
+	void *ptr = malloc(4);
+	printf("ptr=%p... ", ptr);
+	free(ptr);
+
+	mem_clear_paging(); // FIXME: move me...
+	ROM = (char *) SNES_ROM_ADDRESS;
+	dmaFillHalfWord(0, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE - (512*1024));	//Clear memory: ZIP Will use this as malloc
+	
+	bool zipFileLoaded = false;
+	if(strstr (_FS_getFileExtension(romname),"ZIP")){	
+		zipFileLoaded = true;
 	}
 	
-	//file
-	if(name->StructFDFromFS_getDirectoryListMethod == FT_FILE){
-		int size;
-		char romname[MAX_TGDSFILENAME_LENGTH+1];
-		memset((char*)&romname[0], 0, sizeof(romname));
-		
-		int ROMheader;
-		char *ROM;
-		int crc;
-		CFG.LargeROM = 0;
-		
-		//filename already has correct format
-		if (
-			(name->filenameFromFS_getDirectoryListMethod[0] == '0')
-			&&
-			(name->filenameFromFS_getDirectoryListMethod[1] == ':')
-			&&
-			(name->filenameFromFS_getDirectoryListMethod[2] == '/')
-		){
-				strcpy(romname, name->filenameFromFS_getDirectoryListMethod);
-		}
-		//otherwise build format
-		else{
-			strcpy(romname, getfatfsPath(startFilePath));
-			if (startFilePath[strlen(startFilePath)-1] != '/'){
-				strcat(romname, "/");
-			}
-			strcat(romname, name->filenameFromFS_getDirectoryListMethod);
-		}
-		clrscr();
-		strcpy(CFG.ROMFile, romname);
-		void *ptr = malloc(4);
-		printf("ptr=%p... ", ptr);
-		free(ptr);
-
-		mem_clear_paging(); // FIXME: move me...
-		ROM = (char *) SNES_ROM_ADDRESS;
-		SnemulDSdmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE - (512*1024));	//Clear memory: ZIP Will use this as malloc
-		
-		bool zipFileLoaded = false;
-		if(strstr (_FS_getFileExtension(name->filenameFromFS_getDirectoryListMethod),"ZIP")){	
-			zipFileLoaded = true;
-		}
-		
-		if(zipFileLoaded == true){
-			printf("Unzipping: %s", CFG.ROMFile);
-			//Decompress File and get internal ZIP name for use later
-			char unzippedFile[MAX_TGDSFILENAME_LENGTH+1];
-			load_gz((char*)CFG.ROMFile, (char*)unzippedFile);
-			strcpy(CFG.ROMFile, unzippedFile);
-			printf("Unzip OK: %s", unzippedFile);
-		}
-		
-		swiDelay(1);
-		SnemulDSdmaFillHalfWord(3, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE - (512*1024));	////Clear memory: ROM will use it
-		
-		size = FS_getFileSize((char*)&CFG.ROMFile[0]);	//may segfault
-		ROMheader = size & 8191;
-		if (ROMheader != 0&& ROMheader != 512){
-			ROMheader = 512;
-		}
-		
-		clrscr();
-		printf(" - - ");
-		printf(" - - ");
-		printf("File:%s - Size:%d", CFG.ROMFile, size);
-		if (size-ROMheader > ROM_MAX_SIZE)
-		{
-			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, ROM_STATIC_SIZE+ROMheader);
-			CFG.LargeROM = 1;
-			crc = crc32(0, ROM, ROM_STATIC_SIZE);
-			printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
-		}
-		else
-		{
-			FS_loadROM(ROM-ROMheader, CFG.ROMFile);
-			CFG.LargeROM = 0;
-			crc = crc32(0, ROM, size-ROMheader);
-			printf("CRC = %08x ", crc);
-		}
-		
-		changeROM(ROM-ROMheader, size);
-		checkConfiguration(name->filenameFromFS_getDirectoryListMethod, crc);
-		
-		//Apply topScreen / bottomScreen setting
-		if(CFG.TopScreenEmu == 0){
-			SnemulDSLCDSwap();
-		}
+	if(zipFileLoaded == true){
+		printf("Unzipping: %s", CFG.ROMFile);
+		//Decompress File and get internal ZIP name for use later
+		char unzippedFile[MAX_TGDSFILENAME_LENGTH+1];
+		load_gz((char*)CFG.ROMFile, (char*)unzippedFile);
+		strcpy(CFG.ROMFile, unzippedFile);
+		printf("Unzip OK: %s", unzippedFile);
 	}
+	
+	swiDelay(1);
+	dmaFillHalfWord(0, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE - (512*1024));	////Clear memory: ROM will use it
+	
+	size = FS_getFileSize((char*)&CFG.ROMFile[0]);
+	ROMheader = size & 8191;
+	if (ROMheader != 0&& ROMheader != 512){
+		ROMheader = 512;
+	}
+	
+	clrscr();
+	printf(" - - ");
+	printf(" - - ");
+	printf("File:%s - Size:%d", CFG.ROMFile, size);
+	if (size-ROMheader > ROM_MAX_SIZE)
+	{
+		FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, ROM_STATIC_SIZE+ROMheader);
+		CFG.LargeROM = 1;
+		crc = crc32(0, ROM, ROM_STATIC_SIZE);
+		printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
+	}
+	else
+	{
+		FS_loadROM(ROM-ROMheader, CFG.ROMFile);
+		CFG.LargeROM = 0;
+		crc = crc32(0, ROM, size-ROMheader);
+		printf("CRC = %08x ", crc);
+	}
+	
+	changeROM(ROM-ROMheader, size);
+	checkConfiguration(name, crc);
 	
 	return 0;
 }
 
+#define DEBUG_BUF ((char *)0x27FE200)
+
 int selectSong(char *name)
 {
-	char spcname[MAX_TGDSFILENAME_LENGTH+1];
-	memset(spcname, 0, sizeof(spcname));
+	char spcname[100];
+
+	strcpy(spcname, CFG.ROMPath);
+	if (CFG.ROMPath[strlen(CFG.ROMPath)-1] != '/')
+		strcat(spcname, "/");
+	strcat(spcname, "/");
 	strcat(spcname, name);
 	strcpy(CFG.Playlist, spcname);
 	CFG.Jukebox = 1;
 	CFG.Sound_output = 0;
 	APU_stop();
-	
-	u8 * spcFile = malloc(0x10200);
-	if(spcFile == NULL){
+	if (FS_loadFile(spcname, APU_RAM_ADDRESS, 0x10200) < 0)
 		return -1;
-	}
-	if(FS_loadFile(spcname, spcFile, 0x10200) < 0){
-		printf("selectSong(): Load error: %s", spcname);
-		while(1==1){
-			
-		}
-		free(spcFile);
-		return -1;
-	}
-	APU_playSpc(spcFile);	//blocking, wait APU init
-	free(spcFile);
+	APU_playSpc();
+	// Wait APU init
+	IRQVBlankWait();
+	IRQVBlankWait();
+	IRQVBlankWait();
+	IRQVBlankWait();
+	//	GUI_printf("\nDBG: %s", DEBUG_BUF);	
 	return 0;
 }
 
 //---------------------------------------------------------------------------------
-__attribute__((section(".itcm")))
-int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
-	
-	/*			TGDS 1.5 Standard ARM9 Init code start	*/
+int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
+{
+	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
 	GUI_init(isTGDSCustomConsole);
 	clrscr();
-	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup());
+	
+	bool isCustomTGDSMalloc = false;
+	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc));
+	
 	sint32 fwlanguage = (sint32)getLanguage();
 	GUI_setLanguage(fwlanguage);
 	
@@ -493,20 +491,12 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 		printf(_STR(IDS_FS_FAILED));
 	}
 	
-	/*			TGDS 1.5 Standard ARM9 Init code end	*/
-	
-	memset(&startFilePath, 0, sizeof(startFilePath));
-	memset(&startSPCFilePath, 0, sizeof(startSPCFilePath));
+	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	DisableIrq(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	disableSleepMode();	//Disable timeout-based sleep mode
 	DisableSoundSampleContext();
 	swiDelay(1000);
-	
-	coherent_user_range_by_size((u32)IPC6, sizeof(struct sIPCSharedTGDSSpecific));
-	IPC6->APU_ADDR_CNT = 0;
-	IPC6->APU_ADDR_ANS = IPC6->APU_ADDR_CMD = 0;
-	screen_mode = 0;
 	
 #ifndef DSEMUL_BUILD	
 	GUI.printfy = 32;
@@ -516,26 +506,76 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	//GUI_align_printf(GUI_TEXT_ALIGN_CENTER, _STR(4));
 #endif	
 	
+	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = getsIPCSharedTGDSSpecific()->APU_ADDR_ANS = getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
 	update_spc_ports();
 	initSNESEmpty();
-	
-	// Clear "HDMA"
-	int i = 0;
-	for (i = 0; i < 192; i++){
-		GFX.lineInfo[i].mode = -1;
-		t_GFX_lineInfo *l = &GFX.lineInfo[i];
-		memset((u8*)l, 0, sizeof(GFX.lineInfo));
-	}
 
-	// Load SNEMUL.CFG
-	printf("Load conf1");
-	set_config_file(getfatfsPath("snemul.cfg"));
+	// Clear "HDMA"
+	int i;
+	for (i = 0; i < 192; i++)
+		GFX.lineInfo[i].mode = -1;
+
+	//PrecalculateCalibrationData();
 	
-	printf("Load conf2");
+	
+	
+	//GUI_printf("zzz");
+#if 0
+	{	char *p = malloc(10);
+		GUI_printf("RAM = %p last malloc = %p", SNESC.RAM, p);
+	}
+	/* TOUCH SCREEN TEST */
+	while (1)
+	{
+		int i;
+
+		mytouchPosition mytouchXY;
+
+		keys = keysPressed();
+		//		mytouchXY=mytouchReadXY();
+
+		GUI_printf("keys = %x %d ", keys, SNES.h_blank);
+		if (keys & KEY_TOUCH)
+		{
+			touchXY=superTouchReadXY();
+			GUI_printf("x = %d y = %d       ", touchXY.px, touchXY.py);
+			//		waitReleaseTouch();	
+		}
+
+		if ((keys & KEY_START))
+		break;
+	}
+#endif	
+
+
+#ifndef	DSEMUL_BUILD	
+	//for (i = 0; i < 100; i++)
+	//	IRQVBlankWait();
+#endif	
+	GUI_printf("Load conf1");
+	// Load SNEMUL.CFG
+	set_config_file(getfatfsPath("snemul.cfg"));	//set_config_file("snemul.cfg");
+	
+	//removed
+	/*
+	{
+		FILE *f=fopen("/moonshl2/extlink.dat","rb");
+		if(!f){GUI_printf("Extlink cannot open.");while(1);}//__swiSleep();}
+		fread(&extlink,1,sizeof(extlink),f);
+		fclose(f);
+		if(extlink.ID!=ExtLinkBody_ID){GUI_printf("Not valid extlink.");while(1);}//__swiSleep();}
+	}
+	*/
+	
+	//CFG.ROMPath = get_config_string(NULL, "ROMPath", GAMES_DIR);
+	
+	GUI_printf("Load conf2");
 	readOptionsFromConfig("Global");
-	printf("Load conf3");
-	GUI_getConfig();
-	printf("Load conf4");
+	GUI_printf("Load conf3");
+	GUI_getConfig();	
+	GUI_printf("Load conf4");
+	
+	strcpy(CFG.ROMPath, "/snes");	//0:/snes
 	
 	//ARGV Support: 
 	if (argc > 1) {
@@ -545,82 +585,58 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 		GUI_getROMFirstTime(CFG.ROMPath);	//Output rom -> CFG.ROMFile
 	}
 	
-	memset(&guiSelItem, 0, sizeof(guiSelItem));
-	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
-	guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
-	loadROM(&guiSelItem);
-
+	loadROM(CFG.ROMFile, 0);
 	if (!(argc > 1)) {
 		GUI_deleteROMSelector(); 	//Should also free ROMFile
 	}
-	GUI_createMainMenu();		//Start GUI
+	GUI_createMainMenu();	//Start GUI
 	
-//trace code
-#if 0
-	printf("CPU_init=%p ", CPU_init);
-	printf("CPU_goto=%p ", CPU_goto2);
-	printf("logbuf=%p ", logbuf);
+	
 	while (1)
 	{
-		keys = keysPressed();
-		if ((keys & KEY_START))
-		break;
-	}
-#endif	
-	
-	while (1){
-		
-		if(REG_DISPSTAT & DISP_VBLANK_IRQ){
-			//Sync Events
-			if(handleROMSelect==true){
-				handleROMSelect=false;
-				GUI_getROMIterable(startFilePath);
-				GUI_deleteROMSelector(); // Should also free lst
-				GUI_createMainMenu();	//	Start GUI
-			}
-			
-			if(handleSPCSelect==true){
-				handleSPCSelect=false;
-				GUI_getSPCIterable(startSPCFilePath);
-				GUI_deleteROMSelector(); // Should also free ROMFile
-				GUI_createMainMenu();	//Start GUI
-			}
-			GUI_update();
+		if (!SNES.Stopped){
+			go();
 		}
-		go();
+		if (/*!CFG.mouse && */REG_POWERCNT & POWER_SWAP_LCDS)
+			GUI_update();
+		
+		/*
+		if (keys & KEY_LID)
+		{
+			saveSRAM();
+			APU_pause();
+			// hinge is closed 
+			// power off everything not needed
+			//powerOFF(POWER_ALL) ;
+			// set system into sleep 
+			while (keys & KEY_LID)
+			{
+				IRQVBlankWait();
+				keys = keysPressed();
+			}
+			// wait a bit until returning power 
+			// power on again 
+			// set up old irqs again 
+			APU_pause();
+		}
+		*/
 		
 		#ifdef GDB_ENABLE
 		setBacklight(POWMAN_BACKLIGHT_TOP_BIT|POWMAN_BACKLIGHT_BOTTOM_BIT);
 		//GDB Stub Process must run here
-		int retGDBVal = remoteStubMain();
-		if(retGDBVal == remoteStubMainWIFINotConnected){
+		if(remoteStubMain() == remoteStubMainWIFINotConnected){
 			if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){
-				clrscr();
 				//Show IP and port here
-				printf("[Connect to GDB]:");
-				char IP[16];
-				printf("Port:%d GDB IP:%s", remotePort, print_ip((uint32)Wifi_GetIP(), IP));
+				GUI_printf("Port:%d GDB IP:%s",remotePort,(char*)print_ip((uint32)Wifi_GetIP()));
 				remoteInit();
 			}
 			else{
 				//GDB Client Reconnect:ERROR
 			}
 		}
-		else if(retGDBVal == remoteStubMainWIFIConnectedGDBDisconnected){
-			setWIFISetup(false);
-			if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){ // gdbNdsStart() called
-				reconnectCount++;
-				clrscr();
-				//Show IP and port here
-				printf("[Re-Connect to GDB]:So far:%d time(s)",reconnectCount);
-				char IP[16];
-				printf("Port:%d GDB IP:%s", remotePort, print_ip((uint32)Wifi_GetIP(), IP));
-				remoteInit();
-			}
-		}
-		
 		//else should be connected and GDB running at desired IP/port
 		#endif
 	}
+
 	return 0;
 }

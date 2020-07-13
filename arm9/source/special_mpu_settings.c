@@ -21,7 +21,8 @@ USA
 #include "special_mpu_settings.h"
 #include "typedefsTGDS.h"
 #include "nds_cp15_misc.h"
-#include "utilsTGDS.h"
+#include "posixHandleTGDS.h"
+#include "linkerTGDS.h"
 
 void setSnemulDSSpecial0xFFFF0000MPUSettings(){
 	mpuSetting[VECTORS_0xFFFF0000_MPU].inst_regionSetting[0].regionsettings = (uint32)( PAGE_128M | 0x00000000 | 1);
@@ -32,13 +33,13 @@ void setSnemulDSSpecial0xFFFF0000MPUSettings(){
 	mpuSetting[VECTORS_0xFFFF0000_MPU].inst_regionSetting[5].regionsettings = (uint32)((uint32)(&_dtcm_start) | PAGE_16K | 1);
 	mpuSetting[VECTORS_0xFFFF0000_MPU].inst_regionSetting[6].regionsettings = (uint32)( PAGE_16M 	| 0x02400000 | 1);
 	mpuSetting[VECTORS_0xFFFF0000_MPU].inst_regionSetting[7].regionsettings = (uint32)( PAGE_4M 	| 0x02000000 | 1);
-	mpuSetting[VECTORS_0xFFFF0000_MPU].WriteBufferAvailabilityForRegions = 0b11110101; //EWRAM, DTCM, ITCM
+	mpuSetting[VECTORS_0xFFFF0000_MPU].WriteBufferAvailabilityForRegions = 0b11110001; //EWRAM, DTCM, ITCM
 	
 	mpuSetting[VECTORS_0xFFFF0000_MPU].DCacheAvailabilityForRegions = 0b10000100;	//DTCM & ITCM
 	mpuSetting[VECTORS_0xFFFF0000_MPU].ICacheAvailabilityForRegions = 0b10000100;	//DTCM & ITCM
 	
-	mpuSetting[VECTORS_0xFFFF0000_MPU].ITCMAccessForRegions = 0x33336363;
-	mpuSetting[VECTORS_0xFFFF0000_MPU].DTCMAccessForRegions = 0x33336363;
+	mpuSetting[VECTORS_0xFFFF0000_MPU].ITCMAccessForRegions = 0x33333363;
+	mpuSetting[VECTORS_0xFFFF0000_MPU].DTCMAccessForRegions = 0x33333363;
 	
 	updateMPUSetting((T_mpuSetting *)&mpuSetting[VECTORS_0xFFFF0000_MPU]);
 }

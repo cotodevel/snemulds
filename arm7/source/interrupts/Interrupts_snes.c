@@ -10,16 +10,12 @@
 #include "main.h"
 #include "mixrate.h"
 #include "apu_shared.h"
-#include "interrupts.h"
-#include "biosTGDS.h"
-#include "eventsTGDS.h"
 
 //User Handler Definitions
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-inline __attribute__((always_inline)) 
 void IpcSynchandlerUser(uint8 ipcByte){
 	switch(ipcByte){
 		default:{
@@ -32,14 +28,12 @@ void IpcSynchandlerUser(uint8 ipcByte){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-inline __attribute__((always_inline)) 
 void Timer0handlerUser(){
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-inline __attribute__((always_inline)) 
 void Timer1handlerUser(){
 	#if PROFILING_ON
 		long long begin = TIMER2_DATA + ((long long)TIMER3_DATA << 19);
@@ -73,28 +67,24 @@ void Timer1handlerUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-inline __attribute__((always_inline)) 
 void Timer2handlerUser(){
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-inline __attribute__((always_inline)) 
 void Timer3handlerUser(){
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-inline __attribute__((always_inline)) 
 void HblankUser(){
 	
 	// Block execution until the hblank processing on ARM9
 	if (!SPC_disable)
 	{
-		
-		struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
+		struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
 		int VCount = REG_VCOUNT;        
 		scanlineCount++;
 		uint32 T0 = APU_MEM[APU_TIMER0]?APU_MEM[APU_TIMER0]:0x100;
@@ -102,33 +92,30 @@ void HblankUser(){
 		uint32 T2 = APU_MEM[APU_TIMER2]?APU_MEM[APU_TIMER2]:0x100;
 		
 		if ((VCount & 1) == 1) {        		      	
-			if (++APU2->T0Count >= T0) {
-				APU2->T0Count -= T0;
+			if (++APU2->TIM0 >= T0) {
+				APU2->TIM0 -= T0;
 				APU_MEM[APU_COUNTER0]++;
 				APU_MEM[APU_COUNTER0] &= 0xf;
 			}
-			if (++APU2->T1Count >= T1) {
-				APU2->T1Count -= T1;
+			if (++APU2->TIM1 >= T1) {
+				APU2->TIM1 -= T1;
 				APU_MEM[APU_COUNTER1]++;
 				APU_MEM[APU_COUNTER1] &= 0xf;
 			}
 		}
-		APU2->T2Count += 4;
-		if (APU2->T2Count >= T2) {
-			APU2->T2Count -= T2;
+		APU2->TIM2 += 4;
+		if (APU2->TIM2 >= T2) {
+			APU2->TIM2 -= T2;
 			APU_MEM[APU_COUNTER2]++;
 			APU_MEM[APU_COUNTER2] &= 0xf;
 		}
 		
 	}
-	
-	handleARM7SVC();	/* Do not remove, handles TGDS services */
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-inline __attribute__((always_inline)) 
 void VblankUser(){
 	#if PROFILING_ON
 		// Debug time data
@@ -146,17 +133,14 @@ void VblankUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-inline __attribute__((always_inline)) 
 void VcounterUser(){
-	//sendByteIPCIndirect(SNEMULDS_HANDLE_VCOUNT);	sendIPCIRQOnly();	//Works! But it is unused
-}
 
+}
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-inline __attribute__((always_inline)) 
 void screenLidHasOpenedhandlerUser(){
 	TurnOnScreens();
 }
@@ -165,7 +149,6 @@ void screenLidHasOpenedhandlerUser(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
-inline __attribute__((always_inline)) 
 void screenLidHasClosedhandlerUser(){
 	TurnOffScreens();
 }

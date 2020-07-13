@@ -25,36 +25,36 @@ DIRLIBS_HDR = $(foreach dirres,$(DIRS_ARM9_HEADER),-I "$(CURDIR)/$(RELATIVE_PATH
 DIRLIBS_SRC = $(foreach dirres,$(DIRS_ARM9_SRC),-I "$(CURDIR)/$(RELATIVE_PATH)/$(dirres)/" )
 
 file_arm9_src_c=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.c))  )
-file_arm9_src_o=  $(foreach dir,$(BUILD), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.o))  )
-file_arm9_src_o_out = $(filter-out $(TARGET_LIBRARY_CRT0_FILE_9).o, $(file_arm9_src_o))
 file_arm9_src_s=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.s))  )
 file_arm9_src_SUPP=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.S))  )
+file_arm9_src_cpp=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.cpp))  )
 file_arm9_src_bin=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.bin))  )
 
 # Object Target
-objs_arm9:=	${file_arm9_src_c:.c=.o}	${file_arm9_src_s:.s=.o}	${file_arm9_src_SUPP:.S=.o}		${file_arm9_src_bin:.bin=.o}
-d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_SUPP:.S=.d}
+objs_arm9:=	${file_arm9_src_c:.c=.o}	${file_arm9_src_s:.s=.o}	${file_arm9_src_SUPP:.S=.o}		${file_arm9_src_cpp:.cpp=.o}	${file_arm9_src_bin:.bin=.o}
+d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_SUPP:.S=.d}	${file_arm9_src_cpp:.cpp=.d}
 
 #ARM9 specific definitions.	-fno-common so we force initialized data to rodata
 MAPFILE = $(DIR_ARM9).map
-AS_ASFLAGS		=	-march=armv5te	-mthumb-interwork	-defsym	ARM9='1'	-defsym		NDS='1'	-defsym debug=0
-CC_ASFLAGS		=	-march=armv5te -marm	-Os	-s	-mthumb-interwork	-DARM9		-fno-exceptions
-CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++
+SHARED_FLAGS	=	-march=armv5te	-mthumb-interwork
+AS_ASFLAGS		=	$(SHARED_FLAGS)	-defsym debug=0	-defsym	appver='$(EXECUTABLE_VERSION)'	-defsym	ARM9='1'
+CC_ASFLAGS		=	$(SHARED_FLAGS)	-Wall	-DNDS -DARM9	-marm	-O2 -ffast-math -fomit-frame-pointer -fno-exceptions	-MMD -MP	-Ddebug=0	-nostdinc	-Dappver='$(EXECUTABLE_VERSION)'
+CPP_FLAGS		=	$(SHARED_FLAGS)	$(CC_ASFLAGS)
 BUILD			= 	$(BUILD_ARM9)
 DIR_SRC			=	$(DIRS_ARM9_SRC)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	=	-specs=special_nds_arm9_ld.specs	-Wl,--gc-sections,-Map,$(MAPFILE)
-LIBRARIES =	-l$(TARGET_LIBRARY_NAME_9)	-lcnano9	
+LDFLAGS	=	-specs=special_nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),-z,defs
+LIBRARIES =	-l$(TARGET_LIBRARY_NAME_9)	-lcnano9	-lgcc	
 
 ################################################################################################
 
 #Dont modify anything else if not necessary ..
-OBJECTS = 	$(objs_arm9)	$(file_arm9_src_o_out)
+OBJECTS = 	$(objs_arm9)
 OBJDIR 	=	./$(BUILD)
 VPATH 	=	$(DIR_SRC)
-OBJPROG = 	$(addprefix $(OBJDIR)/, $(NONSTRIPELF_ARM9))
+OBJPROG = 	$(addprefix $(OBJDIR)/, $(ELF_ARM9))
 
 
 all: $(OBJDIR)|	$(TARGET_LIBRARY_CRT0_FILE_9).o	$(BINSTRIP_RULE_9)
@@ -77,6 +77,12 @@ $(OBJDIR)/%.o : %.c
 	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_PROHIBITED)	-o $@ -c $<
 	-@echo 'C Compile End: $@'
 
+#Do C++ (CXX) Compile now!
+$(OBJDIR)/%.o : %.cpp
+	-@echo 'C++ Compile start: $@'
+	$(CXX)	$(CPP_FLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o $@ -c $<
+	-@echo 'C Compile End: $@'
+
 #Coto: Special "exception" rule. Fixes tricky projects such as SnemulDS's opcodes2.s where GCC AS is used, while compatibility with .S is required for newer projects.
 #.S is GCC CC/CPP for compiling assembler with cpp headers
 #.s is GCC AS Assembler for compiling assembler the usual way
@@ -90,13 +96,13 @@ $(OBJDIR)/%.o : %.s
 #Do S (GCC CC) Compile now!
 $(OBJDIR)/%.o : %.S
 	-@echo 'S Compile start: $@'
-	$(CC)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $@ -c $<
+	$(CXX)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $@ -c $<
 	-@echo 'S Compile end: $@'
 
 #Special rule: compile crt0 for arm9 entrypoint
 $(TARGET_LIBRARY_CRT0_FILE_9).o:	$(TARGET_LIBRARY_LINKER_FILE_9)
 	-@echo 'S Compile start: crt0s'
-	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $(OBJDIR)/$@ -c $<
+	$(CXX)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $(OBJDIR)/$@ -c $<
 	-@echo 'S Compile end: crt0s'
 
 #Linkage. 
@@ -105,16 +111,12 @@ $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	$(CC) $^ $(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
 	-@echo 'Leaving Linking phase. Output: $@'
 
-#xxxx-nonstripped.elf -> xxxx.elf STRIP operation
-$(ELF_ARM9): $(OBJPROG)
-	-@echo '$@ Unstripped. STRIP Start!'
-	$(OBJSTRIP)	-s -R .comment -R .gnu.version	$<
-	-mv	$<	$@
-	
-$(BINSTRIP_RULE_9): $(ELF_ARM9)
-	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
-	$(OBJCOPY) 	-S -O binary	$<	$@
-	-rm	$<
+#keep only binary sections from elf. --only-section
+$(BINSTRIP_RULE_9): $(OBJPROG)
+	-@echo 'Binary-only strip start'
+	$(OBJCOPY) 	-O binary	$<	$@
+	-@echo 'Binary-only strip finish: $<	->	$@'
+
 ################################################################################################
 
 clean:

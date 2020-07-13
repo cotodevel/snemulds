@@ -22,8 +22,8 @@ extern bool paused;
 extern bool SPC_disable;
 extern bool SPC_freedom;
 
-extern void SetupSoundSnemulDS();
-extern void StopSoundSnemulDS();
+extern void SetupSound();
+extern void StopSound();
 extern void LoadSpc(const uint8 *spc);
 extern void SaveSpc(uint8 *spc);
 

@@ -64,7 +64,9 @@ void SetStateFromRawPSW(uint32 state[16], uint8 psw) {
 
 void  ApuReset() {
     apuSleeping = 0;
+
     APU_MEM = (uint8*)APU_RAM_ADDRESS;
+	
 	APU_MEM_ZEROPAGEREAD = (uint8*)&MemZeroPageReadTable;
     APU_MEM_ZEROPAGEWRITE = (uint8*)&MemZeroPageWriteTable;
 	
@@ -108,8 +110,8 @@ void  ApuReset() {
     for (i = 0; i < 4; i++) {
         ((uint32*)APU_MEM_ZEROPAGEREAD)[0xF4 + i] = (uint32)(&MemReadApuPort);
         ((uint32*)APU_MEM_ZEROPAGEWRITE)[0xF4 + i + 0x40]= (uint32)(&MemWriteApuPort);
-        IPC6->PORT_SNES_TO_SPC[i] = 0;
-        IPC6->PORT_SPC_TO_SNES[i] = 0;
+        getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[i] = 0;
+        getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[i] = 0;
     }
 	
     for (i = 0; i < 0x40; i++) {
@@ -120,7 +122,7 @@ void  ApuReset() {
 // 6 - Cycles (bit 0 - C, bit 1 - v, bit 2 - h, bits 3+ cycles left)
 // 7 - Optable
 // 8 - NZ
-	
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
 	// Set up the initial APU state
 	APU_STATE[0] = APU_STATE[1] = APU_STATE[2] = 0;
     APU_STATE[3] = ((uint32)&(APU_MEM[0]));
@@ -130,8 +132,8 @@ void  ApuReset() {
 	APU_STATE[7] = (uint32)CpuJumpTable;
     APU_STATE[8] = 0;
     APU_SP = 0x1FF;
-	
-	IPC6->APU2.T0Count = 0;
-	IPC6->APU2.T1Count = 0;
-	IPC6->APU2.T2Count = 0;
+
+	APU2->TIM0 = 0;
+	APU2->TIM1 = 0;
+	APU2->TIM2 = 0;
 }

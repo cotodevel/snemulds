@@ -272,7 +272,7 @@ void APU_printOpcode(uint8 opcode, uint16 pc, uint8 pc1, uint8 pc2)
     case 0xEF : sprintf(buf,"SLEEP"); break;
     case 0xFF : sprintf(buf,"STOP"); break;
 
-    default   : sprintf(buf," ?? (%02X)", opcode); break;
+    default   : sprintf(buf,"???(%02X)", opcode); break;
   }
   FS_printlog(buf);
   FS_printlog("\n");

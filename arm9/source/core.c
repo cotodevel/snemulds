@@ -15,14 +15,12 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include "core.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include "opcodes.h"
-#include "dswnifi.h"
-#include "dswnifi_lib.h"
+//#include "snemul.h"
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
@@ -33,6 +31,8 @@ GNU General Public License for more details.
 #include <allegro.h>
 #endif
 
+
+#include "cpu.h"
 #include "apu.h"
 #include "snes.h"
 #include "gfx.h"
@@ -43,35 +43,26 @@ GNU General Public License for more details.
 //#include "superfx.h"
 //#include "sfxinst.h"
 
-//Snes Hardware
-__attribute__((section(".dtcm")))
-__attribute__ ((aligned (4))) struct s_cpu	CPU;
+uchar   mem_getbyte(uint32 offset, uchar bank);
+void	mem_setbyte(uint32 offset, uchar bank, uchar byte);
+ushort  mem_getword(uint32 offset, uchar bank);
+void    mem_setword(uint32 offset, uchar bank, ushort word);
 
-__attribute__((section(".arm9sharedwram")))
-__attribute__ ((aligned (4))) struct s_gfx	GFX;
 
-__attribute__((section(".arm9sharedwram")))
-__attribute__ ((aligned (4))) struct s_snes	SNES;
 
-__attribute__((section(".dtcm")))
-__attribute__ ((aligned (4))) struct s_snescore	SNESC;
+int	SPC700_emu;
 
-__attribute__ ((aligned (4))) struct s_cfg	CFG;
+void	PPU_port_write(uint32 address, uint8 value);
+uchar	PPU_port_read(uint32 address);
 
-__attribute__((section(".dtcm")))
-uint16	PPU_PORT[0x90]; // 2100 -> 2183
-
-__attribute__((section(".dtcm")))
-uint16	DMA_PORT[0x180]; // 4200 -> 437F
 
 // A OPTIMISER
-static inline 
-int PPU_fastDMA_2118_1(int offs, int bank, int len)
+int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 {
 	int i;
 	uint8	*ptr;
 
-	ptr = (uint8*)map_memory(offs, bank);
+	ptr = map_memory(offs, bank);
 
 	if (PPU_PORT[0x15]&0x80) {
 		if (!GFX.FS_incr && GFX.SC_incr == 1)
@@ -132,7 +123,7 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 	return offs+len;
 }
 
-static inline void DMA_transfert(uchar port)
+void DMA_transfert(uchar port)
 {
   uint		tmp;
   ushort	PPU_port;
@@ -212,18 +203,20 @@ static inline void DMA_transfert(uchar port)
   //END_PROFILE(DMA, 4);
 }
 
-inline void		HDMA_transfert(unsigned char port){
+
+void		HDMA_transfert(unsigned char port)
+{
   uint		len;
   uchar		*ptr, *ptr2, repeat;
   ushort	tmp=0;
 
   //START_PROFILE(DMA, 4);
   SNES.HDMA_nblines[port] = 0;
-  ptr = (uchar*)map_memory((DMA_PORT[0x102+port*0x10])+(DMA_PORT[0x103+port*0x10]<<8),
+  ptr = map_memory((DMA_PORT[0x102+port*0x10])+(DMA_PORT[0x103+port*0x10]<<8),
                     DMA_PORT[0x104+port*0x10]);
 
   if (!ptr) {
-/*    printf(" (invalid memory access during a H-DMA transfert : %06X)",
+/*    iprintf(" (invalid memory access during a H-DMA transfert : %06X)",
       DMA_PORT[0x102+port*0x10]+(DMA_PORT[0x103+port*0x10]<<8)+
       (DMA_PORT[0x104+port*0x10]<<16));*/
       return;
@@ -242,7 +235,7 @@ inline void		HDMA_transfert(unsigned char port){
       repeat = !(*(ptr-1)&0x80);
     }
     if (DMA_PORT[0x100+port*0x10]&0x40) {
-      ptr2 = (uchar*)map_memory(*ptr+(*(ptr+1)<<8), DMA_PORT[0x107+port*0x10]);
+      ptr2 = map_memory(*ptr+(*(ptr+1)<<8), DMA_PORT[0x107+port*0x10]);
       ptr += 2;
       switch (DMA_PORT[0x100+port*0x10]&7) {
         case 0x00 :
@@ -299,6 +292,27 @@ inline void		HDMA_transfert(unsigned char port){
 
 /* ============================ I/O registers ========================== */
 
+__attribute__((section(".itcm")))
+uint32	IONOP_DMA_READ(uint32 addr)
+{
+	return (DMA_PORT[addr]);
+}
+__attribute__((section(".itcm")))
+uint32	IONOP_PPU_READ(uint32 addr)
+{
+	return (PPU_PORT[addr]);
+}
+
+__attribute__((section(".itcm")))
+void	IONOP_PPU_WRITE(uint32 addr, uint32 byte)
+{
+	PPU_PORT[addr] = byte;
+}
+__attribute__((section(".itcm")))
+void	IONOP_DMA_WRITE(uint32 addr, uint32 byte)
+{
+	DMA_PORT[addr] = byte;
+}
 __attribute__((section(".itcm")))
 void	W4016(uint32 addr, uint32 value)
 {
@@ -585,8 +599,8 @@ uint32	R213F(uint32 addr)
 __attribute__((section(".itcm")))      
 uint32	R2140(uint32 addr)
 {
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
-	//	LOG("0 %02x (%04x, %04x)\n", IPC6->PORT_SPC_TO_SNES[0], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
+	//	LOG("0 %02x (%04x, %04x)\n", getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[0], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
       if (!CFG.Sound_output)
       { /* APU Skipper */
         switch ((APU2->skipper_cnt1++)%11) {
@@ -603,7 +617,7 @@ uint32	R2140(uint32 addr)
           case 10: return 0x09;
         }
       }
-      return IPC6->PORT_SPC_TO_SNES[0];      
+      return getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[0];      
 }
 
 static int oldapupc;
@@ -611,20 +625,20 @@ static int oldapupc;
 __attribute__((section(".itcm")))      
 uint32	R2141(uint32 addr)
 {
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
-	//int newapupc = ((*(uint32*)(0x27E0000)) & 0xFFFF);
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
+	int newapupc = ((*(uint32*)(0x27E0000)) & 0xFFFF);
 	
-/*	 if (IPC6->PORT_SPC_TO_SNES[1] == 0x33 || IPC6->PORT_SPC_TO_SNES[1] == 0x11 && 
+/*	 if (getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[1] == 0x33 || getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[1] == 0x11 && 
 	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f)
 	 APU_printLog();*/
 #if 0	 
-	 if (IPC6->PORT_SPC_TO_SNES[1] == 0x33 /*&& 
+	 if (getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[1] == 0x33 /*&& 
 	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f*/)
 	 LOG(".");
 
-	 if (/*IPC6->PORT_SPC_TO_SNES[1] == 0x33 || */IPC6->PORT_SPC_TO_SNES[1] == 0x11 /*&& 
+	 if (/*getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[1] == 0x33 || */getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[1] == 0x11 /*&& 
 	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f*/)
-	//LOG("1 %02x (%04x, %04x)", IPC6->PORT_SPC_TO_SNES[1], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
+	//LOG("1 %02x (%04x, %04x)", getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[1], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
 #endif	
 	
 /*	if (newapupc != 0)
@@ -653,12 +667,12 @@ uint32	R2141(uint32 addr)
           case 12: return REAL_A >> 8;        
         }
       }
-      return IPC6->PORT_SPC_TO_SNES[1];       
+      return getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[1];       
 }
 __attribute__((section(".itcm")))      
 uint32	R2142(uint32 addr)
 {
-      struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
+      struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
 	  if (!CFG.Sound_output)
 	  {
         switch ((APU2->skipper_cnt3++)%7) {
@@ -671,13 +685,12 @@ uint32	R2142(uint32 addr)
           case 6: return 0xBB;
         }
       }
-      return IPC6->PORT_SPC_TO_SNES[2];      
+      return getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[2];      
 }
 __attribute__((section(".itcm")))
 uint32	R2143(uint32 addr)
 {     
-	
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
 
       if (!CFG.Sound_output)
 	  {
@@ -693,7 +706,7 @@ uint32	R2143(uint32 addr)
           case 8: return REAL_A>>8;
         }
       }
-      return IPC6->PORT_SPC_TO_SNES[3];      
+      return getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[3];      
 }
 __attribute__((section(".itcm")))
 uint32	R2180(uint32 addr)
@@ -1153,10 +1166,10 @@ void	W2133(uint32 addr, uint32 value)
 		dummy++;
 	}
 #endif		          		
-	if (IPC6->APU_ADDR_BLKP[1])
+	if (getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[1])
 	{
 		//LOG("1 b %04x\n", newapupc);
-		while (IPC6->APU_ADDR_BLKP[1]);
+		while (getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[1]);
 #if 0
   		LOG("1 w %02x %04x\n", value, *(uint16 *)(APU_RAM_ADDRESS+0x18));
 #else  		
@@ -1184,21 +1197,20 @@ void	W2140(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {    	
-		
 //   		LOG("0<-%02x\n", value); 
     	if (CFG.SoundPortSync & 0x10)
     		pseudoSleep(SYNC_TIME);
 		if (CFG.SoundPortSync & 1)
 		{
-			if (IPC6->APU_ADDR_BLKP[0])
+			if (getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[0])
 			{
-				while (IPC6->APU_ADDR_BLKP[0]);
+				while (getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[0]);
 			}
 		}    	
-    	IPC6->PORT_SNES_TO_SPC[0] = value;
+    	getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[0] = value;
     	
 		if ((CFG.SoundPortSync & 1) && value) 
-			IPC6->APU_ADDR_BLKP[0] = 1;    	
+			getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[0] = 1;    	
     }
     else
         PPU_PORT[0x40] = value; 
@@ -1209,14 +1221,14 @@ void	W2141(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {
-		//LOG("1<-%02x\n", value);    	
+    	//LOG("1<-%02x\n", value);    	
     	if (CFG.SoundPortSync & 0x20)
     		pseudoSleep(SYNC_TIME);
 		if (CFG.SoundPortSync & 2)
 		{
-			if (IPC6->APU_ADDR_BLKP[1])
+			if (getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[1])
 			{
-				while (IPC6->APU_ADDR_BLKP[1]);
+				while (getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[1]);
 			}
 		}
 /*				    	
@@ -1224,17 +1236,17 @@ void	W2141(uint32 addr, uint32 value)
 		int newapupc = (*(uint32*)(0x27E0000)) & 0xFFFF;
 		if (value == 0x55 && (newapupc & 0xf000) == 0x1000)
 			pseudoSleep(2000);	
-		if (IPC6->APU_ADDR_BLKP[1])
+		if (getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[1])
 		{
-			while (IPC6->APU_ADDR_BLKP[1]);
+			while (getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[1]);
 			pseudoSleep(2000);
 		}
 #endif
 */
-    	IPC6->PORT_SNES_TO_SPC[1] = value;
+    	getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[1] = value;
     	
 		if ((CFG.SoundPortSync & 2) && value) 
-			IPC6->APU_ADDR_BLKP[1] = 1;			    	
+			getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[1] = 1;			    	
     }
     else
         PPU_PORT[0x41] = value;
@@ -1245,22 +1257,21 @@ void	W2142(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {    
-		
 //    	LOG("2<-%02x\n", value);    	
     	if (CFG.SoundPortSync & 0x40)
     		pseudoSleep(SYNC_TIME);    	
 		if (CFG.SoundPortSync & 4)
 		{
-			if (IPC6->APU_ADDR_BLKP[2])
+			if (getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[2])
 			{
-				while (IPC6->APU_ADDR_BLKP[2]);
+				while (getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[2]);
 			}
 		}
 
-    	IPC6->PORT_SNES_TO_SPC[2] = value;
+    	getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[2] = value;
     	
 		if ((CFG.SoundPortSync & 4) && value) 
-			IPC6->APU_ADDR_BLKP[2] = 1;			    	
+			getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[2] = 1;			    	
     }
     else
         PPU_PORT[0x42] = value;    	     
@@ -1271,22 +1282,21 @@ void	W2143(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {  
-		
 //    	LOG("3<-%02x\n", value);    	
     	if (CFG.SoundPortSync & 0x80)
     		pseudoSleep(SYNC_TIME);    	
 		if (CFG.SoundPortSync & 8)
 		{	
-			if (IPC6->APU_ADDR_BLKP[3])
+			if (getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[3])
 			{
-				while (IPC6->APU_ADDR_BLKP[3]);
+				while (getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[3]);
 			}
 		}
 
-    	IPC6->PORT_SNES_TO_SPC[3] = value;
+    	getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[3] = value;
    	
 		if ((CFG.SoundPortSync & 8) && value) 
-			IPC6->APU_ADDR_BLKP[3] = 1;			    	
+			getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP[3] = 1;			    	
     }
     else
         PPU_PORT[0x43] = value; 
@@ -1770,6 +1780,28 @@ void read_scope()
     }
 }
 
+void	update_joypads()
+{
+//  read_joypads();	
+  int joypad = get_joypad();
+//      read_joypads();
+  SNES.joypads[0] = joypad;
+  SNES.joypads[0] |= 0x80000000;
+  if (CFG.mouse)
+    read_mouse();
+  if (CFG.scope)
+  	read_scope();
+
+  if (DMA_PORT[0x00]&1)
+    {
+  	  SNES.Joy1_cnt = 16;    	
+      DMA_PORT[0x18] = SNES.joypads[0];
+      DMA_PORT[0x19] = SNES.joypads[0]>>8;
+      DMA_PORT[0x1A] = SNES.joypads[1];
+      DMA_PORT[0x1B] = SNES.joypads[1]>>8;
+    }
+}
+
 void SNES_update()
 { 
   int value;
@@ -1792,68 +1824,47 @@ void SNES_update()
   GFX.map_slot[3] = (PPU_PORT[0x0A]&0x7C)>>2;
 }
 
-void CPU_pack()
+
+void GoNMI()
 {
-	if (CPU.packed){
-		return;
-	}
-	
-	CPU.PC = (uint32)((sint32)PCptr+(sint32)SnesPCOffset); 
-	CPU.PB = S&0xFFFF;
-	CPU.A = REAL_A;
-	CPU.X = X;
-	CPU.Y = Y;
-	Cycles = -((sint32)SaveR8 >> 14);
-	CPU.S = S >> 16;
-	CPU.P = 0; 
-	if (SaveR8 & 0x00000002) CPU.P |= P_C;
-	if (SaveR8 & 0x00000001) CPU.P |= P_V;
-	if (SaveR8 & 0x00000400) CPU.P |= P_E;    
-	if (SaveR6 & 0x00018000) CPU.P |= P_N;
-	if (!(SaveR6 << 16)) CPU.P |= P_Z;
-	CPU.P |= ((SaveR8 << 22) & 0x3c000000) >> 24;
-	CPU.D = D >> 16;
-	CPU.DB = D & 0xFF;
-	CPU.WAI_state = (SaveR8 & 0x00001000)?1:0;  
-	CPU.packed = 1;
+  CPU_pack();
+
+  if (CPU.WAI_state) {
+    CPU.WAI_state = 0; CPU.PC++;
+  };
+
+  pushb(CPU.PB);
+  pushw(CPU.PC);
+  pushb(CPU.P);
+  CPU.PC = CPU.NMI;
+  CPU.PB = 0;
+  CPU.P &= ~P_D;
+  
+  CPU.unpacked = 0; // ASM registers to update
+
+//  if (CFG.CPU_log) fprintf(SNES.flog, "--> NMI\n");
 }
 
-void CPU_unpack()
+void GoIRQ()
 {
-	if (CPU.unpacked){
-		return;	
-	}
-	
-	SnesPCOffset = -(sint32)mem_getbaseaddress(CPU.PC, CPU.PB);
-	PCptr = (uint8*)map_memory(CPU.PC, CPU.PB);
-	
-	S = CPU.PB;
-	S |= CPU.S << 16;
-	
-	// FIXME: "B" register
-	if (CPU.P & P_M)
-	{
-		A = CPU.A << 24;
-		SnesB = (CPU.A & 0xFF00) << 16;
-	}
-	else
-		A = CPU.A << 16;
+  CPU_pack();
 
-	X = CPU.X;
-	Y = CPU.Y;
+  if (CPU.WAI_state) {
+    CPU.WAI_state = 0; CPU.PC++;
+  };
+
+  if (!(CPU.P&P_I)) {
+    pushb(CPU.PB);
+    pushw(CPU.PC);
+    pushb(CPU.P);
+    CPU.PC = CPU.IRQ; 
+    CPU.PB = 0;
+    CPU.P |= P_I;
+    CPU.P &= ~P_D;
+  }
+  CPU.unpacked = 0; // ASM registers to update  
   
-	SaveR8 = SaveR6 = 0;
-	if (CPU.P & P_C) SaveR8 |= 0x00000002;
-	if (CPU.P & P_V) SaveR8 |= 0x00000001;
-	if (CPU.P & P_N) SaveR6 |= 0x00018000;
-	if (CPU.P & P_E) SaveR8 |= 0x00000400;   
-  
-	if (!(CPU.P & P_Z)) SaveR6 |= 0x00000001;
-	SaveR8 |= ((CPU.P << 24) & 0x3c000000) >> 22; 
-  
-	D = CPU.DB;  
-	D |= CPU.D << 16;
-  
-	CPU.unpacked = 1;
-	CPU_update();
+  DMA_PORT[0x11] = 0x80;
+//  if (CFG.CPU_log) fprintf(SNES.flog, "--> IRQ\n");
 }
+

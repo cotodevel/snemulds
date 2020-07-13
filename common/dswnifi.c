@@ -82,6 +82,8 @@ int guest_vcount = 0;		//guest generated REG_VCOUNT
 int host_framecount = 0;
 int guest_framecount = 0;
 
+int ThisSNESFrameCount = 0;
+int guestSNESFrameCount = 0;
 
 //These methods are template you must override (as defined below), to have an easy DS - DS framework running.
 

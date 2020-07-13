@@ -6,9 +6,9 @@
 #include "dsregs.h"
 #include "gui_widgets.h"
 #include "guiTGDS.h"
-#include "gui_console_connector.h"
-#include "consoleTGDS.h"
+#include "console_str.h"
 #include "keypadTGDS.h"
+#include "gui_console_connector.h"
 
 int	GUIList_handler(t_GUIZone *zone, int message, int param, void *arg)
 {
@@ -24,15 +24,18 @@ int	GUIList_handler(t_GUIZone *zone, int message, int param, void *arg)
 		for (i = 0; i < height && this->first_item+i < this->nb_items; i++)
 		{
 			int c = param == 0 ? GUI_BLACK : -1;
-			if (i == this->prev_item)
+			if (i == this->prev_item){
 				c = GUI_BLACK;
-			if (i == this->cur_item)
+			}
+			if (i == this->cur_item){
 				c = GUI_LIGHTRED;
-			if (c >= 0)
-				GUI_drawBar(zone, c, 0, i*gh, 
-							zone->x2-zone->x1, (i+1)*gh);
+			}
+			if (c >= 0){
+				GUI_drawBar(zone, c, 0, i*gh, zone->x2-zone->x1, (i+1)*gh);
+			}
+			
 			bool readAndBlendFromVRAM = true;	//we blend old vram characters here since it may have other valid pixel values, such as background color
-			GUI_drawText(zone, 0, i*gh, GUI_WHITE, this->items[this->first_item+i],readAndBlendFromVRAM);
+			GUI_drawText(zone, 0, i*gh, GUI_WHITE, this->items[this->first_item+i], readAndBlendFromVRAM);
 		}
 		return 1;
 	}
@@ -285,22 +288,18 @@ int	GUIStaticEx_handler(t_GUIZone *zone, int message, int param, void *arg)
 {
 	switch (message)
 	{
-		case GUI_DRAW:
-		{
-			int str = (int)zone->data & 0xFFFF;
-			int str_arg = ((int)zone->data >> 16) & 0xFF;
-			int flags = ((int)zone->data >> 24) & 0xFF;
-			
-			sint8 buf[64];
-			snprintf(buf, 64, GUI.string[str], str_arg); // FIXME
-			GUI_drawAlignText(zone, flags, (zone->y2-zone->y1)/2, GUI_WHITE, buf);
-			return 1;
-		}
-		break;
+	case GUI_DRAW:
+	{
+		int str = (int)zone->data & 0xFFFF;
+		int str_arg = ((int)zone->data >> 16) & 0xFF;
+		int flags = ((int)zone->data >> 24) & 0xFF;
+		
+		sint8 buf[64];
+		snprintf(buf, 64, GUI.string[str], str_arg); // FIXME
+		GUI_drawAlignText(zone, flags, (zone->y2-zone->y1)/2, GUI_WHITE, buf);
+		return 1;
 	}
-	
-	
-	
+	}
 	return 0;
 }
 
@@ -446,35 +445,16 @@ t_GUIScreen	*GUI_newSelector(int nb_items, sint8 **items, int title, t_GUIFont *
 	return scr_select;
 }
 
-struct sGUISelectorItem GUISelector_getSelected(t_GUIScreen *scr, int *index) 
+sint8 *GUISelector_getSelected(t_GUIScreen *scr, int *index) 
 {
-	struct sGUISelectorItem guiSelectorItem;
-	memset(&guiSelectorItem, 0, sizeof(guiSelectorItem));
 	t_GUIList *list = scr->zones[0].data;
-	if (index){
+
+	if (index)
 		*index = list->first_item+list->cur_item;
-	}
-	if (list->cur_item == -1){
-		guiSelectorItem.filenameFromFS_getDirectoryListMethod = NULL;
-		guiSelectorItem.StructFDFromFS_getDirectoryListMethod = FT_NONE;
-		return guiSelectorItem;
-	}
-	
-	//Decide if FT_FILE, FT_DIR or FT_NONE
-	guiSelectorItem.filenameFromFS_getDirectoryListMethod = list->items[list->first_item+list->cur_item];
-	if(strncmp(guiSelectorItem.filenameFromFS_getDirectoryListMethod, "..", 2) == 0){
-		guiSelectorItem.StructFDFromFS_getDirectoryListMethod = FT_NONE;
-	}
-	else if(
-		(guiSelectorItem.filenameFromFS_getDirectoryListMethod[strlen(guiSelectorItem.filenameFromFS_getDirectoryListMethod) - 1] == '/')
-	){
-		guiSelectorItem.StructFDFromFS_getDirectoryListMethod = FT_DIR;
-	}
-	else{
-		guiSelectorItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
-	}
-	
-	return guiSelectorItem;
+		
+	if (list->cur_item == -1)
+		return NULL;
+	return list->items[list->first_item+list->cur_item];
 }
 
 void GUI_deleteSelector(t_GUIScreen *scr)

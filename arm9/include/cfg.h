@@ -19,7 +19,6 @@ GNU General Public License for more details.
 #define __cfg_h__
 
 #include "typedefsTGDS.h"
-#include "limitsTGDS.h"
 
 struct s_cfg
 {
@@ -36,11 +35,14 @@ struct s_cfg
   int	mouse;
   int	scope;
 
+
+  int	CPU_speedhack;
+
   int	Timing;
 
   int	Debug, Debug2;
 
-  int	EnableSRAM;
+  int	AutoSRAM;
 
   int	InterleavedROM;
   int	InterleavedROM2;
@@ -74,23 +76,19 @@ struct s_cfg
   int		BG3TilePriority;
   int		BG3PaletteFix;
 
-  sint8		ROMFile[MAX_TGDSFILENAME_LENGTH+1]; 
-  sint8		SPCFile[MAX_TGDSFILENAME_LENGTH+1]; 
+  sint8		ROMFile[100]; 
+  sint8		ROMPath[100];
   
-  sint8		ROMPath[MAX_TGDSFILENAME_LENGTH+1];
-  sint8		SPCPath[MAX_TGDSFILENAME_LENGTH+1];
-  
-  sint8 		Fullpath[MAX_TGDSFILENAME_LENGTH+1];	//each time loadRom is loaded this is rewritten (used for load/saving while zip file)
-  sint8 		ZipFullpath[MAX_TGDSFILENAME_LENGTH+1];	//zip / gz support (used only for loadrom loadpage)
-  sint8 		ZipFullpathRealName[MAX_TGDSFILENAME_LENGTH+1];	//zip / gz support (used for load/save)
+  sint8 		Fullpath[100];	//each time loadRom is loaded this is rewritten (used for load/saving while zip file)
+  sint8 		ZipFullpath[100];	//zip / gz support (used only for loadrom loadpage)
+  sint8 		ZipFullpathRealName[100];	//zip / gz support (used for load/save)
   
   int		Jukebox;  
-  sint8		Playlist[MAX_TGDSFILENAME_LENGTH+1];
+  sint8		Playlist[100];
 
 // GUI  
   sint8		GUISort;
   sint16	Language;
-  int TopScreenEmu;	//0: emulator renders at Bottom Screen -- 1: emulator renders at Top Screen (default)
 };
 
 #endif

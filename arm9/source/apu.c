@@ -25,7 +25,6 @@ GNU General Public License for more details.
 #include "InterruptsARMCores_h.h"
 #include "core.h"
 #include "apu_shared.h"
-#include "soundTGDS.h"
 
 ////////////////////////////////////////////////////////////////////////////
 // Definitions
@@ -56,25 +55,15 @@ void	APU_stop()
 #ifndef IN_EMULATOR	
 	APU_command(SNEMULDS_APUCMD_SPCDISABLE); //APU_command(0x00000004);
 	// Wait the APU disabling
-	
-	while (IPC6->APU_ADDR_ANS != 0xFF00FF00){
+	while (getsIPCSharedTGDSSpecific()->APU_ADDR_ANS != 0xFF00FF00){
 		IRQVBlankWait();
 	}
 #endif	
 }
 
-void	APU_playSpc(u8 * inSPCBuffer)
+void	APU_playSpc()
 {
-	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
-	fifomsg[10] = (uint32)0xFAFAFAFA;
-	
-	//prevent APU from desync
-	SendFIFOWords(SNEMULDS_APUCMD_PLAYSPC, (u32)inSPCBuffer);	//APU_command(0x00000003);
-	
-	while((uint32)fifomsg[10] == (uint32)0xFAFAFAFA){
-		swiDelay(2);
-	}
-	
+    APU_command(SNEMULDS_APUCMD_PLAYSPC); //APU_command(0x00000003);
 }
 
 void	APU_saveSpc()
@@ -95,11 +84,10 @@ void	APU_loadSpc()
 void	APU_clear()
 {
 	APU_command(SNEMULDS_APUCMD_CLRMIXERBUF); //APU_command(0x00000005);
-	IPC6->APU_ADDR_CNT = 0;
+	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
 }
 
-//Unimplemented
-/*
+
 void APU_playSong(uint8 *data, int size)
 {
 	CFG.Sound_output = 0; // Disable Sound emulation
@@ -110,9 +98,10 @@ void APU_playSong(uint8 *data, int size)
     memcpy(APU_RAM_ADDRESS, data, size);
     APU_playSpc();    // Put APU in PLAY MODE	
 }
-*/
 
-void APU_command(uint32 command){
+
+void APU_command(uint32 command)
+{
 	//prevent APU from desync
-	SendFIFOWords(command, 0);
+	SendFIFOWordsITCM(command, 0);
 }

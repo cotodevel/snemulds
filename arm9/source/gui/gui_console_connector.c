@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 USA
-
 */
 
 /***********************************************************/
@@ -37,115 +36,73 @@ GNU General Public License for more details.
 
 //This file abstracts specific SnemulDS console code that relies on core functionality.
 
+
 #include "gui_console_connector.h"
 #include "consoleTGDS.h"
-#include "utilsTGDS.h"
+#include "console_str.h"
 #include "fs.h"
+#include "guiTGDS.h"
 #include "snes.h"
 #include "core.h"
 #include "engine.h"
-#include "main.h"
 #include "dswnifi_lib.h"
+#include "gui_widgets.h"
 
 ////////[For custom Console implementation]:////////
 //You need to override :
-	//ConsoleInstance * getProjectSpecificVRAMSetup()
+	//vramSetup * getProjectSpecificVRAMSetup()
 	//Which provides a proper custom 2D VRAM setup
 
 //Then override :
-	//bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst)
+	//bool InitProjectSpecificConsole()
 	//Which provides the console init code, example below.
 
 //After that you can call :
-	//bool isTGDSCustomConsole = true;
-	//GUI_init(isTGDSCustomConsole);
+	//bool project_specific_console = true;
+	//GUI_init(project_specific_console);
 
 
 ////////[For default Console implementation simply call]:////////
-	//bool isTGDSCustomConsole = false;
-	//GUI_init(isTGDSCustomConsole);
+	//bool project_specific_console = false;
+	//GUI_init(project_specific_console);
+
+
 
 
 
 	////////[Custom Console implementation]////////
 
 
-//Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
-ConsoleInstance * getProjectSpecificVRAMSetup(){
-	return SNEMULDS_2DVRAM_SETUP();
-}
 
-//1) VRAM Layout
-ConsoleInstance * SNEMULDS_2DVRAM_SETUP(){
-	ConsoleInstance * CustomSessionConsoleInst = (ConsoleInstance *)(&ConsoleHandle[1]);
-	memset (CustomSessionConsoleInst, 0, sizeof(CustomSessionConsoleInst));
-	vramSetup * vramSetupDefault = (vramSetup *)&CustomSessionConsoleInst->thisVRAMSetupConsole;
-	
-	//vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].vrambankCR = VRAM_A_0x06000000_ENGINE_A_BG;
-	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].enabled = true;
-	
-	//vramSetBankB(VRAM_B_MAIN_BG_0x06020000);
-	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].vrambankCR = VRAM_B_0x06020000_ENGINE_A_BG;
-	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].enabled = true;
-	
-	// 128Ko (+48kb) for sub screen / GUI / Console
-	//vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-	vramSetupDefault->vramBankSetupInst[VRAM_C_INDEX].vrambankCR = VRAM_C_0x06200000_ENGINE_B_BG;
-	vramSetupDefault->vramBankSetupInst[VRAM_C_INDEX].enabled = true;
-	
-	// Some memory for ARM7 (128 Ko!)
-	//vramSetBankD(VRAM_D_ARM7_0x06000000);
-	vramSetupDefault->vramBankSetupInst[VRAM_D_INDEX].vrambankCR = VRAM_D_0x06000000_ARM7;
-	vramSetupDefault->vramBankSetupInst[VRAM_D_INDEX].enabled = true;
-	
-	// 80K for Sprites
-	//(SNES:32K -NDSVRAM 64K @ 0x6400000)
-	vramSetupDefault->vramBankSetupInst[VRAM_E_INDEX].vrambankCR = VRAM_E_0x06400000_ENGINE_A_BG;
-	vramSetupDefault->vramBankSetupInst[VRAM_E_INDEX].enabled = true;
-	
-	//(NDSVRAM 16K @ 0x06410000)
-	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].vrambankCR = VRAM_F_0x06410000_ENGINE_A_BG;
-	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].enabled = true;
-	
-	//vramSetBankG(VRAM_G_BG_EXT_PALETTE);
-	vramSetupDefault->vramBankSetupInst[VRAM_G_INDEX].vrambankCR = VRAM_G_SLOT01_ENGINE_A_BG_EXTENDED;
-	vramSetupDefault->vramBankSetupInst[VRAM_G_INDEX].enabled = true;
-	
-	// 48ko For CPU 
-	//vramSetBankH(VRAM_H_LCD);
-	vramSetupDefault->vramBankSetupInst[VRAM_H_INDEX].vrambankCR = VRAM_H_LCDC_MODE;
-	vramSetupDefault->vramBankSetupInst[VRAM_H_INDEX].enabled = true;
-	
-	//vramSetBankI(VRAM_I_LCD);
-	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].vrambankCR = VRAM_I_LCDC_MODE;
-	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].enabled = true;
-	
-	return CustomSessionConsoleInst;
+
+//Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
+vramSetup * getProjectSpecificVRAMSetup(){
+	return SNEMULDS_2DVRAM_SETUP();
 }
 
 
 //2) Uses subEngine: VRAM Layout -> Console Setup
-bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst){
+bool InitProjectSpecificConsole(){
+	DefaultSessionConsole = (ConsoleInstance *)(&CustomConsole);
 	
 	//Set subEngine
-	SetEngineConsole(subEngine,ConsoleInstanceInst);
+	SetEngineConsole(subEngine, DefaultSessionConsole);
 	
 	//Set subEngine properties
-	ConsoleInstanceInst->ConsoleEngineStatus.ENGINE_DISPCNT	=	(uint32)(MODE_5_2D | DISPLAY_BG3_ACTIVE | DISPLAY_BG0_ACTIVE | DISPLAY_BG1_ACTIVE);
+	DefaultSessionConsole->ConsoleEngineStatus.ENGINE_DISPCNT	=	(uint32)(MODE_5_2D | DISPLAY_BG3_ACTIVE | DISPLAY_BG0_ACTIVE | DISPLAY_BG1_ACTIVE);
 	
 	// BG0: Background layer :
-	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[0].BGNUM = 0;
-	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[0].REGBGCNT = BG_MAP_BASE(30) | BG_TILE_BASE(7) | BG_32x32 | BG_COLOR_16 | BG_PRIORITY_3;
+	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[0].BGNUM = 0;
+	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[0].REGBGCNT = BG_MAP_BASE(30) | BG_TILE_BASE(7) | BG_32x32 | BG_COLOR_16 | BG_PRIORITY_3;
 	// Available : 0 - 60 Ko
 	
 	// BG1: Text layer : 
-	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[1].BGNUM = 1;
-	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[1].REGBGCNT = BG_MAP_BASE(31) | BG_TILE_BASE(7) | BG_32x32 | BG_COLOR_16;
+	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[1].BGNUM = 1;
+	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[1].REGBGCNT = BG_MAP_BASE(31) | BG_TILE_BASE(7) | BG_32x32 | BG_COLOR_16;
 	
 	// BG3: FrameBuffer : 64(TILE:4) - 128 Kb
-	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[3].BGNUM = 3;
-	ConsoleInstanceInst->ConsoleEngineStatus.EngineBGS[3].REGBGCNT = BG_BMP_BASE(4) | BG_BMP8_256x256 | BG_PRIORITY_1;
+	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[3].BGNUM = 3;
+	DefaultSessionConsole->ConsoleEngineStatus.EngineBGS[3].REGBGCNT = BG_BMP_BASE(4) | BG_BMP8_256x256 | BG_PRIORITY_1;
 	
 	REG_BG3X_SUB = 0;
 	REG_BG3Y_SUB = 0;
@@ -154,15 +111,18 @@ bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst){
 	REG_BG3PC_SUB = 0;
 	REG_BG3PD_SUB = 1 << 8;
 	
-	ConsoleInstanceInst->VideoBuffer = GUI.DSFrameBuffer = (uint16 *)BG_BMP_RAM_SUB(4);
+	GUI.DSFrameBuffer = (uint16 *)BG_BMP_RAM_SUB(4);
 	GUI.DSText = (uint16 *)BG_MAP_RAM_SUB(31);
 	GUI.DSBack = (uint16 *)BG_MAP_RAM_SUB(30);
 	GUI.DSTileMemory = (uint16 *)BG_TILE_RAM_SUB(7);
 	
-	GUI.Palette = &BG_PALETTE_SUB[0];
+	BG_PALETTE_SUB[0] = RGB15(0,0,0);			//back-ground tile color
+	BG_PALETTE_SUB[255] = RGB15(26,26,26);		//tile color
+	
+	GUI.Palette = &BG_PALETTE_SUB[216];
 	GUI.ScanJoypad = 0;
 	
-	GUI.Palette[0] = RGB8(0, 0, 0); // Black / back-ground tile color
+	GUI.Palette[0] = RGB8(0, 0, 0); // Black
 	GUI.Palette[1] = RGB8(32, 32, 32); // Dark Grey 2
 	GUI.Palette[2] = RGB8(64, 64, 64); // Dark Grey
 	GUI.Palette[3] = RGB8(128, 128, 128); // Grey
@@ -216,23 +176,62 @@ bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst){
 	
 	GUI.Palette[39] = RGB8(255, 255, 255); // White
 	
-	//Fill the Pallette
-	int i = 0;
-	for(i=0;i < (256 - 39); i++){
-		GUI.Palette[i + 40] = GUI.Palette[39];
-	}
-	
-	//TGDS Console defaults
-	GUI.consoleAtTopScreen = false;	//GUI console at bottom screen
-	GUI.consoleBacklightOn = true;	//Backlight On for console
-	
-	UpdateConsoleSettings(ConsoleInstanceInst);
-	
-	//No need to enable Malloc ARM7 code here. This program does not use nor requires it.
-	while (!(*((vuint8*)0x04000243) & (VRAM_D_0x06000000_ARM7)));	//Wait for ARM7 until VRAM is rdy.
-	
+	InitializeConsole(DefaultSessionConsole);
 	return true;
 }
+
+
+//Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
+//1) VRAM Layout
+vramSetup * SNEMULDS_2DVRAM_SETUP(){
+	
+	vramSetup * vramSetupDefault = (vramSetup *)&vramSetupDefaultConsole;
+	
+	//vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
+	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].vrambankCR = VRAM_A_0x06000000_ENGINE_A_BG;
+	vramSetupDefault->vramBankSetupInst[VRAM_A_INDEX].enabled = true;
+	
+	//vramSetBankB(VRAM_B_MAIN_BG_0x06020000);
+	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].vrambankCR = VRAM_B_0x06020000_ENGINE_A_BG;
+	vramSetupDefault->vramBankSetupInst[VRAM_B_INDEX].enabled = true;
+	
+	// 128Ko (+48kb) for sub screen / GUI / Console
+	//vramSetBankC(VRAM_C_SUB_BG_0x06200000);
+	vramSetupDefault->vramBankSetupInst[VRAM_C_INDEX].vrambankCR = VRAM_C_0x06200000_ENGINE_B_BG;
+	vramSetupDefault->vramBankSetupInst[VRAM_C_INDEX].enabled = true;
+	
+	// Some memory for ARM7 (128 Ko!)
+	//vramSetBankD(VRAM_D_ARM7_0x06000000);
+	vramSetupDefault->vramBankSetupInst[VRAM_D_INDEX].vrambankCR = VRAM_D_0x06000000_ARM7;
+	vramSetupDefault->vramBankSetupInst[VRAM_D_INDEX].enabled = true;
+	
+	// 80K for Sprites
+	//(SNES:32K -NDSVRAM 64K @ 0x6400000)
+	vramSetupDefault->vramBankSetupInst[VRAM_E_INDEX].vrambankCR = VRAM_E_0x06400000_ENGINE_A_BG;
+	vramSetupDefault->vramBankSetupInst[VRAM_E_INDEX].enabled = true;
+	
+	//(NDSVRAM 16K @ 0x06410000)
+	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].vrambankCR = VRAM_F_0x06410000_ENGINE_A_BG;
+	vramSetupDefault->vramBankSetupInst[VRAM_F_INDEX].enabled = true;
+	
+	//vramSetBankG(VRAM_G_BG_EXT_PALETTE);
+	vramSetupDefault->vramBankSetupInst[VRAM_G_INDEX].vrambankCR = VRAM_G_SLOT01_ENGINE_A_BG_EXTENDED;
+	vramSetupDefault->vramBankSetupInst[VRAM_G_INDEX].enabled = true;
+	
+	// 48ko For CPU 
+	//vramSetBankH(VRAM_H_LCD);
+	vramSetupDefault->vramBankSetupInst[VRAM_H_INDEX].vrambankCR = VRAM_H_LCDC_MODE;
+	vramSetupDefault->vramBankSetupInst[VRAM_H_INDEX].enabled = true;
+	
+	//vramSetBankI(VRAM_I_LCD);
+	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].vrambankCR = VRAM_I_LCDC_MODE;
+	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].enabled = true;
+	
+	
+	return vramSetupDefault;
+}
+
+
 
 
 t_GUIScreen *buildGFXConfigMenu()
@@ -413,136 +412,66 @@ t_GUIScreen *buildMainMenu()
 
 
 int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
-	switch (msg)
+	if (msg == GUI_DRAW)
+		consoleClear(DefaultSessionConsole);
+	if (msg == GUI_COMMAND && (param == 3|| param == 4)) // OK ou cancel
 	{
-		case GUI_DRAW:{
-			GUI_clearScreen(0);
-		}	
-		break;
-		case GUI_COMMAND:
-			if (param == 3)
-			{
-				struct sGUISelectorItem sel = GUISelector_getSelected(GUI.screen, NULL);
-				if(sel.StructFDFromFS_getDirectoryListMethod == FT_FILE){
-					GUI_clearScreen(0);
-					char fname[256+1];
-					memset(fname, 0, sizeof(fname));
-					char * outBuf = (char *)malloc(256*10);
-					int matchCount = str_split((char*)sel.filenameFromFS_getDirectoryListMethod, "/", outBuf, 10, 256);
-					char * file = (char*)((char*)outBuf + (matchCount*256));
-					if(strlen(file) > 0){						
-						strcpy(fname, "0:");
-						strcat(fname, startFilePath);
-						strcat(fname, "/");
-						strcat(fname, file);
-						strcpy((char*)&CFG.ROMFile[0], fname);
-						sel.StructFDFromFS_getDirectoryListMethod = FT_FILE;
-						sel.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
-						loadROM(&sel);
-					}
-					else{
-						printf("ROM read error.");
-					}
-					free(outBuf);
-					GUI_clearScreen(0);
-				}
-				
-				GUI.ScanJoypad = 0;
-				SNES.Stopped = 0;
-				GUI.exit = 1;
-				return 1;
-			}
-			//B press
-			if (param == 4)
-			{		
-				if (CFG.Sound_output || CFG.Jukebox)
-					APU_pause();
-				
-				GUI.ScanJoypad = 0;
-				SNES.Stopped = 0;
-				GUI.exit = 1;
-				return 1;
-			}
-		break;
+		//minimal file select parts taken from GUI_getROM
+		if (param == 3)
+		{
+			sint8 *sel = GUISelector_getSelected(GUI.screen, NULL);
+			//clrscr();
+			//printf("ROMSelectorHandler:");	//filename.smc
+			//printf("romfile:%s",sel);
+			//while(1);
+			loadROM(sel, 0);
+			consoleClear(DefaultSessionConsole);
+		}
+		if (param == 4)
+		{
+			if (CFG.Sound_output || CFG.Jukebox)
+				APU_pause();			
+		}
+	    GUI.ScanJoypad = 0;
+		SNES.Stopped = 0;
+		GUI_deleteSelector(GUI.screen);
+		GUI_switchScreen(scr_main);
+		return 1;
 	}
-	
-	//Play/Pause APU
-	if (CFG.Sound_output || CFG.Jukebox)
-		APU_pause();
 	return 0;
 }
 
 
 int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
-	switch (msg)
+	if (msg == GUI_DRAW)
+		consoleClear(DefaultSessionConsole);
+	if (msg == GUI_COMMAND && (param == 3|| param == 4)) // OK ou cancel
 	{
-		case GUI_DRAW:{
-			GUI_clearScreen(0);
-		}	
-		break;
-		case GUI_COMMAND:
-			if (param == 3)
-			{
-				struct sGUISelectorItem sel = GUISelector_getSelected(GUI.screen, NULL);
-				if(sel.StructFDFromFS_getDirectoryListMethod == FT_FILE){
-					GUI_clearScreen(0);
-					char fname[256+1];
-					memset(fname, 0, sizeof(fname));
-					char * outBuf = (char *)malloc(256*10);
-					int matchCount = str_split((char*)sel.filenameFromFS_getDirectoryListMethod, "/", outBuf, 10, 256);
-					char * file = (char*)((char*)outBuf + (matchCount*256));
-					if(strlen(file) > 0){						
-						strcpy(fname, "0:");
-						strcat(fname, startSPCFilePath);
-						strcat(fname, "/");
-						strcat(fname, file);
-						int retVal = selectSong(fname);
-						if(retVal != 0){
-							printf("SPC read error.");
-						}
-					}
-					else{
-						printf("SPC read error.");
-					}
-					free(outBuf);
-					GUI_clearScreen(0);
-				}
-				
-				GUI.ScanJoypad = 0;
-				SNES.Stopped = 0;
-				GUI.exit = 1;
-				return 1;
-			}
-			//B press
-			if (param == 4)
-			{		
-				if (CFG.Sound_output || CFG.Jukebox)
-					APU_pause();
-				
-				GUI.ScanJoypad = 0;
-				SNES.Stopped = 0;
-				GUI.exit = 1;
-				return 1;
-			}
-		break;
+		if (param == 3)
+		{
+			sint8 *sel = GUISelector_getSelected(GUI.screen, NULL);
+			selectSong(sel);
+			
+		}
+		if (param == 4)
+		{
+			GUI_deleteSelector(GUI.screen);
+			GUI_switchScreen(scr_main);
+		}
+		return 1;
 	}
-	
-	//Play/Pause APU
-	if (CFG.Sound_output || CFG.Jukebox)
-		APU_pause();
 	return 0;
 }
 
 int LoadStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
-	if (msg == GUI_DRAW){
-		GUI_clearScreen(0);	
-	}
+	if (msg == GUI_DRAW)
+		consoleClear(DefaultSessionConsole);
 	if (msg == GUI_COMMAND&& (param == 3|| param == 4)) // OK ou cancel
 	{
 		if (param == 3)
 		{
 			int id;
-			GUISelector_getSelected(GUI.screen, &id);	//takes current romfilename chosen
+			GUISelector_getSelected(GUI.screen, &id);
 
 			sint8 stateFile[100];
 			strcpy(stateFile, CFG.ROMFile);
@@ -565,15 +494,14 @@ int LoadStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
 }
 
 int SaveStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
-	if (msg == GUI_DRAW){
-		GUI_clearScreen(0);
-	}
+	if (msg == GUI_DRAW)
+		consoleClear(DefaultSessionConsole);
 	if (msg == GUI_COMMAND && (param == 3 || param == 4)) // OK ou cancel
 	{
 		if (param == 3)
 		{
 			int id;
-			GUISelector_getSelected(GUI.screen, &id);	//takes current romfilename chosen
+			GUISelector_getSelected(GUI.screen, &id);
 
 			sint8 stateName[64];
 			sint8 stateFile[100];
@@ -604,10 +532,9 @@ int SaveStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
 int GFXConfigHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-	case GUI_DRAW:{
-		GUI_clearScreen(0);
-	}
-	return 0;
+	case GUI_DRAW:
+		consoleClear(DefaultSessionConsole);
+		return 0;
 	case GUI_COMMAND:
 	{
 		switch (param)
@@ -670,10 +597,9 @@ int GFXConfigHandler(t_GUIZone *zone, int msg, int param, void *arg){
 int AdvancedHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-	case GUI_DRAW:{
-		GUI_clearScreen(0);
-	}
-	return 0;
+	case GUI_DRAW:
+		consoleClear(DefaultSessionConsole);
+		return 0;
 	case GUI_COMMAND:
 	{
 		switch (param)
@@ -739,10 +665,9 @@ void LayerOptionsUpdate()
 int LayersOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){	
 	switch (msg)
 	{
-	case GUI_DRAW:{
-		GUI_clearScreen(0);
-	}
-	break;
+	case GUI_DRAW:
+		consoleClear(DefaultSessionConsole);
+		break;
 	case GUI_COMMAND:
 		//printf2(0, 23, "Command %d %08x", param, arg);
 		switch (param)
@@ -859,10 +784,9 @@ t_GUIScreen *buildLayersMenu(){
 int ScreenOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-	case GUI_DRAW:{
-		GUI_clearScreen(0);
-	}
-	return 0;
+	case GUI_DRAW:
+		consoleClear(DefaultSessionConsole);
+		return 0;
 	case GUI_COMMAND:
 		switch (param)
 		{
@@ -944,10 +868,9 @@ t_GUIScreen *buildScreenMenu(){
 int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-	case GUI_DRAW:{
-		GUI_clearScreen(0);
-	}
-	break;
+	case GUI_DRAW:
+		consoleClear(DefaultSessionConsole);
+		break;
 	case GUI_COMMAND:
 //		printf2(0, 23, "Command %d", param);
 		switch (param)
@@ -977,8 +900,11 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		case 3: // Speed
 			CFG.WaitVBlank = !((int)arg >> 24);			
 			return 1;
+		case 4: // Speed hacks
+			CFG.CPU_speedhack = (int)arg >> 24;
+			return 1;	
 		case 5: // Automatic SRAM saving
-			CFG.EnableSRAM = (int)arg >> 24;
+			CFG.AutoSRAM = (int)arg >> 24;
 			return 1;
 		
 		case 6: //multiplayer
@@ -1043,11 +969,15 @@ t_GUIScreen *buildOptionsMenu(){
 	GUI_setZone   (scr, 3, 80, 104, 256, 104+16); // Speed
 	GUI_linkObject(scr, 3, GUI_CHOICE(IDS_SPEED+1, 2, !CFG.WaitVBlank), GUIChoiceButton_handler);
 	
+	GUI_setZone   (scr, 10, 0, 124, 80, 124+16); // static
+	GUI_linkObject(scr, 10, GUI_STATIC_LEFT(IDS_HACKS, 0), GUIStaticEx_handler);
+	GUI_setZone   (scr, 4, 80, 124, 256, 124+16); // Hacks
+	GUI_linkObject(scr, 4, GUI_CHOICE(IDS_HACKS+1, 4, CFG.CPU_speedhack), GUIChoiceButton_handler);
 
 	GUI_setZone   (scr, 11, 24, 144, 256, 144+16); // Auto order static
 	GUI_linkObject(scr, 11, GUI_STATIC_LEFT(IDS_AUTO_SRAM, 0), GUIStaticEx_handler);
 	GUI_setZone   (scr, 5, 0, 144, 16, 144+16); // Automatic SRAM saving
-	GUI_linkObject(scr, 5, GUI_CHOICE(IDS_CHECK, 2, CFG.EnableSRAM), GUIChoiceButton_handler);
+	GUI_linkObject(scr, 5, GUI_CHOICE(IDS_CHECK, 2, CFG.AutoSRAM), GUIChoiceButton_handler);
 
 	//GUI_setZone   (scr, 6, 100, 84, 100+16, 84+16); // Memory pak extension
 	//GUI_linkObject(scr, 6, GUI_CHOICE(IDS_CHECK, 2, 0 > 0), GUIChoiceButton_handler);
@@ -1094,23 +1024,34 @@ t_GUIScreen *buildOptionsMenu(){
 int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	int i;
 	
-	if (msg == GUI_DRAW){
-		GUI_clearScreen(0);
-	}
+	if (msg == GUI_DRAW)
+		consoleClear(DefaultSessionConsole);
 	if (msg == GUI_COMMAND)
 	{
 		//GUI_console_printf(0, 0, "Command %d", param);		
 		if (param == 0) // ROM list
 		{
-			//////////////////////////Halt emu, give control to GUI, and wait for A/B events//////////////////////////
-			SNES.Stopped = 1;
+		    SNES.Stopped = 1;
 		    GUI.ScanJoypad = 1;
 		    if (CFG.Sound_output || CFG.Jukebox)
 		    	APU_pause();
-				
-			handleROMSelect=true;
-			////////////////////////Halt emu, give control to GUI, and wait for A/B events end////////////////////////
-			return 1;
+			
+			// Get ROMs list
+  		    int		cnt;
+  		    sint8 **dir_list = FS_getDirectoryList(CFG.ROMPath, "SMC|SFC|SWC|FIG|ZIP|GZ", &cnt);
+  		    
+  		    // Alphabetical sort
+  		    if (CFG.GUISort){
+  		    	qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);
+			}
+		    // Create ROM selector
+  		    t_GUIScreen *scr = 
+  		    	GUI_newSelector(cnt, dir_list, IDS_SELECT_ROM, &trebuchet_9_font);
+			scr->handler = ROMSelectorHandler;		    
+		    
+			// Switch GUI Screen
+		    GUI_switchScreen(scr);
+		    return 1;
 		}
 		if (param == 1 || param == 2) // Load / Save
 		{
@@ -1146,15 +1087,22 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		}
 		if (param == 4) // Jukebox
 		{
-			//////////////////////////Halt emu, give control to GUI, and wait for A/B events//////////////////////////
-			SNES.Stopped = 1;
-		    GUI.ScanJoypad = 1;
-		    if (CFG.Sound_output || CFG.Jukebox)
-		    	APU_pause();
-				
-			handleSPCSelect=true;
-			////////////////////////Halt emu, give control to GUI, and wait for A/B events end////////////////////////
-			return 1;		    
+			// Get ROMs list
+  		    int		cnt;
+  		    sint8 **dir_list = FS_getDirectoryList(CFG.ROMPath, "SPC", &cnt);
+
+  		    // Alphabetical sort
+  		    if (CFG.GUISort){
+  		    	qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);  		    
+  		    }
+		    // Create ROM selector
+  		    t_GUIScreen *scr = 
+  		    	GUI_newSelector(cnt, dir_list, IDS_JUKEBOX, &trebuchet_9_font);
+			scr->handler = SPCSelectorHandler;		    
+		    
+			// Switch GUI Screen
+		    GUI_switchScreen(scr);
+		    return 1;		    
 		}		
 		if (param == 5) // Advanced
 		{
@@ -1174,7 +1122,7 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		{
 			GUI.hide = 1;
 			powerOFF(POWER_2D_B);
-			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
+			setBacklight(PM_BACKLIGHT_TOP);
 		}
 		return 1;
 	}
@@ -1185,21 +1133,54 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-		case GUI_DRAW:{
-			GUI_clearScreen(0);
-		}	
+	case GUI_DRAW:
+		consoleClear(DefaultSessionConsole);
 		break;
-		case GUI_COMMAND:
-			if (param == 3)
-			{
-				GUI.exit = 1;
-				return 1;
-			}
+	case GUI_COMMAND:
+		if (param == 3)
+		{
+			GUI.exit = 1;
+			return 1;
+		}
 	}
 	return 0;
 }
 
-//Synchronous - Reentrant GUI handlers
+
+//read rom from (path)touchscreen:output rom -> CFG.ROMFile
+void GUI_getROM(sint8 *rompath){
+	//snprintf (CFG.ROMPath, strlen(rompath)+1, "%s/",rompath);	//path:/test/
+	
+    GUI.ScanJoypad = 1;
+	consoleClear(DefaultSessionConsole);
+
+		// Get ROMs list
+	int		cnt;
+    sint8 **dir_list = FS_getDirectoryList(rompath, "SMC|SFC|SWC|FIG|ZIP|GZ", &cnt);
+	
+	// Alphabetical sort
+	if (CFG.GUISort){
+		qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);
+	}
+
+	// Create ROM selector
+	t_GUIScreen *scr = GUI_newSelector(cnt, dir_list, IDS_SELECT_ROM, &trebuchet_9_font);
+    scr->zones[4].handler = NULL; // Remove CANCEL button
+	scr->handler = FirstROMSelectorHandler;
+	
+	GUI_drawScreen(scr, NULL);
+	
+	GUI_start();
+	
+	sint8 *sel = GUISelector_getSelected(scr, NULL);
+
+    GUI.ScanJoypad = 0;
+	
+	//sprintf(CFG.ROMPath,"%s/%s",buf,sel);	//rets path+rom.smc	/ok
+	//printf("rom:%s",sel);
+	
+	sprintf(CFG.ROMFile,"%s",sel);	//filename.ext -> CFG.ROMFile;
+}
 
 //First time GUI File Handler.
 void GUI_getROMFirstTime(sint8 *rompath){
@@ -1218,130 +1199,19 @@ void GUI_getROMFirstTime(sint8 *rompath){
 	scr->handler = FirstROMSelectorHandler;
 	GUI_drawScreen(scr, NULL);
 	GUI_start();
-	struct sGUISelectorItem sel = GUISelector_getSelected(scr, NULL);
-	if(sel.StructFDFromFS_getDirectoryListMethod == FT_NONE){
-		//Leave dir
-		char curDir[256+1];
-		memset(curDir, 0, sizeof(curDir));
-		strcpy(curDir, startFilePath);
-		leaveDir((char*)&curDir[0]);
-		strcpy(startFilePath, curDir);
-		
-		//release GUI events manually
-		GUI.exit = 1;
-		g_event.event = 0;
-		GUI_getROMFirstTime(startFilePath);
-		return ;
-	}
-	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){	
-		//Enter new dir
-		strcat((char*)startFilePath, (char*)"/"); 
-		strcat((char*)startFilePath, (char*)sel.filenameFromFS_getDirectoryListMethod); 
-		startFilePath[strlen(startFilePath)-1]='\0'; //remove last "/"
-		return GUI_getROMFirstTime(startFilePath);
-	}
+	char * selFile = GUISelector_getSelected(scr, NULL);
     GUI.ScanJoypad = 0;
-	strcpy(CFG.ROMFile, sel.filenameFromFS_getDirectoryListMethod);
+	strcpy(CFG.ROMFile, selFile);
 }
 
-void GUI_getROMIterable(sint8 *rompath){
-	SNES.Stopped = 1;
-	GUI.ScanJoypad = 1;
-	GUI_clearScreen(0);
-	//Pause APU
-	if (CFG.Sound_output || CFG.Jukebox)
-		APU_pause();
-	// Get ROMs list
-	int		cnt;
-    sint8 **dir_list = FS_getDirectoryList(rompath, "SMC|SFC|SWC|FIG|ZIP|GZ", &cnt);
-	// Alphabetical sort
-	if (CFG.GUISort){
-		qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);
-	}
-	// Create ROM selector
-	t_GUIScreen *scr = GUI_newSelector(cnt, dir_list, IDS_SELECT_ROM, &trebuchet_9_font);
-    scr->handler = ROMSelectorHandler;
-	GUI_drawScreen(scr, NULL);
-	GUI_start();
-	struct sGUISelectorItem sel = GUISelector_getSelected(scr, NULL);
-	
-	if(sel.StructFDFromFS_getDirectoryListMethod == FT_NONE){
-		//Leave dir
-		char curDir[256+1];
-		memset(curDir, 0, sizeof(curDir));
-		strcpy(curDir, startFilePath);
-		leaveDir((char*)&curDir[0]);
-		strcpy(startFilePath, curDir);
-		
-		//release GUI events manually
-		GUI.exit = 1;
-		g_event.event = 0;
-		GUI_getROMIterable(startFilePath);
-		return ;
-	}
-	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){
-		//Enter new dir
-		strcat((char*)startFilePath, (char*)"/"); 
-		strcat((char*)startFilePath, (char*)sel.filenameFromFS_getDirectoryListMethod); 
-		startFilePath[strlen(startFilePath)-1]='\0'; //remove last "/"			
-		return GUI_getROMIterable(startFilePath);
-	}
-    GUI.ScanJoypad = 0;
-	strcpy(CFG.ROMFile, sel.filenameFromFS_getDirectoryListMethod);
-}
-
-void GUI_getSPCIterable(sint8 *rompath){
-	SNES.Stopped = 1;
-	GUI.ScanJoypad = 1;
-	GUI_clearScreen(0);
-	//Pause APU
-	if (CFG.Sound_output || CFG.Jukebox)
-		APU_pause();
-	// Get ROMs list
-	int		cnt;
-    sint8 **dir_list = FS_getDirectoryList(rompath, "SPC", &cnt);
-	// Alphabetical sort
-	if (CFG.GUISort){
-		qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);
-	}
-	// Create ROM selector
-	t_GUIScreen *scr =  GUI_newSelector(cnt, dir_list, IDS_JUKEBOX, &trebuchet_9_font);
-	scr->handler = SPCSelectorHandler;
-	GUI_drawScreen(scr, NULL);
-	GUI_start();
-	struct sGUISelectorItem sel = GUISelector_getSelected(scr, NULL);
-	if(sel.StructFDFromFS_getDirectoryListMethod == FT_NONE){
-		//Leave dir
-		char curDir[256+1];
-		memset(curDir, 0, sizeof(curDir));
-		strcpy(curDir, startSPCFilePath);
-		leaveDir((char*)&curDir[0]);
-		strcpy(startSPCFilePath, curDir);
-		
-		//release GUI events manually
-		GUI.exit = 1;
-		g_event.event = 0;
-		GUI_getSPCIterable(startSPCFilePath);
-		return ;
-	}
-	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){
-		//Enter new dir
-		strcat((char*)startSPCFilePath, (char*)"/"); 
-		strcat((char*)startSPCFilePath, (char*)sel.filenameFromFS_getDirectoryListMethod); 
-		startSPCFilePath[strlen(startSPCFilePath)-1]='\0'; //remove last "/"
-		return GUI_getSPCIterable(startSPCFilePath);
-	}
-    GUI.ScanJoypad = 0;
-	strcpy(CFG.SPCFile, sel.filenameFromFS_getDirectoryListMethod);
-}
 
 void GUI_deleteROMSelector(){
 	GUI_deleteSelector(GUI.screen); // Should also delete dir_list
-	GUI_clearScreen(0);
+	consoleClear(DefaultSessionConsole);
 }
 
 void GUI_createMainMenu(){
-	GUI_clearScreen(0);
+	consoleClear(DefaultSessionConsole);
 	
 #if 1
 	// Create Main screen
@@ -1382,21 +1252,19 @@ void GUI_createMainMenu(){
 void GUI_getConfig(){
 	CFG.GUISort = get_config_int("GUI", "FileChooserSort", 1);
 	CFG.Language = get_config_int("GUI", "Language", -1);
-	CFG.TopScreenEmu = get_config_int("GUI", "TopScreen", 1);
 	
 	if (CFG.Language != -1)
 		GUI_setLanguage(CFG.Language);
 }
 
 void	GUI_showROMInfos(int size){
-    printf("%s %s\n", _STR(IDS_TITLE), SNES.ROM_info.title);
-    printf("%s %d bytes\n", _STR(IDS_SIZE), size);
+    printf("%s %s ", _STR(IDS_TITLE), SNES.ROM_info.title);
+    printf("%s %d bytes ", _STR(IDS_SIZE), size);
     if (SNES.HiROM) 
-    	printf("%s HiROM\n", _STR(IDS_ROM_TYPE));
+    	printf("%s HiROM ", _STR(IDS_ROM_TYPE));
     else 
-    	printf("%s LoROM\n", _STR(IDS_ROM_TYPE));
-    printf("%s %s\n", _STR(IDS_COUNTRY), SNES.ROM_info.countrycode < 2 ? "NTSC" : "PAL");	
-	printf("SRAM Size: %d", SNES.ROM_info.SRAMsize);
+    	printf("%s LoROM ", _STR(IDS_ROM_TYPE));
+    printf("%s %s ", _STR(IDS_COUNTRY), SNES.ROM_info.countrycode < 2 ? "NTSC" : "PAL");	
 }
 
 
@@ -1405,62 +1273,6 @@ void LOG(sint8 * ftm, ...){
 }
 
 
-
-//GUI parts
-
-int GUI_getStrWidth(t_GUIZone *zone, sint8 *text)
-{
-	t_GUIFont   *font = zone->font;
-	int			in_katakana = 0;
-    int 		i, w;
-
-    for (i=0, w=0; i < strlen(text); i++)
-    {
-    	if (text[i] == 0x0e)
-    	{
-    		in_katakana = 1;
-    		continue;
-    	}
-    	if (text[i] == 0x0f)
-    	{
-    		in_katakana = 0;
-    		continue;
-    	}
-    	
-    	if (in_katakana)
-    	{
-    		if (text[i] < 0x26 || text[i] > 0x5f)
-    			continue;
-    		sint8 c = g_katana_jisx0201_conv[text[i]-0x26];
-    		w += katakana_12_font.glyphs[c - katakana_12_font.offset]->width + font->space;
-    	}
-    	else
-    	{
-    		if (text[i] - font->offset >= 0 && font->glyphs[text[i] - font->offset] != NULL)
-    		{
-    			w += font->glyphs[text[i] - font->offset]->width + font->space;
-    		}
-    		else
-    			w += font->space;
-    	}
-    }
-
-    return w - font->space;
-}
-
-
-
-
-
-
-
-//
-
-
-int		GUI_getZoneTextHeight(t_GUIZone *zone)
-{
-	return (zone->y2 - zone->y1) / (GUI_getFontHeight(zone)+1);
-}
 
 int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 {
@@ -1495,21 +1307,21 @@ int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 		
 		if (ptr == NULL) 
 		{
-			// Nous avons touchÃ© la fin de la chaine
-			if (good_space == subtext[cnt]) // Pas d'espace positionnÃ©, plus rien Ã  faire
+			// Nous avons touché la fin de la chaine
+			if (good_space == subtext[cnt]) // Pas d'espace positionné, plus rien à faire
 				break;
-			// S'il on est lÃ  c'est qui faut couper la chaine avant
+			// S'il on est là c'est qui faut couper la chaine avant
 		}
 		
-		if (good_space != subtext[cnt]) // Si l'espace a Ã©tÃ© positionnÃ©
+		if (good_space != subtext[cnt]) // Si l'espace a été positionné
 		{
 			if (ptr)
-				*ptr = ' '; // Le dernier essai doit Ãªtre effacÃ©
-			*good_space = 0; // Le bon espace est marquÃ©
+				*ptr = ' '; // Le dernier essai doit être effacé
+			*good_space = 0; // Le bon espace est marqué
 		} else
 			good_space = ptr; // Pas de bon espace, alors coupons un mot trop grand
 				
-		cur_text = good_space+1; // Nouveau mot aprÃ¨s l'espace
+		cur_text = good_space+1; // Nouveau mot après l'espace
 		//printf("=> %s", cur_text);		
 		subtext[++cnt] = cur_text; 
 	}
@@ -1540,21 +1352,4 @@ int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 		sy += GUI_getFontHeight(zone);
 	}
 	return sy;
-}
-
-//center screen needs a rewrite
-void		GUI_align_printf(int flags, sint8 *fmt, ...)
-{
-	char * printfBuf = (char*)&ConsolePrintfBuf[0];
-	va_list ap;
-    va_start(ap, fmt);
-    vsnprintf((sint8*)printfBuf, sizeof(ConsolePrintfBuf), fmt, ap);
-    va_end(ap);
-
-    // FIXME
-    t_GUIZone zone;
-    zone.x1 = 0; zone.y1 = 0; zone.x2 = 256; zone.y2 = 192;
-    zone.font = &trebuchet_9_font;
-    // FIXME
-    GUI.printfy += GUI_drawAlignText(&zone, flags, GUI.printfy, sizeof(ConsolePrintfBuf), (sint8*)printfBuf);
 }

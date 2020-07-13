@@ -54,6 +54,7 @@ GNU General Public License for more details.
 	else CPU_NextCycles = 0;	\
 }
 
+
 //CPU Hardware
 #ifndef __opcodes_cpu_snemul__
 #define __opcodes_cpu_snemul__
@@ -63,8 +64,6 @@ GNU General Public License for more details.
 #define NB_CYCLES 180
 
 #endif
-
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -89,17 +88,19 @@ extern	uint8	*CPU_WaitAddress;
 extern	uint8	*CPU_LoopAddress;
 extern	uint32			BRKaddress;
 extern	uint32			COPaddress;
+extern void CPU_pack();
+extern void CPU_unpack();
 extern void	pushb(uint8 b);
 extern void pushw(uint16 w);
 extern uint8	pullb();
 extern uint16	pullw();
 extern void CPU_goto(int cycles);
 
+
 //opcodes2.s
 extern void 	CPU_goto2(int CyclesToCrunch);
 extern void 	CPU_update();
 extern void		CPU_init();	
-
 #ifdef __cplusplus
 }
 #endif

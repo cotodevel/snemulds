@@ -22,178 +22,195 @@ OUTPUT_FORMAT("elf32-littlearm")
 /* attributes can actually help in debugging because if you try to move functions to DTCM, for example, compiler will rant since DTCM is DATA only path and not execution*/
 MEMORY
 {
-	DTCM : ORIGIN = 0x0b000000, LENGTH = 16K	/*vector handlers are here in the 0x10 area*/
-	ITCM : ORIGIN = 0x01000000, LENGTH = 32K
+	DTCM : ORIGIN = 0x0b000000, LENGTH = 16K
+	ITCM : ORIGIN = 0x01FF8300, LENGTH = 32K - 1K + 256
+	VECTORS : ORIGIN = 0x01FF8000, LENGTH = 1K - 256
 	GBAROM : ORIGIN = 0x08000000, LENGTH = 32M
 	EWRAM : ORIGIN = 0x02000000, LENGTH = 4M
 	ARM9SHAREDWRAM : ORIGIN = 0x03000000, LENGTH = 32K
+	GBAEW   : ORIGIN = 0x02000000, LENGTH = 256k	/* todo... */
 }
 
 _itcm_start = ORIGIN(ITCM);
 _itcm_end = ORIGIN(ITCM)	+	LENGTH(ITCM);
 
+_vector_start = ORIGIN(VECTORS);
+_vector_end = ORIGIN(VECTORS)	+	LENGTH(VECTORS);
+
 _ewram_start = ORIGIN(EWRAM);
 _ewram_end = ORIGIN(EWRAM)	+	LENGTH(EWRAM);
+
+_arm9sharedwram_start = ORIGIN(ARM9SHAREDWRAM);
+_arm9sharedwram_end = ORIGIN(ARM9SHAREDWRAM)	+	LENGTH(ARM9SHAREDWRAM);
 
 _gba_start = ORIGIN(GBAROM);
 _gba_end = ORIGIN(GBAROM)	+	LENGTH(GBAROM);
 
+_gbawram_start = ORIGIN(GBAEW);
+_gbawram_end = ORIGIN(GBAEW)	+	LENGTH(GBAEW);
+
 _dtcm_start = ORIGIN(DTCM);
 _dtcm_end = ORIGIN(DTCM)	+	LENGTH(DTCM);
-
-_arm9sharedwram_start = ORIGIN(ARM9SHAREDWRAM);
-_arm9sharedwram_end = ORIGIN(ARM9SHAREDWRAM)	+	LENGTH(ARM9SHAREDWRAM);
 
 /* ARM9 Specific */
 _arm9_irqcheckbits = ORIGIN(DTCM) + 0x3FF8;	/* __irq_flags */
 _arm9_irqhandler = ORIGIN(DTCM) + 0x3FFC;	/* __irq_vector */
 
 /* ARM ABI says stacks are full decreasing */
-sp_SVC	= _dtcm_end  - 0x200;	/* reset, swi exception*/
-sp_IRQ	= sp_SVC - 0x200;	/*irq exception*/
-sp_FIQ	= sp_IRQ - 0x200;	/* fiq exception */
-sp_ABT	= sp_FIQ - 0x200;	/* prefetch / data aborts exception */
-sp_UND	= sp_ABT - 0x200;	/* undefined exception */
-sp_USR	= sp_UND - 0x200;	/* usr / sys stacks */
+sp_SVC	= _dtcm_end - 0x200;
+sp_IRQ	= sp_SVC - 0x200;
+sp_FIQ	= sp_IRQ - 0x200;
+sp_ABT	= sp_FIQ - 0x200;
+sp_UND	= sp_ABT - 0x200;
+sp_USR	= sp_UND - 0x200;
+sp_SYS	= sp_USR - 0x200;
+sp_IRQCHANDLER	=	sp_SYS - 0x1000;
 
-ENTRY (_start)
 SECTIONS
 {
-	PROVIDE (__init_start__ = ABSOLUTE(.));
-	.init : SUBALIGN(4) { 			/* Entrypoint */
-		KEEP(*(.init*))
-		FILL(0x4);
-		PROVIDE (__init_end__ = ABSOLUTE(.));
-		. = ALIGN(4 + (. & (4 - 1)));
+	.init : { __init_start__ = .;
+		*(.init*)
+		. = ALIGN(4);
 	} > EWRAM = 0xff
-	
-	/* Text section must be first, so the DLDI patcher code can read DLDI section properly */
-	PROVIDE (__text_start__ = ABSOLUTE(.));
-	.text : SUBALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
-		KEEP(*(.text*))	
-		FILL(0x4);
-		PROVIDE (__text_end__ = ABSOLUTE(.));
-		. = ALIGN(4 + (. & (4 - 1)));
+	__init_end__ = .;
+	__preinit_array_start__ = .;
+	.preinit_array : { 
+		*(.preinit_array*)
+		. = ALIGN(4);
 	} > EWRAM = 0xff
-	
-	PROVIDE (__itcm_vma_start = ABSOLUTE(.));
-	.itcm : SUBALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
-		KEEP (*(.itcm*))
-		FILL(0x4);
-		PROVIDE (__itcm_vma_end__ = ABSOLUTE(.));
-		. = ALIGN(4 + (. & (4 - 1)));
-	} > ITCM AT > EWRAM
-	
-	PROVIDE (__dtcm_vma_start = ABSOLUTE(.));
-	.dtcm : SUBALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
-		KEEP (*(.dtcm*))
-		FILL(0x4);
-		PROVIDE (__dtcm_vma_end__ = ABSOLUTE(.));
-		. = ALIGN(4 + (. & (4 - 1)));
-	} > DTCM AT > EWRAM
-	
-	PROVIDE (___arm9sharedwram_vma_start = ABSOLUTE(.));
-	.arm9sharedwram : SUBALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
-		KEEP (*(.arm9sharedwram*))
-		FILL(0x4);
-		PROVIDE (___arm9sharedwram_vma_end__ = ABSOLUTE(.));
-		. = ALIGN(4 + (. & (4 - 1)));
-	} > ARM9SHAREDWRAM AT > EWRAM
-	
-	
-	PROVIDE (__rodata_start__ = ABSOLUTE(.));
-	.rodata : SUBALIGN(4) {			/* used by TGDS-Newlib C/C++ code */
+	__preinit_array_end__ = .;
+	__init_array_start__ = .;
+	.init_array : { 
+		*(.init_array*)
+		. = ALIGN(4);
+	} > EWRAM = 0xff
+	init_array_end__ = .;
+	__fini_array_start__ = .;
+	.fini_array : {
+		*(.fini_array*)
+		. = ALIGN(4);
+	} > EWRAM = 0xff
+	__fini_array_end__ = .;
+	__text_start__ = .;
+	.text : {
+		*(.text)
+		*(.text*)
+		*(.gnu.linkonce.t*)
+		. = ALIGN(4);
+	} > EWRAM = 0xff
+	__text_end__ = .;
+	__bss_vma_start = .;
+	.bss : {
+		*(.dynbss*)
+		*(.bss)
+		*(.gnu.linkonce.b*.)
+		*(COMMON)					/* libc requires these for uninitialized objects, include any heap uninit vars*/
+		. = ALIGN(4);
+	} > EWRAM = 0xff
+	__bss_vma_end = .;
+	__sbss_start__ = .;
+	.sbss : {
+		*(.sbss*)
+		. = ALIGN(4);
+	}> EWRAM = 0xff
+	__sbss_vma_end = .;
+	__data_start__ = .;
+	.data : {
+		*(.data)
+		*(.data.*)
+		*(.gnu.linkonce.d*)
+		. = ALIGN(4);
+	} > EWRAM = 0xff
+	__data_end__ = .;
+	__rodata_start__ = .;
+	.rodata : { 
 		*(.rdata)
 		*(.rodata)
 		*(.rodata.*)
     	*(.gnu.linkonce.r.*)
-		FILL(0x4);
-		PROVIDE (__rodata_end__ = ABSOLUTE(.));
-		. = ALIGN(4 + (. & (4 - 1)));
+		. = ALIGN(4);
 	} > EWRAM = 0xff
-	
-	PROVIDE (__bss_vma_start = ABSOLUTE(.));
-	.bss : SUBALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
-		*(.dynbss*)
-		*(.bss*)
-		*(.bss)
-		KEEP(*(COMMON))					/* libc requires these for uninitialized objects, include any heap uninit vars*/
-		*(.gnu.linkonce.b*.)
-		FILL(0x4);
-		PROVIDE (__bss_vma_end = ABSOLUTE(.));
-		. = ALIGN(4 + (. & (4 - 1)));
+	__rodata_end__ = .;
+	__eh_frame_start__ = .;
+	.eh_frame : {
+		*(.eh_frame*)
+		. = ALIGN(4);
 	} > EWRAM = 0xff
-	
-	PROVIDE (__exidx_start = ABSOLUTE(.));
-	.ARM.exidx : SUBALIGN(4) {			/* not used at all, but some code rely on ARM debugging symbols */
+	__eh_frame_end__ = .;
+	__jcr_start__ = .;
+	.jcr : {
+		*(.jcr*)
+		. = ALIGN(4);
+	} > EWRAM = 0xff
+	__jcr_end__ = .;
+	__vfp11_veneer_start__ = .;
+	.vfp11_veneer : {
+		*(.vfp11_veneer*)
+		. = ALIGN(4);
+	} > EWRAM = 0xff
+	__vfp11_veneer_end__ = .;
+	__exidx_start = .;
+    .ARM.exidx   : {		/* newlib C++ require these constructors */
 		*(.ARM.exidx)
 		*(.ARM.exidx*)
 		*(.gnu.linkonce.armexidx.)
 		*(.gnu.linkonce.armexidx.*)
-		FILL(0x4);
-		PROVIDE (__exidx_end = ABSOLUTE(.));
-		. = ALIGN(4 + (. & (4 - 1)));
 	} > EWRAM = 0xff
-	
-	PROVIDE (__data_start__ = ABSOLUTE(.));
-	.data : SUBALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
-		*(.data)
-		*(.data.*)
-		*(.gnu.linkonce.d*)
-		*(.gnu.linkonce.t*)
-		FILL(0x4);
-		PROVIDE (__data_end__ = ABSOLUTE(.));
-		. = ALIGN(4 + (. & (4 - 1)));
+    __exidx_end = .;
+	__v4_bx_start__ = .;
+	.v4_bx : {
+		*(.v4_bx*)
+		. = ALIGN(4);
 	} > EWRAM = 0xff
-	
-	PROVIDE (__fini_start__ = ABSOLUTE(.));
-	.fini : SUBALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
-		*(.fini)
+	__v4_bx_end__ = .;
+	__iplt_start__ = .;
+	.iplt : {
+		*(.iplt*)
+		. = ALIGN(4);
+	} > EWRAM = 0xff
+	__iplt_end__ = .;
+	__igot_plt_start__ = .;
+	.igot.plt : {
+		*(.igot.plt*)
+		. = ALIGN(4);
+	} > EWRAM = 0xff
+	__igot_plt_end__ = .;
+	__rel_dyn_start__ = .;
+	.rel.dyn : { 
+		*(.rel.dyn*)
+		. = ALIGN(4);
+	} > EWRAM = 0xff
+	__rel_dyn_end__ = .;
+	__fini_start__ = .;
+	.fini : {
 		*(.fini*)
-		FILL(0x4);
-		PROVIDE (__fini_end__ = ABSOLUTE(.));
-		. = ALIGN(4 + (. & (4 - 1)));
+		. = ALIGN(4);
 	} > EWRAM = 0xff
-	
-	/*
-     * Stabs le debugging sections.
-     *
-     */
-
-    .stab          0 : { *(.stab) }	> EWRAM = 0xff
-    .stabstr       0 : { *(.stabstr) }	> EWRAM = 0xff
-    .stab.excl     0 : { *(.stab.excl) }	> EWRAM = 0xff
-    .stab.exclstr  0 : { *(.stab.exclstr) }	> EWRAM = 0xff
-    .stab.index    0 : { *(.stab.index) }	> EWRAM = 0xff
-    .stab.indexstr 0 : { *(.stab.indexstr) }	> EWRAM = 0xff
-    .comment       0 : { *(.comment) }	> EWRAM = 0xff
-    /* DWARF debug sections.
-       Symbols in the DWARF debugging sections are relative to the beginning
-       of the section so we begin them at 0.  */
-    /* DWARF 1 */
-    .debug          0 : { *(.debug) }	> EWRAM = 0xff
-    .line           0 : { *(.line) }	> EWRAM = 0xff
-    /* GNU DWARF 1 extensions */
-    .debug_srcinfo  0 : { *(.debug_srcinfo) }	> EWRAM = 0xff
-    .debug_sfnames  0 : { *(.debug_sfnames) }	> EWRAM = 0xff
-    /* DWARF 1.1 and DWARF 2 */
-    .debug_aranges  0 : { *(.debug_aranges) }	> EWRAM = 0xff
-    .debug_pubnames 0 : { *(.debug_pubnames) }	> EWRAM = 0xff
-    /* DWARF 2 */
-    .debug_info     0 : { *(.debug_info .gnu.linkonce.wi.*) }	> EWRAM = 0xff
-    .debug_abbrev   0 : { *(.debug_abbrev) }	> EWRAM = 0xff
-    .debug_line     0 : { *(.debug_line) }	> EWRAM = 0xff
-    .debug_frame    0 : { *(.debug_frame) }	> EWRAM = 0xff
-    .debug_str      0 : { *(.debug_str) }	> EWRAM = 0xff
-    .debug_loc      0 : { *(.debug_loc) }	> EWRAM = 0xff
-    .debug_macinfo  0 : { *(.debug_macinfo) }	> EWRAM = 0xff
-    /* SGI/MIPS DWARF 2 extensions */
-    .debug_weaknames 0 : { *(.debug_weaknames) }	> EWRAM = 0xff
-    .debug_funcnames 0 : { *(.debug_funcnames) }	> EWRAM = 0xff
-    .debug_typenames 0 : { *(.debug_typenames) }	> EWRAM = 0xff
-    .debug_varnames  0 : { *(.debug_varnames) }		> EWRAM = 0xff
-	
-	PROVIDE (__lib__end__ = __fini_end__ + 0x4);
-	. = . + 0x4;
-	PROVIDE (__vma_stub_end__ = __lib__end__ + 0x4);
+	__fini_end__ = .;
+	__lib__end__ = __fini_end__;
+	__itcm_vma_start = .;
+	.itcm : {
+		KEEP (*(.itcm*))
+		. = ALIGN(4);
+	} > ITCM AT > EWRAM
+	__itcm_vma_end__ = .;
+	__dtcm_vma_start = .;
+	.dtcm : {
+		KEEP (*(.dtcm*))
+		. = ALIGN(4);
+	} > DTCM AT > EWRAM
+	__dtcm_vma_end__ = .;
+	__vectors_vma_start = .;
+	.vectors : {
+		KEEP (*(.vectors*))
+		. = ALIGN(4);
+	} > VECTORS AT > EWRAM
+	__vectors_vma_end__ = .;
+	___arm9sharedwram_vma_start = .;
+	.arm9sharedwram : {
+		KEEP (*(.arm9sharedwram*))
+		. = ALIGN(4);
+	} > ARM9SHAREDWRAM AT > EWRAM
+	___arm9sharedwram_vma_end__ = .;
+	__vma_stub_end__ = __lib__end__ + SIZEOF(.itcm) + SIZEOF(.dtcm) + SIZEOF(.vectors) + SIZEOF(.arm9sharedwram);
 }

@@ -16,20 +16,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 USA
 
 */
-
-//TGDS required version: IPC Version: 1.3
-
-//IPC FIFO Description: 
-//		TGDSIPC 		= 	Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
-//		TGDSUSERIPC		=	Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
-
 #include "ipcfifoTGDS.h"
 #include "ipcfifoTGDSUser.h"
-#include "dmaTGDS.h"
 #include "apu_shared.h"
 
 #ifdef ARM7
 #include <string.h>
+
 #include "pocketspc.h"
 #include "apu.h"
 #include "dsp.h"
@@ -42,41 +35,66 @@ USA
 #endif
 
 #ifdef ARM9
+
 #include <stdbool.h>
+
 #include "memmap.h"
 #include "common.h"
 #include "cfg.h"
 #include "main.h"
 #include "core.h"
+
 #include "dsregs.h"
 #include "dsregs_asm.h"
 #include "InterruptsARMCores_h.h"
+
 #include "wifi_arm9.h"
+
 #endif
 
 
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
+	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(getUserIPCAddress());
+	return sIPCSharedTGDSSpecificInst;
+}
 
-//inherits what is defined in: common_shared.c
+//inherits what is defined in: ipcfifoTGDS.c
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 	
 	switch (cmd1) {
-	
 		//ARM7 command handler
 		#ifdef ARM7
+		
+		//ARM7 Only
+		case(FIFO_POWERCNT_ON):{
+			powerON((uint16)cmd2);
+		}
+		break;
+		
+		case (FIFO_POWERMGMT_WRITE):{
+			PowerManagementDeviceWrite(PM_SOUND_AMP, (int)cmd2>>16);  // void * data == command2
+		}
+		break;
+		
+		
 		case SNEMULDS_APUCMD_RESET: //case 0x00000001:
 		{
 			// Reset
-			StopSoundSnemulDS();
+			StopSound();
 
 			memset(playBuffer, 0, MIXBUFSIZE * 8);
-			IPC6->APU_ADDR_CNT = 0; 
+
+			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0; 
 			ApuReset();
 			DspReset();
 
-			SetupSoundSnemulDS();
+			SetupSound();
 			paused = false;
 			SPC_disable = false;
 			SPC_freedom = false;
@@ -85,39 +103,28 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		case SNEMULDS_APUCMD_PAUSE:{ //case 0x00000002:{
 			// Pause/unpause
 			if (!paused) {
-				StopSoundSnemulDS();
+				StopSound();
 			} else {
-				SetupSoundSnemulDS();
+				SetupSound();
 			}
 			if (SPC_disable)
 				SPC_disable = false;        
 			paused = !paused;
 		}
 		break;
-		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC
-			//Reset APU
-			StopSoundSnemulDS();
-			memset(playBuffer, 0, MIXBUFSIZE * 8);
-			IPC6->APU_ADDR_CNT = 0; 
-			ApuReset();
-			DspReset();
-			SetupSoundSnemulDS();
-			
-			//Load APU payload
-			LoadSpc((const u8*)cmd2);
-			
-			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
-			fifomsg[10] = (uint32)0;	//release ARM9 APU_playSpc()
-			
+		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC 	
+			LoadSpc(APU_RAM_ADDRESS);
+			SetupSound();   	
+			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;             	
 			paused = false;
+			SPC_freedom = true;
 			SPC_disable = false;
-			SPC_freedom = false;
 		}
 		break;
 			
 		case SNEMULDS_APUCMD_SPCDISABLE:{ //case 0x00000004:{ // DISABLE 
 			SPC_disable = true;
-			IPC6->APU_ADDR_CNT = 0;
+			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
 		}
 		break;        
 		
@@ -133,7 +140,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			
 		case SNEMULDS_APUCMD_LOADSPC:{ //case 0x00000007:{ // LOAD state 
 			LoadSpc(APU_RAM_ADDRESS);
-			IPC6->APU_ADDR_CNT = 0; 
+			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0; 
 		}
 		break;
 		#endif
@@ -146,6 +153,44 @@ __attribute__((section(".itcm")))
 #endif
 void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 }
+
+//project specific stuff
+#ifdef ARM9
+
+//small hack to update SNES_ADDRESS at opcodes2.s
+void update_ram_snes(){
+    //snes_ram_address = (uint32)&snes_ram_bsram[0x6000];
+}
+#endif
+
+//APU Ports from SnemulDS properly binded with Assembly APU Core
+void update_spc_ports(){
+    struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
+	APU_T0_ASM_ADDR = (uint32)&APU2->T0;
+	APU_T1_ASM_ADDR = (uint32)&APU2->T1;
+	APU_T2_ASM_ADDR = (uint32)&APU2->T2;
+	
+	APU_TIM0_ASM_ADDR = (uint32)&APU2->TIM0;
+	APU_TIM1_ASM_ADDR = (uint32)&APU2->TIM1;
+	APU_TIM2_ASM_ADDR = (uint32)&APU2->TIM2;
+	
+	APU_CNT0_ASM_ADDR = (uint32)&APU2->CNT0;
+	APU_CNT1_ASM_ADDR = (uint32)&APU2->CNT1;
+	APU_CNT2_ASM_ADDR = (uint32)&APU2->CNT2;
+	
+	//must reflect to ipcfifoTGDSUser.h defs
+	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[0];
+	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)&getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[0]; 
+	ADDR_APU_PROGRAM_COUNTER=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
+	
+	ADDR_SNEMUL_CMD	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_CMD;	//0x027FFFE8	// SNEMUL_CMD
+	ADDR_SNEMUL_ANS	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_ANS;	//0x027fffec	// SNEMUL_ANS
+	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
+	getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP = (volatile uint8 *)ADDR_SNEMUL_BLK;
+	
+	//todo: APU_ADDR_CNT: is unused by Assembly APU Core?
+}
+
 
 #ifdef ARM9
 //Callback update sample implementation
@@ -171,29 +216,3 @@ void stopSoundUser(u32 srcFrmt){
 	#endif
 }
 
-//project specific stuff
-
-//APU Ports from SnemulDS properly binded with Assembly APU Core
-void update_spc_ports(){
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
-	
-	//must reflect to ipcfifoTGDSUser.h defs
-	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&IPC6->PORT_SPC_TO_SNES[0];
-	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)&IPC6->PORT_SNES_TO_SPC[0]; 
-	ADDR_APU_PROGRAM_COUNTER=	(uint32)(volatile uint32*)&IPC6->APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
-	
-	ADDR_SNEMUL_CMD	=	(uint32)(volatile uint32*)&IPC6->APU_ADDR_CMD;	//0x027FFFE8	// SNEMUL_CMD
-	ADDR_SNEMUL_ANS	=	(uint32)(volatile uint32*)&IPC6->APU_ADDR_ANS;	//0x027fffec	// SNEMUL_ANS
-	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)&IPC6->APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
-	IPC6->APU_ADDR_BLKP = (uint8 *)ADDR_SNEMUL_BLK;
-	
-	//todo: APU_ADDR_CNT: is unused by APU Core?
-}
-
-
-#ifdef ARM9
-__attribute__((section(".itcm")))
-#endif
-void SnemulDSdmaFillHalfWord(sint32 dmachannel,uint32 value, uint32 dest, uint32 word_count){
-	memset((u8*)dest, value, (int)word_count);
-}

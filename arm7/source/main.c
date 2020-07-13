@@ -3,21 +3,16 @@
 #include "apu.h"
 #include "dsp.h"
 #include "main.h"
-#include "InterruptsARMCores_h.h"
-#include "interrupts.h"	
+#include "InterruptsARMCores_h.h"	//new
+#include "interrupts.h"	//ori
+
 #include "ipcfifoTGDSUser.h"
 #include "wifi_arm7.h"
 #include "usrsettingsTGDS.h"
 #include "timerTGDS.h"
-#include "dmaTGDS.h"
+
+#include "timerTGDS.h"
 #include "CPUARMTGDS.h"
-#include "utilsTGDS.h"
-#include "biosTGDS.h"
-#include "dldi.h"
-#include "spifwTGDS.h"
-#include "posixHandleTGDS.h"
-#include "eventsTGDS.h"
-#include "powerTGDS.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
 uint16 *playBuffer;
@@ -30,19 +25,19 @@ bool paused = true;
 bool SPC_disable = true;
 bool SPC_freedom = false;
 
-void SetupSoundSnemulDS() {
+void SetupSound() {
     soundCursor = 0;
 	apuMixPosition = 0;
 
     powerON(POWER_SOUND);
     REG_SOUNDCNT = SOUND_ENABLE | SOUND_VOL(0x7F);
-	
-	TIMERXDATA(0) = TIMER_FREQ(MIXRATE);
+
+    TIMERXDATA(0) = TIMER_FREQ(MIXRATE);
     TIMERXCNT(0) = TIMER_DIV_1 | TIMER_ENABLE;
 
-    TIMERXDATA(1) = 0x10000 - (MIXBUFSIZE);
+    TIMERXDATA(1) = 0x10000 - MIXBUFSIZE;
     TIMERXCNT(1) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
-
+	
     // Debug
 	#if PROFILING_ON  
 		TIMERXDATA(2) = 0;
@@ -51,13 +46,19 @@ void SetupSoundSnemulDS() {
 		TIMERXDATA(3) = 0;
 		TIMERXCNT(3) = TIMER_CASCADE | TIMER_ENABLE;
 	#endif    
+	
+	DisableIrq(IRQ_TIMER3);
+	EnableIrq(IRQ_TIMER1);
 }
  
-void StopSoundSnemulDS() {
+void StopSound() {
     powerOFF(POWER_SOUND);
     REG_SOUNDCNT = 0;
     TIMERXCNT(0) = 0;
     TIMERXCNT(1) = 0;
+	
+	DisableIrq(IRQ_TIMER1);
+	EnableIrq(IRQ_TIMER3);
 }
 
 void LoadSpc(const uint8 *spc) {
@@ -120,24 +121,11 @@ void SaveSpc(uint8 *spc) {
 //---------------------------------------------------------------------------------
 int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------
-	swiDelay(1);
-	swiDelay(1);
-	swiDelay(1);
-	swiDelay(1);
 	
-	/*			TGDS 1.5 Standard ARM7 Init code start	*/
+	while (!(*((vuint8*)0x04000240) & 0x2));
 	installWifiFIFO();		//use DSWIFI
 	
-	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
-	while (!(*((vuint8*)0x04000240) & (1<<1)));
-	
-	int argBuffer[MAXPRINT7ARGVCOUNT];
-	memset((unsigned char *)&argBuffer[0], 0, sizeof(argBuffer));
-	writeDebugBuffer7("TGDS ARM7.bin Boot OK! ", 0, (int*)&argBuffer[0]);
-	
-	/*			TGDS 1.5 Standard ARM7 Init code end	*/
-	
-    playBuffer = (uint16*)ARM7_SOUNDWORK_BASE;
+    playBuffer = (uint16*)0x6000000;
     int i   = 0;
     for (i = 0; i < MIXBUFSIZE * 4; i++) {
         playBuffer[i] = 0;
@@ -146,9 +134,11 @@ int main(int _argc, sint8 **_argv) {
 	update_spc_ports(); //APU Ports from SnemulDS properly binded with Assembly APU Core
     ApuReset();
     DspReset();
-    SetupSoundSnemulDS();
+    SetupSound();
     
-    while (1) {
+    while (1) {   
+        
+		
 		if(SPC_disable == false){
             int cyclesToExecute, samplesToMix;
 			//if (scanlineCount >= 66) {
@@ -159,23 +149,26 @@ int main(int _argc, sint8 **_argv) {
 			//	samplesToMix = 16;
 			//	cyclesToExecute = spcCyclesPerSec / (32000 / 2);
 			//}
-			cyclesToExecute = spcCyclesPerSec / (32000 / 8);
+			cyclesToExecute = spcCyclesPerSec / (32000 / 2);
 			ApuExecute(cyclesToExecute);
 			
-			if (scanlineCount >= 8) {
-				scanlineCount = 0;
-				samplesToMix = 16;
-				if (apuMixPosition + samplesToMix < (MIXBUFSIZE * 2)) {
-					DspMixSamplesStereo(samplesToMix, &playBuffer[apuMixPosition]);
-					apuMixPosition += samplesToMix;
-				}
-				else{
+			if (scanlineCount >= 16) {
+				scanlineCount -= 16;		
+				samplesToMix = 32;
+				if (apuMixPosition + samplesToMix > MIXBUFSIZE * 2) {
+					int tmp = (apuMixPosition + samplesToMix) - (MIXBUFSIZE * 2);
+					if (tmp != samplesToMix) {
+						DspMixSamplesStereo(samplesToMix - tmp, &playBuffer[apuMixPosition]);
+					}
+					samplesToMix = tmp;
 					apuMixPosition = 0;
-				}								
+				}
+				DspMixSamplesStereo(samplesToMix, &playBuffer[apuMixPosition]);
+				apuMixPosition += samplesToMix;								
 			}			
         }
 		else{
-			IPC6->APU_ADDR_ANS = (uint32)0xFF00FF00;
+			getsIPCSharedTGDSSpecific()->APU_ADDR_ANS = (uint32)0xFF00FF00;
 		}
 		
 	}

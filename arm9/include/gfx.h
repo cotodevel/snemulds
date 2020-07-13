@@ -73,7 +73,8 @@ typedef struct {
 	int		CX, CY;	
 } t_GFX_lineInfo;
 
-struct s_gfx{
+struct s_gfx
+{
   int		ScreenWidth, ScreenHeight;
 
   sprite_Info	spr_info[128];
@@ -158,7 +159,7 @@ struct s_gfx{
 
   // Count the number of high and low priority for a line of block (for BG3)
   sint8		BG3TilePriority[64];
-};
+} __attribute__ ((aligned (2))) ;
 
 #endif
 

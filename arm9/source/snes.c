@@ -18,7 +18,7 @@ GNU General Public License for more details.
 #include <malloc.h>
 #include <string.h>
 
-#include "core.h"
+#include "cpu.h"
 #include "snes.h"
 #include "apu.h"
 #include "gfx.h"
@@ -107,9 +107,9 @@ void	reset_CPU()
   CPU.S = 0x1ff;
 
   CPU_init();	
-  PCptr = (u8*)map_memory(CPU.PC, CPU.PB);
+  PCptr = map_memory(CPU.PC, CPU.PB);
   SnesPCOffset = -((sint32)mem_getbaseaddress(CPU.PC, CPU.PB));
-  //printf("PCptr = %08x\n", PCptr);
+  //GUI_printf("PCptr = %08x\n", PCptr);
   CPU.IsBreak = 0;
   CPU.packed = CPU.unpacked = 0;
   
@@ -162,7 +162,8 @@ void	reset_SNES()
     SPC700_emu = 0;
   SPC700_reset();
 */
-  struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
+  struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
+  APU2->counter = 0;
 //  if (CFG.Sound_output) 
   	APU_nice_reset();
 

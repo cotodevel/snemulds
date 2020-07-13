@@ -406,7 +406,7 @@ clearLoop:
 channelLoopback:
     @ Check if active == 0, then next
     ldrb r3, [r0, #ACTIVE_OFFSET]
-    cmp r3, #0
+    cmps r3, #0
     beq nextChannelNothingDone
 
     @ Save the start position of the mix buffer & echo buffer
@@ -580,7 +580,7 @@ noEnvelopeUpdate:
     @ Decode the sample block, r0 = DspChannel*
     stmfd sp!, {r0-r3, r14}
     bl DecodeSampleBlock
-    cmp r0, #1
+    cmps r0, #1
     ldmfd sp!, {r0-r3, r14}
     beq nextChannel
 
@@ -653,7 +653,7 @@ nextChannelNothingDone:
     ldrb r3, channelNum
     add r3, r3, #1
     strb r3, channelNum
-    cmp r3, #8
+    cmps r3, #8
     blt channelLoopback
 
 @ This is the end of normal mixing

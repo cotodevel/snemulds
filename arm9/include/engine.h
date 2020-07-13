@@ -20,32 +20,13 @@ GNU General Public License for more details.
 
 #include "dsregs.h"
 #include "typedefsTGDS.h"
-#include "opcodes.h"
-#include "common.h"
-#include "fs.h"
-#include "gfx.h"
-#include "apu.h"
-#include "cfg.h"
-#include "core.h"
-#include "ppu.h"
-#include "conf.h"
-#include "memmap.h"
-#include "guiTGDS.h"
-#include "ipcfifoTGDSUser.h"
-#include "nds_cp15_misc.h"
-#include "fatfslayerTGDS.h"
-#include "about.h"
-#include "utilsTGDS.h"
-#include "clockTGDS.h"
-#include "dswnifi_lib.h"
+
+#endif
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-extern int ThisSNESFrameCount;
-extern int guestSNESFrameCount;
 
 extern void writeSRAM(int offset, uint8* src, int size);
 extern void readSRAM(int offset, uint8* dest, int size);
@@ -55,13 +36,16 @@ extern int saveSRAM();
 extern uint8 interrupted;
 
 extern int initSNESEmpty();
+extern int OldPC;
+extern int go();
 extern void show_opcode(sint8 *buf, uint8 opcode, int pc, int pb, unsigned short flags);
 extern int trace_CPU();
 extern void trace_CPUFast();
-extern int changeROM(sint8 *ROM, int size);
+
+
+//true == nifi awaits in VblankEnd, false = nifi running N vcounter lines and hasn't reached vblankEnd yet
+extern bool nifiVblankEndWait;
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

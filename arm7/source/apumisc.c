@@ -9,18 +9,18 @@
 uint8 apuShowRom;
 
 void ApuWriteControlByte(uint8 byte) {
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
-	uint8 orig = APU_MEM[APU_CONTROL_REG];
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
+    uint8 orig = APU_MEM[APU_CONTROL_REG];
     if ((orig & 0x1) == 0 && (byte & 0x1) != 0) {
-        APU2->T0Count = 0;
+        APU2->TIM0 = 0;
         APU_MEM[APU_COUNTER0] = 0;
 	}
     if ((orig & 0x2) == 0 && (byte & 0x2) != 0) {
-        APU2->T1Count = 0;    	
+        APU2->TIM1 = 0;    	
         APU_MEM[APU_COUNTER1] = 0;
 	}
     if ((orig & 0x4) == 0 && (byte & 0x4) != 0) {
-        APU2->T2Count = 0;    	
+        APU2->TIM2 = 0;    	
         APU_MEM[APU_COUNTER2] = 0;
 	}
 
@@ -28,8 +28,8 @@ void ApuWriteControlByte(uint8 byte) {
 		// Clear port 0 and 1
 		APU_MEM[0xF4] = 0;
 		APU_MEM[0xF5] = 0;
-        IPC6->PORT_SNES_TO_SPC[0] = 0;
-        IPC6->PORT_SNES_TO_SPC[1] = 0;
+        getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[0] = 0;
+        getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[1] = 0;
 //        PORT_SPC_TO_SNES[0] = 0;
 //        PORT_SPC_TO_SNES[1] = 0;
 	}
@@ -37,8 +37,8 @@ void ApuWriteControlByte(uint8 byte) {
 		// Clear port 0 and 1
 		APU_MEM[0xF6] = 0;
 		APU_MEM[0xF7] = 0;
-        IPC6->PORT_SNES_TO_SPC[2] = 0;
-        IPC6->PORT_SNES_TO_SPC[3] = 0;
+        getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[2] = 0;
+        getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[3] = 0;
 //        PORT_SPC_TO_SNES[2] = 0;
 //        PORT_SPC_TO_SNES[3] = 0;
 	}
@@ -64,15 +64,14 @@ void ApuPrepareStateAfterReload() {
 /*    APU_MEM[APU_COUNTER0] &= 0xf;
     APU_MEM[APU_COUNTER1] &= 0xf;
     APU_MEM[APU_COUNTER2] &= 0xf;*/
-	
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&IPC6->APU2);
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
 	int i=0;
-    for (i = 0; i < 4; i++) IPC6->PORT_SNES_TO_SPC[i] = APU_MEM[0xF4 + i];
+    for (i = 0; i < 4; i++) getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[i] = APU_MEM[0xF4 + i];
 
 	// archeide
-	APU2->T0Count = 0;
-	APU2->T1Count = 0;
-	APU2->T2Count = 0;	
+	APU2->TIM0 = 0;
+	APU2->TIM1 = 0;
+	APU2->TIM2 = 0;	
 
 	apuShowRom = APU_MEM[APU_CONTROL_REG] >> 7;
     if (apuShowRom) {

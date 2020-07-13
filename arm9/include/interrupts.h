@@ -34,6 +34,7 @@ USA
 #include "conf.h"
 #include "frontend.h"
 #include "main.h"
+#include "font_8x8_uv.h"
 #include "ppu.h"
 #include "keypadTGDS.h"
 #include "interrupts.h"

@@ -45,7 +45,7 @@ CheckBranch:
 	
 	cmp	r0, APU_PC @ If PC = WaitAddres We have detected an timer loop
 	
-	@ldreq r1, =0x27E0004	@APU2.T1Count
+	@ldreq r1, =0x27E0004	@APU2.T1
 	ldreq r1,=APU_T1_ASM_ADDR
 	ldreq r1,[r1]
 	
@@ -145,13 +145,13 @@ doneDispatch:
 @ Out: r0 - byte read (in bits 0..7), r1 - unchanged, r2 - trashed, r12 - unchanged, flags - trashed
 .MACRO readMem8
     ldrb r0, [APU_RAMBASE, r12]
-    cmp r12, #0xff
+    cmps r12, #0xff
     blle zeroPageMemRead8
 .ENDM
 
 .MACRO readMem8NoCheck
     ldrb r0, [APU_RAMBASE, r12]
-    cmp r12, #0xff
+    cmps r12, #0xff
     blle zeroPageMemRead8
 .ENDM
 
@@ -160,7 +160,7 @@ doneDispatch:
 .MACRO writeMem8
     mov r2, #0x40 << 16
     add r2, r2, r12, lsl #16
-    cmp r2, #0x140 << 16
+    cmps r2, #0x140 << 16
     bllo zeroAndHighPageMemWrite8
     strb r0, [APU_RAMBASE, r12]
 .ENDM
@@ -169,7 +169,7 @@ doneDispatch:
 @ In: r0 - value to write (in bits 0.. 7), r12 - address to read
 @ Out: r0 - ???, r1 - unchanged, r2 - trashed, r12 - unchanged, flags - trashed
 .MACRO writeMem8ZeroPage
-    cmp r12, #0xff
+    cmps r12, #0xff
     blle zeroPageMemWrite8
     strb r0, [APU_RAMBASE, r12]
 .ENDM
@@ -421,7 +421,7 @@ zeroAndHighPageMemWrite8:
 .MACRO branchDpBitSet bit
     loadDp
     readMem8
-    tst r0, #1 << \bit
+    tsts r0, #1 << \bit
 
     ldrsb r0, [APU_PC], #1
     addne APU_PC, APU_PC, r0
@@ -433,7 +433,7 @@ zeroAndHighPageMemWrite8:
 .MACRO branchDpBitClear bit
     loadDp
     readMem8
-    tst r0, #1 << \bit
+    tsts r0, #1 << \bit
 
     ldrsb r0, [APU_PC], #1
     addeq APU_PC, APU_PC, r0
@@ -1948,7 +1948,7 @@ opCF:
 //   DIV      YA,X      9E    1    12    Q:A B:Y <- YA / X       NV..H..Z.
 op9E:
     mov r1, APU_REG_X, lsr #24
-    cmp r1, #0
+    cmps r1, #0
     bne 1f
 
     @ Divide by zero, set NV, clear Z
@@ -1960,7 +1960,7 @@ op9E:
 1:
     @ Normal divide, Y = modulo result, A = result
     bic APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG
-    cmp APU_REG_Y, APU_REG_A
+    cmps APU_REG_Y, APU_REG_A
     @ Set V flag when Y >= A
     orrge APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG
 
@@ -2013,7 +2013,7 @@ op2F:
 //   BEQ     rel        F0    2    2/4  branch on Z=1                  ...
 opF0:
     ldrsb r0, [APU_PC], #1
-    tst APU_NZ, #0xFF
+    tsts APU_NZ, #0xFF
     addeq APU_PC, APU_PC, r0
     addeq APU_CYCLES, APU_CYCLES, #2 << CYCLE_SHIFT
 .ifeq CheckIntrLoop-1
@@ -2025,7 +2025,7 @@ opF0:
 //   BNE     rel        D0    2    2/4  branch on Z=0                  ...
 opD0:
     ldrsb r0, [APU_PC], #1
-    tst APU_NZ, #0xFF
+    tsts APU_NZ, #0xFF
     addne APU_PC, APU_PC, r0
     addne APU_CYCLES, APU_CYCLES, #2 << CYCLE_SHIFT
 .ifeq CheckIntrLoop-1
@@ -2037,7 +2037,7 @@ opD0:
 //   BCS     rel        B0    2    2/4  branch on C=1                  ...
 opB0:
     ldrsb r0, [APU_PC], #1
-    tst APU_CYCLES, #CYCLES_C_FLAG
+    tsts APU_CYCLES, #CYCLES_C_FLAG
     addne APU_PC, APU_PC, r0
     addne APU_CYCLES, APU_CYCLES, #2 << CYCLE_SHIFT
 .ifeq CheckIntrLoop-1
@@ -2049,7 +2049,7 @@ opB0:
 //   BCC     rel        90    2    2/4  branch on C=0                  ...
 op90:
     ldrsb r0, [APU_PC], #1
-    tst APU_CYCLES, #CYCLES_C_FLAG
+    tsts APU_CYCLES, #CYCLES_C_FLAG
     addeq APU_PC, APU_PC, r0
     addeq APU_CYCLES, APU_CYCLES, #2 << CYCLE_SHIFT
 .ifeq CheckIntrLoop-1
@@ -2061,7 +2061,7 @@ op90:
 //   BVS     rel        70    2    2/4  branch on V=1                  ...
 op70:
     ldrsb r0, [APU_PC], #1
-    tst APU_CYCLES, #CYCLES_V_FLAG
+    tsts APU_CYCLES, #CYCLES_V_FLAG
     addne APU_PC, APU_PC, r0
     addne APU_CYCLES, APU_CYCLES, #2 << CYCLE_SHIFT
 .ifeq CheckIntrLoop-1
@@ -2073,7 +2073,7 @@ op70:
 //   BVC     rel        50    2    2/4  branch on V=0                  ...
 op50:
     ldrsb r0, [APU_PC], #1
-    tst APU_CYCLES, #CYCLES_V_FLAG
+    tsts APU_CYCLES, #CYCLES_V_FLAG
     addeq APU_PC, APU_PC, r0
     addeq APU_CYCLES, APU_CYCLES, #2 << CYCLE_SHIFT
 .ifeq CheckIntrLoop-1
@@ -2085,7 +2085,7 @@ op50:
 //   BMI     rel        30    2    2/4  branch on N=1                  ...
 op30:
     ldrsb r0, [APU_PC], #1
-    tst APU_NZ, #0x80
+    tsts APU_NZ, #0x80
     addne APU_PC, APU_PC, r0
     addne APU_CYCLES, APU_CYCLES, #2 << CYCLE_SHIFT
 .ifeq CheckIntrLoop-1
@@ -2097,7 +2097,7 @@ op30:
 //   BPL     rel        10    2    2/4  branch on N=0                  ...
 op10:
     ldrsb r0, [APU_PC], #1
-    tst APU_NZ, #0x80
+    tsts APU_NZ, #0x80
     addeq APU_PC, APU_PC, r0
     addeq APU_CYCLES, APU_CYCLES, #2 << CYCLE_SHIFT
 .ifeq CheckIntrLoop-1
@@ -2133,7 +2133,7 @@ op2E:
     loadDp
     readMem8
     ldrsb r1, [APU_PC], #1
-    cmp r0, APU_REG_A, lsr #24
+    cmps r0, APU_REG_A, lsr #24
     addne APU_PC, APU_PC, r1
     addne APU_CYCLES, APU_CYCLES, #2 << CYCLE_SHIFT
 .ifeq CheckIntrLoop-1
@@ -2147,7 +2147,7 @@ opDE:
     loadDpOfs APU_REG_X
     readMem8
     ldrsb r1, [APU_PC], #1
-    cmp r0, APU_REG_A, lsr #24
+    cmps r0, APU_REG_A, lsr #24
     addne APU_PC, APU_PC, r1
     addne APU_CYCLES, APU_CYCLES, #2 << CYCLE_SHIFT
 .ifeq CheckIntrLoop-1
@@ -2310,15 +2310,15 @@ op6D:
 //   PUSH     PSW       0D    1     4    push PSW to stack       .........
 op0D:
     and r0, APU_NZ, #1 << 7     @ N flag
-    tst APU_CYCLES, #CYCLES_V_FLAG
+    tsts APU_CYCLES, #CYCLES_V_FLAG
     orrne r0, r0, #1 << 6       @ V flag
-    tst APU_DP, #0x100
+    tsts APU_DP, #0x100
     orrne r0, r0, #1 << 5       @ Dp flag
-    tst APU_CYCLES, #CYCLES_H_FLAG
+    tsts APU_CYCLES, #CYCLES_H_FLAG
     orrne r0, r0, #1 << 3       @ H flag
-    tst APU_NZ, #0xFF
+    tsts APU_NZ, #0xFF
     orreq r0, r0, #1 << 1       @ Z flag
-    tst APU_CYCLES, #CYCLES_C_FLAG
+    tsts APU_CYCLES, #CYCLES_C_FLAG
     orrne r0, r0, #1            @ C flag
     push8
     fetch 4
@@ -2350,15 +2350,15 @@ op8E:
     pop8
     @ Set CVH flags
     bic APU_CYCLES, APU_CYCLES, #(CYCLES_C_FLAG | CYCLES_V_FLAG | CYCLES_H_FLAG)
-    tst r0, #1 << 6
+    tsts r0, #1 << 6
     orrne APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG
-    tst r0, #1
+    tsts r0, #1
     orrne APU_CYCLES, APU_CYCLES, #CYCLES_C_FLAG
-    tst r0, #1 << 3
+    tsts r0, #1 << 3
     orrne APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG
     @ Set DP
     mov APU_DP, #0
-    tst r0, #1 << 5
+    tsts r0, #1 << 5
     movne APU_DP, #0x100
     @ Set NZ
     and APU_NZ, r0, #0x82
@@ -2520,7 +2520,7 @@ opCA:
     @ Clear the top 3 bits of the address bit
     bic r12, r12, #0xE000
     readMem8NoCheck
-    tst APU_CYCLES, #CYCLES_C_FLAG
+    tsts APU_CYCLES, #CYCLES_C_FLAG
     mov r2, #1
     biceq r0, r0, r2, lsl r1
     orrne r0, r0, r2, lsl r1

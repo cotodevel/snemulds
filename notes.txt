@@ -1,47 +1,6 @@
-notes 10/05/2020:
-
-SnemulDS doesn't boot or freezes before booting up:
-
-- Check non-aligned built ITCM code
-- Check for ITCM code conflicts (mostly toolchaingenericDS-side ITCM code which may cause lockups, thus these must be removed/moved to other memory)
-- If anything fails, move timing dependant code (such as DMA-wait calls) to EWRAM, because caches are enabled for i/d-tcm code and likely to cause issues, using the default MPU settings.
-- Check other notes
-
---
-
-notes 06/04/2018:
-
 special_nds_arm_ld_crt0.xxx in /arm9 uses ARM9 WRAM as a whole new section to run very fast data... like the ppu code!
+
 snes rendering is going to be faster now.
 
---
-
-notes 11/01/2018:
-
-1)
-For compatibility on older cards, the --no-gc-sections must be added (for both ARM7 and ARM9 NDS ARM Cores). Perhaps it's an issue with unaligned stubbed leftovers from
-the building sessions. But hey, it's kept. 50~KB shouldn't matter much here.
-
-2)
--Os is preferred, as -02 it cause slower gameplay and takes a lot of space.
-
-3)
-Nifi works, but the multiplayer is not implemented. Todo
-
-4)
-The .ZIP routine is slow because I use a page buffer to decompress a portion of the file, and then it is written back. If the driver in your flashcard do not support DMA on writes
-it will be slow. Be patient.
-
+06/04/2018
 Coto.
-
---
-
-notes 02/24/2019:
-
-dswnifi: will disconnect after a while but it actually works. There are some games that read the first bit in the DMA port for joypad access, and the joypad bits are subsequently built,
-thus, games like donkey kong country 1 might not work correctly in local nifi.
-
-Only tested P1 on both DS
-
-I already added code that detects wether host/guest are in the same frame count (as N SNES scanlines will increase one snes frame), also added code where the GUEST NDS PPU syncs from HOST NDS PPU
-VCOUNT line (or scanline). There is still joypad input lag thus, I have to build a good joypad input predictor. (sort of what NesDS does already in NIFI).

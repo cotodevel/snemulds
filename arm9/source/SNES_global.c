@@ -15,22 +15,44 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#ifndef __main_h__
-#define __main_h__
+#include "gfx.h"
+#include "apu.h"
+#include "cfg.h"
 
+#include "cpu.h"
+#include "core.h"
+#include "engine.h"
+#include "apu.h"
+#include "ppu.h"
+#include "main.h"
+#include "conf.h"
+#include "fs.h"
+#include "memmap.h"
+#include "consoleTGDS.h"
+#include "opcodes.h"
+//#include "common.h"
+#include "ipcfifoTGDSUser.h"
+#include "nds_cp15_misc.h"
 #include "fatfslayerTGDS.h"
+#include "about.h"
 #include "utilsTGDS.h"
+#include "clockTGDS.h"
+#include "snes.h"
 
-#endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//__attribute__((section(".dtcm")))
+struct s_cpu	CPU;
+__attribute__((section(".arm9sharedwram")))
+struct s_gfx	GFX;
+struct s_cfg	CFG;
+__attribute__((section(".arm9sharedwram")))
+struct s_snes	SNES;
+__attribute__((section(".dtcm")))
+struct s_snescore	SNESC;
 
-extern int argc;
-extern sint8 **argv;
-extern int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]);
 
-#ifdef __cplusplus
-}
-#endif
+__attribute__((section(".dtcm")))
+uint16	PPU_PORT[0x90]; // 2100 -> 2183
+__attribute__((section(".dtcm")))
+uint16	DMA_PORT[0x180]; // 4200 -> 437F
+

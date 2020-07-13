@@ -39,140 +39,67 @@ GNU General Public License for more details.
 #ifndef __gui_console_snemulds_h__
 #define __gui_console_snemulds_h__
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
-#include <stdarg.h>
-#include <malloc.h>
-#include <ctype.h>
-#include "common.h"
-#include "ipcfifoTGDSUser.h"
-
-#include "typedefsTGDS.h"
-#include "dsregs.h"
 #include "consoleTGDS.h"
-#include "core.h"
-#include "opcodes.h"
-#include "snapshot.h"
-#include "ppu.h"
-
-#include "guiTGDS.h"
+#include "videoTGDS.h"
+#include "dswnifi_lib.h"
+#include "dswnifi.h"
 #include "fs.h"
-#include "common.h"
-
 #include "gfx.h"
 #include "cfg.h"
 #include "apu.h"
-#include "biosTGDS.h"
-
 #include "conf.h"
-#include "gui_widgets.h"
-#include "InterruptsARMCores_h.h"
-#include "about.h"
-#include "dmaTGDS.h"
-
-#include "posixHandleTGDS.h"
+#include "spifwTGDS.h"
+#include "main.h"
+#include "timerTGDS.h"
 #include "fatfslayerTGDS.h"
-#include "keypadTGDS.h"
-#include "videoTGDS.h"
+#include "utilsTGDS.h"
+#include "dmaTGDS.h"
+#include "ipcfifoTGDSUser.h"
 
-//SnemulDS GUI Colors
+//GUI defs
 
-#define GUI_PAL			0
-#define GUI_BLACK		(GUI_PAL+0)
-#define GUI_DARKGREY2	(GUI_PAL+1)
-#define GUI_DARKGREY	(GUI_PAL+2)
-#define GUI_GREY		(GUI_PAL+3)
+#define GUI_EVENT			1
+#define GUI_DRAW			2
+#define GUI_COMMAND			3
 
-#define GUI_DARKRED		(GUI_PAL+4)
-#define GUI_RED			(GUI_PAL+5)
-#define GUI_LIGHTRED	(GUI_PAL+6)
+#define GUI_EVENT_STYLUS	100
+#define GUI_EVENT_BUTTON	101
 
-#define GUI_DARKGREEN	(GUI_PAL+12)
-#define GUI_GREEN		(GUI_PAL+13)
-#define GUI_LIGHTGREEN	(GUI_PAL+14)
+#define GUI_EVENT_ENTERZONE	110
+#define GUI_EVENT_LEAVEZONE	111
+#define	GUI_EVENT_FOCUS		112
+#define	GUI_EVENT_UNFOCUS	113
 
-#define GUI_DARKBLUE	(GUI_PAL+8)
-#define GUI_BLUE		(GUI_PAL+9)
-#define GUI_LIGHTBLUE	(GUI_PAL+10)
+#define	EVENT_STYLUS_PRESSED 	1000
+#define	EVENT_STYLUS_RELEASED	1001
+#define	EVENT_STYLUS_DRAGGED 	1002
 
-#define GUI_DARKYELLOW	(GUI_PAL+17)
-#define GUI_YELLOW		(GUI_PAL+18)
-#define GUI_LIGHTYELLOW	(GUI_PAL+19)
+#define	EVENT_BUTTON_ANY	 	2000
+#define	EVENT_BUTTON_PRESSED	2001
+#define	EVENT_BUTTON_RELEASED	2002
+#define	EVENT_BUTTON_HELD	 	2003
 
-#define GUI_WHITE		39
-#define GUI_LIGHTGREY	(GUI_WHITE-2)
-#define GUI_LIGHTGREY2	(GUI_WHITE-1)
+#define IMG_IN_MEMORY	0
+#define IMG_IN_VRAM		1
+#define IMG_NOLOAD		2
 
-#define IDS_OK				10
-#define IDS_CANCEL			11
-#define IDS_APPLY			12
-#define IDS_SAVE			13
+#define GUI_TEXT_ALIGN_CENTER	0
+#define GUI_TEXT_ALIGN_LEFT		1
+#define GUI_TEXT_ALIGN_RIGHT	2
 
-#define IDS_SELECT_ROM		20
-#define IDS_LOAD_STATE		21
-#define IDS_SAVE_STATE		22
-#define IDS_OPTIONS			23
-#define IDS_JUKEBOX			24
-#define IDS_ADVANCED		25
+#define GUI_ST_PRESSED			1
+#define GUI_ST_SELECTED			2
+#define GUI_ST_FOCUSED			4
+#define GUI_ST_HIDDEN			8
+#define GUI_ST_DISABLED			16
 
-#define IDS_RESET			27
-#define IDS_SAVE_SRAM		28
+#define GUI_HANDLE_JOYPAD		1
 
-#define IDS_SOUND			30
+#define GUI_PARAM(a) (void *)(a)
+#define GUI_PARAM2(a, b) (void *)((((uint16)(a)) << 16) | ((uint16)(b)))
+#define GUI_PARAM3(s, n, c) (void *)((s) | ((n) << 16) | ((c) << 24))
 
-#define IDS_SPEED			32
-
-#define IDS_SCREEN			36
-#define IDS_LAYERS			37
-
-#define IDS_HACKS			38
-
-#define IDS_HUD				44
-#define IDS_YSCROLL			49
-#define IDS_SCALING			54
-
-#define IDS_LAYERS_TITLE	60
-
-#define IDS_LAYERS_HELP		62
-#define IDS_AUTO_ORDER		65
-#define IDS_LAYER			66
-#define IDS_SPRITES			67
-
-#define IDS_OFF				69
-#define IDS_DIGIT			70
-
-#define IDS_CHECK			80
-#define IDS_AUTO_SRAM		82
-
-#define IDS_USE_MEM_PACK	85
-
-#define IDS_TITLE			90
-#define IDS_SIZE			91
-#define IDS_ROM_TYPE		92
-#define IDS_COUNTRY			93
-
-#define IDS_GFX_CONFIG		96
-#define IDS_PRIO_PER_TILE	97
-
-#define IDS_NONE			98
-#define IDS_BG1				99
-#define IDS_BG2				100
-
-#define IDS_BLOCK_PRIO		101
-
-#define IDS_GC_ON			102
-#define IDS_GC_OFF			103
-
-#define IDS_BLANK_TILE		104
-#define IDS_FIX_GRAPHICS	105
-#define IDS_GC_BG			106
-#define IDS_GC_BG_LOW		107
-#define IDS_GC_SPRITES		108
-
-#define IDS_MULTIPLAYER_MODE		109
-
+#define _STR(x) GUI.string[x]
 
 #endif
 
@@ -204,22 +131,25 @@ extern int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg);
 extern t_GUIScreen *buildOptionsMenu();
 extern int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg);
 extern int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg);
+//read rom from (path)touchscreen:output rom -> CFG.ROMFile
+extern void GUI_getROM(sint8 *rompath);
 extern void GUI_deleteROMSelector();
 extern void GUI_createMainMenu();
 extern void GUI_getConfig();
 extern void	GUI_showROMInfos(int size);
 
+
 //Definition that overrides the weaksymbol expected from toolchain to init console video subsystem
-extern ConsoleInstance * getProjectSpecificVRAMSetup();
+extern vramSetup * getProjectSpecificVRAMSetup();
+extern vramSetup * SNEMULDS_2DVRAM_SETUP();
 
 //Custom console VRAM layout setup
 
 //1) VRAM Layout
-extern bool InitProjectSpecificConsole(ConsoleInstance * ConsoleInstanceInst);
+extern bool InitProjectSpecificConsole();
 
 //2) Uses subEngine: VRAM Layout -> Console Setup
-extern ConsoleInstance * SNEMULDS_2DVRAM_SETUP();
-
+extern vramSetup * SNEMULDS_2DVRAM_SETUP();
 extern sint8*  g_snemulds_str_jpn[];
 extern sint8*  g_snemulds_str_eng[];
 extern sint8*  g_snemulds_str_fr[];
@@ -231,23 +161,19 @@ extern sint8*  g_snemulds_str_cat[];
 extern sint8*  g_snemulds_str_pol[];
 extern sint8*  g_snemulds_str_nl[];
 extern sint8*  g_snemulds_str_dan[];
-
-extern int selectSong(sint8 *name);	//Jukebox load SPC method
+extern int selectSong(sint8 *name);
 extern void	CPU_unpack();
+extern void	SNES_update();
 extern void	PPU_update();
+extern void	CPU_pack();
+extern int loadSRAM();
+extern int saveSRAM();
 extern void PPU_ChangeLayerConf(int i);
 extern void saveOptionsToConfig(sint8 *section);
 extern void	APU_clear();
-extern void GUI_setLanguage(int lang);
-extern int GUI_getStrWidth(t_GUIZone *zone, sint8 *text);
 extern int		GUI_getZoneTextHeight(t_GUIZone *zone);
 extern int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text);
-extern void		GUI_align_printf(int flags, sint8 *fmt, ...);
-extern t_GUIFont trebuchet_9_font;
-
 extern void GUI_getROMFirstTime(sint8 *rompath);
-extern void GUI_getROMIterable(sint8 *rompath);
-extern void GUI_getSPCIterable(sint8 *rompath);
 
 #ifdef __cplusplus
 }
