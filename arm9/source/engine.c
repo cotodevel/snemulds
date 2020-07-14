@@ -55,6 +55,7 @@ GNU General Public License for more details.
 #include "about.h"
 #include "utilsTGDS.h"
 #include "clockTGDS.h"
+#include "keypadTGDS.h"
 
 
 //struct s_snes SNES;
@@ -165,13 +166,12 @@ int	changeROM(char *ROM, int size)
     loadSRAM();	
 }
 
-int initSNESEmpty()
-{
-	screen_mode = 0;
+int initSNESEmpty(){
 	CFG.BG3Squish = 0;
 	CFG.WaitVBlank = 0;
 	CFG.YScroll = 0;
 	CFG.CPU_speedhack = 1;
+	CFG.LocalPlayMode = 0; //0 == idle / 1 == local: host / 2 == local: guest
 	//CFG.TileMode = 1;
 	CFG.Scaled = 0;
 	CFG.LayersConf = 0;
@@ -198,9 +198,10 @@ int initSNESEmpty()
 	//SNESC.BSRAM = (uchar *)malloc(0x8000);
 	SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
 	init_GFX();
-	GFX.Graph_enabled = 1;
 
-	//  GUI_printf("Init OK...\n");
+	GFX.Graph_enabled = 1;
+	
+	//  printf("Init OK...\n");
 	return 0;
 }
 	

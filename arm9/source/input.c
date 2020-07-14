@@ -17,8 +17,6 @@
 #include "videoTGDS.h"
 #include "keypadTGDS.h"
 
-//extern touchPosition superTouchReadXY();
-
 extern u32 keys;
 
 uint32	joypad_conf_mode = 0;
@@ -33,15 +31,20 @@ int	setBacklight(int flags)
 	SendArm7Command(8 | (flags << 16));
 }
 */
-int myLCDSwap()
-{
-	SWAP_LCDS();
+
+int SnemulDSLCDSwap(){
+	bool isDirectFramebuffer = true;
+	bool disableTSCWhenTGDSConsoleTop = true;
+	bool SaveConsoleContext = false;	//no effect because directFB == true
+	u8 * FBSaveContext = NULL;			//no effect because directFB == true
+	TGDSLCDSwap(disableTSCWhenTGDSConsoleTop, isDirectFramebuffer, SaveConsoleContext, FBSaveContext);
+	ToggleOnOffConsoleBacklight();
 	if (GUI.hide)
 	{
 		if (REG_POWERCNT & POWER_SWAP_LCDS)
-			setBacklight(PM_BACKLIGHT_TOP);
+			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
 		else
-			setBacklight(PM_BACKLIGHT_BOTTOM);
+			setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 	}
 	return 0;
 }
@@ -49,9 +52,7 @@ int myLCDSwap()
 int get_joypad()
 {
 	int res = 0;
-
-//#define KEYS_CUR (( ((~REG_KEYINPUT)&0x3ff) | (((~IPC->buttons)&3)<<10) | \
-//	 			 (((~IPC->buttons)<<6) & (KEY_TOUCH|KEY_LID) ))^KEY_LID)	
+	scanKeys();
 	keys = keysPressed();
 
 #if 0
@@ -73,12 +74,13 @@ int get_joypad()
 			}
 			if ((keys & KEY_RIGHT))
 			{
+				struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 				/* LOG("%04x %04x %02x %02x %04x %04x\n", CPU.PC,
 				(uint32)((sint32)PCptr+(sint32)SnesPCOffset),
-				getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[1], PORT_SPC_TO_SNES[1],
+				TGDSIPC->PORT_SNES_TO_SPC[1], PORT_SPC_TO_SNES[1],
 				 (*(uint32*)(0x27E0000)) & 0xFFFF, *(uint16 *)(APU_RAM_ADDRESS+0x18));
 				*/
-				//getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[1] = 0x44; 		
+				//TGDSIPC->PORT_SNES_TO_SPC[1] = 0x44; 		
 			}
 			
 		}	
@@ -91,11 +93,8 @@ int get_joypad()
 			if (joypad_conf_mode)
 				return 0;			
 			CFG.mouse ^= 1;
-/*			lcdSwap();
-			if (GUI.hide)
-				setBacklight(CFG.mouse ? PM_BACKLIGHT_BOTTOM : PM_BACKLIGHT_TOP);*/
-			myLCDSwap();
 			joypad_conf_mode = 1;
+			
 			return 0;			
 		}
 		if (keys & KEY_RIGHT)
@@ -103,10 +102,7 @@ int get_joypad()
 			if (joypad_conf_mode)
 				return 0;			
 			CFG.mouse = 0;
-/*			lcdSwap();
-			if (GUI.hide)
-				setBacklight(CFG.mouse ? PM_BACKLIGHT_BOTTOM : PM_BACKLIGHT_TOP);*/
-			myLCDSwap();			
+			SnemulDSLCDSwap();			
 			joypad_conf_mode = 1;
 			return 0;				
 		}		
@@ -212,21 +208,18 @@ int get_joypad()
 			}  
 		}
 
-		//touchPosition touchXY;
-		//touchXY = superTouchReadXY();
-		
-		if (keysHeld() & KEY_TOUCH)
-		{		
+		//Touchscreen Events
+		if (keysHeld() & KEY_TOUCH){
+			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 			int tx, ty;
-
-			tx = getsIPCSharedTGDS()->touchXpx;
+			tx = TGDSIPC->touchXpx;
 			
 			if (CFG.Scaled == 0) // No scaling
-				ty = getsIPCSharedTGDS()->touchYpx+GFX.YScroll;
+				ty = TGDSIPC->touchYpx+GFX.YScroll;
 			else if (CFG.Scaled == 1) // Half scaling
-				ty = getsIPCSharedTGDS()->touchYpx*208/192+12; // FIXME			
+				ty = TGDSIPC->touchYpx*208/192+12; // FIXME			
 			else if (CFG.Scaled == 2) // Full screen
-				ty = getsIPCSharedTGDS()->touchYpx*224/192;
+				ty = TGDSIPC->touchYpx*224/192;
 			
 			if (CFG.MouseMode == 0)
 			{
@@ -253,7 +246,6 @@ int get_joypad()
 			}
 			else
 				SNES.mouse_b =  mouse_cur_b;
-		
 		}
 		else
 		SNES.mouse_b =  0;
@@ -264,20 +256,23 @@ int get_joypad()
 
 
 
-//new
+__attribute__((section(".itcm")))
 uint16 read_joypad1() {
 	return (uint16)(DMA_PORT[0x18] | (DMA_PORT[0x19] << 8));
 }
 
+__attribute__((section(".itcm")))
 uint16 read_joypad2() {
 	return (uint16)(DMA_PORT[0x1a] | (DMA_PORT[0x1b] << 8));
 }
 
+__attribute__((section(".itcm")))
 void write_joypad1(uint16 bits){
 	DMA_PORT[0x18] = (bits&0xff);
 	DMA_PORT[0x19] = ((bits>>8)&0xff);
 }
 
+__attribute__((section(".itcm")))
 void write_joypad2(uint16 bits){
 	DMA_PORT[0x1a] = (bits&0xff);
 	DMA_PORT[0x1b] = ((bits>>8)&0xff);

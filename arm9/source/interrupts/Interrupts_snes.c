@@ -120,7 +120,7 @@ __attribute__((section(".itcm")))
 void screenLidHasOpenedhandlerUser(){
 	//if console top screen, shut off console
 	if(GUI.consoleAtTopScreen == true){
-		//detectAndTurnOffConsole();	//todo
+		detectAndTurnOffConsole();
 	}
 }
 

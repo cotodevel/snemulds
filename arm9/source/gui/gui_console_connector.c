@@ -177,6 +177,10 @@ bool InitProjectSpecificConsole(){
 	GUI.Palette[39] = RGB8(255, 255, 255); // White
 	
 	InitializeConsole(DefaultSessionConsole);
+	
+	GUI.consoleAtTopScreen = false;	//GUI console at bottom screen
+	GUI.consoleBacklightOn = true;	//Backlight On for console
+	
 	return true;
 }
 
@@ -1120,9 +1124,11 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		}		
 		if (param == 7) // HideGUI
 		{
+			/*
 			GUI.hide = 1;
 			powerOFF(POWER_2D_B);
 			setBacklight(PM_BACKLIGHT_TOP);
+			*/
 		}
 		return 1;
 	}
@@ -1252,6 +1258,7 @@ void GUI_createMainMenu(){
 void GUI_getConfig(){
 	CFG.GUISort = get_config_int("GUI", "FileChooserSort", 1);
 	CFG.Language = get_config_int("GUI", "Language", -1);
+	CFG.TopScreenEmu = get_config_int("GUI", "TopScreen", 1);
 	
 	if (CFG.Language != -1)
 		GUI_setLanguage(CFG.Language);

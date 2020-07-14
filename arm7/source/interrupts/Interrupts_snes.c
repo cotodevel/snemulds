@@ -10,6 +10,7 @@
 #include "main.h"
 #include "mixrate.h"
 #include "apu_shared.h"
+#include "biosTGDS.h"
 
 //User Handler Definitions
 
@@ -127,7 +128,7 @@ void VblankUser(){
 		TIMER3_DATA = 0;
 		TIMER3_CR = TIMER_CASCADE | TIMER_ENABLE;
 	#endif
-	
+	handleARM7SVC();	/* Do not remove, handles TGDS services */
 }
 
 #ifdef ARM9

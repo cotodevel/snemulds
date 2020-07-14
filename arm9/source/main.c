@@ -42,29 +42,15 @@
 #include "dswnifi_lib.h"
 #include "dswnifi.h"
 #include "ipcfifoTGDSUser.h"
-
-//#define USE_EMUL
+#include "eventsTGDS.h"
 
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
 
 uint32 screen_mode;
 int APU_MAX = 262;
 //volatile int h_blank;
-
-
 u32 keys;
 
-typedef struct s_Options
-{
-	uint8 BG3Squish :2;
-	uint8 SoundOutput :1;
-	uint8 LayersConf :6;
-	uint8 TileMode :1;
-	uint8 BG_Layer :8;
-	uint8 YScroll :2;
-	uint8 WaitVBlank :1;
-	uint8 SpeedHack :3;
-} t_Options;
 
 void applyOptions()
 {
@@ -426,6 +412,11 @@ int loadROM(char *name, int confirm)
 	
 	changeROM(ROM-ROMheader, size);
 	checkConfiguration(name, crc);
+	
+	//Apply topScreen / bottomScreen setting
+	if(CFG.TopScreenEmu == 0){
+		SnemulDSLCDSwap();
+	}
 	
 	return 0;
 }

@@ -416,16 +416,15 @@ void		GUI_drawScreen(t_GUIScreen *scr, void *param)
 
 t_GUIEvent	g_event;
 
-
 int GUI_update()
 {
-	//Async events
 	scanKeys();
 	int new_event = 0;
 	int pressed = keysPressed(); 	// buttons pressed this loop
 	int released = keysReleased();
 	int held = keysHeld();				//touch screen
 	int repeated = keysRepeated();
+	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 	
 	if (GUI.hide)
 	{
@@ -438,39 +437,35 @@ int GUI_update()
 		}
 	}
 	else{
-		if((pressed & KEY_TOUCH) && !(held & KEY_TOUCH))
-		{
-			g_event.event = EVENT_STYLUS_PRESSED;
-			g_event.stl.x = getsIPCSharedTGDS()->touchXpx;
-			g_event.stl.y = getsIPCSharedTGDS()->touchYpx;		
-			new_event = GUI_EVENT_STYLUS;
+		int px=0, py=0; 
+		if(getTouchScreenEnabled() == true){
+			px = TGDSIPC->touchXpx;
+			py = TGDSIPC->touchYpx;
 		}
-		
-		else if((held & KEY_TOUCH) && !(released & KEY_TOUCH))
-		{
-			if (penIRQread() == false){
-				return 0;
-			}
 			
-			g_event.event = EVENT_STYLUS_DRAGGED;
-
-			g_event.stl.dx = getsIPCSharedTGDS()->touchXpx - g_event.stl.x;
-			g_event.stl.dy = getsIPCSharedTGDS()->touchYpx - g_event.stl.y;
-			g_event.stl.x = getsIPCSharedTGDS()->touchXpx;
-			g_event.stl.y = getsIPCSharedTGDS()->touchYpx;
+		if((pressed & KEY_TOUCH) && !(held & KEY_TOUCH)){
+			g_event.event = EVENT_STYLUS_PRESSED;
+			g_event.stl.x = px;
+			g_event.stl.y = py;		
 			new_event = GUI_EVENT_STYLUS;
-		
 		}
-		else if (!(held & KEY_TOUCH) && (released & KEY_TOUCH)) //too much fast: (penIRQread() == false)
-		{
+		else if((held & KEY_TOUCH) && !(released & KEY_TOUCH)){
+			g_event.event = EVENT_STYLUS_DRAGGED;
+			g_event.stl.dx = px - g_event.stl.x;
+			g_event.stl.dy = py - g_event.stl.y;
+			g_event.stl.x = px;
+			g_event.stl.y = py;
+			new_event = GUI_EVENT_STYLUS;
+		}
+		else if (!(held & KEY_TOUCH) && (released & KEY_TOUCH)){ //too much fast: (penIRQread() == false)
 			g_event.event = EVENT_STYLUS_RELEASED;
 			new_event = GUI_EVENT_STYLUS;
-		}	
-
-		else if((getsIPCSharedTGDS()->buttons7 != 0) && GUI.ScanJoypad){
+		}
+		
+		else if((TGDSIPC->buttons7 != 0) && GUI.ScanJoypad){
 				g_event.event = EVENT_BUTTON_ANY;
 				new_event = GUI_EVENT_BUTTON;
-				g_event.joy.buttons = getsIPCSharedTGDS()->buttons7;
+				g_event.joy.buttons = TGDSIPC->buttons7;
 				g_event.joy.pressed = pressed;
 				g_event.joy.repeated = repeated;
 				g_event.joy.released = released;
