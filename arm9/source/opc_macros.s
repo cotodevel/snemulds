@@ -2270,7 +2270,7 @@ SBCD_m1:
 .endm
 
 .macro CheckWaitAddress
-	ldr		r1, CPU_LoopSpeedHacks
+	mov 	r1, #0		@speedhacks disabled: ldr		r1, CPU_LoopSpeedHacks
 	cmp		r1,	#0
 	beq		3f
 

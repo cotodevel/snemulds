@@ -83,7 +83,6 @@ extern unsigned int		SnesB;
 extern	uint32			CPU_log;
 extern	uint32			AsmDebug[16];
 extern	sint32			CPU_NextCycles;
-extern	uint32			CPU_LoopSpeedHacks;
 extern	uint8	*CPU_WaitAddress;
 extern	uint8	*CPU_LoopAddress;
 extern	uint32			BRKaddress;

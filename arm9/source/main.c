@@ -159,8 +159,6 @@ void readOptionsFromConfig(char *section)
 	CFG.Transparency
 			= get_config_int(section, "Transparency", CFG.Transparency);
 	CFG.WaitVBlank = get_config_int(section, "Vblank", CFG.WaitVBlank);
-	CFG.CPU_speedhack
-			= get_config_int(section, "SpeedHacks", CFG.CPU_speedhack);
 	CFG.FastDMA = get_config_int(section, "FastDMA", CFG.FastDMA);
 
 	CFG.MouseXAddr = get_config_hex(section, "MouseXAddr", 0);
@@ -225,7 +223,6 @@ void saveOptionsToConfig(char *section)
 
 	//	set_config_int(section, "Transparency", CFG.Transparency);
 	set_config_int(section, "Vblank", CFG.WaitVBlank);
-	set_config_int(section, "SpeedHacks", CFG.CPU_speedhack);
 	//	set_config_int(section, "FastDMA", CFG.FastDMA);
 
 	/*	set_config_hex(section, "MouseXAddr", 0);
@@ -262,7 +259,6 @@ void packOptions(uint8 *ptr)
 	opt->BG_Layer = CFG.BG_Layer;
 	opt->YScroll = CFG.YScroll;
 	opt->WaitVBlank = CFG.WaitVBlank;
-	opt->SpeedHack = CFG.CPU_speedhack;
 }
 
 void unpackOptions(int version, uint8 *ptr)
@@ -298,7 +294,6 @@ void unpackOptions(int version, uint8 *ptr)
 	CFG.BG_Layer = opt->BG_Layer;
 	CFG.YScroll = opt->YScroll;
 	CFG.WaitVBlank = opt->WaitVBlank;
-	CFG.CPU_speedhack = opt->SpeedHack;
 
 	applyOptions();
 }

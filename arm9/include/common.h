@@ -79,7 +79,6 @@ typedef struct s_Options
 	uint8 BG_Layer :8;
 	uint8 YScroll :2;
 	uint8 WaitVBlank :1;
-	uint8 SpeedHack :3;
 } t_Options;
 
 #endif

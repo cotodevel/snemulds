@@ -144,7 +144,6 @@ int initSNESEmpty(){
 	CFG.BG3Squish = 0;
 	CFG.WaitVBlank = 0;
 	CFG.YScroll = 0;
-	CFG.CPU_speedhack = 0;
 	CFG.LocalPlayMode = 0; //0 == idle / 1 == local: host / 2 == local: guest
 	//CFG.TileMode = 1;
 	CFG.Scaled = 0;

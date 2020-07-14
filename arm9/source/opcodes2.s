@@ -704,8 +704,6 @@ RTS_m0x0:   RTS_m0x1:   RTS_m1x0:   RTS_m1x1:   OpRTS   NA, 0, 6
 
 BRL_m0x0:   BRL_m0x1:   BRL_m1x0:   BRL_m1x1:   OpBRL   NA, 3, 3
 
-.GLOBAL CPU_LoopSpeedHacks
-CPU_LoopSpeedHacks:       .word	0
 .GLOBAL CPU_NextCycles
 CPU_NextCycles:			  .word	0
 .GLOBAL CPU_WaitAddress
