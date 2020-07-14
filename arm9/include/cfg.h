@@ -78,6 +78,7 @@ struct s_cfg
   int		BG3PaletteFix;
 
   sint8		ROMFile[MAX_TGDSFILENAME_LENGTH+1]; 
+  sint8		SPCFile[MAX_TGDSFILENAME_LENGTH+1]; 
   sint8		ROMPath[MAX_TGDSFILENAME_LENGTH+1];
   sint8		SPCPath[MAX_TGDSFILENAME_LENGTH+1];
   

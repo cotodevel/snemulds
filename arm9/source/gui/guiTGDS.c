@@ -41,7 +41,7 @@ GNU General Public License for more details.
 #include "keypadTGDS.h"
 #include "utilsTGDS.h"
 #include "spifwTGDS.h"
-#include "gui_console_connector.h"
+#include "guiTGDS.h"
 
 t_GUIScreen	*GUI_newScreen(int nb_elems)
 {
@@ -416,15 +416,19 @@ void		GUI_drawScreen(t_GUIScreen *scr, void *param)
 
 t_GUIEvent	g_event;
 
+char startFilePath[MAX_TGDSFILENAME_LENGTH+1];
+char startSPCFilePath[MAX_TGDSFILENAME_LENGTH+1];
+struct sGUISelectorItem guiSelItem;
+
 int GUI_update()
 {
+	//Async events
 	scanKeys();
 	int new_event = 0;
 	int pressed = keysPressed(); 	// buttons pressed this loop
 	int released = keysReleased();
 	int held = keysHeld();				//touch screen
 	int repeated = keysRepeated();
-	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 	
 	if (GUI.hide)
 	{
@@ -437,6 +441,7 @@ int GUI_update()
 		}
 	}
 	else{
+		struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 		int px=0, py=0; 
 		if(getTouchScreenEnabled() == true){
 			px = TGDSIPC->touchXpx;
@@ -492,6 +497,7 @@ int GUI_update()
 			memset(&PendingMessage, 0, sizeof(PendingMessage));
 		}
 	}
+	
 	return 0;
 }
 

@@ -20,6 +20,9 @@ GNU General Public License for more details.
 
 #include "fatfslayerTGDS.h"
 #include "utilsTGDS.h"
+#include "guiTGDS.h"
+#include "gui_widgets.h"
+#include "consoleTGDS.h"
 
 #endif
 
@@ -30,6 +33,13 @@ extern "C" {
 extern int argc;
 extern sint8 **argv;
 extern int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]);
+extern int loadROM(struct sGUISelectorItem *name);
+extern bool handleROMSelect;
+extern bool handleSPCSelect;
+
+extern void GUI_getROMFirstTime(sint8 *rompath);
+extern void GUI_getROMIterable(sint8 *rompath);
+extern void GUI_getSPCIterable(sint8 *rompath);
 
 #ifdef __cplusplus
 }

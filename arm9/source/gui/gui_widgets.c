@@ -8,7 +8,7 @@
 #include "guiTGDS.h"
 #include "console_str.h"
 #include "keypadTGDS.h"
-#include "gui_console_connector.h"
+#include "guiTGDS.h"
 
 int	GUIList_handler(t_GUIZone *zone, int message, int param, void *arg)
 {
@@ -445,16 +445,35 @@ t_GUIScreen	*GUI_newSelector(int nb_items, sint8 **items, int title, t_GUIFont *
 	return scr_select;
 }
 
-sint8 *GUISelector_getSelected(t_GUIScreen *scr, int *index) 
+struct sGUISelectorItem GUISelector_getSelected(t_GUIScreen *scr, int *index) 
 {
+	struct sGUISelectorItem guiSelectorItem;
+	memset(&guiSelectorItem, 0, sizeof(guiSelectorItem));
 	t_GUIList *list = scr->zones[0].data;
-
-	if (index)
+	if (index){
 		*index = list->first_item+list->cur_item;
-		
-	if (list->cur_item == -1)
-		return NULL;
-	return list->items[list->first_item+list->cur_item];
+	}
+	if (list->cur_item == -1){
+		guiSelectorItem.filenameFromFS_getDirectoryListMethod = NULL;
+		guiSelectorItem.StructFDFromFS_getDirectoryListMethod = FT_NONE;
+		return guiSelectorItem;
+	}
+	
+	//Decide if FT_FILE, FT_DIR or FT_NONE
+	guiSelectorItem.filenameFromFS_getDirectoryListMethod = list->items[list->first_item+list->cur_item];
+	if(strncmp(guiSelectorItem.filenameFromFS_getDirectoryListMethod, "..", 2) == 0){
+		guiSelectorItem.StructFDFromFS_getDirectoryListMethod = FT_NONE;
+	}
+	else if(
+		(guiSelectorItem.filenameFromFS_getDirectoryListMethod[strlen(guiSelectorItem.filenameFromFS_getDirectoryListMethod) - 1] == '/')
+	){
+		guiSelectorItem.StructFDFromFS_getDirectoryListMethod = FT_DIR;
+	}
+	else{
+		guiSelectorItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
+	}
+	
+	return guiSelectorItem;
 }
 
 void GUI_deleteSelector(t_GUIScreen *scr)

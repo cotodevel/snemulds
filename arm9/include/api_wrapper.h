@@ -26,7 +26,7 @@ USA
 #include "consoleTGDS.h"
 #include "api_wrapper.h"
 #include "apu_jukebox.h"
-#include "gui_console_connector.h"
+#include "guiTGDS.h"
 
 
 #endif
@@ -47,8 +47,6 @@ extern void packOptions(uint8 *ptr);
 extern void unpackOptions(int version, uint8 *ptr);
 extern int 	checkConfiguration(sint8 *name, int crc);
 
-extern int	loadROM(sint8 *name, int confirm);
-extern int	changeROM(sint8 *ROM, int size);
 
 #ifdef __cplusplus
 }

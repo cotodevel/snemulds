@@ -3,6 +3,7 @@
 #define __GUI_WIDGETS_H__
 
 #include "guiTGDS.h"
+#include "consoleTGDS.h"
 
 /* ---------------------------- Widgets --------------------------------- */
 
@@ -44,6 +45,12 @@ typedef struct
 	uint8	cur_state; // Current state
 } t_GUIChoiceButton;
 
+struct sGUISelectorItem
+{
+	char * filenameFromFS_getDirectoryListMethod;
+	int StructFDFromFS_getDirectoryListMethod;	//note: this FT_FILE / FT_DIR does not represent a current open struct fd * in TGDS environment, but just the file/dir attributes
+};
+
 #define GUI_CHOICE(s, n, c)	(void *)((s) | ((n) << 16) | ((c) << 24))
 
 #define GUI_GET_CHOICE(scr, i) ((int)(scr)->zones[i].data >> 24)
@@ -70,7 +77,7 @@ extern int GUIStatic_handler(t_GUIZone *zone, int message, int param, void *arg)
 extern int GUIStaticEx_handler(t_GUIZone *zone, int message, int param, void *arg);
 extern int GUIChoiceButton_handler(t_GUIZone *zone, int message, int param, void *arg);
 extern t_GUIScreen	*GUI_newSelector(int nb_items, sint8 **items, int title, t_GUIFont *font);
-extern sint8 *GUISelector_getSelected(t_GUIScreen *scr, int *index);
+extern struct sGUISelectorItem GUISelector_getSelected(t_GUIScreen *scr, int *index);
 extern void GUI_deleteSelector(t_GUIScreen *scr);
 extern t_GUIScreen	*GUI_newList(int nb_items, int max_size, int title, t_GUIFont *font);
 extern void	GUI_setItem(t_GUIScreen *scr, int i, sint8 *s, int max_size);

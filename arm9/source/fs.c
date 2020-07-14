@@ -71,6 +71,7 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
 	(*cnt)++;
 	size += strlen(leaveDirDirectory)+1;
 	
+	FS_lock();
 	DIR *dir = opendir(path);
 	if( NULL != dir ){
 		while (1){
@@ -173,6 +174,7 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
 		}
 	}
 	closedir(dir);
+	FS_unlock();
 	return list;
 }
 

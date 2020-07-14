@@ -69,7 +69,7 @@ void	APU_playSpc(u8 * inSPCBuffer)
 	fifomsg[40] = (uint32)0xFFFFC070;
 	
 	//prevent APU from desync
-	SendFIFOWords(SNEMULDS_APUCMD_PLAYSPC, (u32)inSPCBuffer);	//APU_command(0x00000003);
+	SendFIFOWordsITCM(SNEMULDS_APUCMD_PLAYSPC, (u32)inSPCBuffer);	//APU_command(0x00000003);
 	
 	while((uint32)fifomsg[40] == (uint32)0xFFFFC070){
 		swiDelay(2);

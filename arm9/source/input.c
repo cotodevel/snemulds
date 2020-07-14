@@ -13,7 +13,7 @@
 #include "apu.h"
 #include "opcodes.h"
 #include "cpu.h"
-#include "gui_console_connector.h"
+#include "guiTGDS.h"
 #include "videoTGDS.h"
 #include "keypadTGDS.h"
 
