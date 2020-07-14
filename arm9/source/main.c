@@ -183,7 +183,7 @@ void readOptionsFromConfig(char *section)
 	
 	//CFG.MapExtMem = get_config_int(section, "MapExtMem", CFG.MapExtMem);
 	
-	CFG.AutoSRAM = get_config_int(section, "AutoSRAM", CFG.AutoSRAM);
+	CFG.EnableSRAM = get_config_int(section, "EnableSRAM", CFG.EnableSRAM);
 }
 
 void saveOptionsToConfig(char *section)
@@ -221,7 +221,7 @@ void saveOptionsToConfig(char *section)
 	 set_config_int(section, "BlankTileNumber", CFG.Debug2);
 	 set_config_oct(section, "SpritePriority", 01123);*/
 	
-	set_config_int(section, "AutoSRAM", CFG.AutoSRAM);
+	set_config_int(section, "EnableSRAM", CFG.EnableSRAM);
 	save_config_file();
 }
 

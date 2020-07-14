@@ -42,7 +42,7 @@ struct s_cfg
 
   int	Debug, Debug2;
 
-  int	AutoSRAM;
+  int	EnableSRAM;
 
   int	InterleavedROM;
   int	InterleavedROM2;

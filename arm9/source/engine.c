@@ -356,7 +356,7 @@ int go()
 
           GFX.nb_frames = 0;
           
-          if (CFG.AutoSRAM && SNES.SRAMWritten)
+          if (CFG.EnableSRAM && SNES.SRAMWritten)
           {
         	  saveSRAM();
         	  GUI_printf("Auto SRAM written");
