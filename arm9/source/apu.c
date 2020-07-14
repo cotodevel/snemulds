@@ -55,15 +55,26 @@ void	APU_stop()
 #ifndef IN_EMULATOR	
 	APU_command(SNEMULDS_APUCMD_SPCDISABLE); //APU_command(0x00000004);
 	// Wait the APU disabling
+	
 	while (getsIPCSharedTGDSSpecific()->APU_ADDR_ANS != 0xFF00FF00){
 		IRQVBlankWait();
 	}
 #endif	
 }
 
-void	APU_playSpc()
+void	APU_playSpc(u8 * inSPCBuffer)
 {
-    APU_command(SNEMULDS_APUCMD_PLAYSPC); //APU_command(0x00000003);
+	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
+	fifomsg[40] = (uint32)0xFFFFC070;
+	
+	//prevent APU from desync
+	SendFIFOWords(SNEMULDS_APUCMD_PLAYSPC, (u32)inSPCBuffer);	//APU_command(0x00000003);
+	
+	while((uint32)fifomsg[40] == (uint32)0xFFFFC070){
+		swiDelay(2);
+	}
+	
 }
 
 void	APU_saveSpc()
@@ -87,7 +98,8 @@ void	APU_clear()
 	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
 }
 
-
+//Unimplemented
+/*
 void APU_playSong(uint8 *data, int size)
 {
 	CFG.Sound_output = 0; // Disable Sound emulation
@@ -98,10 +110,9 @@ void APU_playSong(uint8 *data, int size)
     memcpy(APU_RAM_ADDRESS, data, size);
     APU_playSpc();    // Put APU in PLAY MODE	
 }
+*/
 
-
-void APU_command(uint32 command)
-{
+void APU_command(uint32 command){
 	//prevent APU from desync
-	SendFIFOWordsITCM(command, 0);
+	SendFIFOWords(command, 0);
 }

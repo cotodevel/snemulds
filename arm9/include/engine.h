@@ -42,10 +42,6 @@ extern void show_opcode(sint8 *buf, uint8 opcode, int pc, int pb, unsigned short
 extern int trace_CPU();
 extern void trace_CPUFast();
 
-
-//true == nifi awaits in VblankEnd, false = nifi running N vcounter lines and hasn't reached vblankEnd yet
-extern bool nifiVblankEndWait;
-
 #ifdef __cplusplus
 }
 #endif

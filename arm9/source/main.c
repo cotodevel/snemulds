@@ -43,6 +43,7 @@
 #include "dswnifi.h"
 #include "ipcfifoTGDSUser.h"
 #include "eventsTGDS.h"
+#include "ipcfifoTGDS.h"
 
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
 
@@ -89,6 +90,13 @@ void PPU_ChangeLayerConf(int i)
 
 void readOptionsFromConfig(char *section)
 {
+	char romPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
+	char spcPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
+	strcpy(romPath, get_config_string("Global", "ROMPath", ""));
+	strcpy(spcPath, get_config_string("Global", "SPCPath", ""));
+	strcpy(CFG.ROMPath, getfatfsPath(romPath));
+	strcpy(CFG.SPCPath, getfatfsPath(spcPath));
+	
 	CFG.BG3Squish = get_config_int(section, "BG3Squish", CFG.BG3Squish) & 3;
 	// FIXME 
 	GFX.YScroll = get_config_int(section, "YScroll", GFX.YScroll);
@@ -421,30 +429,32 @@ int loadROM(char *name, int confirm)
 	return 0;
 }
 
-#define DEBUG_BUF ((char *)0x27FE200)
-
 int selectSong(char *name)
 {
-	char spcname[100];
-
-	strcpy(spcname, CFG.ROMPath);
-	if (CFG.ROMPath[strlen(CFG.ROMPath)-1] != '/')
-		strcat(spcname, "/");
+	char spcname[MAX_TGDSFILENAME_LENGTH+1];
+	memset(spcname, 0, sizeof(spcname));
+	strcpy(spcname, CFG.SPCPath);
 	strcat(spcname, "/");
 	strcat(spcname, name);
 	strcpy(CFG.Playlist, spcname);
 	CFG.Jukebox = 1;
 	CFG.Sound_output = 0;
 	APU_stop();
-	if (FS_loadFile(spcname, APU_RAM_ADDRESS, 0x10200) < 0)
+	
+	u8 * spcFile = malloc(0x10200);
+	if(spcFile == NULL){
 		return -1;
-	APU_playSpc();
-	// Wait APU init
-	IRQVBlankWait();
-	IRQVBlankWait();
-	IRQVBlankWait();
-	IRQVBlankWait();
-	//	GUI_printf("\nDBG: %s", DEBUG_BUF);	
+	}
+	if(FS_loadFile(spcname, spcFile, 0x10200) < 0){
+		printf("selectSong(): Load error: %s", spcname);
+		while(1==1){
+			
+		}
+		free(spcFile);
+		return -1;
+	}
+	APU_playSpc(spcFile);	//blocking, wait APU init
+	free(spcFile);
 	return 0;
 }
 
@@ -543,11 +553,11 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 	//for (i = 0; i < 100; i++)
 	//	IRQVBlankWait();
 #endif	
-	GUI_printf("Load conf1");
 	// Load SNEMUL.CFG
-	set_config_file(getfatfsPath("snemul.cfg"));	//set_config_file("snemul.cfg");
+	printf("Load conf1");
+	set_config_file(getfatfsPath("snemul.cfg"));
 	
-	//removed
+	//ext support, removed for now
 	/*
 	{
 		FILE *f=fopen("/moonshl2/extlink.dat","rb");
@@ -557,8 +567,6 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 		if(extlink.ID!=ExtLinkBody_ID){GUI_printf("Not valid extlink.");while(1);}//__swiSleep();}
 	}
 	*/
-	
-	//CFG.ROMPath = get_config_string(NULL, "ROMPath", GAMES_DIR);
 	
 	GUI_printf("Load conf2");
 	readOptionsFromConfig("Global");

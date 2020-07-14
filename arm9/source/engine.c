@@ -27,36 +27,31 @@ GNU General Public License for more details.
 #include <allegro.h>
 #endif
 
+#include "dsregs.h"
+#include "typedefsTGDS.h"
 #include "opcodes.h"
-
 #include "common.h"
 #include "fs.h"
-
 #include "snes.h"
 #include "gfx.h"
 #include "cpu.h"
 #include "apu.h"
 #include "cfg.h"
-
 #include "core.h"
 #include "engine.h"
 #include "apu.h"
 #include "ppu.h"
 #include "main.h"
 #include "conf.h"
-#include "fs.h"
 #include "memmap.h"
-#include "consoleTGDS.h"
-#include "opcodes.h"
-//#include "common.h"
+#include "guiTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #include "nds_cp15_misc.h"
 #include "fatfslayerTGDS.h"
 #include "about.h"
 #include "utilsTGDS.h"
 #include "clockTGDS.h"
-#include "keypadTGDS.h"
-
+#include "dswnifi_lib.h"
 
 //struct s_snes SNES;
 //struct s_cfg CFG;
@@ -86,19 +81,8 @@ int loadSRAM()
 {
   char sramFile[100];
   	
-  if (SNESC.SRAMMask)
+  if (SNESC.SRAMMask > 0)
     {
-#ifdef USE_GBFS
-/*		char header[16];
-		
-		readSRAM(0, (uint8 *)header, 16);
-		if (!strcmp(header, "SNEmulDS SRAM"))
-		{
-			GUI_printf("Found SRAM header!\n");
-			readSRAM(16, SNESC.SRAM, SNESC.SRAMMask+1);
-			return 0;
-		}*/ 
-#endif    	
     	strcpy(sramFile, CFG.ROMFile);
 		strcpy(strrchr(sramFile, '.'), ".SRM");
     	FS_loadFile(sramFile, SNESC.SRAM, SNESC.SRAMMask+1);
@@ -111,21 +95,11 @@ int saveSRAM()
 {
   char sramFile[100];
   	
-  if (SNESC.SRAMMask)
+  if (SNESC.SRAMMask > 0)
     {
-#ifndef USE_GBFS    	
     	strcpy(sramFile, CFG.ROMFile);
-		strcpy(strrchr(sramFile, '.'), ".SRM");
-		
+		strcpy(strrchr(sramFile, '.'), ".SRM");		
     	FS_saveFile(sramFile, SNESC.SRAM, SNESC.SRAMMask+1,false);	//force_file_creation == false here (we could destroy or corrupt saves..)
-#else
-/*		char header[16];
-		
-		memset(header, 0, 16);
-		strcpy(header, "SNEmulDS SRAM");
-		writeSRAM(0, (uint8 *)header, 16);
-		writeSRAM(16, SNESC.SRAM, SNESC.SRAMMask+1);*/
-#endif    	    	
     }	
 }
 
@@ -170,7 +144,7 @@ int initSNESEmpty(){
 	CFG.BG3Squish = 0;
 	CFG.WaitVBlank = 0;
 	CFG.YScroll = 0;
-	CFG.CPU_speedhack = 1;
+	CFG.CPU_speedhack = 0;
 	CFG.LocalPlayMode = 0; //0 == idle / 1 == local: host / 2 == local: guest
 	//CFG.TileMode = 1;
 	CFG.Scaled = 0;
@@ -204,8 +178,6 @@ int initSNESEmpty(){
 	//  printf("Init OK...\n");
 	return 0;
 }
-	
-int OldPC;
 
 __attribute__((section(".itcm")))
 int go()
@@ -709,7 +681,7 @@ int trace_CPU()
   
 //#else
   sprintf(buf2,"%02X:%04X ; ", CPU.PB, CPU.PC);
-  GUI_printf("%s", buf2);
+  printf("%s", buf2);
   //swiDelay(10000000);
 #endif          
 

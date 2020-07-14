@@ -161,7 +161,7 @@ extern sint8*  g_snemulds_str_cat[];
 extern sint8*  g_snemulds_str_pol[];
 extern sint8*  g_snemulds_str_nl[];
 extern sint8*  g_snemulds_str_dan[];
-extern int selectSong(sint8 *name);
+extern int selectSong(sint8 *name);		//Jukebox load SPC method
 extern void	CPU_unpack();
 extern void	SNES_update();
 extern void	PPU_update();

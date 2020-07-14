@@ -1,7 +1,6 @@
 # SnemulDS
 
-TGDS Version: 1.6
-Branch: Master. This uses ARM9 DLDI
+Branch: Master. This uses ARM7 DLDI (future DSi compatibility). Use ARM9DLDI branch if you want a stable build.
 
 SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes)... 
 This is based from real 0.6.a sources archeide left years ago and I managed to find.
@@ -19,10 +18,6 @@ How to get the latest working version:
 	- SPC Playback: Optionally, create a /spc folder in SD: root, and put your SPC files on it. You can choose and play a SPC File in the "SPC Jukebox" option. 
 	- Then run SNEmulDS.nds
 
-ARGV Support:
-	- SnemulDS now supports ARGV, same standard as used in devkitARM. 
-		The vector 0 ARGument can be whatever (usually 0:/dir/dir2/dirwhatever/SnemulDS.nds)
-		The vector 1 ARGument must be the fullfilepath string (Format: 0:/dir/dir2/dirwhatever/file.smc)
 Hotkeys:
 
 	While SnemulDS runs a game, it is possible to perform the following hotkeys:

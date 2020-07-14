@@ -451,17 +451,29 @@ int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		consoleClear(DefaultSessionConsole);
 	if (msg == GUI_COMMAND && (param == 3|| param == 4)) // OK ou cancel
 	{
+		//A press
 		if (param == 3)
 		{
 			sint8 *sel = GUISelector_getSelected(GUI.screen, NULL);
-			selectSong(sel);
+			int retVal = selectSong(sel);
+			if(retVal != 0){
+				printf("SPC read error.");
+			}
 			
+			//No need to restore apu because SPC reloading
 		}
+		//B press
 		if (param == 4)
 		{
-			GUI_deleteSelector(GUI.screen);
-			GUI_switchScreen(scr_main);
+			//Play APU
+			if (CFG.Sound_output || CFG.Jukebox)
+				APU_pause();
 		}
+		
+		GUI.ScanJoypad = 0;
+		SNES.Stopped = 0;
+		GUI_deleteSelector(GUI.screen);
+		GUI_switchScreen(scr_main);	
 		return 1;
 	}
 	return 0;
@@ -1091,22 +1103,31 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		}
 		if (param == 4) // Jukebox
 		{
+			//////////////////////////Halt emu, give control to GUI, and wait for A/B events//////////////////////////
+			SNES.Stopped = 1;
+		    GUI.ScanJoypad = 1;		    
+	    	
+			//Pause APU
+			if (CFG.Sound_output || CFG.Jukebox){
+				APU_pause();	
+			}
 			// Get ROMs list
   		    int		cnt;
-  		    sint8 **dir_list = FS_getDirectoryList(CFG.ROMPath, "SPC", &cnt);
+  		    sint8 **dir_list = FS_getDirectoryList(CFG.SPCPath, "SPC", &cnt);
 
   		    // Alphabetical sort
   		    if (CFG.GUISort){
   		    	qsort(dir_list, cnt, sizeof(sint8 *), sort_strcmp);  		    
   		    }
 		    // Create ROM selector
-  		    t_GUIScreen *scr = 
-  		    	GUI_newSelector(cnt, dir_list, IDS_JUKEBOX, &trebuchet_9_font);
+  		    t_GUIScreen *scr = GUI_newSelector(cnt, dir_list, IDS_JUKEBOX, &trebuchet_9_font);
 			scr->handler = SPCSelectorHandler;		    
 		    
 			// Switch GUI Screen
 		    GUI_switchScreen(scr);
-		    return 1;		    
+		    ////////////////////////Halt emu, give control to GUI, and wait for A/B events end////////////////////////
+		    
+			return 1;		    
 		}		
 		if (param == 5) // Advanced
 		{
