@@ -226,12 +226,13 @@ int	FS_loadROM(sint8 *ROM, sint8 *filename)
 	int size = ftell(f);
 	fseek(f, 0, SEEK_SET);
 
-	//Prevent Cache problems.
-	coherent_user_range_by_size((uint32)ROM, (int)size);
-	
 	fread(ROM, 1, size, f);
 	GUI_printf("Read done\n");
 	fclose(f);
+	
+	//Prevent Cache problems.
+	coherent_user_range_by_size((uint32)ROM, (int)size);
+	
 	FS_unlock();
 
 	return 1;
@@ -253,11 +254,12 @@ int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
 		FS_unlock();
 		return -1;
 	}
-	//Prevent Cache problems.
-	coherent_user_range_by_size((uint32)ROM, (int)size);
 	
 	int ret = fread(ROM, 1, size, fPaging);
 	FS_unlock();
+	
+	//Prevent Cache problems.
+	coherent_user_range_by_size((uint32)ROM, (int)size);
 	
 	if(ret != size){
 		return -1;
@@ -276,9 +278,6 @@ int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
 		return -1;
 	}
 	
-	//Prevent Cache problems.
-	coherent_user_range_by_size((uint32)buf, (int)size);
-	
 	ret = fseek(fPaging, pos, SEEK_SET);
 	
 	if (ret < 0)
@@ -288,7 +287,12 @@ int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
 	}
 	
 	
-	return fread(buf, 1, size, fPaging);
+	ret = fread(buf, 1, size, fPaging);
+	
+	//Prevent Cache problems.
+	coherent_user_range_by_size((uint32)buf, (int)size);
+	
+	return ret;
 }
 
 int	FS_shouldFreeROM()
