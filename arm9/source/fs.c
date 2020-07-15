@@ -53,10 +53,9 @@ GNU General Public License for more details.
 #include "dsregs_asm.h"
 #include "typedefsTGDS.h"
 #include "consoleTGDS.h"
-//#include "api_wrapper.h"
-//#include "apu_jukebox.h"
 #include "about.h"
 #include "xenofunzip.h"
+#include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 
 /* *********************** FAT ************************ */
 
@@ -68,113 +67,153 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
 	
 	// add ".." because fatfs removes it
 	char * leaveDirDirectory = "..";
-	(*cnt)++;
-	size += strlen(leaveDirDirectory)+1;
+	char * baseDirectory = "/";
+	int pathLen = strlen(path);
 	
-	FS_lock();
-	DIR *dir = opendir(path);
-	if( NULL != dir ){
-		while (1){
-			struct dirent* pent = readdir(dir);
-			if(pent != NULL){
-				struct fd * fdinst = getStructFD(pent->d_ino);	//struct stat st is generated at the moment readdir(); is called, so get access to it through fdinst->stat
-				if(fdinst){
-					if(mask){
-						sint8 *ext = _FS_getFileExtension(pent->d_name);
-						if ((ext && strstr(mask, ext)) || (fdinst->StructFDType == FT_DIR)){
-							//Count files and directories
-							if(fdinst->StructFDType == FT_FILE){
-								(*cnt)++;
-								size += strlen(pent->d_name)+1;
-							}
-							else if(fdinst->StructFDType == FT_DIR){
-								(*cnt)++;
-								size += strlen(pent->d_name)+2;	//add trailing "/"
-							}
-						}
-					}
-					else{
-						//Count files and directories
-						if(fdinst->StructFDType == FT_FILE){
-							(*cnt)++;
-							size += strlen(pent->d_name)+1;
-						}
-						else if(fdinst->StructFDType == FT_DIR){
-							(*cnt)++;
-							size += strlen(pent->d_name)+2;	//add trailing "/"
-						}
-					}
+	//remove leading "0:" 
+	if (
+		(path[0] == '0')
+		&&
+		(path[1] == ':')
+	){
+		char savePath[256+1];
+		memset(savePath, 0, sizeof(savePath));
+		strncpy(savePath, (char*)&path[2], pathLen - 2);
+		strcpy(path, savePath);
+	}
+	
+	//If directory is not root, add ".."
+	char tempPath[256+1];
+	memset(tempPath, 0, sizeof(tempPath));
+	strcpy(tempPath, path);
+	if(
+		(pathLen >= 2)
+	)
+	{
+		(*cnt)++;
+		size += strlen(baseDirectory)+1;
+	}
+	//we reach base path, add "/"
+	else{
+		(*cnt)++;
+		size += strlen(leaveDirDirectory)+1;
+	}
+	
+	//Create TGDS Dir API context
+	struct FileClassList * fileClassListCtx = initFileList();
+	cleanFileList(fileClassListCtx);
+
+	//Use TGDS Dir API context
+	int startFromIndex = 0;
+	struct FileClass * fileClassInst = NULL;
+	fileClassInst = FAT_FindFirstFile(tempPath, fileClassListCtx, startFromIndex);
+	
+	//Generate Dir
+	int curdirCount = getCurrentDirectoryCount(fileClassListCtx);
+	
+	//Iterate and fill
+	int dirIter = 0;
+	for(dirIter = 0; dirIter < curdirCount; dirIter++){
+		struct FileClass * fileClassInst = getFileClassFromList(dirIter, fileClassListCtx);
+		char curFileDirName[256+1];
+		strcpy(curFileDirName, fileClassInst->fd_namefullPath);
+		if(mask){
+			sint8 *ext = _FS_getFileExtension(curFileDirName);
+			if ((ext && strstr(mask, ext)) || (fileClassInst->type == FT_DIR)){
+				//Count files and directories
+				if(fileClassInst->type == FT_FILE){
+					(*cnt)++;
+					parsefileNameTGDS(curFileDirName);
+					strcpy(fileClassInst->fd_namefullPath, curFileDirName);
+					size += strlen(fileClassInst->fd_namefullPath)+1;
+				}
+				else if(fileClassInst->type == FT_DIR){
+					(*cnt)++;
+					parseDirNameTGDS(curFileDirName);
+					strcpy(fileClassInst->fd_namefullPath, curFileDirName);
+					size += strlen(fileClassInst->fd_namefullPath)+2;	//add trailing "/"
 				}
 			}
-			else{
-				break;
+		}//so far requires to remove last leading "/" from file/dirs
+		else{
+			//Count files and directories
+			if(fileClassInst->type == FT_FILE){
+				(*cnt)++;
+				size += strlen(curFileDirName)+1;
+			}
+			else if(fileClassInst->type == FT_DIR){
+				(*cnt)++;
+				size += strlen(curFileDirName)+2;	//add trailing "/"
 			}
 		}
 	}
-	rewinddir(dir);
 	
 	sint8	**list = (sint8	**)malloc((*cnt)*sizeof(sint8 *)+size);
 	sint8	*ptr = ((sint8 *)list) + (*cnt)*sizeof(sint8 *);
 	int i = 0; 
 	
-	// add ".." because fatfs removes it
-	strcpy(ptr, leaveDirDirectory);
-	list[i++] = ptr;
-	ptr += strlen(leaveDirDirectory)+1;
+	//If directory is not root, add ".."
+	if(
+		(pathLen > 2)
+	)
+	{
+		strcpy(ptr, leaveDirDirectory);
+		list[i++] = ptr;
+		ptr += strlen(leaveDirDirectory)+1;
+	}
+	//we reach base path, add "/"
+	else{
+		strcpy(ptr, baseDirectory);
+		list[i++] = ptr;
+		ptr += strlen(baseDirectory)+1;
+	}
 	
-	if(NULL != dir){
-		while (1){
-			struct dirent* pent = readdir(dir);	//if NULL already not a dir
-			if(pent != NULL){
-				struct fd * fdinst = getStructFD(pent->d_ino);
-				if(fdinst){
-					if(mask){
-						sint8 *ext = _FS_getFileExtension(pent->d_name);
-						if ((ext && strstr(mask, ext)) || (fdinst->StructFDType == FT_DIR)){
-							if(fdinst->StructFDType == FT_FILE){
-								strcpy(ptr, pent->d_name);
-								list[i++] = ptr;
-								ptr += strlen(pent->d_name)+1;
-							}
-							else if(fdinst->StructFDType == FT_DIR){
-								char dirName[MAX_TGDSFILENAME_LENGTH+1];
-								memset(dirName, 0, sizeof(dirName));
-								strcpy(dirName, (pent->d_name));
-								strcat(dirName, "/");
-								
-								strcpy(ptr, dirName);
-								list[i++] = ptr;
-								ptr += strlen(dirName)+1;
-							}
-						}
-					}
-					else{
-						if(fdinst->StructFDType == FT_FILE){
-							strcpy(ptr, pent->d_name);
-							list[i++] = ptr;
-							ptr += strlen(pent->d_name)+1;
-						}
-						else if(fdinst->StructFDType == FT_DIR){
-							char dirName[MAX_TGDSFILENAME_LENGTH+1];
-							memset(dirName, 0, sizeof(dirName));
-							strcpy(dirName, (pent->d_name));
-							strcat(dirName, "/");
-							
-							strcpy(ptr, dirName);
-							list[i++] = ptr;
-							ptr += strlen(dirName)+1;
-						}
-					}
+	//Iterate and fill
+	for(dirIter = 0; dirIter < curdirCount; dirIter++){
+		struct FileClass * fileClassInst = getFileClassFromList(dirIter, fileClassListCtx);
+		char curFileDirName[256+1];
+		strcpy(curFileDirName, fileClassInst->fd_namefullPath);
+		if(mask){
+			sint8 *ext = _FS_getFileExtension(curFileDirName);
+			if ((ext && strstr(mask, ext)) || (fileClassInst->type == FT_DIR)){
+				if(fileClassInst->type == FT_FILE){
+					strcpy(ptr, curFileDirName);
+					list[i++] = ptr;
+					ptr += strlen(curFileDirName)+1;
 				}
-				
+				else if(fileClassInst->type == FT_DIR){
+					char dirName[MAX_TGDSFILENAME_LENGTH+1];
+					memset(dirName, 0, sizeof(dirName));
+					strcpy(dirName, (curFileDirName));
+					strcat(dirName, "/");
+					
+					strcpy(ptr, dirName);
+					list[i++] = ptr;
+					ptr += strlen(dirName)+1;
+				}
 			}
-			else{
-				break;
+		}
+		else{
+			if(fileClassInst->type == FT_FILE){
+				strcpy(ptr, curFileDirName);
+				list[i++] = ptr;
+				ptr += strlen(curFileDirName)+1;
+			}
+			else if(fileClassInst->type == FT_DIR){
+				char dirName[MAX_TGDSFILENAME_LENGTH+1];
+				memset(dirName, 0, sizeof(dirName));
+				strcpy(dirName, (curFileDirName));
+				strcat(dirName, "/");
+				
+				strcpy(ptr, dirName);
+				list[i++] = ptr;
+				ptr += strlen(dirName)+1;
 			}
 		}
 	}
-	closedir(dir);
-	FS_unlock();
+	
+	//Free TGDS Dir API context
+	freeFileList(fileClassListCtx);
 	return list;
 }
 

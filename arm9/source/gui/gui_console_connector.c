@@ -1230,12 +1230,15 @@ void GUI_getROMFirstTime(sint8 *rompath){
 		GUI_getROMFirstTime(startFilePath);
 		return ;
 	}
-	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){	
-		//Enter new dir
-		strcat((char*)startFilePath, (char*)"/"); 
-		strcat((char*)startFilePath, (char*)sel.filenameFromFS_getDirectoryListMethod); 
-		startFilePath[strlen(startFilePath)-1]='\0'; //remove last "/"
-		return GUI_getROMFirstTime(startFilePath);
+	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){
+		//Enter new dir			
+		int thisLen = strlen(sel.filenameFromFS_getDirectoryListMethod);
+		if((sel.filenameFromFS_getDirectoryListMethod[thisLen-1] == '/') && (thisLen > 2)){
+			sel.filenameFromFS_getDirectoryListMethod[thisLen-1]='\0'; //remove last "/" //remove last "/"
+		}
+		//Update for later use
+		strcpy(startSPCFilePath, sel.filenameFromFS_getDirectoryListMethod);
+		GUI_getROMFirstTime(sel.filenameFromFS_getDirectoryListMethod);
 	}
     GUI.ScanJoypad = 0;
 	strcpy(CFG.ROMFile, sel.filenameFromFS_getDirectoryListMethod);
@@ -1277,14 +1280,18 @@ void GUI_getROMIterable(sint8 *rompath){
 		return ;
 	}
 	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){
-		//Enter new dir
-		strcat((char*)startFilePath, (char*)"/"); 
-		strcat((char*)startFilePath, (char*)sel.filenameFromFS_getDirectoryListMethod); 
-		startFilePath[strlen(startFilePath)-1]='\0'; //remove last "/"			
-		return GUI_getROMIterable(startFilePath);
+		//Enter new dir			
+		int thisLen = strlen(sel.filenameFromFS_getDirectoryListMethod);
+		if((sel.filenameFromFS_getDirectoryListMethod[thisLen-1] == '/') && (thisLen > 2)){
+			sel.filenameFromFS_getDirectoryListMethod[thisLen-1]='\0'; //remove last "/" //remove last "/"
+		}
+		//Update for later use
+		strcpy(startSPCFilePath, sel.filenameFromFS_getDirectoryListMethod);
+		GUI_getROMIterable(sel.filenameFromFS_getDirectoryListMethod);
 	}
     GUI.ScanJoypad = 0;
 	strcpy(CFG.ROMFile, sel.filenameFromFS_getDirectoryListMethod);
+	SNES.Stopped = 0;
 }
 
 void GUI_getSPCIterable(sint8 *rompath){
@@ -1322,14 +1329,18 @@ void GUI_getSPCIterable(sint8 *rompath){
 		return ;
 	}
 	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){
-		//Enter new dir
-		strcat((char*)startSPCFilePath, (char*)"/"); 
-		strcat((char*)startSPCFilePath, (char*)sel.filenameFromFS_getDirectoryListMethod); 
-		startSPCFilePath[strlen(startSPCFilePath)-1]='\0'; //remove last "/"
-		return GUI_getSPCIterable(startSPCFilePath);
+		//Enter new dir			
+		int thisLen = strlen(sel.filenameFromFS_getDirectoryListMethod);
+		if((sel.filenameFromFS_getDirectoryListMethod[thisLen-1] == '/') && (thisLen > 2)){
+			sel.filenameFromFS_getDirectoryListMethod[thisLen-1]='\0'; //remove last "/" //remove last "/"
+		}
+		//Update for later use
+		strcpy(startSPCFilePath, sel.filenameFromFS_getDirectoryListMethod);
+		GUI_getSPCIterable(sel.filenameFromFS_getDirectoryListMethod);
 	}
     GUI.ScanJoypad = 0;
 	strcpy(CFG.SPCFile, sel.filenameFromFS_getDirectoryListMethod);
+	SNES.Stopped = 0;
 }
 
 
