@@ -128,14 +128,14 @@ void VblankUser(){
 		TIMER3_DATA = 0;
 		TIMER3_CR = TIMER_CASCADE | TIMER_ENABLE;
 	#endif
-	handleARM7SVC();	/* Do not remove, handles TGDS services */
+	
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void VcounterUser(){
-
+	handleARM7SVC();	/* Do not remove, handles TGDS services */
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
