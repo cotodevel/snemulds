@@ -91,18 +91,12 @@ void VblankUser(){
 	
 	GFX.DSFrame++;
 	GFX.v_blank=1;
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
-	// FIX APU cycles
-#if 0	
-	if (/*CFG.Sound_output && */APU2->counter > 100 && APU2->counter < 261)
-	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT += 261 - APU2->counter;
-#endif		
+	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = getsIPCSharedTGDSSpecific();
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSIPCUSER->APU2);
+	// FIX APU cycles	
 	//*APU_ADDR_CNT += 262;
 	if (CFG.Sound_output)
-	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = APU_MAX;
-	APU2->counter = 0;
-
-
+	TGDSIPCUSER->APU_ADDR_CNT = APU_MAX;
 	//GUI_printf("vblank! \n");	
 }
 

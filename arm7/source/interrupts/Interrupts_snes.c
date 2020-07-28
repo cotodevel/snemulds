@@ -94,20 +94,20 @@ void HblankUser(){
 		uint32 T2 = APU_MEM[APU_TIMER2]?APU_MEM[APU_TIMER2]:0x100;
 		
 		if ((VCount & 1) == 1) {        		      	
-			if (++APU2->TIM0 >= T0) {
-				APU2->TIM0 -= T0;
+			if (++APU2->T0Count >= T0) {
+				APU2->T0Count -= T0;
 				APU_MEM[APU_COUNTER0]++;
 				APU_MEM[APU_COUNTER0] &= 0xf;
 			}
-			if (++APU2->TIM1 >= T1) {
-				APU2->TIM1 -= T1;
+			if (++APU2->T1Count >= T1) {
+				APU2->T1Count -= T1;
 				APU_MEM[APU_COUNTER1]++;
 				APU_MEM[APU_COUNTER1] &= 0xf;
 			}
 		}
-		APU2->TIM2 += 4;
-		if (APU2->TIM2 >= T2) {
-			APU2->TIM2 -= T2;
+		APU2->T2Count += 4;
+		if (APU2->T2Count >= T2) {
+			APU2->T2Count -= T2;
 			APU_MEM[APU_COUNTER2]++;
 			APU_MEM[APU_COUNTER2] &= 0xf;
 		}

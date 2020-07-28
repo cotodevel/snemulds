@@ -236,41 +236,8 @@ int go()
       SNES.V_Count = 0;
       //update_joypads();
 	}
-#if 0
-    if (CFG.Sound_output) {
-      if (SNES.V_Count & 63) {
-        if (SNES.V_Count & 1) {
-          if (!SNES.NTSC && ((SNES.V_Count&7) == 1)) {
-            APU2->TIM0++; APU2->TIM1++; APU2->TIM2+=4;
-          }
-          if (++APU2->TIM0 >= APU2->T0) {
-            APU2->TIM0 -= APU2->T0; APU2->CNT0++;
-            //if (APU2->CONTROL&1) { SPC700_emu = 1; APU_WaitCounter++; }
-          }
-          if (++APU2->TIM1 >= APU2->T1) {
-            APU2->TIM1 -= APU2->T1; APU2->CNT1++;
-            //if (APU2->CONTROL&2) { SPC700_emu = 1; APU_WaitCounter++; }
-          }
-        }
-        APU2->TIM2 += 4;
-        if (APU2->TIM2 >= APU2->T2) {
-          APU2->TIM2 -= APU2->T2; APU2->CNT2++;
-          //if (APU.CONTROL&4) { SPC700_emu = 1; APU_WaitCounter++; }
-        }
-      }
-    }
-#endif
     if (SNES.V_Count < GFX.ScreenHeight) 
-    {   	
-#if 0    	
-      if (GFX.Sprites_table_dirty) {
-/*        if ((CFG.BG_Layer&0x10))
-          draw_sprites();*/
-
-//draw_screen();    
-        GFX.Sprites_table_dirty = 0;
-      }
-#endif      
+    {    
       if (!(PPU_PORT[0x00]&0x80) && DMA_PORT[0x0C] && CFG.BG_Layer&0x80)
         HDMA_write();
       SNES.HDMA_line++;

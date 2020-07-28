@@ -173,18 +173,6 @@ void update_ram_snes(){
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
     struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
-	APU_T0_ASM_ADDR = (uint32)&APU2->T0;
-	APU_T1_ASM_ADDR = (uint32)&APU2->T1;
-	APU_T2_ASM_ADDR = (uint32)&APU2->T2;
-	
-	APU_TIM0_ASM_ADDR = (uint32)&APU2->TIM0;
-	APU_TIM1_ASM_ADDR = (uint32)&APU2->TIM1;
-	APU_TIM2_ASM_ADDR = (uint32)&APU2->TIM2;
-	
-	APU_CNT0_ASM_ADDR = (uint32)&APU2->CNT0;
-	APU_CNT1_ASM_ADDR = (uint32)&APU2->CNT1;
-	APU_CNT2_ASM_ADDR = (uint32)&APU2->CNT2;
-	
 	//must reflect to ipcfifoTGDSUser.h defs
 	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&getsIPCSharedTGDSSpecific()->PORT_SPC_TO_SNES[0];
 	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)&getsIPCSharedTGDSSpecific()->PORT_SNES_TO_SPC[0]; 
@@ -195,7 +183,7 @@ void update_spc_ports(){
 	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
 	getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP = (uint8 *)ADDR_SNEMUL_BLK;
 	
-	//todo: APU_ADDR_CNT: is unused by Assembly APU Core?
+	//todo: APU_ADDR_CNT: is unused by APU Core?
 }
 
 

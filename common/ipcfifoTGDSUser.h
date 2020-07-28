@@ -29,18 +29,31 @@ USA
 #include "dswnifi.h"
 #include "apu_shared.h"
 
+//Coto: If your snemulDS build has no sound, the culprit is a mis-aligned struct s_apu2 + struct sIPCSharedTGDSSpecific, so fill in there int stubX (X = number) until it works.
 struct s_apu2
 {
-	/* timers */
-	uint32    T0, T1, T2;
-	uint32 	TIM0, TIM1, TIM2;
-	uint32	CNT0, CNT1, CNT2;
-  
+	//skipper is a hack depending on port access, will redirect to other hardware
 	int	    skipper_cnt1;
 	int	    skipper_cnt2;
 	int	    skipper_cnt3;
 	int	    skipper_cnt4;
-	int		counter;
+	
+	/* Timers */
+	u32 T0Count;
+	u32 T1Count;
+	u32 T2Count;
+	
+	u32 T0Target;
+    u32 T1Target;
+    u32 T2Target;
+    
+	u32 T0Cycles;
+    u32 T1Cycles;
+	u32 T2Cycles;
+    
+	u8 T0Enabled;
+    u8 T1Enabled;
+    u8 T2Enabled;
 };
 
 struct sIPCSharedTGDSSpecific{

@@ -133,7 +133,7 @@ void  ApuReset() {
     APU_STATE[8] = 0;
     APU_SP = 0x1FF;
 
-	APU2->TIM0 = 0;
-	APU2->TIM1 = 0;
-	APU2->TIM2 = 0;
+	getsIPCSharedTGDSSpecific()->APU2.T0Count = 0;
+	getsIPCSharedTGDSSpecific()->APU2.T1Count = 0;
+	getsIPCSharedTGDSSpecific()->APU2.T2Count = 0;
 }

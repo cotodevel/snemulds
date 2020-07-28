@@ -44,6 +44,7 @@
 #include "engine.h"
 #include "guiTGDS.h"
 #include "core.h"
+#include "nds_cp15_misc.h"
 
 //wnifilib: multiplayer
 #include "dswnifi_lib.h"
@@ -533,42 +534,9 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 
 	// Clear "HDMA"
 	int i;
-	for (i = 0; i < 192; i++)
+	for (i = 0; i < 192; i++){
 		GFX.lineInfo[i].mode = -1;
-
-	//PrecalculateCalibrationData();
-	
-	
-	
-	//GUI_printf("zzz");
-#if 0
-	{	char *p = malloc(10);
-		GUI_printf("RAM = %p last malloc = %p", SNESC.RAM, p);
 	}
-	/* TOUCH SCREEN TEST */
-	while (1)
-	{
-		int i;
-
-		mytouchPosition mytouchXY;
-
-		keys = keysPressed();
-		//		mytouchXY=mytouchReadXY();
-
-		GUI_printf("keys = %x %d ", keys, SNES.h_blank);
-		if (keys & KEY_TOUCH)
-		{
-			touchXY=superTouchReadXY();
-			GUI_printf("x = %d y = %d       ", touchXY.px, touchXY.py);
-			//		waitReleaseTouch();	
-		}
-
-		if ((keys & KEY_START))
-		break;
-	}
-#endif	
-
-
 #ifndef	DSEMUL_BUILD	
 	//for (i = 0; i < 100; i++)
 	//	IRQVBlankWait();
@@ -576,18 +544,6 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 	// Load SNEMUL.CFG
 	printf("Load conf1");
 	set_config_file(getfatfsPath("snemul.cfg"));
-	
-	//ext support, removed for now
-	/*
-	{
-		FILE *f=fopen("/moonshl2/extlink.dat","rb");
-		if(!f){GUI_printf("Extlink cannot open.");while(1);}//__swiSleep();}
-		fread(&extlink,1,sizeof(extlink),f);
-		fclose(f);
-		if(extlink.ID!=ExtLinkBody_ID){GUI_printf("Not valid extlink.");while(1);}//__swiSleep();}
-	}
-	*/
-	
 	GUI_printf("Load conf2");
 	readOptionsFromConfig("Global");
 	GUI_printf("Load conf3");
