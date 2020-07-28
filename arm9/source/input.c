@@ -4,15 +4,14 @@
 
 #include <malloc.h>
 #include <string.h>
-
 #include "common.h"
 #include "gfx.h"
 #include "snes.h"
 #include "cfg.h"
-
+#include "ppu.h"
 #include "apu.h"
 #include "opcodes.h"
-#include "cpu.h"
+#include "core.h"
 #include "guiTGDS.h"
 #include "videoTGDS.h"
 #include "keypadTGDS.h"
@@ -41,10 +40,12 @@ int SnemulDSLCDSwap(){
 	ToggleOnOffConsoleBacklight();
 	if (GUI.hide)
 	{
-		if (REG_POWERCNT & POWER_SWAP_LCDS)
+		if ((REG_POWERCNT & POWER_SWAP_LCDS) == POWER_SWAP_LCDS){
 			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
-		else
+		}
+		else{
 			setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+		}
 	}
 	return 0;
 }
@@ -211,7 +212,7 @@ int get_joypad()
 		//Touchscreen Events
 		if (keysHeld() & KEY_TOUCH){
 			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
-			int tx, ty;
+			int tx=0, ty=0;
 			tx = TGDSIPC->touchXpx;
 			
 			if (CFG.Scaled == 0) // No scaling

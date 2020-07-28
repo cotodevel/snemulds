@@ -27,21 +27,18 @@ GNU General Public License for more details.
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "consoleTGDS.h"
-
 #include "guiTGDS.h"
 #include "biosTGDS.h"
-
 #include "gui_widgets.h"
 #include "console_str.h"
 #include "InterruptsARMCores_h.h"
 #include "dmaTGDS.h"
-
 #include "posixHandleTGDS.h"
 #include "fatfslayerTGDS.h"
 #include "keypadTGDS.h"
 #include "utilsTGDS.h"
 #include "spifwTGDS.h"
-#include "guiTGDS.h"
+#include "powerTGDS.h"
 
 t_GUIScreen	*GUI_newScreen(int nb_elems)
 {

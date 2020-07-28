@@ -37,6 +37,13 @@
 #include "fatfslayerTGDS.h"
 #include "utilsTGDS.h"
 #include "dmaTGDS.h"
+#include "keypadTGDS.h"
+#include "memmap.h"
+#include "biosTGDS.h"
+#include "crc32.h"
+#include "engine.h"
+#include "guiTGDS.h"
+#include "core.h"
 
 //wnifilib: multiplayer
 #include "dswnifi_lib.h"
@@ -313,25 +320,25 @@ int checkConfiguration(char *name, int crc)
 	{
 		section = FS_getFileName(name);
 	}
-	else if (section = find_config_section_with_hex("crc", crc))
+	else if ((section = find_config_section_with_hex("crc", crc)))
 	{
 	}
-	else if (section = find_config_section_with_string("title2", SNES.ROM_info.title))
+	else if ((section = find_config_section_with_string("title2", SNES.ROM_info.title)))
 	{
 	}
-	else if (section = find_config_section_with_hex("crc2", crc))
+	else if ((section = find_config_section_with_hex("crc2", crc)))
 	{
 	}
-	else if (section = find_config_section_with_string("title3", SNES.ROM_info.title))
+	else if ((section = find_config_section_with_string("title3", SNES.ROM_info.title)))
 	{
 	}
-	else if (section = find_config_section_with_hex("crc3", crc))
+	else if ((section = find_config_section_with_hex("crc3", crc)))
 	{
 	}
-	else if (section = find_config_section_with_string("title4", SNES.ROM_info.title))
+	else if ((section = find_config_section_with_string("title4", SNES.ROM_info.title)))
 	{
 	}
-	else if (section = find_config_section_with_hex("crc4", crc))
+	else if ((section = find_config_section_with_hex("crc4", crc)))
 	{
 	}
 
@@ -457,7 +464,7 @@ int selectSong(char *name)
 	if(spcFile == NULL){
 		return -1;
 	}
-	if(FS_loadFile(CFG.Playlist, spcFile, 0x10200) < 0){
+	if(FS_loadFile(CFG.Playlist, (char*)spcFile, 0x10200) < 0){
 		//GUI_printf("selectSong(): Load error: %s", CFG.Playlist);
 		free(spcFile);
 		return -1;

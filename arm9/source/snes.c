@@ -18,13 +18,15 @@ GNU General Public License for more details.
 #include <malloc.h>
 #include <string.h>
 
-#include "cpu.h"
+#include "core.h"
 #include "snes.h"
 #include "apu.h"
 #include "gfx.h"
 #include "cfg.h"
 //#include "superfx.h"
 #include "opcodes.h"
+#include "ppu.h"
+#include "memmap.h"
 #include "ipcfifoTGDSUser.h"
 
 #define bzero(p, s)	memset(p, 0, s)
@@ -107,7 +109,7 @@ void	reset_CPU()
   CPU.S = 0x1ff;
 
   CPU_init();	
-  PCptr = map_memory(CPU.PC, CPU.PB);
+  PCptr = (u8*)map_memory(CPU.PC, CPU.PB);
   SnesPCOffset = -((sint32)mem_getbaseaddress(CPU.PC, CPU.PB));
   //GUI_printf("PCptr = %08x\n", PCptr);
   CPU.IsBreak = 0;
@@ -203,7 +205,7 @@ int cnt_alphachar(char *str)
 {
   int i = 0, cnt = 0;
 
-  while (i <= 21) {
+  while (i < 21) {
     if ((str[i] >= 'a' && str[i] <= 'z') || (str[i] >= 'A' && str[i] <= 'Z'))
       cnt++;
     i++;
@@ -277,7 +279,7 @@ void	load_ROM(char *ROM, int ROM_size)
 
   SNES.ROMHeader = fileheader;
   SNES.ROMSize = filesize-fileheader;
-  SNESC.ROM = ROM+fileheader;
+  SNESC.ROM = (u8*)(ROM+fileheader);
 
   if (CFG.InterleavedROM)
     UnInterleaveROM();

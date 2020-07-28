@@ -3,16 +3,15 @@
 #include "apu.h"
 #include "dsp.h"
 #include "main.h"
-#include "InterruptsARMCores_h.h"	//new
-#include "interrupts.h"	//ori
-
+#include "InterruptsARMCores_h.h"
+#include "interrupts.h"
 #include "ipcfifoTGDSUser.h"
 #include "wifi_arm7.h"
 #include "usrsettingsTGDS.h"
 #include "timerTGDS.h"
-
-#include "timerTGDS.h"
 #include "CPUARMTGDS.h"
+#include "eventsTGDS.h"
+#include "powerTGDS.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
 uint16 *playBuffer;

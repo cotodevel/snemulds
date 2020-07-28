@@ -1,7 +1,7 @@
-#include "ipcfifoTGDSUser.h"
+#include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
-
+#include "ipcfifoTGDSUser.h"
 #include "InterruptsARMCores_h.h"
 #include "wifi_arm7.h"
 #include "pocketspc.h"
@@ -11,6 +11,7 @@
 #include "mixrate.h"
 #include "apu_shared.h"
 #include "biosTGDS.h"
+#include "eventsTGDS.h"
 
 //User Handler Definitions
 

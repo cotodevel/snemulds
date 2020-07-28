@@ -34,7 +34,6 @@ GNU General Public License for more details.
 #include "fs.h"
 #include "snes.h"
 #include "gfx.h"
-#include "cpu.h"
 #include "apu.h"
 #include "cfg.h"
 #include "core.h"
@@ -85,7 +84,7 @@ int loadSRAM()
     {
     	strcpy(sramFile, CFG.ROMFile);
 		strcpy(strrchr(sramFile, '.'), ".SRM");
-    	FS_loadFile(sramFile, SNESC.SRAM, SNESC.SRAMMask+1);
+    	FS_loadFile(sramFile, (char*)SNESC.SRAM, SNESC.SRAMMask+1);
     }	
 	return 0;    
 }
@@ -93,14 +92,15 @@ int loadSRAM()
 
 int saveSRAM()
 {
-  char sramFile[100];
-  	
-  if (SNESC.SRAMMask > 0)
-    {
-    	strcpy(sramFile, CFG.ROMFile);
+	char sramFile[100];
+
+	if (SNESC.SRAMMask > 0)
+	{
+		strcpy(sramFile, CFG.ROMFile);
 		strcpy(strrchr(sramFile, '.'), ".SRM");		
-    	FS_saveFile(sramFile, SNESC.SRAM, SNESC.SRAMMask+1,false);	//force_file_creation == false here (we could destroy or corrupt saves..)
-    }	
+		FS_saveFile(sramFile, (char*)SNESC.SRAM, SNESC.SRAMMask+1,false);	//force_file_creation == false here (we could destroy or corrupt saves..)
+	}
+	return 0;
 }
 
 unsigned char interrupted;
@@ -127,7 +127,7 @@ int	changeROM(char *ROM, int size)
 
 	// Write SRAM
     load_ROM(ROM, size);
-    SNES.ROM_info.title[21] = '\0';
+    SNES.ROM_info.title[20] = '\0';
     int i = 20;
     while (i >= 0 && SNES.ROM_info.title[i] == ' ')
     	SNES.ROM_info.title[i--] = '\0';
@@ -138,6 +138,7 @@ int	changeROM(char *ROM, int size)
 	// Clear screen
 	// Read SRAM
     loadSRAM();	
+	return 0;
 }
 
 int initSNESEmpty(){

@@ -39,8 +39,7 @@ free_crc32_table (void)
 }
 
 
-unsigned int
-crc32 (unsigned int crc, const void *buffer, unsigned int size)
+unsigned int crc32 (unsigned int crc, const void *buffer, unsigned int size)
 {
   unsigned char *p = (unsigned char *) buffer;
 

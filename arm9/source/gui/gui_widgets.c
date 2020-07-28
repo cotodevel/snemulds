@@ -467,7 +467,7 @@ struct sGUISelectorItem GUISelector_getSelected(t_GUIScreen *scr, int *index)
 	else if(
 		(guiSelectorItem.filenameFromFS_getDirectoryListMethod[strlen(guiSelectorItem.filenameFromFS_getDirectoryListMethod) - 1] == '/')
 		||
-		(strcmp(guiSelectorItem.filenameFromFS_getDirectoryListMethod[strlen(guiSelectorItem.filenameFromFS_getDirectoryListMethod) - 1], "//") == 0)
+		(strcmp((char*)(guiSelectorItem.filenameFromFS_getDirectoryListMethod + strlen(guiSelectorItem.filenameFromFS_getDirectoryListMethod) - 1), "//") == 0)
 	){
 		guiSelectorItem.StructFDFromFS_getDirectoryListMethod = FT_DIR;
 	}

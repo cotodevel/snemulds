@@ -20,16 +20,14 @@ GNU General Public License for more details.
 #include "InterruptsARMCores_h.h"
 #include "interrupts.h"
 #include "ipcfifoTGDSUser.h"
-
-
 #include "timerTGDS.h"
-
 #include "common.h"
 #include "opcodes.h"
 #include "snes.h"
-#include "cpu.h"
+#include "core.h"
 #include "cfg.h"
 #include "apu.h"
+#include "memmap.h"
 
 #ifdef WIN32
 #define OPCODE _inline

@@ -34,7 +34,7 @@ GNU General Public License for more details.
 #include <malloc.h>
 #include <string.h>
 
-#include "cpu.h"
+#include "core.h"
 #include "snes.h"
 #include "apu.h"
 #include "gfx.h"
@@ -152,6 +152,7 @@ int	read_snapshot(char *file, uchar nb)
   GFX.tiles_dirty = 1;
   GFX.Sprites_table_dirty = 1;
   CPU.unpacked = 0; // Update ASM  
+	return 0;
 }
 
 int write_snapshot(char *file, unsigned char nb, const char *name)

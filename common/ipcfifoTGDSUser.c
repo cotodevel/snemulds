@@ -16,13 +16,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 USA
 
 */
+
 #include "ipcfifoTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #include "apu_shared.h"
+#include "InterruptsARMCores_h.h"
+#include "powerTGDS.h"
 
 #ifdef ARM7
 #include <string.h>
-
 #include "pocketspc.h"
 #include "apu.h"
 #include "dsp.h"
@@ -35,21 +37,15 @@ USA
 #endif
 
 #ifdef ARM9
-
 #include <stdbool.h>
-
 #include "memmap.h"
 #include "common.h"
 #include "cfg.h"
 #include "main.h"
 #include "core.h"
-
 #include "dsregs.h"
 #include "dsregs_asm.h"
-#include "InterruptsARMCores_h.h"
-
 #include "wifi_arm9.h"
-
 #endif
 
 
@@ -122,7 +118,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			SetupSound();
 			
 			//Load APU payload
-			LoadSpc(cmd2);
+			LoadSpc((const u8*)cmd2);
 			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 			fifomsg[40] = (uint32)0;	//release ARM9 APU_playSpc()
@@ -197,7 +193,7 @@ void update_spc_ports(){
 	ADDR_SNEMUL_CMD	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_CMD;	//0x027FFFE8	// SNEMUL_CMD
 	ADDR_SNEMUL_ANS	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_ANS;	//0x027fffec	// SNEMUL_ANS
 	ADDR_SNEMUL_BLK	=	(uint32)(volatile uint32*)&getsIPCSharedTGDSSpecific()->APU_ADDR_BLK;	//0x027fffe8	// SNEMUL_BLK
-	getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP = (volatile uint8 *)ADDR_SNEMUL_BLK;
+	getsIPCSharedTGDSSpecific()->APU_ADDR_BLKP = (uint8 *)ADDR_SNEMUL_BLK;
 	
 	//todo: APU_ADDR_CNT: is unused by Assembly APU Core?
 }

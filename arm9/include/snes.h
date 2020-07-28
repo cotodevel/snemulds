@@ -16,18 +16,11 @@ GNU General Public License for more details.
 */
 
 #ifndef __snes_h__
+#define __snes_h__
 
 #include <stdio.h>
 #include "common.h"
 
-#define MAP_RELOAD      0x80000000
-#define MAP_PPU         0x81000000
-#define MAP_CPU         0x82000000
-#define MAP_DSP         0x83000000
-#define MAP_LOROM_SRAM  0x84000000
-#define MAP_HIROM_SRAM  0x85000000
-#define MAP_NONE        0x86000000
-#define MAP_LAST        0x8F000000
 
 typedef
        struct {
@@ -64,6 +57,11 @@ struct s_snescore
 //#define MAP SNES.Map
 
 extern struct s_snescore	SNESC;
+extern struct s_snes	SNES;
+//#define SNES	((struct s_snes *)(0x23E0000))
+extern uint16	PPU_PORT[0x90]; // 2100 -> 2183
+extern uint16	DMA_PORT[0x180]; // 4200 -> 437F
+extern int cnt_alphachar(char *str);
 
 struct s_snes
 {
@@ -122,48 +120,23 @@ struct s_snes
   int		stat_OPC_cnt[256];*/
 };
 
-extern struct s_snes	SNES;
 
-//#define SNES	((struct s_snes *)(0x23E0000))
-
-extern uint16	PPU_PORT[0x90]; // 2100 -> 2183
-extern uint16	DMA_PORT[0x180]; // 4200 -> 437F
+// DS->Snes Memory
+#define DS_SRAM          ((uint8*)0x0A000000)
 
 #define EMPTYMEM		(ushort *)(0x23E0000)
 //#define PPU_PORT	((ushort *)(0x23E0000))
 //#define DMA_PORT	((ushort *)(0x23E4000))
 
 #define SNES_SRAM_ADDRESS ((uchar *)(0x23E6000))
-
 #define SNES_ROM_ADDRESS ((uchar *)(0x20C0000))
 
-#define ROM_MAX_SIZE	(3*1024*1024)
+//Rom Page variables
+#define ROM_MAX_SIZE	(sint32)(3*1024*1024)
 //#define ROM_STATIC_SIZE	(1*1024*1024)
 //#define ROM_PAGING_SIZE	(2*1024*1024)
-#define ROM_STATIC_SIZE	(64*1024)
-#define ROM_PAGING_SIZE	(ROM_MAX_SIZE-ROM_STATIC_SIZE)
+#define ROM_STATIC_SIZE	(sint32)(64*1024)
+#define ROM_PAGING_SIZE	(sint32)(ROM_MAX_SIZE-ROM_STATIC_SIZE)
 #define SNES_ROM_PAGING_ADDRESS (SNES_ROM_ADDRESS+ROM_STATIC_SIZE)
-
-void	pushb(uint8 value);
-void	pushw(uint16 value);
-
-uchar   mem_getbyte(uint32 offset, uchar bank);
-void	mem_setbyte(uint32 offset, uchar bank, uchar byte);
-ushort  mem_getword(uint32 offset, uchar bank);
-void    mem_setword(uint32 offset, uchar bank, ushort word);
-void	*map_memory(uint16 offset, uchar bank);
-void	*mem_getbaseaddress(uint16 offset, uchar bank);
-
-void	GoNMI();
-void	GoIRQ();
-
-
-void	reset_SNES();
-int		get_joypad();
-void	HDMA_write();
-void	HDMA_transfert(uchar port);
-void	load_ROM(char *ROM, int ROM_size);
-
-
 
 #endif

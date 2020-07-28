@@ -17,29 +17,13 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "cpu.h"
+#include "core.h"
 #include "opcodes.h"
 #include "common.h"
 #include "snes.h"
 #include "cfg.h"
 #include "memmap.h"
-#include "posixHandleTGDS.h"
-
-extern int OldPC;
-extern char *ROM_Image;
-
-#define NOT_LARGE	0
-#define USE_PAGING	1
-#define USE_EXTMEM	2
-
-
-extern uchar DMA_port_read(long address);
-extern void DMA_port_write(long address, unsigned short value);
-extern void PPU_port_write(long address, unsigned short value);
-extern uchar PPU_port_read(long address);
-
-#define SPECIAL_MAP(p) ((int)(p) & 0x80000000)
-#define REGULAR_MAP(p) (!((int)(p) & 0x80000000))  	
+#include "utilsTGDS.h"
 
 void WriteProtectROM()
 {
@@ -51,7 +35,7 @@ void WriteProtectROM()
 	for (c = 0; c < 0x800; c++)
 	{
 		if (SNES.BlockIsROM[c])
-			WMAP[c] = (uchar *)MAP_NONE;
+			WMAP[c] = (uchar*)MAP_NONE;
 	}
 }
 
@@ -61,7 +45,7 @@ void FixMap()
 
 	for (c = 0; c < 0x800; c++)
 	{
-		if (MAP[c] != MAP_RELOAD && REGULAR_MAP(MAP[c]))
+		if ( (MAP[c] != (uchar*)MAP_RELOAD) && REGULAR_MAP(MAP[c]))
 		{
 			MAP[c] -= ((c << 13)&0xFF0000);
 		}
@@ -108,15 +92,7 @@ void InitLoROMMap(int mode)
 		// Only a part of RAM is used static
 		maxRAM = ROM_STATIC_SIZE;
 	}
-	if (mode == USE_EXTMEM)
-	{
-		// Extended RAM mode...
-		// All RAM available is used static
-		// the remaining of mapping use extended RAM
-		maxRAM = ROM_MAX_SIZE;
-		largeROM = (uint8 *)0x8000000 + SNES.ROMHeader;
-	}
-
+	
 	for (c = 0; c < 0x200; c += 8)
 	{
 		MAP[c+0] = MAP[c+0x400] = SNESC.RAM;
@@ -226,14 +202,6 @@ void InitHiROMMap(int mode)
 		// Only a part of RAM is used static
 		maxRAM = ROM_STATIC_SIZE;
 	}
-	if (mode == USE_EXTMEM)
-	{
-		// Extended RAM mode...
-		// All RAM available is used static
-		// the remaining of mapping use extended RAM
-		maxRAM = ROM_MAX_SIZE;
-		largeROM = (uint8 *)0x8000000 + SNES.ROMHeader;
-	}
 	
 	for (c = 0; c < 0x200; c += 8)
 	{
@@ -297,7 +265,7 @@ void InitHiROMMap(int mode)
 
 /*#define	PAGE_SIZE		8192
  #define PAGE_OFFSET		0*/
-#define	PAGE_SIZE		65536
+#define	PAGE_SIZE		ROM_STATIC_SIZE
 #define PAGE_OFFSET		3
 
 uchar *ROM_paging= NULL;
@@ -308,7 +276,7 @@ void mem_clear_paging()
 {
 	if (ROM_paging)
 	{
-//		GUI_printf("Memory paging cleared...\n");
+//		printf("Memory paging cleared...\n");
 		//		free(ROM_paging);
 		free(ROM_paging_offs);
 		ROM_paging = NULL;
@@ -321,7 +289,7 @@ void mem_init_paging()
 	/*	ROM_paging = malloc(ROM_PAGING_SIZE);
 	 if (!ROM_paging)
 	 {
-	 GUI_printf("Not enough memory for ROM paging.\n");
+	 printf("Not enough memory for ROM paging.\n");
 	 while(1);
 	 }*/
 	ROM_paging = SNES_ROM_PAGING_ADDRESS;
@@ -329,7 +297,7 @@ void mem_init_paging()
 	ROM_paging_offs = malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
 	if (!ROM_paging_offs)
 	{
-		GUI_printf("Not enough memory for ROM paging (2).\n");
+		printf("Not enough memory for ROM paging (2).\n");
 		while (1)
 			;
 	}
@@ -368,12 +336,12 @@ void mem_removeCacheBlock(int block)
 
 		if ((block & 7) >= 4)
 		{
-			MAP[block] = MAP_RELOAD;
-			MAP[block+0x400] = MAP_RELOAD;
+			MAP[block] = (uchar*)MAP_RELOAD;
+			MAP[block+0x400] = (uchar*)MAP_RELOAD;
 		}
 		if (SNES.BlockIsROM[block+0x200])
-			MAP[block+0x200] = MAP_RELOAD;
-		MAP[block+0x600] = MAP_RELOAD;
+			MAP[block+0x200] = (uchar*)MAP_RELOAD;
+		MAP[block+0x600] = (uchar*)MAP_RELOAD;
 	}
 }
 
@@ -613,7 +581,7 @@ uchar mem_getbyte(uint32 offset,uchar bank)
 	block = (address>>13)&0x7FF;
 	addr = MAP[block];
 
-	if (addr == MAP_RELOAD)
+	if (addr == (uchar*)MAP_RELOAD)
 	addr = mem_checkReload(block);
 
 	if (REGULAR_MAP(addr))
@@ -633,7 +601,7 @@ void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 
 	block = (address>>13)&0x7FF;
 	addr = WMAP[block];
-	if (addr == MAP_RELOAD)
+	if (addr == (uchar*)MAP_RELOAD)
 	addr = mem_checkReload(block);
 	if (REGULAR_MAP(addr))
 	{
@@ -653,7 +621,7 @@ ushort mem_getword(uint32 offset,uchar bank)
 	block = (address>>13)&0x7FF;
 	addr = MAP[block];
 
-	if (addr == MAP_RELOAD)
+	if (addr == (uchar*)MAP_RELOAD)
 	addr = mem_checkReload(block);
 	if (REGULAR_MAP(addr))
 	{
@@ -673,7 +641,7 @@ void mem_setword(uint32 offset, uchar bank, ushort word)
 	//  CPU.WaitAddress = -1;
 	block = (address>>13)&0x7FF;
 	addr = WMAP[block];
-	if (addr == MAP_RELOAD)
+	if (addr == (uchar*)MAP_RELOAD)
 	addr = mem_checkReload(block);
 
 	if (REGULAR_MAP(addr))
@@ -693,7 +661,7 @@ void *mem_getbaseaddress(uint16 offset, uchar bank)
 	block = (address>>13)&0x7FF;
 	ptr = MAP[block];
 
-	if (ptr == MAP_RELOAD)
+	if (ptr == (uchar*)MAP_RELOAD)
 		ptr = mem_checkReload(block);
 
 	if (REGULAR_MAP(ptr))
@@ -724,7 +692,7 @@ void *map_memory(uint16 offset, uchar bank)
 	block = (address>>13)&0x7FF;
 	ptr = MAP[block];
 
-	if (ptr == MAP_RELOAD)
+	if (ptr == (uchar*)MAP_RELOAD)
 		ptr = mem_checkReload(block);
 
 	if (REGULAR_MAP(ptr))
