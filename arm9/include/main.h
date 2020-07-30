@@ -23,7 +23,7 @@ GNU General Public License for more details.
 #include "guiTGDS.h"
 #include "gui_widgets.h"
 #include "consoleTGDS.h"
-
+#include "ipcfifoTGDSUser.h"
 #endif
 
 #ifdef __cplusplus
@@ -34,6 +34,7 @@ extern int argc;
 extern sint8 **argv;
 extern int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]);
 extern int loadROM(struct sGUISelectorItem *name);
+extern int loadROMfromBuffer(char * bufSrc, int bufSize);
 extern bool handleROMSelect;
 extern bool handleSPCSelect;
 

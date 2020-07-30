@@ -91,6 +91,9 @@ struct sIPCSharedTGDSSpecific{
 //GDB stub support
 //#define GDB_ENABLE
 
+//SnemulDS embedded file
+//#define SNEMULDS_EMBEDDED_FILE
+
 #endif
 
 #ifdef __cplusplus
@@ -107,9 +110,6 @@ extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern uint32 ADDR_PORT_SNES_TO_SPC;
 extern uint32 ADDR_PORT_SPC_TO_SNES;
 
-#ifdef ARM9
-extern void update_ram_snes();
-#endif
 
 extern void update_spc_ports();
 

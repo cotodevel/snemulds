@@ -47,9 +47,6 @@ struct s_snescore
   int		SRAMMask;  
 };
 
-/* DS Memory */
-#define SNES_RAM_ADDRESS	((uint8 *)(0x023C0000))
-
 #define MAP  ((uchar **)(0x06898000))
 #define WMAP ((uchar **)(0x0689A000))
 //#define MAP ((uchar **)(0x27E0000))
@@ -120,6 +117,8 @@ struct s_snes
   int		stat_OPC_cnt[256];*/
 };
 
+/* DS Memory */
+#define SNES_RAM_ADDRESS	((uint8 *)(0x023C0000))
 
 // DS->Snes Memory
 #define DS_SRAM          ((uint8*)0x0A000000)
@@ -127,16 +126,15 @@ struct s_snes
 #define EMPTYMEM		(ushort *)(0x23E0000)
 //#define PPU_PORT	((ushort *)(0x23E0000))
 //#define DMA_PORT	((ushort *)(0x23E4000))
-
 #define SNES_SRAM_ADDRESS ((uchar *)(0x23E6000))
-#define SNES_ROM_ADDRESS ((uchar *)(0x20C0000))
+#define SNES_ROM_ADDRESS ((uchar *)(0x020C0000))
 
-//Rom Page variables
-#define ROM_MAX_SIZE	(sint32)(3*1024*1024)
+//Rom Page variables:
+#define ROM_MAX_SIZE	(int)(3*1024*1024)
 //#define ROM_STATIC_SIZE	(1*1024*1024)
 //#define ROM_PAGING_SIZE	(2*1024*1024)
-#define ROM_STATIC_SIZE	(sint32)(64*1024)
-#define ROM_PAGING_SIZE	(sint32)(ROM_MAX_SIZE-ROM_STATIC_SIZE)
+#define ROM_STATIC_SIZE	(int)(64*1024)
+#define ROM_PAGING_SIZE	(int)(ROM_MAX_SIZE-ROM_STATIC_SIZE)
 #define SNES_ROM_PAGING_ADDRESS (SNES_ROM_ADDRESS+ROM_STATIC_SIZE)
 
 #endif

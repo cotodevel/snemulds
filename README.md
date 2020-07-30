@@ -27,6 +27,7 @@ Hotkeys:
 Notes:
 /release folder has precompiled binaries for you to enjoy
 
+
 Compile Toolchain: To compile this project you will need to follow the steps at https://bitbucket.org/Coto88/toolchaingenericds : Then simply extract the project somewhere.
 
 Compile this project: 
@@ -58,16 +59,27 @@ b) The file extension must be renamed to .smc before compression.
 c) The compressed file must use  .zip (deflate) or .gz, and the compressed .zip must have 1 only file.
 
 
-Optional)
-GDB Remote debugging is now possible, to enable GDB Remote Debugging you need: common/ipcfifoTGDSUser.h and remove the trailing "//" (without commas):
+[Optional]
+
+GDB Remote debugging: 
+To enable GDB Remote Debugging you need: common/ipcfifoTGDSUser.h and remove the trailing "//" (without commas):
 //#define GDB_ENABLE
 
 1.  Then recompile the project. Run SnemulDS and games won´t boot while GDB Remote debugging is running, this is normal. 
 2.  While 1) takes place, follow the steps @ https://bitbucket.org/Coto88/toolchaingenericds-gdbstub-example
 
-to disable GDB Remote debugging add the trailing "//" you edited in Optional) step, and recompile the project.
+To disable GDB Remote debugging add the trailing "//" you edited in Optional) step, and recompile the project.
 
 
+EmbeddedFile mode:
+1) To build a SnemulDS.nds that embeds & runs directly a binary file, such file must be renamed into "fileEmbed.bin" (no quotes)
+then copied over onto arm9/data/ folder. 
+
+2) Head over to ipcfifoTGDSUser.h and define the SNEMULDS_EMBEDDED_FILE value (if it had a leading "//", remove them)
+
+3) You will need to follow the [Compile Toolchain] steps to build such .NDS binary.
+
+Note: It follows the standard NDS NTR format. Any file equal or below 1.5MB will work. 
 
 
 To do:

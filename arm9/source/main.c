@@ -53,6 +53,10 @@
 #include "eventsTGDS.h"
 #include "ipcfifoTGDS.h"
 
+#ifdef SNEMULDS_EMBEDDED_FILE
+#include "fileEmbed.h"
+#endif
+
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
 
 uint32 screen_mode;
@@ -345,10 +349,85 @@ int checkConfiguration(char *name, int crc)
 
 	if (section != NULL)
 	{
-		GUI_printf("Section : %s ", section);
+		printf("Section : %s ", section);
 		readOptionsFromConfig(section);
 	}
 }
+
+int loadROMfromBuffer(char * bufSrc, int bufSize)
+{
+	//wait until release A button
+	scanKeys();
+	u32 keys = keysPressed();
+	while (keys&KEY_A){
+		scanKeys();
+		keys = keysPressed();
+	}
+	
+	int size;
+	char romname[MAX_TGDSFILENAME_LENGTH+1] = {0};
+	int ROMheader;
+	char *ROM;
+	int crc;
+	
+	// Save SRAM of previous game first
+	//saveSRAM();
+	CFG.LargeROM = 0;
+	strcpy(romname, "");
+	
+	clrscr();
+	memset(CFG.ROMFile, 0, sizeof(CFG.ROMFile));
+	strcpy(CFG.ROMFile, romname);
+	void *ptr = malloc(4);
+	printf("ptr=%p... ", ptr);
+	free(ptr);
+	
+	mem_clear_paging(); // FIXME: move me...
+	//ROM = (char *) SNES_ROM_ADDRESS;
+	ROM = bufSrc;	//point to target buffer
+	
+	
+	size = bufSize;
+	ROMheader = size & 8191;
+	if (ROMheader != 0&& ROMheader != 512){
+		ROMheader = 512;
+	}
+
+	clrscr();
+	printf(" - - ");
+	printf(" - - ");
+	printf("Fileload from Buffer: %x - Size:%d", ROM, size);
+	if (size-ROMheader > (3*1024*1024) )	//Fits in EWRAM fully always
+	{
+		ROM = ROM-ROMheader;
+		//FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, ROM_STATIC_SIZE+ROMheader);
+		CFG.LargeROM = 1;
+		crc = crc32(0, ROM, ROM_STATIC_SIZE);
+		printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
+	}
+	else
+	{
+		ROM = ROM-ROMheader;
+		//FS_loadROM(ROM-ROMheader, CFG.ROMFile);
+		CFG.LargeROM = 0;
+		crc = crc32(0, ROM, size-ROMheader);
+		printf("CRC = %08x ", crc);
+	}
+
+	changeROM(ROM-ROMheader, size);
+	//checkConfiguration(name->filenameFromFS_getDirectoryListMethod, crc);
+	
+	/*
+	//Apply topScreen / bottomScreen setting
+	if(CFG.TopScreenEmu == 0){
+		SnemulDSLCDSwap();
+	}
+	*/
+	
+	
+	return 0;
+}
+
 
 int loadROM(struct sGUISelectorItem * name)
 {
@@ -466,11 +545,11 @@ int selectSong(char *name)
 		return -1;
 	}
 	if(FS_loadFile(CFG.Playlist, (char*)spcFile, 0x10200) < 0){
-		//GUI_printf("selectSong(): Load error: %s", CFG.Playlist);
+		//printf("selectSong(): Load error: %s", CFG.Playlist);
 		free(spcFile);
 		return -1;
 	}
-	//GUI_printf("WAITING");
+	//printf("WAITING");
 	APU_playSpc(spcFile);	//blocking, wait APU init
 	free(spcFile);
 	return 0;
@@ -503,6 +582,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 	memset(&startFilePath, 0, sizeof(startFilePath));
 	memset(&startSPCFilePath, 0, sizeof(startSPCFilePath));
 	
+	#ifndef SNEMULDS_EMBEDDED_FILE
 	int ret=FS_init();
 	if (ret == 0)
 	{
@@ -512,6 +592,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 	{
 		printf(_STR(IDS_FS_FAILED));
 	}
+	#endif
 	
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
@@ -541,14 +622,33 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 	//for (i = 0; i < 100; i++)
 	//	IRQVBlankWait();
 #endif	
+	
+	#ifdef SNEMULDS_EMBEDDED_FILE
+	
+	//1) Copy ROM to target addr
+	extern u32 _snes_start;
+	char * embeddedFileOffset = &fileEmbed[0];
+	int embeddedFileSize = fileEmbed_size;
+	
+	//2) Free memory already consumed
+	/*
+	extern u32 __lib__end__;
+	extern u32 __vma_stub_end__;
+	int embeddedSize = (sint32)((uint8*)(uint32*)&__vma_stub_end__ - (sint32)(&__lib__end__));
+	sbrk(-embeddedSize);
+	*/
+	loadROMfromBuffer((char*)embeddedFileOffset, embeddedFileSize);
+	#endif
+	
+	#ifndef SNEMULDS_EMBEDDED_FILE
 	// Load SNEMUL.CFG
 	printf("Load conf1");
 	set_config_file(getfatfsPath("snemul.cfg"));
-	GUI_printf("Load conf2");
+	printf("Load conf2");
 	readOptionsFromConfig("Global");
-	GUI_printf("Load conf3");
+	printf("Load conf3");
 	GUI_getConfig();	
-	GUI_printf("Load conf4");
+	printf("Load conf4");
 	
 	//ARGV Support: 
 	if (argc > 1) {
@@ -566,6 +666,8 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 	if (!(argc > 1)) {
 		GUI_deleteROMSelector(); 	//Should also free ROMFile
 	}
+	#endif
+	
 	GUI_createMainMenu();	//Start GUI
 	
 	while (1)
@@ -606,7 +708,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 		if(remoteStubMain() == remoteStubMainWIFINotConnected){
 			if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){
 				//Show IP and port here
-				GUI_printf("Port:%d GDB IP:%s",remotePort,(char*)print_ip((uint32)Wifi_GetIP()));
+				printf("Port:%d GDB IP:%s",remotePort,(char*)print_ip((uint32)Wifi_GetIP()));
 				remoteInit();
 			}
 			else{

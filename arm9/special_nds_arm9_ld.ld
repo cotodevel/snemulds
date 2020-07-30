@@ -23,12 +23,12 @@ OUTPUT_FORMAT("elf32-littlearm")
 MEMORY
 {
 	DTCM : ORIGIN = 0x0b000000, LENGTH = 16K
-	ITCM : ORIGIN = 0x01FF8300, LENGTH = 32K - 1K + 256
-	VECTORS : ORIGIN = 0x01FF8000, LENGTH = 1K - 256
-	GBAROM : ORIGIN = 0x08000000, LENGTH = 32M
+	ITCM : ORIGIN = 0x01FF8300, LENGTH = 32K - 768
+	VECTORS : ORIGIN = 0x01FF8000, LENGTH = 768
 	EWRAM : ORIGIN = 0x02000000, LENGTH = 4M
 	ARM9SHAREDWRAM : ORIGIN = 0x03000000, LENGTH = 32K
-	GBAEW   : ORIGIN = 0x02000000, LENGTH = 256k	/* todo... */
+	SNESROM : ORIGIN = 0x020C0000, LENGTH = 3M
+	
 }
 
 _itcm_start = ORIGIN(ITCM);
@@ -43,14 +43,11 @@ _ewram_end = ORIGIN(EWRAM)	+	LENGTH(EWRAM);
 _arm9sharedwram_start = ORIGIN(ARM9SHAREDWRAM);
 _arm9sharedwram_end = ORIGIN(ARM9SHAREDWRAM)	+	LENGTH(ARM9SHAREDWRAM);
 
-_gba_start = ORIGIN(GBAROM);
-_gba_end = ORIGIN(GBAROM)	+	LENGTH(GBAROM);
-
-_gbawram_start = ORIGIN(GBAEW);
-_gbawram_end = ORIGIN(GBAEW)	+	LENGTH(GBAEW);
-
 _dtcm_start = ORIGIN(DTCM);
 _dtcm_end = ORIGIN(DTCM)	+	LENGTH(DTCM);
+
+_snes_start = ORIGIN(SNESROM);
+_snes_end = ORIGIN(SNESROM)	+	LENGTH(SNESROM);
 
 /* ARM9 Specific */
 _arm9_irqcheckbits = ORIGIN(DTCM) + 0x3FF8;	/* __irq_flags */
@@ -63,8 +60,7 @@ sp_FIQ	= sp_IRQ - 0x200;
 sp_ABT	= sp_FIQ - 0x200;
 sp_UND	= sp_ABT - 0x200;
 sp_USR	= sp_UND - 0x200;
-sp_SYS	= sp_USR - 0x200;
-sp_IRQCHANDLER	=	sp_SYS - 0x1000;
+sp_SYS	= sp_USR;
 
 SECTIONS
 {
@@ -187,7 +183,14 @@ SECTIONS
 		. = ALIGN(4);
 	} > EWRAM = 0xff
 	__fini_end__ = .;
-	__lib__end__ = __fini_end__;
+	PROVIDE (__lib__end__ = __fini_end__);
+	
+	__vectors_vma_start = .;
+	.vectors : {
+		KEEP (*(.vectors*))
+		. = ALIGN(4);
+	} > VECTORS AT > EWRAM
+	__vectors_vma_end__ = .;
 	__itcm_vma_start = .;
 	.itcm : {
 		KEEP (*(.itcm*))
@@ -200,17 +203,19 @@ SECTIONS
 		. = ALIGN(4);
 	} > DTCM AT > EWRAM
 	__dtcm_vma_end__ = .;
-	__vectors_vma_start = .;
-	.vectors : {
-		KEEP (*(.vectors*))
-		. = ALIGN(4);
-	} > VECTORS AT > EWRAM
-	__vectors_vma_end__ = .;
 	___arm9sharedwram_vma_start = .;
 	.arm9sharedwram : {
 		KEEP (*(.arm9sharedwram*))
 		. = ALIGN(4);
 	} > ARM9SHAREDWRAM AT > EWRAM
 	___arm9sharedwram_vma_end__ = .;
-	__vma_stub_end__ = __lib__end__ + SIZEOF(.itcm) + SIZEOF(.dtcm) + SIZEOF(.vectors) + SIZEOF(.arm9sharedwram);
+	__vma_stub_end__ = __lib__end__ + SIZEOF(.vectors) + SIZEOF(.itcm) + SIZEOF(.dtcm) + SIZEOF(.arm9sharedwram);
+	
+	___embeddedBinData_vma_start = .;
+	.embeddedBinData : { 
+		*(.embeddedBinData*)
+		. = ALIGN(512);
+		___embeddedBinData_vma_end__ = .;
+	} > SNESROM = 0xFF
+	
 }

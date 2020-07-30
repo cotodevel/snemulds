@@ -164,10 +164,6 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 //project specific stuff
 #ifdef ARM9
 
-//small hack to update SNES_ADDRESS at opcodes2.s
-void update_ram_snes(){
-    //snes_ram_address = (uint32)&snes_ram_bsram[0x6000];
-}
 #endif
 
 //APU Ports from SnemulDS properly binded with Assembly APU Core

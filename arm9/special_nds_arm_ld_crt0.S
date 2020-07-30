@@ -132,18 +132,6 @@ _start:
 	bl                  copy
 	
 	
-	
-	
-	/*  Clear BSS */
-	ldr                 r0,=__bss_vma_start
-	ldr                 r1,=__bss_vma_end
-	bl clear
-	
-	@Clear vma sections used before
-	ldr                 r0,=__lib__end__
-	ldr                 r1,=__vma_stub_end__
-	bl clear
-	
 	/* Wait until ARM7 reads firmware and we initialize ARM9 from this flag */
 	ldr r1,=(0x027FF000 + 0x5D)	@(uint8)Console Type: 
 	waitForFirmwareARM7Setup:
