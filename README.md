@@ -81,6 +81,9 @@ then copied over onto arm9/data/ folder.
 
 Note: It follows the standard NDS NTR format. Any file equal or below 1.5MB will work. 
 
+Remap NDS -> SNES Keys:
+Head over to release/snemul.cfg, section: [KEYS] and copy/paste source value into target field, then restore original overwritten value into source field.
+Save changes, then copy snemul.cfg in SD root. Keys are remapped now.
 
 To do:
 

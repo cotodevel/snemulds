@@ -61,8 +61,6 @@ int _offsetY_tab[4] = { 16, 0, 32, 24 };
 
 uint32 screen_mode;
 int APU_MAX = 262;
-//volatile int h_blank;
-u32 keys;
 
 __attribute__((section(".dtcm")))
 bool handleROMSelect=false;
@@ -107,6 +105,20 @@ void PPU_ChangeLayerConf(int i)
 
 void readOptionsFromConfig(char *section)
 {
+	//SNES button mapping
+	SNES_A = get_config_hex("KEYS", "SNES_BUTTON_A", 0x00000080);
+	SNES_B = get_config_hex("KEYS", "SNES_BUTTON_B", 0x00008000);
+	SNES_X = get_config_hex("KEYS", "SNES_BUTTON_X", 0x00000040);
+	SNES_Y = get_config_hex("KEYS", "SNES_BUTTON_Y", 0x00004000);
+	SNES_L = get_config_hex("KEYS", "SNES_BUTTON_L", 0x00000020);
+	SNES_R = get_config_hex("KEYS", "SNES_BUTTON_R", 0x00000010);
+	SNES_SELECT = get_config_hex("KEYS", "SNES_BUTTON_SELECT", 0x00002000);
+	SNES_START = get_config_hex("KEYS", "SNES_BUTTON_START", 0x00001000);
+	SNES_UP = get_config_hex("KEYS", "SNES_BUTTON_UP", 0x00000800);
+	SNES_DOWN = get_config_hex("KEYS", "SNES_BUTTON_DOWN", 0x00000400);
+	SNES_LEFT = get_config_hex("KEYS", "SNES_BUTTON_LEFT", 0x00000200);
+	SNES_RIGHT = get_config_hex("KEYS", "SNES_BUTTON_RIGHT", 0x00000100);
+	
 	char romPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
 	char spcPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
 	strcpy(romPath, get_config_string("Global", "ROMPath", ""));

@@ -29,6 +29,7 @@ USA
 #include "common.h"
 #include "cfg.h"
 #include "opcodes.h"
+#include "keypadTGDS.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -255,8 +256,6 @@ extern void	reset_SNES();
 extern void	UnInterleaveROM();
 extern void	load_ROM(sint8 *ROM, int ROM_size);
 
-//input.c
-extern int get_joypad();
 
 extern uint16 read_joypad1();
 extern uint16 read_joypad2();
@@ -267,6 +266,22 @@ extern void CPU_pack();
 extern void CPU_unpack();
 extern int SnemulDSLCDSwap();
 extern void	HDMA_transfert(unsigned char port);
+
+extern uint32 SNES_A;
+extern uint32 SNES_B;
+extern uint32 SNES_X;
+extern uint32 SNES_Y;
+extern uint32 SNES_L;
+extern uint32 SNES_R;
+extern uint32 SNES_SELECT;
+extern uint32 SNES_START;
+extern uint32 SNES_UP;
+extern uint32 SNES_DOWN;
+extern uint32 SNES_LEFT;
+extern uint32 SNES_RIGHT;
+extern uint32	joypad_conf_mode;
+extern uint32	mouse_cur_b;
+extern int get_joypad();
 
 #ifdef __cplusplus
 }
