@@ -37,6 +37,8 @@ GNU General Public License for more details.
 #include <fcntl.h>
 #include <stdlib.h>
 
+#define MAX_CHARACTER_DISPLAY (int)(20)	//Shows fullpath, and if fullpath exceeds this number, just the filename is displayed
+
 #ifdef __cplusplus
 extern "C" {
 #endif

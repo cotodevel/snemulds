@@ -125,7 +125,20 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
 					(*cnt)++;
 					parsefileNameTGDS(curFileDirName);
 					strcpy(fileClassInst->fd_namefullPath, curFileDirName);
-					size += strlen(fileClassInst->fd_namefullPath)+1;
+					//Remove full path and instead just the filename if filename exceeds 20 characters
+					char tempBuf[256+1] = {0};
+					char * filepath = fileClassInst->fd_namefullPath;
+					char outDir[256+1] = {0};
+					getDirFromFilePath(filepath, (char*)&outDir[0]);
+					int dirLen = strlen(outDir)+3;
+					if (strlen(fileClassInst->fd_namefullPath) > MAX_CHARACTER_DISPLAY){
+						strncpy(tempBuf, &fileClassInst->fd_namefullPath[dirLen], strlen(fileClassInst->fd_namefullPath) - dirLen);
+					}
+					else{
+						strcpy(tempBuf, fileClassInst->fd_namefullPath);
+					}
+					
+					size += strlen(tempBuf)+1;
 				}
 				else if(fileClassInst->type == FT_DIR){
 					(*cnt)++;
@@ -177,9 +190,22 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
 			sint8 *ext = _FS_getFileExtension(curFileDirName);
 			if ((ext && strstr(mask, ext)) || (fileClassInst->type == FT_DIR)){
 				if(fileClassInst->type == FT_FILE){
-					strcpy(ptr, curFileDirName);
+					//Remove full path and instead just the filename if filename exceeds 20 characters
+					char * filepath = fileClassInst->fd_namefullPath;
+					char outDir[256+1] = {0};
+					char tempBuf[256+1] = {0};
+					getDirFromFilePath(filepath, (char*)&outDir[0]);
+					int dirLen = strlen(outDir)+3;
+					if (strlen(fileClassInst->fd_namefullPath) > MAX_CHARACTER_DISPLAY){
+						strncpy(tempBuf, &fileClassInst->fd_namefullPath[dirLen], strlen(fileClassInst->fd_namefullPath) - dirLen);
+					}
+					else{
+						strcpy(tempBuf, fileClassInst->fd_namefullPath);
+					}
+						
+					strcpy(ptr, tempBuf);
 					list[i++] = ptr;
-					ptr += strlen(curFileDirName)+1;
+					ptr += strlen(tempBuf)+1;
 				}
 				else if(fileClassInst->type == FT_DIR){
 					char dirName[MAX_TGDSFILENAME_LENGTH+1];
@@ -227,7 +253,7 @@ int	FS_loadROM(sint8 *ROM, sint8 *filename)
 	fseek(f, 0, SEEK_SET);
 
 	fread(ROM, 1, size, f);
-	GUI_printf("Read done\n");
+	GUI_printf("Read done: %s:%d", filename, size);
 	fclose(f);
 	
 	//Prevent Cache problems.
