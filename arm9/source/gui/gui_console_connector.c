@@ -582,19 +582,23 @@ int SaveStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			GUISelector_getSelected(GUI.screen, &id);	//takes current romfilename chosen
 
 			sint8 stateName[64];
-			sint8 stateFile[100];
-
+			sint8 stateFile[256+1];
+			
 			strcpy(stateFile, CFG.ROMFile);
 			strcpy(strrchr(stateFile, '.'), ".sml");
-
+			
 			time_t unixTime = time(NULL);
 			struct tm* timeStruct = gmtime((const time_t *)&unixTime);
 			sprintf(stateName,	"%04d/%02d/%02d %02d:%02d",
-					timeStruct->tm_year+1900, timeStruct->tm_mon, timeStruct->tm_mday, timeStruct->tm_hour, 
+					timeStruct->tm_year, timeStruct->tm_mon, timeStruct->tm_mday, timeStruct->tm_hour, 
 					timeStruct->tm_min);
-
 			CPU_pack();
-			write_snapshot(getfatfsPath(stateFile), id, stateName);
+			if(write_snapshot(stateFile, id, stateName) == true){
+				//GUI_printf("write_snapshot()OK:%s\n", stateFile);
+			}
+			else{
+				//GUI_printf("write_snapshot()FAIL:%s\n", stateFile);
+			}
 		}
 		GUI_deleteList(GUI.screen);
 		GUI_switchScreen(scr_main);

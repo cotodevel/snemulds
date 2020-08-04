@@ -21,17 +21,17 @@ GNU General Public License for more details.
 #include "guiTGDS.h"
 
 typedef struct {
-	sint8 name[16];
-}TSnapShot_Header;
+  char name[16];
+} TSnapShot_Header;
 
 typedef struct {
-	int            A, X, Y, S, P, D, PB, DB, PC;
-	
-	uint8  BG_scroll_reg;
-	uint8  PPU_NeedMultiply;
-	uint8	 options[5];
-	//uint8 HI_1C, HI_1D, HI_1E, HI_1F, HI_20;
-	uint8  SC_incr, FS_incr, OAM_upper_byte;
+  int            A, X, Y, S, P, D, PB, DB, PC;
+
+  unsigned char  BG_scroll_reg;
+  unsigned char  PPU_NeedMultiply;
+  unsigned char	 options[5];
+  //unsigned char HI_1C, HI_1D, HI_1E, HI_1F, HI_20;
+  unsigned char  SC_incr, FS_incr, OAM_upper_byte;
 } TSnapShot;
 
 #endif
@@ -43,7 +43,7 @@ extern "C" {
 
 extern int	get_snapshot_name(sint8 *file, uchar nb, sint8 *name);
 extern int	read_snapshot(sint8 *file, uchar nb);
-extern int	write_snapshot(sint8 *file, uint8 nb, const sint8 *name);
+extern bool	write_snapshot(sint8 *file, uint8 nb, const sint8 *name);
 
 #ifdef __cplusplus
 }

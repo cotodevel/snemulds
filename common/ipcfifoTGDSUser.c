@@ -140,8 +140,11 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		}
 		break;
 
-		case SNEMULDS_APUCMD_SAVESPC:{ //case 0x00000006:{ // SAVE state 
-			SaveSpc(APU_RAM_ADDRESS);
+		case SNEMULDS_APUCMD_SAVESPC:{ //case 0x00000006:{ // //Save APU Memory Snapshot -> u8 * inSPCBuffer @ ARM9 EWRAM
+			SaveSpc((const u8*)cmd2);
+			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
+			fifomsg[40] = (uint32)0;	//release ARM9 APU_playSpc()
 		}
 		break;  
 			

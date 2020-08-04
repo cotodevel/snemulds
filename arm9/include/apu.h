@@ -32,10 +32,9 @@ extern void	APU_nice_reset();
 extern void	APU_pause();
 extern void	APU_stop();
 extern void	APU_playSpc(u8 * inSPCBuffer);
-extern void	APU_saveSpc();
+extern void	APU_saveSpc(u8 * inSPCBuffer);
 extern void	APU_loadSpc();
 extern void	APU_clear();
-extern void APU_playSong(uint8 *data, int size);
 extern void APU_command(uint32 command);
 
 #ifdef __cplusplus
