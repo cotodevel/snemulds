@@ -1120,17 +1120,16 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		    GUI.ScanJoypad = 1;		    
 	    	APU_pause();
 		    	
-			t_GUIScreen *scr = GUI_newList(8, 32, 
-					param == 1 ? IDS_LOAD_STATE : IDS_SAVE_STATE, &trebuchet_9_font);
+			t_GUIScreen *scr = GUI_newList(8, 32, param == 1 ? IDS_LOAD_STATE : IDS_SAVE_STATE, &trebuchet_9_font);
 			
 			sint8 stateName[33];
-			sint8 stateFile[100];
+			sint8 stateFile[256+1];
 			strcpy(stateFile, CFG.ROMFile);
 			strcpy(strrchr(stateFile, '.'), ".sml");
 			
 			for (i = 0; i < 8; i++)
 			{
-				if (get_snapshot_name(getfatfsPath(stateFile), i, stateName))
+				if (get_snapshot_name(stateFile, i, stateName))
 					GUI_setItem(scr, i, stateName, 32);
 				else
 					GUI_setItem(scr, i, "--Empty--", 32);
