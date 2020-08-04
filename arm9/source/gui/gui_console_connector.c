@@ -554,8 +554,13 @@ int LoadStateHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			sint8 stateFile[100];
 			strcpy(stateFile, CFG.ROMFile);
 			strcpy(strrchr(stateFile, '.'), ".sml");
-
-			read_snapshot(getfatfsPath(stateFile), id);
+			if(read_snapshot(stateFile, id) == true){
+				//GUI_printf("read_snapshot()OK:%s\n", stateFile);
+			}
+			else{
+				//GUI_printf("read_snapshot()FAIL:%s\n", stateFile);
+			}
+			
 			CPU_unpack();
 			SNES_update();
 			PPU_update();

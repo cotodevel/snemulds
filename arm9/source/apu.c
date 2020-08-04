@@ -95,11 +95,19 @@ void	APU_saveSpc(u8 * inSPCBuffer)
 	coherent_user_range_by_size((uint32)inSPCBuffer, (int)0x10200);
 }
 
-void	APU_loadSpc()
+void	APU_loadSpc(u8 * inSPCBuffer)
 {
-	APU_command(SNEMULDS_APUCMD_LOADSPC); //APU_command(0x00000007);
-	// Wait the ARM7 to load the SPC
-	// FIXME : replace this with a variable check
+	coherent_user_range_by_size((uint32)inSPCBuffer, (int)0x10200);	
+	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
+	fifomsg[40] = (uint32)0xFFFFC070;
+	
+	//prevent APU from desync
+	SendFIFOWordsITCM(SNEMULDS_APUCMD_LOADSPC, (u32)inSPCBuffer);	//APU_command(0x00000007);
+	
+	while((uint32)fifomsg[40] == (uint32)0xFFFFC070){
+		swiDelay(2);
+	}
 }
 
 

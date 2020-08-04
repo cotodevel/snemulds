@@ -87,6 +87,10 @@ Remap NDS -> SNES Keys:
 Head over to release/snemul.cfg, section: [KEYS] and copy/paste source value into target field, then restore original overwritten value into source field.
 Save changes, then copy snemul.cfg in SD root. Keys are remapped now.
 
+Save / Load States:
+
+It is experimental. It may or not work consecutively. It's recommended to always save then restore a single state at a time.
+
 To do:
 
 -   fix Mode 0 (no transparency/broken)

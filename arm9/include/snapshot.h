@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 extern int	get_snapshot_name(sint8 *file, uchar nb, sint8 *name);
-extern int	read_snapshot(sint8 *file, uchar nb);
+extern bool	read_snapshot(sint8 *file, uchar nb);
 extern bool	write_snapshot(sint8 *file, uint8 nb, const sint8 *name);
 
 #ifdef __cplusplus

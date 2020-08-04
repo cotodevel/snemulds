@@ -149,7 +149,10 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		break;  
 			
 		case SNEMULDS_APUCMD_LOADSPC:{ //case 0x00000007:{ // LOAD state 
-			LoadSpc(APU_RAM_ADDRESS);
+			LoadSpc((const u8*)cmd2);
+			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
+			fifomsg[40] = (uint32)0;	//release ARM9 APU_loadSpc()
 			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0; 
 		}
 		break;
