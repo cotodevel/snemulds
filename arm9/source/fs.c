@@ -123,14 +123,16 @@ sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
 				//Count files and directories
 				if(fileClassInst->type == FT_FILE){
 					(*cnt)++;
-					parsefileNameTGDS(curFileDirName);
-					strcpy(fileClassInst->fd_namefullPath, curFileDirName);
 					//Remove full path and instead just the filename if filename exceeds 20 characters
 					char tempBuf[256+1] = {0};
 					char * filepath = fileClassInst->fd_namefullPath;
 					char outDir[256+1] = {0};
 					getDirFromFilePath(filepath, (char*)&outDir[0]);
-					int dirLen = strlen(outDir)+3;
+					int dirLen = strlen(outDir)+3;					
+					//Save current dir just once if there's files to be listed
+					if(dirIter == 0){
+						strcpy(startFilePath, outDir);
+					}			
 					if (strlen(fileClassInst->fd_namefullPath) > MAX_CHARACTER_DISPLAY){
 						strncpy(tempBuf, &fileClassInst->fd_namefullPath[dirLen], strlen(fileClassInst->fd_namefullPath) - dirLen);
 					}

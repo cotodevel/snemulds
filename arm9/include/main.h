@@ -38,9 +38,9 @@ extern int loadROMfromBuffer(char * bufSrc, int bufSize);
 extern bool handleROMSelect;
 extern bool handleSPCSelect;
 
-extern void GUI_getROMFirstTime(sint8 *rompath);
-extern void GUI_getROMIterable(sint8 *rompath);
-extern void GUI_getSPCIterable(sint8 *rompath);
+extern char *GUI_getROMFirstTime(sint8 *rompath);
+extern char *GUI_getROMIterable(sint8 *rompath);
+extern char *GUI_getSPCIterable(sint8 *rompath);
 
 #ifdef __cplusplus
 }

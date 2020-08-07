@@ -436,26 +436,30 @@ int ROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			{
 				struct sGUISelectorItem sel = GUISelector_getSelected(GUI.screen, NULL);
 				if(sel.StructFDFromFS_getDirectoryListMethod == FT_FILE){
-					GUI_clearScreen(0);
-					char fname[256+1];
-					memset(fname, 0, sizeof(fname));
-					char * outBuf = (char *)malloc(256*10);
-					int matchCount = str_split((char*)sel.filenameFromFS_getDirectoryListMethod, "/", outBuf, 10, 256);
-					char * file = (char*)((char*)outBuf + (matchCount*256));
-					if(strlen(file) > 0){						
-						strcpy(fname, "0:");
-						strcat(fname, startFilePath);
-						strcat(fname, "/");
-						strcat(fname, file);
+					//Filename already has correct format
+					if (
+						(sel.filenameFromFS_getDirectoryListMethod[0] == '0')
+						&&
+						(sel.filenameFromFS_getDirectoryListMethod[1] == ':')
+						&&
+						(sel.filenameFromFS_getDirectoryListMethod[2] == '/')
+					){
+						
+					}
+					//Otherwise build format
+					else{
+						char fname[256+1];
+						memset(fname, 0, sizeof(fname));
+						strcpy(fname, getfatfsPath(startFilePath));
+						if (fname[strlen(fname)-1] != '/'){
+							strcat(fname, "/");
+						}
+						strcat(fname, sel.filenameFromFS_getDirectoryListMethod);
 						strcpy((char*)&CFG.ROMFile[0], fname);
 						sel.StructFDFromFS_getDirectoryListMethod = FT_FILE;
 						sel.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
-						loadROM(&sel);
 					}
-					else{
-						printf("ROM read error.");
-					}
-					free(outBuf);
+					loadROM(&sel);
 					GUI_clearScreen(0);
 				}
 				
@@ -495,31 +499,31 @@ int SPCSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			if (param == 3)
 			{
 				struct sGUISelectorItem sel = GUISelector_getSelected(GUI.screen, NULL);
-				if(sel.StructFDFromFS_getDirectoryListMethod == FT_FILE){
-					GUI_clearScreen(0);
-					char fname[256+1];
-					memset(fname, 0, sizeof(fname));
-					char * outBuf = (char *)malloc(256*10);
-					int matchCount = str_split((char*)sel.filenameFromFS_getDirectoryListMethod, "/", outBuf, 10, 256);
-					char * file = (char*)((char*)outBuf + (matchCount*256));
-					if(strlen(file) > 0){						
-						strcpy(fname, "0:");
-						strcat(fname, startSPCFilePath);
-						strcat(fname, "/");
-						strcat(fname, file);
-						int retVal = selectSong(fname);
-						if(retVal != 0){
-							printf("SPC read error.");
-						}
-					}
-					else{
-						printf("SPC read error.");
-					}
-					free(outBuf);
-					GUI_clearScreen(0);
+				char fname[256+1];
+				//Filename already has correct format
+				if (
+					(sel.filenameFromFS_getDirectoryListMethod[0] == '0')
+					&&
+					(sel.filenameFromFS_getDirectoryListMethod[1] == ':')
+					&&
+					(sel.filenameFromFS_getDirectoryListMethod[2] == '/')
+				){
+					strcpy(fname, sel.filenameFromFS_getDirectoryListMethod);
 				}
-				
-				
+				//Otherwise build format
+				else{
+					memset(fname, 0, sizeof(fname));
+					strcpy(fname, getfatfsPath(startSPCFilePath));
+					if (fname[strlen(fname)-1] != '/'){
+						strcat(fname, "/");
+					}
+					strcat(fname, sel.filenameFromFS_getDirectoryListMethod);
+				}
+				int retVal = selectSong(fname);
+				if(retVal != 0){
+					printf("SPC read error.");
+				}
+				GUI_clearScreen(0);
 				GUI.ScanJoypad = 0;
 				SNES.Stopped = 0;
 				GUI.exit = 1;
@@ -1206,9 +1210,8 @@ int FirstROMSelectorHandler(t_GUIZone *zone, int msg, int param, void *arg){
 }
 
 //Synchronous - Reentrant GUI handlers
-
 //First time GUI File Handler.
-void GUI_getROMFirstTime(sint8 *rompath){
+char * GUI_getROMFirstTime(sint8 *rompath){
 	GUI.ScanJoypad = 1;
 	GUI_clearScreen(0);
 	// Get ROMs list
@@ -1236,8 +1239,7 @@ void GUI_getROMFirstTime(sint8 *rompath){
 		//release GUI events manually
 		GUI.exit = 1;
 		g_event.event = 0;
-		GUI_getROMFirstTime(startFilePath);
-		return ;
+		return GUI_getROMFirstTime(startFilePath);
 	}
 	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){
 		//Enter new dir			
@@ -1247,13 +1249,13 @@ void GUI_getROMFirstTime(sint8 *rompath){
 		}
 		//Update for later use
 		strcpy(startSPCFilePath, sel.filenameFromFS_getDirectoryListMethod);
-		GUI_getROMFirstTime(sel.filenameFromFS_getDirectoryListMethod);
+		return GUI_getROMFirstTime(sel.filenameFromFS_getDirectoryListMethod);
 	}
     GUI.ScanJoypad = 0;
-	strcpy(CFG.ROMFile, sel.filenameFromFS_getDirectoryListMethod);
+	return sel.filenameFromFS_getDirectoryListMethod;
 }
 
-void GUI_getROMIterable(sint8 *rompath){
+char * GUI_getROMIterable(sint8 *rompath){
 	SNES.Stopped = 1;
 	GUI.ScanJoypad = 1;
 	GUI_clearScreen(0);
@@ -1285,8 +1287,7 @@ void GUI_getROMIterable(sint8 *rompath){
 		//release GUI events manually
 		GUI.exit = 1;
 		g_event.event = 0;
-		GUI_getROMIterable(startFilePath);
-		return ;
+		return GUI_getROMIterable(startFilePath);
 	}
 	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){
 		//Enter new dir			
@@ -1296,14 +1297,15 @@ void GUI_getROMIterable(sint8 *rompath){
 		}
 		//Update for later use
 		strcpy(startSPCFilePath, sel.filenameFromFS_getDirectoryListMethod);
-		GUI_getROMIterable(sel.filenameFromFS_getDirectoryListMethod);
+		return GUI_getROMIterable(sel.filenameFromFS_getDirectoryListMethod);
 	}
     GUI.ScanJoypad = 0;
 	strcpy(CFG.ROMFile, sel.filenameFromFS_getDirectoryListMethod);
 	SNES.Stopped = 0;
+	return sel.filenameFromFS_getDirectoryListMethod;
 }
 
-void GUI_getSPCIterable(sint8 *rompath){
+char * GUI_getSPCIterable(sint8 *rompath){
 	SNES.Stopped = 1;
 	GUI.ScanJoypad = 1;
 	GUI_clearScreen(0);
@@ -1334,8 +1336,7 @@ void GUI_getSPCIterable(sint8 *rompath){
 		//release GUI events manually
 		GUI.exit = 1;
 		g_event.event = 0;
-		GUI_getSPCIterable(startSPCFilePath);
-		return ;
+		return GUI_getSPCIterable(startSPCFilePath);
 	}
 	else if(sel.StructFDFromFS_getDirectoryListMethod == FT_DIR){
 		//Enter new dir			
@@ -1345,11 +1346,11 @@ void GUI_getSPCIterable(sint8 *rompath){
 		}
 		//Update for later use
 		strcpy(startSPCFilePath, sel.filenameFromFS_getDirectoryListMethod);
-		GUI_getSPCIterable(sel.filenameFromFS_getDirectoryListMethod);
+		return GUI_getSPCIterable(sel.filenameFromFS_getDirectoryListMethod);
 	}
     GUI.ScanJoypad = 0;
-	strcpy(CFG.SPCFile, sel.filenameFromFS_getDirectoryListMethod);
 	SNES.Stopped = 0;
+	return sel.filenameFromFS_getDirectoryListMethod;
 }
 
 

@@ -221,7 +221,6 @@ extern void saveOptionsToConfig(sint8 *section);
 extern void	APU_clear();
 extern int		GUI_getZoneTextHeight(t_GUIZone *zone);
 extern int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text);
-extern void GUI_getROMFirstTime(sint8 *rompath);
 
 #ifdef __cplusplus
 }

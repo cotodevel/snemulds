@@ -471,16 +471,27 @@ int loadROM(struct sGUISelectorItem * name)
 			&&
 			(name->filenameFromFS_getDirectoryListMethod[2] == '/')
 		){
-				strcpy(romname, name->filenameFromFS_getDirectoryListMethod);
+			strcpy(romname, name->filenameFromFS_getDirectoryListMethod);
 		}
 		//otherwise build format
 		else{
 			strcpy(romname, getfatfsPath(startFilePath));
-			if (startFilePath[strlen(startFilePath)-1] != '/'){
+			if (romname[strlen(romname)-1] != '/'){
 				strcat(romname, "/");
 			}
 			strcat(romname, name->filenameFromFS_getDirectoryListMethod);
 		}
+		
+		//There's a bug when rendering certain UI elements, some garbage may appear near the end of the filename, todo
+		char ext[256];
+		char tmp[256];
+		strcpy(tmp,romname);
+		separateExtension(tmp,ext);
+		strlwr(ext);
+		if(strlen(ext) > 4){
+			romname[strlen(romname)-2] = '\0';
+		}
+		
 		clrscr();
 		memset(CFG.ROMFile, 0, sizeof(CFG.ROMFile));
 		strcpy(CFG.ROMFile, romname);
@@ -662,17 +673,17 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 	GUI_getConfig();	
 	printf("Load conf4");
 	
+	memset(&guiSelItem, 0, sizeof(guiSelItem));
+	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
+	
 	//ARGV Support: 
 	if (argc > 1) {
 		strcpy(&CFG.ROMFile[0], (const char *)argv[1]);
+		guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
 	}
 	else{
-		GUI_getROMFirstTime(CFG.ROMPath);	//Output rom -> CFG.ROMFile
+		guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMFirstTime(CFG.ROMPath);
 	}
-	
-	memset(&guiSelItem, 0, sizeof(guiSelItem));
-	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
-	guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
 	loadROM(&guiSelItem);
 
 	if (!(argc > 1)) {
