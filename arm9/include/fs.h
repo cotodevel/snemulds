@@ -49,7 +49,6 @@ extern int		FS_loadROMPage(sint8 *buf, unsigned int pos, int size);
 extern int		FS_loadAllFile(sint8 *filename, sint8 *buf, int *size);
 extern int		FS_shouldFreeROM();
 extern int		FS_chdir(const sint8 *path);
-extern sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt);
 extern sint8 	*FS_getFileName(sint8 *filename);
 extern int 		load_gz(char *fname, char *newtempfname);
 extern char 	* tmpFile;

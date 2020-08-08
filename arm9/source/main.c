@@ -119,19 +119,13 @@ void readOptionsFromConfig(char *section)
 	SNES_LEFT = get_config_hex("KEYS", "SNES_BUTTON_LEFT", 0x00000200);
 	SNES_RIGHT = get_config_hex("KEYS", "SNES_BUTTON_RIGHT", 0x00000100);
 	
+	//Initial Dirs
 	char romPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
 	char spcPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
 	strcpy(romPath, get_config_string("Global", "ROMPath", ""));
 	strcpy(spcPath, get_config_string("Global", "SPCPath", ""));
-	
-	strcpy(startFilePath, "/");	//Init var
-	strcat(startFilePath, romPath); //Init var
-	
-	strcpy(startSPCFilePath, "/");
-	strcat(startSPCFilePath, spcPath);
-	
-	strcpy(CFG.ROMPath, getfatfsPath(romPath));
-	strcpy(CFG.SPCPath, getfatfsPath(spcPath));
+	strcpy(startFilePath, romPath); 
+	strcpy(startSPCFilePath, spcPath);
 	
 	CFG.BG3Squish = get_config_int(section, "BG3Squish", CFG.BG3Squish) & 3;
 	// FIXME 
@@ -682,7 +676,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 		guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
 	}
 	else{
-		guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMFirstTime(CFG.ROMPath);
+		guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMList(startFilePath);
 	}
 	loadROM(&guiSelItem);
 
@@ -702,9 +696,13 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 				
 				if (CFG.Sound_output || CFG.Jukebox)
 					APU_pause();
-					
-				GUI_getROMIterable(startFilePath);
-				GUI_deleteROMSelector(); // Should also free lst
+				
+				memset(&guiSelItem, 0, sizeof(guiSelItem));
+				char * fileName = GUI_getROMList(startFilePath);
+				guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
+				guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)fileName;
+				loadROM(&guiSelItem);
+				
 				GUI_createMainMenu();	//	Start GUI
 			}
 			
@@ -714,8 +712,12 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH])
 				if (CFG.Sound_output || CFG.Jukebox)
 					APU_pause();
 				
-				GUI_getSPCIterable(startSPCFilePath);
-				GUI_deleteROMSelector(); // Should also free ROMFile
+				memset(&guiSelItem, 0, sizeof(guiSelItem));
+				char * fileName = GUI_getSPCList(startSPCFilePath);
+				guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
+				guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)fileName;
+				selectSong(fileName);
+				
 				GUI_createMainMenu();	//Start GUI
 			}
 			GUI_update();

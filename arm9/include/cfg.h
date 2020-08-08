@@ -77,8 +77,6 @@ struct s_cfg
 
   sint8		ROMFile[MAX_TGDSFILENAME_LENGTH+1]; 
   sint8		SPCFile[MAX_TGDSFILENAME_LENGTH+1]; 
-  sint8		ROMPath[MAX_TGDSFILENAME_LENGTH+1];
-  sint8		SPCPath[MAX_TGDSFILENAME_LENGTH+1];
   
   int		Jukebox;  
   sint8		Playlist[MAX_TGDSFILENAME_LENGTH+1];
