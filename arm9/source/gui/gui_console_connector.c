@@ -1248,13 +1248,13 @@ void GUI_getConfig(){
 }
 
 void	GUI_showROMInfos(int size){
-    printf("%s %s ", _STR(IDS_TITLE), SNES.ROM_info.title);
-    printf("%s %d bytes ", _STR(IDS_SIZE), size);
+    GUI_printf("%s %s ", _STR(IDS_TITLE), SNES.ROM_info.title);
+    GUI_printf("%s %d bytes ", _STR(IDS_SIZE), size);
     if (SNES.HiROM) 
-    	printf("%s HiROM ", _STR(IDS_ROM_TYPE));
+    	GUI_printf("%s HiROM ", _STR(IDS_ROM_TYPE));
     else 
-    	printf("%s LoROM ", _STR(IDS_ROM_TYPE));
-    printf("%s %s ", _STR(IDS_COUNTRY), SNES.ROM_info.countrycode < 2 ? "NTSC" : "PAL");	
+    	GUI_printf("%s LoROM ", _STR(IDS_ROM_TYPE));
+    GUI_printf("%s %s ", _STR(IDS_COUNTRY), SNES.ROM_info.countrycode < 2 ? "NTSC" : "PAL");	
 }
 
 
