@@ -4,3 +4,7 @@ snes rendering is going to be faster now.
 
 06/04/2018
 Coto.
+
+16 Dec 2020:
+
+SnemulDS is no longer supported on TGDS. 

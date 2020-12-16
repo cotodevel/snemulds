@@ -66,12 +66,12 @@ void	APU_stop()
 
 void	APU_playSpc(u8 * inSPCBuffer)
 {
-	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 	fifomsg[40] = (uint32)0xFFFFC070;
 	
 	//prevent APU from desync
-	SendFIFOWordsITCM(SNEMULDS_APUCMD_PLAYSPC, (u32)inSPCBuffer);	//APU_command(0x00000003);
+	SendFIFOWords(SNEMULDS_APUCMD_PLAYSPC, (u32)inSPCBuffer);	//APU_command(0x00000003);
 	
 	while((uint32)fifomsg[40] == (uint32)0xFFFFC070){
 		swiDelay(2);
@@ -81,12 +81,12 @@ void	APU_playSpc(u8 * inSPCBuffer)
 //Requires an empty buffer[0x10200] @ inSPCBuffer, saves ARM7 SNES APUMEMORY into it
 void	APU_saveSpc(u8 * inSPCBuffer)
 {
-	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 	fifomsg[40] = (uint32)0xFFFFC070;
 	
 	//prevent APU from desync
-	SendFIFOWordsITCM(SNEMULDS_APUCMD_SAVESPC, (u32)inSPCBuffer);	//APU_command(0x00000006);
+	SendFIFOWords(SNEMULDS_APUCMD_SAVESPC, (u32)inSPCBuffer);	//APU_command(0x00000006);
 	
 	while((uint32)fifomsg[40] == (uint32)0xFFFFC070){
 		swiDelay(2);
@@ -98,12 +98,12 @@ void	APU_saveSpc(u8 * inSPCBuffer)
 void	APU_loadSpc(u8 * inSPCBuffer)
 {
 	coherent_user_range_by_size((uint32)inSPCBuffer, (int)0x10200);	
-	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 	fifomsg[40] = (uint32)0xFFFFC070;
 	
 	//prevent APU from desync
-	SendFIFOWordsITCM(SNEMULDS_APUCMD_LOADSPC, (u32)inSPCBuffer);	//APU_command(0x00000007);
+	SendFIFOWords(SNEMULDS_APUCMD_LOADSPC, (u32)inSPCBuffer);	//APU_command(0x00000007);
 	
 	while((uint32)fifomsg[40] == (uint32)0xFFFFC070){
 		swiDelay(2);

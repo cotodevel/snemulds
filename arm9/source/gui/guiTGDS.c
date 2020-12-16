@@ -438,7 +438,7 @@ int GUI_update()
 		}
 	}
 	else{
-		struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+		struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 		int px=0, py=0; 
 		if(getTouchScreenEnabled() == true){
 			px = TGDSIPC->touchXpx;

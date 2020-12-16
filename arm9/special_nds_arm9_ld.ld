@@ -22,8 +22,7 @@ USA
 MEMORY
 {
 	DTCM : ORIGIN = 0x0b000000, LENGTH = 16K
-	VECTORS : ORIGIN = 0x01FFC000, LENGTH = 256	
-	ITCM : ORIGIN = 0x01FF8000, LENGTH = 32K
+	ITCM : ORIGIN = 0x01000000, LENGTH = 32K
 	EWRAM : ORIGIN = 0x02000000, LENGTH = 4M
 	ARM9SHAREDWRAM : ORIGIN = 0x03000000, LENGTH = 32K
 	SNESROM : ORIGIN = 0x020C0000, LENGTH = 3M
@@ -32,9 +31,6 @@ MEMORY
 
 _itcm_start = ORIGIN(ITCM);
 _itcm_end = ORIGIN(ITCM)	+	LENGTH(ITCM);
-
-_vector_start = ORIGIN(VECTORS);
-_vector_end = ORIGIN(VECTORS)	+	LENGTH(VECTORS);
 
 _ewram_start = ORIGIN(EWRAM);
 _ewram_end = ORIGIN(EWRAM)	+	LENGTH(EWRAM);
@@ -53,12 +49,12 @@ _arm9_irqcheckbits = ORIGIN(DTCM) + 0x3FF8;	/* __irq_flags */
 _arm9_irqhandler = ORIGIN(DTCM) + 0x3FFC;	/* __irq_vector */
 
 /* ARM ABI says stacks are full decreasing */
-sp_SVC	= _dtcm_end  - 0x200;	/* reset, swi exception*/
-sp_IRQ	= sp_SVC - 0x200;	/*irq exception*/
-sp_FIQ	= sp_IRQ - 0x200;	/* fiq exception */
-sp_ABT	= sp_FIQ - 0x200;	/* prefetch / data aborts exception */
-sp_UND	= sp_ABT - 0x200;	/* undefined exception */
-sp_USR	= sp_UND - 0x200;	/* usr / sys stacks */
+sp_SVC	= _dtcm_end  - 0x400;	/* reset, swi exception*/
+sp_IRQ	= sp_SVC - 0x400;	/*irq exception*/
+sp_FIQ	= sp_IRQ - 0x400;	/* fiq exception */
+sp_ABT	= sp_FIQ - 0x400;	/* prefetch / data aborts exception */
+sp_UND	= sp_ABT - 0x400;	/* undefined exception */
+sp_USR	= sp_UND - 0x400;	/* usr / sys stacks */
 sp_SYS = sp_USR;
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm","elf32-littlearm")
@@ -120,24 +116,27 @@ SECTIONS
 		PROVIDE (__exidx_end = ABSOLUTE(.));
 	} > EWRAM = 0xff
 	
+	PROVIDE (__lib__end__ = __bss_vma_end);
+	. = ALIGN(4);
+	PROVIDE (__vma_stub_end__ = __lib__end__);
+	
+	__vectors_vma_start = .;
 	__itcm_vma_start = .;
-	.itcm      : SUBALIGN(4)
+	.itcm      : 
 	{
+		KEEP (*(.vectors*))
+		__vectors_vma_end__ = .;
+		. = ALIGN(4);
 		KEEP (*(.itcm*))
+		. = ALIGN(4);
 	} > ITCM AT > EWRAM
 	__itcm_vma_end__ = .;
 	
-	__vectors_vma_start = .;
-	.vectors : SUBALIGN(4) {
-		KEEP (*(.vectors*))
-		. = ALIGN(4);
-	} > VECTORS AT > EWRAM
-	__vectors_vma_end__ = .;
-
 	__dtcm_vma_start = .;
-	.dtcm      : SUBALIGN(4)
+	.dtcm      : 
 	{
 		KEEP (*(.dtcm*))
+		. = ALIGN(4);
 	} > DTCM AT > EWRAM
 	__dtcm_vma_end__ = .;
 
@@ -153,12 +152,46 @@ SECTIONS
 		*(.fini)
 		*(.fini*)
 		PROVIDE (__fini_end__ = ABSOLUTE(.));
-		FILL(0x40);
+		FILL(0x100);
 	} > EWRAM = 0xff
 	
-	PROVIDE (__lib__end__ = __fini_end__);
-	. = ALIGN(4);
-	PROVIDE (__vma_stub_end__ = __lib__end__ + 0x40);
+	/*
+	* Stabs le debugging sections.
+	*
+	*/
+
+	.stab          0 : { *(.stab) }
+	.stabstr       0 : { *(.stabstr) }
+	.stab.excl     0 : { *(.stab.excl) }
+	.stab.exclstr  0 : { *(.stab.exclstr) }
+	.stab.index    0 : { *(.stab.index) }
+	.stab.indexstr 0 : { *(.stab.indexstr) }
+	.comment       0 : { *(.comment) }
+	/* DWARF debug sections.
+	Symbols in the DWARF debugging sections are relative to the beginning
+	of the section so we begin them at 0.  */
+	/* DWARF 1 */
+	.debug          0 : { *(.debug) }
+	.line           0 : { *(.line) }
+	/* GNU DWARF 1 extensions */
+	.debug_srcinfo  0 : { *(.debug_srcinfo) }
+	.debug_sfnames  0 : { *(.debug_sfnames) }
+	/* DWARF 1.1 and DWARF 2 */
+	.debug_aranges  0 : { *(.debug_aranges) }
+	.debug_pubnames 0 : { *(.debug_pubnames) }
+	/* DWARF 2 */
+	.debug_info     0 : { *(.debug_info .gnu.linkonce.wi.*) }
+	.debug_abbrev   0 : { *(.debug_abbrev) }
+	.debug_line     0 : { *(.debug_line) }
+	.debug_frame    0 : { *(.debug_frame) }
+	.debug_str      0 : { *(.debug_str) }
+	.debug_loc      0 : { *(.debug_loc) }
+	.debug_macinfo  0 : { *(.debug_macinfo) }
+	/* SGI/MIPS DWARF 2 extensions */
+	.debug_weaknames 0 : { *(.debug_weaknames) }
+	.debug_funcnames 0 : { *(.debug_funcnames) }
+	.debug_typenames 0 : { *(.debug_typenames) }
+	.debug_varnames  0 : { *(.debug_varnames) }
 
 	___embeddedBinData_vma_start = .;
 	.embeddedBinData : { 
@@ -166,43 +199,5 @@ SECTIONS
 		. = ALIGN(512);
 		___embeddedBinData_vma_end__ = .;
 	} > SNESROM = 0xFF
-	
-	/*
-     	* Stabs le debugging sections.
-     	*
-     	*/
-
-    	.stab          0 : { *(.stab) }
-    	.stabstr       0 : { *(.stabstr) }
-    	.stab.excl     0 : { *(.stab.excl) }
-    	.stab.exclstr  0 : { *(.stab.exclstr) }
-    	.stab.index    0 : { *(.stab.index) }
-    	.stab.indexstr 0 : { *(.stab.indexstr) }
-    	.comment       0 : { *(.comment) }
-    	/* DWARF debug sections.
-       	Symbols in the DWARF debugging sections are relative to the beginning
-       	of the section so we begin them at 0.  */
-    	/* DWARF 1 */
-    	.debug          0 : { *(.debug) }
-    	.line           0 : { *(.line) }
-    	/* GNU DWARF 1 extensions */
-    	.debug_srcinfo  0 : { *(.debug_srcinfo) }
-    	.debug_sfnames  0 : { *(.debug_sfnames) }
-    	/* DWARF 1.1 and DWARF 2 */
-    	.debug_aranges  0 : { *(.debug_aranges) }
-    	.debug_pubnames 0 : { *(.debug_pubnames) }
-    	/* DWARF 2 */
-    	.debug_info     0 : { *(.debug_info .gnu.linkonce.wi.*) }
-    	.debug_abbrev   0 : { *(.debug_abbrev) }
-    	.debug_line     0 : { *(.debug_line) }
-    	.debug_frame    0 : { *(.debug_frame) }
-    	.debug_str      0 : { *(.debug_str) }
-    	.debug_loc      0 : { *(.debug_loc) }
-    	.debug_macinfo  0 : { *(.debug_macinfo) }
-    	/* SGI/MIPS DWARF 2 extensions */
-    	.debug_weaknames 0 : { *(.debug_weaknames) }
-    	.debug_funcnames 0 : { *(.debug_funcnames) }
-    	.debug_typenames 0 : { *(.debug_typenames) }
-    	.debug_varnames  0 : { *(.debug_varnames) }
 	
 }

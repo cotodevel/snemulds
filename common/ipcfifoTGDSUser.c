@@ -53,7 +53,7 @@ USA
 __attribute__((section(".itcm")))
 #endif
 struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
-	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(getUserIPCAddress());
+	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(TGDSIPCUserStartAddress);
 	return sIPCSharedTGDSSpecificInst;
 }
 
@@ -82,7 +82,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		case SNEMULDS_APUCMD_RESET: //case 0x00000001:
 		{
 			// Reset
-			StopSound();
+			StopSoundSnemulDS();
 
 			memset(playBuffer, 0, MIXBUFSIZE * 8);
 
@@ -90,7 +90,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			ApuReset();
 			DspReset();
 
-			SetupSound();
+			SetupSoundSnemulDS();
 			paused = false;
 			SPC_disable = false;
 			SPC_freedom = false;
@@ -99,9 +99,9 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		case SNEMULDS_APUCMD_PAUSE:{ //case 0x00000002:{
 			// Pause/unpause
 			if (!paused) {
-				StopSound();
+				StopSoundSnemulDS();
 			} else {
-				SetupSound();
+				SetupSoundSnemulDS();
 			}
 			if (SPC_disable)
 				SPC_disable = false;        
@@ -110,16 +110,16 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		break;
 		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC
 			//Reset APU
-			StopSound();
+			StopSoundSnemulDS();
 			memset(playBuffer, 0, MIXBUFSIZE * 8);
 			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0; 
 			ApuReset();
 			DspReset();
-			SetupSound();
+			SetupSoundSnemulDS();
 			
 			//Load APU payload
 			LoadSpc((const u8*)cmd2);
-			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 			fifomsg[40] = (uint32)0;	//release ARM9 APU_playSpc()
 			
@@ -142,7 +142,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 
 		case SNEMULDS_APUCMD_SAVESPC:{ //case 0x00000006:{ // //Save APU Memory Snapshot -> u8 * inSPCBuffer @ ARM9 EWRAM
 			SaveSpc((const u8*)cmd2);
-			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 			fifomsg[40] = (uint32)0;	//release ARM9 APU_playSpc()
 		}
@@ -150,7 +150,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			
 		case SNEMULDS_APUCMD_LOADSPC:{ //case 0x00000007:{ // LOAD state 
 			LoadSpc((const u8*)cmd2);
-			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 			fifomsg[40] = (uint32)0;	//release ARM9 APU_loadSpc()
 			getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0; 

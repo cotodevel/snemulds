@@ -24,17 +24,17 @@ bool paused = true;
 bool SPC_disable = true;
 bool SPC_freedom = false;
 
-void SetupSound() {
+void SetupSoundSnemulDS() {
     soundCursor = 0;
 	apuMixPosition = 0;
 
 	SoundPowerON(127);		//volume
 
-    TIMERXDATA(0) = TIMER_FREQ(MIXRATE);
-    TIMERXCNT(0) = TIMER_DIV_1 | TIMER_ENABLE;
+    TIMERXDATA(2) = TIMER_FREQ(MIXRATE);
+    TIMERXCNT(2) = TIMER_DIV_1 | TIMER_ENABLE;
 
-    TIMERXDATA(1) = 0x10000 - MIXBUFSIZE;
-    TIMERXCNT(1) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
+    TIMERXDATA(3) = 0x10000 - MIXBUFSIZE;
+    TIMERXCNT(3) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
 	
     // Debug
 	#if PROFILING_ON  
@@ -45,18 +45,18 @@ void SetupSound() {
 		TIMERXCNT(3) = TIMER_CASCADE | TIMER_ENABLE;
 	#endif    
 	
-	DisableIrq(IRQ_TIMER3);
-	EnableIrq(IRQ_TIMER1);
-}
- 
-void StopSound() {
-    powerOFF(POWER_SOUND);
-    REG_SOUNDCNT = 0;
-    TIMERXCNT(0) = 0;
-    TIMERXCNT(1) = 0;
-	
 	DisableIrq(IRQ_TIMER1);
 	EnableIrq(IRQ_TIMER3);
+}
+ 
+void StopSoundSnemulDS() {
+    powerOFF(POWER_SOUND);
+    REG_SOUNDCNT = 0;
+    TIMERXCNT(2) = 0;
+    TIMERXCNT(3) = 0;
+	
+	DisableIrq(IRQ_TIMER3);
+	EnableIrq(IRQ_TIMER1);
 }
 
 void LoadSpc(const uint8 *spc) {
@@ -132,7 +132,7 @@ int main(int _argc, sint8 **_argv) {
 	update_spc_ports(); //APU Ports from SnemulDS properly binded with Assembly APU Core
     ApuReset();
     DspReset();
-    SetupSound();
+    SetupSoundSnemulDS();
     struct sIPCSharedTGDSSpecific* TGDSUSERIPC = getsIPCSharedTGDSSpecific();
 	
     while (1) {
