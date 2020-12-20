@@ -1,8 +1,7 @@
 # SnemulDS
 
-Branch: Master. ARM9 DLDI development branch. Use ARM9DLDI branch if you want a stable build.
-
-ARM7 DLDI is not supported anymore unless a DSi dev wants to add TGDS ARM7DLDI support. PMs can be sent in nesdev forums, or GBATemp.
+Branch: TGDS1.6-Snemulds. SnemulDS as of 16 December 2020 is no longer supported by me, Coto. So I'm keeping this branch (along the same branch name in ToolchainGenericDS repository),
+if somebody else wants to continue development. This last checkpoint is known to work with SnemulDS.
 
 SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes)... 
 This is based from real 0.6.a sources archeide left years ago and I managed to find.
