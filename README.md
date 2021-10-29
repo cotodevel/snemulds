@@ -1,6 +1,8 @@
 # SnemulDS
 
-Branch: TGDS1.6-Snemulds. SnemulDS as of 16 December 2020 is no longer supported by me, Coto. So I'm keeping this branch (along the same branch name in ToolchainGenericDS repository),
+Branch: TGDS1.6-Snemulds-Singles. This branch allows to embed a ROM file inside the emulator, whose file sizes can be up to 1.5MB. Made for DownloadPlay where no DLDI exists. 
+
+SnemulDS as of 16 December 2020 is no longer supported by me, Coto. So I'm keeping this branch (along the same branch name in ToolchainGenericDS repository),
 if somebody else wants to continue development. This last checkpoint is known to work with SnemulDS.
 
 SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes)... 
