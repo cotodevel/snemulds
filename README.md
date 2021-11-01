@@ -11,10 +11,6 @@ This is based from real 0.6.a sources archeide left years ago and I managed to f
 End-users:
 
 Instructions:
-
-How to get the latest working version:
-
-    - Download latest sources from Master branch: https://bitbucket.org/Coto88/SnemulDS/get/TGDS1.6-Snemulds.zip
     - Download and copy, /arm7dldi-ntr -> SnemulDS.nds (NTR mode) or /arm7dldi-twl (TWL mode) -> SnemulDS.srl from /release folder, snemul.cfg as well, in SD:/ root . 
 	  If it prompts for overwrite: Yes to All. 
     - Create a /snes folder in SD: root, and put your homebrew games on it
@@ -31,6 +27,8 @@ Remap NDS -> SNES Keys:
 Save / Load States:
 	- It is experimental. It may or not work consecutively. It's recommended to always save then restore a single state at a time.
 
+
+Latest stable release: https://bitbucket.org/Coto88/SnemulDS/get/TGDS1.6-Snemulds.zip
 
 Changelog:
 
