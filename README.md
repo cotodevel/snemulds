@@ -27,6 +27,9 @@ Remap NDS -> SNES Keys:
 Save / Load States:
 	- It is experimental. It may or not work consecutively. It's recommended to always save then restore a single state at a time.
 
+Properly Saving / Loading SRAM:
+	- Save in-game, check Options -> SRAM saving and wait for a "SRAM written" message to appear. 
+	Right after uncheck this option before reloading other games or shutting down console. This ensures your savefile is kept safely.
 
 Latest stable release: https://bitbucket.org/Coto88/SnemulDS/get/TGDS1.6-Snemulds.zip
 

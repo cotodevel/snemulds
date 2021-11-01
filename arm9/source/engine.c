@@ -297,8 +297,9 @@ int go()
           if (CFG.EnableSRAM && SNES.SRAMWritten)
           {
         	  saveSRAM();
-        	  GUI_printf("Auto SRAM written");
-        	  SNES.SRAMWritten = 0;
+        	  GUI.printfy = 23;
+			  GUI_printf("SRAM written");
+			  SNES.SRAMWritten = 0;
           }
       }
       

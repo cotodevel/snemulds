@@ -214,8 +214,6 @@ extern void	CPU_unpack();
 extern void	SNES_update();
 extern void	PPU_update();
 extern void	CPU_pack();
-extern int loadSRAM();
-extern int saveSRAM();
 extern void PPU_ChangeLayerConf(int i);
 extern void saveOptionsToConfig(sint8 *section);
 extern void	APU_clear();

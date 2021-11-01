@@ -648,7 +648,8 @@ int AdvancedHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			break;
 		case 1: // SAVE SRAM
 			saveSRAM();
-			//GUI_console_printf(0, 23, "SRAM written");
+			GUI.printfy = 23;
+			GUI_printf("SRAM written");
 			break;
 		case 2: // GFX CONFIG
 		{

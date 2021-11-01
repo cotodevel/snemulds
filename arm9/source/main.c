@@ -367,8 +367,6 @@ int loadROM(struct sGUISelectorItem * name)
 		char *ROM;
 		int crc;
 		
-		// Save SRAM of previous game first
-		saveSRAM();
 		CFG.LargeROM = 0;
 		
 		//filename already has correct format

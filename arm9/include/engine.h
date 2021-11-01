@@ -32,7 +32,6 @@ extern void writeSRAM(int offset, uint8* src, int size);
 extern void readSRAM(int offset, uint8* dest, int size);
 extern int loadSRAM();
 extern int saveSRAM();
-
 extern uint8 interrupted;
 
 extern int initSNESEmpty();
