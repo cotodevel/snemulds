@@ -264,15 +264,18 @@ int get_joypad()
 		//Touchscreen Events
 		if (keysHeld() & KEY_TOUCH){
 			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+			struct touchPosition touch;
+			XYReadScrPosUser(&touch);
+	
 			int tx=0, ty=0;
-			tx = TGDSIPC->touchXpx;
+			tx = touch.px;
 			
 			if (CFG.Scaled == 0) // No scaling
-				ty = TGDSIPC->touchYpx+GFX.YScroll;
+				ty = touch.py+GFX.YScroll;
 			else if (CFG.Scaled == 1) // Half scaling
-				ty = TGDSIPC->touchYpx*208/192+12; // FIXME			
+				ty = touch.py*208/192+12; // FIXME			
 			else if (CFG.Scaled == 2) // Full screen
-				ty = TGDSIPC->touchYpx*224/192;
+				ty = touch.py*224/192;
 			
 			if (CFG.MouseMode == 0)
 			{

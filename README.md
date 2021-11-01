@@ -2,10 +2,9 @@
 
 NTR/TWL SDK: TGDS1.6-Snemulds, specially tailored for SnemulDS TWL mode.
 
-# SnemulDS 0.6c alpha
+# SnemulDS 0.6c
 
 master: Development branch. Use TGDS1.6-Snemulds: branch for stable features.
-
 SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes)... 
 This is based from real 0.6.a sources archeide left years ago and I managed to find.
 
@@ -35,6 +34,9 @@ Save / Load States:
 
 Changelog:
 
+SnemulDS 0.6c:
+	- fix TWL mode touchscreen!
+	
 SnemulDS 0.6c alpha:
 	- TWL support! Currently tested on no&gba. Some lag may happen between loading screens. 
 	- Fixed a ton of issues (a work of at least 3 years, related with TGDS SDK, mostly memory issues, codebase stability, interrupts, arm7 dldi support, arm7 sd twl support, etc)

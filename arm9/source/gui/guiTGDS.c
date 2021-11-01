@@ -439,8 +439,11 @@ int GUI_update()
 		struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 		int px=0, py=0; 
 		if(getTouchScreenEnabled() == true){
-			px = TGDSIPC->touchXpx;
-			py = TGDSIPC->touchYpx;
+			struct touchPosition touch;
+			XYReadScrPosUser(&touch);
+			
+			px = touch.px;
+			py = touch.py;
 		}
 			
 		if((pressed & KEY_TOUCH) && !(held & KEY_TOUCH)){

@@ -51,7 +51,15 @@ USA
 __attribute__((section(".itcm")))
 #endif
 struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
-	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(getUserIPCAddress());
+	
+	#ifdef ARM7
+	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(NDS_CACHED_SCRATCHPAD + (80*4));
+	#endif
+	
+	#ifdef ARM9
+	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(NDS_UNCACHED_SCRATCHPAD + (80*4));
+	#endif
+	
 	return sIPCSharedTGDSSpecificInst;
 }
 
@@ -65,16 +73,6 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		//ARM7 command handler
 		#ifdef ARM7
 		
-		//ARM7 Only
-		case(FIFO_POWERCNT_ON):{
-			powerON((uint16)cmd2);
-		}
-		break;
-		
-		case (FIFO_POWERMGMT_WRITE):{
-			PowerManagementDeviceWrite(PM_SOUND_AMP, (int)cmd2>>16);  // void * data == command2
-		}
-		break;
 		
 		
 		case SNEMULDS_APUCMD_RESET: //case 0x00000001:
