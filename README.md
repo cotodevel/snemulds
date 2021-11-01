@@ -53,7 +53,6 @@ SnemulDS 0.6:
 
 Known issues:
 	-   Fix Mode 0 (no transparency/broken)
-	- 	SnemulDS 0.6c has broken touchscreen for now.
 
 Thanks to:
 
