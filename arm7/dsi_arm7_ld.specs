@@ -1,0 +1,7 @@
+%rename link                old_link
+
+*link:
+%(old_link) -T ./dsi_arm7.ld%s
+
+*startfile:
+./build/nds_arm_ld_crt0%O%s crti%O%s crtbegin%O%s

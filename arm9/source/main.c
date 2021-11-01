@@ -1,0 +1,615 @@
+/***********************************************************/
+/* This source is part of SNEmulDS                         */
+/* ------------------------------------------------------- */
+/* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
+/***********************************************************/
+/*
+ This program is free software; you can redistribute it and/or 
+ modify it under the terms of the GNU General Public License as 
+ published by the Free Software Foundation; either version 2 of 
+ the License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful, 
+ but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+ GNU General Public License for more details.
+ */
+
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+#include "dsregs_asm.h"
+
+#include <stdio.h>
+#include "posixHandleTGDS.h"
+#include <string.h>
+#include "guiTGDS.h"
+#include "fs.h"
+#include "snes.h"
+#include "gfx.h"
+#include "cfg.h"
+#include "apu.h"
+#include "conf.h"
+#include "spifwTGDS.h"
+#include "main.h"
+#include "timerTGDS.h"
+#include "guiTGDS.h"
+#include "console_str.h"
+#include "fatfslayerTGDS.h"
+#include "utilsTGDS.h"
+#include "dmaTGDS.h"
+#include "keypadTGDS.h"
+#include "memmap.h"
+#include "biosTGDS.h"
+#include "crc32.h"
+#include "engine.h"
+#include "guiTGDS.h"
+#include "core.h"
+#include "nds_cp15_misc.h"
+
+int _offsetY_tab[4] = { 16, 0, 32, 24 };
+
+uint32 screen_mode;
+int APU_MAX = 262;
+
+__attribute__((section(".dtcm")))
+bool handleROMSelect=false;
+
+__attribute__((section(".dtcm")))
+bool handleSPCSelect=false;
+
+void applyOptions()
+{
+	if (!CFG.Sound_output)
+		APU_clear();
+
+	if (CFG.LayersConf < 10)
+		PPU_ChangeLayerConf(CFG.LayersConf);
+
+	GFX.YScroll = _offsetY_tab[CFG.YScroll];
+}
+
+// FIXME: Move me...
+uint8 LayersConf[10][4] =
+{
+{ 0, 1, 2, 3 },
+{ 1, 2, 0, 3 },
+{ 3, 3, 2, 3 },
+{ 3, 3, 3, 3 },
+{ 2, 2, 2, 2 },
+{ 1, 1, 1, 1 },
+{ 0, 0, 0, 0 },
+{ 2, 3, 0, 1 },
+{ 2, 0, 3, 1 },
+{ 2, 1, 0, 3 }, 
+};
+
+void PPU_ChangeLayerConf(int i)
+{
+	CFG.LayersConf = i % 10;
+	CFG.LayerPr[0] = LayersConf[CFG.LayersConf][0];
+	CFG.LayerPr[1] = LayersConf[CFG.LayersConf][1];
+	CFG.LayerPr[2] = LayersConf[CFG.LayersConf][2];
+	CFG.LayerPr[3] = LayersConf[CFG.LayersConf][3];
+}
+
+void readOptionsFromConfig(char *section)
+{
+	//SNES button mapping
+	SNES_A = get_config_hex("KEYS", "SNES_BUTTON_A", 0x00000080);
+	SNES_B = get_config_hex("KEYS", "SNES_BUTTON_B", 0x00008000);
+	SNES_X = get_config_hex("KEYS", "SNES_BUTTON_X", 0x00000040);
+	SNES_Y = get_config_hex("KEYS", "SNES_BUTTON_Y", 0x00004000);
+	SNES_L = get_config_hex("KEYS", "SNES_BUTTON_L", 0x00000020);
+	SNES_R = get_config_hex("KEYS", "SNES_BUTTON_R", 0x00000010);
+	SNES_SELECT = get_config_hex("KEYS", "SNES_BUTTON_SELECT", 0x00002000);
+	SNES_START = get_config_hex("KEYS", "SNES_BUTTON_START", 0x00001000);
+	SNES_UP = get_config_hex("KEYS", "SNES_BUTTON_UP", 0x00000800);
+	SNES_DOWN = get_config_hex("KEYS", "SNES_BUTTON_DOWN", 0x00000400);
+	SNES_LEFT = get_config_hex("KEYS", "SNES_BUTTON_LEFT", 0x00000200);
+	SNES_RIGHT = get_config_hex("KEYS", "SNES_BUTTON_RIGHT", 0x00000100);
+	
+	//Initial Dirs
+	char romPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
+	char spcPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
+	strcpy(romPath, get_config_string("Global", "ROMPath", ""));
+	strcpy(spcPath, get_config_string("Global", "SPCPath", ""));
+	strcpy(startFilePath, romPath); 
+	strcpy(startSPCFilePath, spcPath);
+	
+	CFG.BG3Squish = get_config_int(section, "BG3Squish", CFG.BG3Squish) & 3;
+	// FIXME 
+	GFX.YScroll = get_config_int(section, "YScroll", GFX.YScroll);
+	if (GFX.YScroll == 16)
+		CFG.YScroll = 0;
+	if (GFX.YScroll == 0)
+		CFG.YScroll = 1;
+	if (GFX.YScroll == 32)
+		CFG.YScroll = 2;
+	if (GFX.YScroll == 24)
+		CFG.YScroll = 3;	
+	
+	CFG.Scaled = get_config_int(section, "Scaled", CFG.Scaled);
+	CFG.Sound_output = get_config_int(section, "Sound", CFG.Sound_output) & 1;
+	CFG.BG_Layer = (get_config_int(section, "HDMA", 1)&1) << 7;
+
+	int BG_Layer = get_config_oct(section, "BGLayers", 010111);
+	if ((BG_Layer & 7) == 1)
+		CFG.BG_Layer |= 1;
+	if (((BG_Layer>>3) & 7) == 1)
+		CFG.BG_Layer |= 2;
+	if (((BG_Layer>>6) & 7) == 1)
+		CFG.BG_Layer |= 4;
+	if (((BG_Layer>>9) & 7) == 1)
+		CFG.BG_Layer |= 8;
+	if (((BG_Layer>>12) & 7) == 1)
+		CFG.BG_Layer |= 0x10;
+
+	CFG.LayersConf = get_config_int(section, "BGPriorities", CFG.LayersConf);
+	if (CFG.LayersConf == 10)
+	{
+		int BGManualPriority = get_config_oct(section, "BGManualPriority",
+				00123);
+		CFG.LayerPr[0] = (BGManualPriority) & 3;
+		CFG.LayerPr[1] = (BGManualPriority>>3) & 3;
+		CFG.LayerPr[2] = (BGManualPriority>>6) & 3;
+		CFG.LayerPr[3] = (BGManualPriority>>9) & 3;
+
+		CFG.LayerPr[0] = get_config_int(section, "BG1Pr", CFG.LayerPr[0]) & 3;
+		CFG.LayerPr[1] = get_config_int(section, "BG2Pr", CFG.LayerPr[1]) & 3;
+		CFG.LayerPr[2] = get_config_int(section, "BG3Pr", CFG.LayerPr[2]) & 3;
+		CFG.LayerPr[3] = get_config_int(section, "BG4Pr", CFG.LayerPr[3]) & 3;
+
+	}
+	else
+		PPU_ChangeLayerConf(CFG.LayersConf);
+
+	CFG.Transparency
+			= get_config_int(section, "Transparency", CFG.Transparency);
+	CFG.WaitVBlank = get_config_int(section, "Vblank", CFG.WaitVBlank);
+	CFG.FastDMA = get_config_int(section, "FastDMA", CFG.FastDMA);
+
+	CFG.MouseXAddr = get_config_hex(section, "MouseXAddr", 0);
+	CFG.MouseYAddr = get_config_hex(section, "MouseYAddr", 0);
+	CFG.MouseMode = get_config_int(section, "MouseMode", 0);
+	CFG.MouseXOffset = get_config_int(section, "MouseXOffset", 0);
+	CFG.MouseYOffset = get_config_int(section, "MouseYOffset", 0);
+
+	CFG.SoundPortSync = 0;
+
+	int SoundPortSync = get_config_oct(section, "SoundPortSync",
+			CFG.SoundPortSync);
+	if ((SoundPortSync & 7) == 1)
+		CFG.SoundPortSync |= 8;
+	if (((SoundPortSync>>3) & 7) == 1)
+		CFG.SoundPortSync |= 4;
+	if (((SoundPortSync>>6) & 7) == 1)
+		CFG.SoundPortSync |= 2;
+	if (((SoundPortSync>>9) & 7) == 1)
+		CFG.SoundPortSync |= 1;
+	if (((SoundPortSync>>12) & 7) == 1)
+		CFG.SoundPortSync |= 0x80;
+	if (((SoundPortSync>>15) & 7) == 1)
+		CFG.SoundPortSync |= 0x40;
+	if (((SoundPortSync>>18) & 7) == 1)
+		CFG.SoundPortSync |= 0x20;
+	if (((SoundPortSync>>21) & 7) == 1)
+		CFG.SoundPortSync |= 0x10;
+
+	CFG.TilePriorityBG = get_config_int(section, "TilePriorityBG",
+			CFG.TilePriorityBG);
+	CFG.BG3TilePriority = get_config_int(section, "BG3TilePriority",
+			CFG.BG3TilePriority);
+	CFG.Debug2 = get_config_int(section, "BlankTileNumber", CFG.Debug2);
+	int SpritePriority = get_config_oct(section, "SpritePriority", 01123);
+	CFG.SpritePr[0] = (SpritePriority) & 3;
+	CFG.SpritePr[1] = (SpritePriority>>3) & 3;
+	CFG.SpritePr[2] = (SpritePriority>>6) & 3;
+	CFG.SpritePr[3] = (SpritePriority>>9) & 3;
+	
+	//CFG.MapExtMem = get_config_int(section, "MapExtMem", CFG.MapExtMem);
+	
+	CFG.EnableSRAM = get_config_int(section, "EnableSRAM", CFG.EnableSRAM);
+}
+
+void saveOptionsToConfig(char *section)
+{
+	set_config_int(section, "BG3Squish", CFG.BG3Squish);
+	// FIXME 
+	set_config_int(section, "YScroll", GFX.YScroll);
+	set_config_int(section, "Sound", CFG.Sound_output);
+	
+	set_config_int(section, "Scaled", CFG.Scaled);
+	//	set_config_int(section, "GFXEngine", CFG.TileMode);
+	//	set_config_int(section, "HDMA", CFG.BG_Layer>>7);
+
+	set_config_oct(section, "BGLayers", 5, (CFG.BG_Layer & 1)|((CFG.BG_Layer
+			& 2)<<2)|((CFG.BG_Layer & 4)<<4)|((CFG.BG_Layer & 8)<<6)
+			|((CFG.BG_Layer & 0x10)<<8));
+
+	set_config_int(section, "BGPriorities", CFG.LayersConf);
+
+	//	set_config_int(section, "Transparency", CFG.Transparency);
+	set_config_int(section, "Vblank", CFG.WaitVBlank);
+	//	set_config_int(section, "FastDMA", CFG.FastDMA);
+
+	/*	set_config_hex(section, "MouseXAddr", 0);
+	 set_config_hex(section, "MouseYAddr", 0);
+	 set_config_int(section, "MouseMode", 0);
+	 set_config_int(section, "MouseXOffset", 0);
+	 set_config_int(section, "MouseYOffset", 0);*/
+
+	//	set_config_oct(section, "SoundPortSync", CFG.SoundPortSync);
+
+	/*	set_config_int(section, "TilePriorityBG", CFG.TilePriorityBG);
+	 set_config_int(section, "BG3TilePriority", CFG.BG3TilePriority);
+	 set_config_int(section, "BlankTileNumber", CFG.Debug2);
+	 set_config_oct(section, "SpritePriority", 01123);*/
+	
+	set_config_int(section, "EnableSRAM", CFG.EnableSRAM);
+	save_config_file();
+}
+
+// FIXME : fix layersconf
+
+void packOptions(uint8 *ptr)
+{
+	t_Options *opt = (t_Options *)ptr;
+
+	opt->BG3Squish = CFG.BG3Squish;
+	opt->SoundOutput = CFG.Sound_output;
+	if (CFG.LayersConf == 0)
+		opt->LayersConf = 0x24; // 0/1/2
+	else
+		opt->LayersConf = CFG.LayerPr[0] | (CFG.LayerPr[1] << 2)
+				| (CFG.LayerPr[2] << 4);
+//	opt->TileMode = CFG.TileMode;
+	opt->BG_Layer = CFG.BG_Layer;
+	opt->YScroll = CFG.YScroll;
+	opt->WaitVBlank = CFG.WaitVBlank;
+}
+
+void unpackOptions(int version, uint8 *ptr)
+{
+	t_Options *opt = (t_Options *)ptr;
+
+	if (version == 1)
+		CFG.BG3Squish = 2-opt->BG3Squish;
+	else
+		CFG.BG3Squish = opt->BG3Squish;
+	CFG.Sound_output = opt->SoundOutput;
+	if (version == 1)
+		CFG.LayersConf = opt->LayersConf;
+	else
+	{
+		if (opt->LayersConf == 0x24) // 0/1/2 == automatic layer
+		{
+			CFG.LayersConf = 0;
+		}
+		else
+		{
+			CFG.LayersConf = 10;
+			CFG.LayerPr[0] = opt->LayersConf&3;
+			CFG.LayerPr[1] = (opt->LayersConf>>2)&3;
+			CFG.LayerPr[2] = (opt->LayersConf>>4)&3;
+			CFG.LayerPr[3] = 3;
+		}
+	}
+/*	if (version == 1)
+		CFG.TileMode = 0; // Force line by line mode
+	else
+		CFG.TileMode = opt->TileMode;*/
+	CFG.BG_Layer = opt->BG_Layer;
+	CFG.YScroll = opt->YScroll;
+	CFG.WaitVBlank = opt->WaitVBlank;
+
+	applyOptions();
+}
+
+__attribute__((optimize("-O0")))
+int checkConfiguration(char *name, int crc)
+{
+	// Check configuration file
+	readOptionsFromConfig("Global");
+
+	char *section= NULL;
+	if (is_section_exists(SNES.ROM_info.title))
+	{
+		section = SNES.ROM_info.title;
+	}
+	else if (is_section_exists(FS_getFileName(name)))
+	{
+		section = FS_getFileName(name);
+	}
+	else if ((section = find_config_section_with_hex("crc", crc)))
+	{
+	}
+	else if ((section = find_config_section_with_string("title2", SNES.ROM_info.title)))
+	{
+	}
+	else if ((section = find_config_section_with_hex("crc2", crc)))
+	{
+	}
+	else if ((section = find_config_section_with_string("title3", SNES.ROM_info.title)))
+	{
+	}
+	else if ((section = find_config_section_with_hex("crc3", crc)))
+	{
+	}
+	else if ((section = find_config_section_with_string("title4", SNES.ROM_info.title)))
+	{
+	}
+	else if ((section = find_config_section_with_hex("crc4", crc)))
+	{
+	}
+
+	if (section != NULL)
+	{
+		GUI_printf("Section : %s ", section);
+		readOptionsFromConfig(section);
+	}
+}
+
+int loadROM(struct sGUISelectorItem * name)
+{
+	//wait until release A button
+	scanKeys();
+	u32 keys = keysPressed();
+	while (keys&KEY_A){
+		scanKeys();
+		keys = keysPressed();
+	}
+	
+	//file
+	if(name->StructFDFromFS_getDirectoryListMethod == FT_FILE){
+		int size;
+		char romname[MAX_TGDSFILENAME_LENGTH+1] = {0};
+		int ROMheader;
+		char *ROM;
+		int crc;
+		
+		// Save SRAM of previous game first
+		saveSRAM();
+		CFG.LargeROM = 0;
+		
+		//filename already has correct format
+		if (
+			(name->filenameFromFS_getDirectoryListMethod[0] == '0')
+			&&
+			(name->filenameFromFS_getDirectoryListMethod[1] == ':')
+			&&
+			(name->filenameFromFS_getDirectoryListMethod[2] == '/')
+		){
+			strcpy(romname, name->filenameFromFS_getDirectoryListMethod);
+		}
+		//otherwise build format
+		else{
+			strcpy(romname, getfatfsPath(startFilePath));
+			if (romname[strlen(romname)-1] != '/'){
+				strcat(romname, "/");
+			}
+			strcat(romname, name->filenameFromFS_getDirectoryListMethod);
+		}
+		
+		//There's a bug when rendering certain UI elements, some garbage may appear near the end of the filename, todo
+		char ext[256];
+		char tmp[256];
+		strcpy(tmp,romname);
+		separateExtension(tmp,ext);
+		strlwr(ext);
+		if(strlen(ext) > 4){
+			romname[strlen(romname)-2] = '\0';
+		}
+		
+		clrscr();
+		memset(CFG.ROMFile, 0, sizeof(CFG.ROMFile));
+		strcpy(CFG.ROMFile, romname);
+		void *ptr = TGDSARM9Malloc(4);
+		GUI_printf("ptr=%p... ", ptr);
+		TGDSARM9Free(ptr);
+
+		mem_clear_paging(); // FIXME: move me...
+		ROM = (char *) SNES_ROM_ADDRESS;
+		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
+		
+		swiDelay(1);
+		dmaFillHalfWord(0, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE - (512*1024));	////Clear memory: ROM will use it
+	
+		size = FS_getFileSize((char*)&CFG.ROMFile[0]);
+		ROMheader = size & 8191;
+		if (ROMheader != 0&& ROMheader != 512){
+			ROMheader = 512;
+		}
+	
+		clrscr();
+		GUI_printf(" - - ");
+		GUI_printf(" - - ");
+		GUI_printf("File:%s - Size:%d", CFG.ROMFile, size);
+		if (size-ROMheader > ROM_MAX_SIZE)
+		{
+			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, ROM_STATIC_SIZE+ROMheader);
+			CFG.LargeROM = 1;
+			crc = crc32(0, ROM, ROM_STATIC_SIZE);
+			GUI_printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
+		}
+		else
+		{
+			FS_loadROM(ROM-ROMheader, CFG.ROMFile);
+			CFG.LargeROM = 0;
+			crc = crc32(0, ROM, size-ROMheader);
+			GUI_printf("CRC = %08x ", crc);
+		}
+	
+		changeROM(ROM-ROMheader, size);
+		checkConfiguration(name->filenameFromFS_getDirectoryListMethod, crc);
+	
+		//Apply topScreen / bottomScreen setting
+		if(CFG.TopScreenEmu == 0){
+			SnemulDSLCDSwap();
+		}
+	}
+	return 0;
+}
+
+int selectSong(char *name)
+{
+	strcpy(CFG.Playlist, name);
+	CFG.Jukebox = 1;
+	CFG.Sound_output = 0;
+	APU_stop();
+	
+	u8 * spcFile = TGDSARM9Malloc(0x10200);
+	if(spcFile == NULL){
+		return -1;
+	}
+	if(FS_loadFile(CFG.Playlist, (char*)spcFile, 0x10200) < 0){
+		//GUI_printf("selectSong(): Load error: %s", CFG.Playlist);
+		TGDSARM9Free(spcFile);
+		return -1;
+	}
+	//GUI_printf("WAITING");
+	APU_playSpc(spcFile);	//blocking, wait APU init
+	TGDSARM9Free(spcFile);
+	return 0;
+}
+
+//---------------------------------------------------------------------------------
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){	
+	asm("mcr	p15, 0, r0, c7, c10, 4");
+	flush_icache_all();
+	flush_dcache_all();
+	
+	/*			TGDS 1.6 Standard ARM9 Init code start	*/
+	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
+	GUI_init(isTGDSCustomConsole);
+	GUI_clear();
+	
+	sint32 fwlanguage = (sint32)getLanguage();
+	GUI_setLanguage(fwlanguage);
+	bool isCustomTGDSMalloc = true;
+	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
+	
+	int ret=FS_init(); 
+	if (ret == 0)
+	{
+		GUI_printf(_STR(IDS_FS_SUCCESS));
+	}
+	else if(ret == -1)
+	{
+		GUI_printf(_STR(IDS_FS_FAILED));
+	}
+	
+	/*			TGDS 1.6 Standard ARM9 Init code end	*/
+	
+	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
+	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
+	REG_IE |= (IRQ_HBLANK| IRQ_VBLANK | IRQ_VCOUNT);		
+	
+	//Set up PPU IRQ Vertical Line
+	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
+	
+	DisableIrq(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
+	DisableSoundSampleContext();
+	swiDelay(1000);
+	
+#ifndef DSEMUL_BUILD	
+	GUI.printfy = 32;
+	//GUI_align_printf(GUI_TEXT_ALIGN_CENTER, SNEMULDS_TITLE);
+	//GUI_align_printf(GUI_TEXT_ALIGN_CENTER, SNEMULDS_SUBTITLE);
+    GUI.printfy += 32; // FIXME
+	//GUI_align_printf(GUI_TEXT_ALIGN_CENTER, _STR(4));
+#endif	
+	
+	memset(&startFilePath, 0, sizeof(startFilePath));
+	memset(&startSPCFilePath, 0, sizeof(startSPCFilePath));
+	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = getsIPCSharedTGDSSpecific()->APU_ADDR_ANS = getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
+	update_spc_ports();
+	initSNESEmpty();
+
+	// Clear "HDMA"
+	int i;
+	for (i = 0; i < 192; i++){
+		GFX.lineInfo[i].mode = -1;
+	}
+#ifndef	DSEMUL_BUILD	
+	//for (i = 0; i < 100; i++)
+	//	IRQVBlankWait();
+#endif	
+	
+	// Load SNEMUL.CFG
+	GUI_printf("Load conf1");
+	set_config_file(getfatfsPath("snemul.cfg"));
+	GUI_printf("Load conf2");
+	readOptionsFromConfig("Global");
+	GUI_printf("Load conf3");
+	GUI_getConfig();	
+	GUI_printf("Load conf4");
+	
+	memset(&guiSelItem, 0, sizeof(guiSelItem));
+	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
+	
+	//ARGV Support: 
+	if (argc > 1) {
+		strcpy(&CFG.ROMFile[0], (const char *)argv[1]);
+		guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
+	}
+	else{
+		guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMList(startFilePath);
+	}
+	loadROM(&guiSelItem);
+
+	if (!(argc > 1)) {
+		GUI_deleteROMSelector(); 	//Should also free ROMFile
+	}
+	
+	GUI_createMainMenu();	//Start GUI
+	
+	while (1)
+	{
+		if(REG_DISPSTAT & DISP_VBLANK_IRQ){
+			//Sync Events
+			if(handleROMSelect==true){
+				handleROMSelect=false;
+				
+				if (CFG.Sound_output || CFG.Jukebox)
+					APU_pause();
+				
+				memset(&guiSelItem, 0, sizeof(guiSelItem));
+				char * fileName = GUI_getROMList(startFilePath);
+				guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
+				guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)fileName;
+				loadROM(&guiSelItem);
+				
+				GUI_createMainMenu();	//	Start GUI
+			}
+			
+			if(handleSPCSelect==true){
+				handleSPCSelect=false;
+				
+				if (CFG.Sound_output || CFG.Jukebox)
+					APU_pause();
+				
+				memset(&guiSelItem, 0, sizeof(guiSelItem));
+				char * fileName = GUI_getSPCList(startSPCFilePath);
+				guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
+				guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)fileName;
+				selectSong(fileName);
+				
+				GUI_createMainMenu();	//Start GUI
+			}
+			GUI_update();
+		}
+		
+		if (!SNES.Stopped){
+			go();
+		}
+	}
+
+	return 0;
+}
