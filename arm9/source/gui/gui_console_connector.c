@@ -186,7 +186,7 @@ bool InitProjectSpecificConsole(){
 	
 	GUI.Palette[39] = RGB8(255, 255, 255); // White
 	
-	InitializeConsole(DefaultSessionConsole);
+	//InitializeConsole(DefaultSessionConsole); //no, use native SnemulDS console engine, not the modified one by TGDS
 	
 	GUI.consoleAtTopScreen = false;	//GUI console at bottom screen
 	GUI.consoleBacklightOn = true;	//Backlight On for console

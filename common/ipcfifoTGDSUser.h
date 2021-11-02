@@ -71,6 +71,7 @@ struct sIPCSharedTGDSSpecific{
 };
 
 // Project Specific
+#define SNEMULDS_SETUP_ARM7 (u32)(0xffff00a0)
 #define SNEMULDS_APUCMD_RESET 0xffff00a1
 #define SNEMULDS_APUCMD_PAUSE 0xffff00a2
 #define SNEMULDS_APUCMD_PLAYSPC 0xffff00a3

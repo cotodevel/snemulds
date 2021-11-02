@@ -40,34 +40,20 @@ GNU General Public License for more details.
 #include "spifwTGDS.h"
 #include "powerTGDS.h"
 
-u16 savedCtxPallete[16];
-
 void switchToTGDSConsoleColors(){
-	int i = 0;
-	for(i = 0; i < 16; i++){
-		savedCtxPallete[i] = GUI.Palette[i];
-	}
-	GUI.Palette = &BG_PALETTE_SUB[0];
-	GUI.Palette[0] = 	RGB8(0,0,0);			//Back-ground tile color / Black
-	GUI.Palette[1] =	RGB8(255, 255, 255); 	//White
-	GUI.Palette[2] =  	RGB8(150, 75, 0); 		//Brown
-	GUI.Palette[3] =  	RGB8(255, 127, 0); 		//Orange
-	GUI.Palette[4] = 	RGB8(255, 0, 255); 		//Magenta
-	GUI.Palette[5] = 	RGB8(0, 255, 255); 		//Cyan
-	GUI.Palette[6] = 	RGB8(255, 255, 0); 		//Yellow
-	GUI.Palette[7] = 	RGB8(0, 0, 255); 		//Blue
-	GUI.Palette[8] = 	RGB8(0, 255, 0); 		//Green
-	GUI.Palette[9] = 	RGB8(255, 0, 0); 		//Red
-	GUI.Palette[0xa] = 	RGB8(128, 128, 128); 	//Grey
-	GUI.Palette[0xb] = 	RGB8(240, 240, 240);	//Light-Grey
+	bool isTGDSCustomConsole = false;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
+	GUI_init(isTGDSCustomConsole);
+	sint32 fwlanguage = (sint32)getLanguage();
+	GUI_setLanguage(fwlanguage);
+	GUI_clear();
 }
 
 void switchToSnemulDSConsoleColors(){
-	int i = 0;
-	GUI.Palette = &BG_PALETTE_SUB[0];
-	for(i = 0; i < 16; i++){
-		GUI.Palette[i] = savedCtxPallete[i];
-	}
+	bool isTGDSCustomConsole = true;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
+	GUI_init(isTGDSCustomConsole);
+	sint32 fwlanguage = (sint32)getLanguage();
+	GUI_setLanguage(fwlanguage);
+	GUI_clear();
 }
 
 t_GUIScreen	*GUI_newScreen(int nb_elems)

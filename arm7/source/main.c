@@ -117,27 +117,14 @@ void SaveSpc(uint8 *spc) {
 int main(int _argc, char **_argv) {
 //---------------------------------------------------------------------------------
 	
-	while (!(*((vuint8*)0x04000240) & 0x2));
-	
-    playBuffer = (uint16*)0x6000000;
-    int i   = 0;
-    for (i = 0; i < MIXBUFSIZE * 4; i++) {
-        playBuffer[i] = 0;
-    }
-	
 	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
 	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
 	REG_IE = IRQ_TIMER1 | IRQ_HBLANK | IRQ_VBLANK | IRQ_VCOUNT | IRQ_IPCSYNC | IRQ_RECVFIFO_NOT_EMPTY | IRQ_SCREENLID;
 	
 	//Set up PPU IRQ Vertical Line
 	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
-		
-	update_spc_ports(); //APU Ports from SnemulDS properly binded with Assembly APU Core
-    ApuReset();
-    DspReset();
-    SetupSound();
-    struct sIPCSharedTGDSSpecific* TGDSUSERIPC = getsIPCSharedTGDSSpecific();
 	
+    struct sIPCSharedTGDSSpecific* TGDSUSERIPC = getsIPCSharedTGDSSpecific();
     while (1) {
 		if(SPC_disable == false){
             int cyclesToExecute, samplesToMix;

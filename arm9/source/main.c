@@ -478,20 +478,21 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){	
+int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
+	/*			TGDS 1.6 Standard ARM9 Init code start	*/
+	
+	bool isTGDSCustomConsole = false;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
+	GUI_init(isTGDSCustomConsole);
+	sint32 fwlanguage = (sint32)getLanguage();
+	GUI_setLanguage(fwlanguage);
+	GUI_clear();
+	
+	bool isCustomTGDSMalloc = true;
+	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
+	
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	flush_icache_all();
 	flush_dcache_all();
-	
-	/*			TGDS 1.6 Standard ARM9 Init code start	*/
-	bool isTGDSCustomConsole = true;	//set default console or custom console: custom console
-	GUI_init(isTGDSCustomConsole);
-	GUI_clear();
-	
-	sint32 fwlanguage = (sint32)getLanguage();
-	GUI_setLanguage(fwlanguage);
-	bool isCustomTGDSMalloc = true;
-	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
 	
 	int ret=FS_init(); 
 	if (ret == 0)

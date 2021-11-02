@@ -140,7 +140,24 @@ int	changeROM(char *ROM, int size)
 	return 0;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int initSNESEmpty(){
+	
+	//First of all: ARM7 APU Core
+	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
+	setValueSafe(&fifomsg[10], (uint32)SNEMULDS_SETUP_ARM7);
+	SendFIFOWordsITCM(SNEMULDS_SETUP_ARM7, 0xFF);
+	while((u32)getValueSafe(&fifomsg[10]) != (u32)0){
+		swiDelay(1);
+	}
+	
+	
 	CFG.BG3Squish = 0;
 	CFG.WaitVBlank = 0;
 	CFG.YScroll = 0;
