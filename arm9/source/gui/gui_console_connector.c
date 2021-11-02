@@ -1132,8 +1132,8 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 //Synchronous - Reentrant GUI handlers
 //First time GUI File Handler.
 char * GUI_getROMList(sint8 *rompath){
+	switchToTGDSConsoleColors();
 	GUI.ScanJoypad = 1;
-	
 	clrscr();
 	char startPath[MAX_TGDSFILENAME_LENGTH+1];
 	strcpy(startPath, rompath);
@@ -1142,7 +1142,7 @@ char * GUI_getROMList(sint8 *rompath){
 	memset(curFile, 0, sizeof(curFile));
 	memset(CFG.ROMFile, 0, sizeof(CFG.ROMFile));
 	
-	while( ShowBrowser((char *)startPath, (char *)curFile) == true ){	//as long you keep using directories ShowBrowser will be true
+	while( ShowBrowser((char *)startPath, (char *)curFile) == true ){	//as long you keep using directories it will be true
 		
 	}
 	
@@ -1153,6 +1153,7 @@ char * GUI_getROMList(sint8 *rompath){
 	
 	strcpy(CFG.ROMFile, curFile);
 	GUI.ScanJoypad = 0;
+	switchToSnemulDSConsoleColors();
 	return (char *)&CFG.ROMFile[0];
 }
 
@@ -1167,7 +1168,7 @@ char * GUI_getSPCList(sint8 *spcpath){
 	memset(curFile, 0, sizeof(curFile));
 	memset(CFG.SPCFile, 0, sizeof(CFG.SPCFile));
 	
-	while( ShowBrowser((char *)startPath, (char *)curFile) == true ){	//as long you keep using directories ShowBrowser will be true
+	while( ShowBrowser((char *)startPath, (char *)curFile) == true ){	//as long you keep using directories it will be true
 		
 	}
 	

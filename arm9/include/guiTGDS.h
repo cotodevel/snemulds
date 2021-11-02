@@ -220,6 +220,10 @@ extern void	APU_clear();
 extern int		GUI_getZoneTextHeight(t_GUIZone *zone);
 extern int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text);
 
+extern u16 savedCtxPallete[16];
+extern void switchToTGDSConsoleColors();
+extern void switchToSnemulDSConsoleColors();
+
 #ifdef __cplusplus
 }
 #endif

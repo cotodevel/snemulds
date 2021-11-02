@@ -145,12 +145,27 @@ _start:
 		beq FirmwareARM7OK
 		cmp r0, #0x20		@DS Lite
 		beq FirmwareARM7OK
+		cmp r0, #0x35		@DS Lite rare fw #1
+		beq FirmwareARM7OK
 		cmp r0, #0x57		@DSi
 		beq FirmwareARM7OK
 		cmp r0, #0x43		@iQueDS
 		beq FirmwareARM7OK
 		cmp r0, #0x63		@iQueDS Lite
 		beq FirmwareARM7OK
+		
+		.extern TGDSInitLoopCount
+		ldr r2,=TGDSInitLoopCount
+		ldr r3, [r2]
+		add r3,r3,#1
+		cmp r3,#(8192 << 6) @524288
+		
+		moveq r1,r0	@u32 fwNo
+		moveq r0,#0x0	@stage
+		beq handleDSInitError 
+		
+		str r3, [r2]
+		
 		b waitForFirmwareARM7Setup
 	FirmwareARM7OK:
 	#endif
