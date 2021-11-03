@@ -208,27 +208,17 @@ void update_spc_ports(){
 }
 
 
+//project specific stuff
+
 #ifdef ARM9
-//Callback update sample implementation
 
-__attribute__((section(".itcm")))
-void updateSoundContextStreamPlaybackUser(u32 srcFrmt){
+void updateStreamCustomDecoder(u32 srcFrmt){
+
 }
+
+void freeSoundCustomDecoder(u32 srcFrmt){
+
+}
+
 #endif
-
-void setupSoundUser(u32 srcFrmtInst){
-	#ifdef ARM7
-	#endif
-	
-	#ifdef ARM9
-	#endif
-}
-
-void stopSoundUser(u32 srcFrmt){
-	#ifdef ARM7
-	#endif
-	
-	#ifdef ARM9
-	#endif
-}
 

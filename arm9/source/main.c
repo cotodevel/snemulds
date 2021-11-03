@@ -45,6 +45,40 @@
 #include "guiTGDS.h"
 #include "core.h"
 #include "nds_cp15_misc.h"
+#include "soundTGDS.h"
+
+//TGDS Soundstreaming API
+int internalCodecType = SRC_NONE; //Returns current sound stream format: WAV, ADPCM or NONE
+struct fd * _FileHandleVideo = NULL; 
+struct fd * _FileHandleAudio = NULL;
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+bool stopSoundStreamUser() {
+	return stopSoundStream(_FileHandleVideo, _FileHandleAudio, &internalCodecType);
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void closeSoundUser() {
+	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
+}
+
+
+
+
+
+
 
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
 
@@ -472,12 +506,13 @@ int selectSong(char *name)
 
 //---------------------------------------------------------------------------------
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("O2")))
 #endif
 
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".itcm")))
 int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	
