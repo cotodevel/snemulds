@@ -514,6 +514,16 @@ __attribute__ ((optnone))
 #endif
 __attribute__((section(".itcm")))
 int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
+	
+	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
+	
+	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
+	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
+	REG_IE |= (IRQ_HBLANK| IRQ_VBLANK | IRQ_VCOUNT);		
+	
+	//Set up PPU IRQ Vertical Line
+	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
+	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	
 	bool isTGDSCustomConsole = false;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
@@ -540,13 +550,6 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
 	}
 	
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
-	
-	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
-	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
-	REG_IE |= (IRQ_HBLANK| IRQ_VBLANK | IRQ_VCOUNT);		
-	
-	//Set up PPU IRQ Vertical Line
-	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
 	
 	DisableIrq(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	DisableSoundSampleContext();

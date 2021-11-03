@@ -124,6 +124,8 @@ int main(int _argc, char **_argv) {
 	//Set up PPU IRQ Vertical Line
 	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
 	
+	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
+
     struct sIPCSharedTGDSSpecific* TGDSUSERIPC = getsIPCSharedTGDSSpecific();
     while (1) {
 		if(SPC_disable == false){
