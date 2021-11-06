@@ -59,8 +59,11 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-bool stopSoundStreamUser() {
-	return stopSoundStream(_FileHandleVideo, _FileHandleAudio, &internalCodecType);
+bool stopSoundStreamUser(){
+	if(SoundStreamStopSoundStreamARM9LibUtilsCallback != NULL){
+		return SoundStreamStopSoundStreamARM9LibUtilsCallback(_FileHandleVideo, _FileHandleAudio, &internalCodecType);
+	}
+	return false;
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -504,6 +507,10 @@ int selectSong(char *name)
 	return 0;
 }
 
+int TGDSProjectReturnFromLinkedModule() {
+	return -1;
+}
+
 //---------------------------------------------------------------------------------
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O2")))
@@ -552,7 +559,9 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	DisableIrq(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
-	DisableSoundSampleContext();
+	if(SoundSampleContextDisableARM7LibUtilsCallback != NULL){
+		SoundSampleContextDisableARM7LibUtilsCallback();
+	}
 	swiDelay(1000);
 	
 #ifndef DSEMUL_BUILD	

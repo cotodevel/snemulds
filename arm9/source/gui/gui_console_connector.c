@@ -1147,7 +1147,7 @@ char * GUI_getROMList(sint8 *rompath){
 	}
 	
 	scanKeys();
-	while(keysPressed() & KEY_START){
+	while(keysDown() & KEY_START){
 		scanKeys();
 	}
 	
@@ -1173,7 +1173,7 @@ char * GUI_getSPCList(sint8 *spcpath){
 	}
 	
 	scanKeys();
-	while(keysPressed() & KEY_START){
+	while(keysDown() & KEY_START){
 		scanKeys();
 	}
 	

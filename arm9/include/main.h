@@ -47,6 +47,7 @@ extern bool handleSPCSelect;
 
 extern char *GUI_getROMList(sint8 *rompath);
 extern char *GUI_getSPCList(sint8 *spcpath);
+extern int TGDSProjectReturnFromLinkedModule();
 
 #ifdef __cplusplus
 }
