@@ -108,7 +108,7 @@ int get_joypad()
 {
 	int res = 0;
 	scanKeys();
-	u32 keys = keysDown();
+	u32 keys = keysHeld();
 
 #if 0
 		if( (keys & KEY_L))
