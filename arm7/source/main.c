@@ -42,8 +42,8 @@ void SetupSound() {
 		TIMERXCNT(4) = TIMER_CASCADE | TIMER_ENABLE;
 	#endif    
 	
-	DisableIrq(IRQ_TIMER3);
-	EnableIrq(IRQ_TIMER2);
+	irqDisable(IRQ_TIMER3);
+	irqEnable(IRQ_TIMER2);
 }
  
 void StopSound() {
@@ -52,8 +52,8 @@ void StopSound() {
     TIMERXCNT(1) = 0;
     TIMERXCNT(2) = 0;
 	
-	DisableIrq(IRQ_TIMER2);
-	EnableIrq(IRQ_TIMER3);
+	irqDisable(IRQ_TIMER2);
+	irqEnable(IRQ_TIMER3);
 }
 
 void LoadSpc(const uint8 *spc) {

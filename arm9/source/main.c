@@ -558,7 +558,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
 	
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
-	DisableIrq(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
+	irqDisable(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	if(SoundSampleContextDisableARM7LibUtilsCallback != NULL){
 		SoundSampleContextDisableARM7LibUtilsCallback();
 	}
