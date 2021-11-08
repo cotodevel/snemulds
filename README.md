@@ -1,6 +1,6 @@
 ![SnemulDSDS](img/snemulDS-TWL.png)
 
-NTR/TWL SDK: TGDS1.6-Snemulds, specially tailored for SnemulDS TWL mode.
+NTR/TWL SDK: TGDS1.65
 
 # SnemulDS 0.6c
 
