@@ -222,3 +222,35 @@ void freeSoundCustomDecoder(u32 srcFrmt){
 
 #endif
 
+
+//Libutils setup: TGDS project doesn't use any libutils extensions.
+void setupLibUtils(){
+	//libutils:
+	
+	//Stage 0
+	#ifdef ARM9
+	initializeLibUtils9(
+		NULL, //ARM7 & ARM9
+		NULL, //ARM9 
+		NULL, //ARM7 & ARM9: void EnableSoundSampleContext(int SndSamplemode)
+		NULL, //ARM7 & ARM9: void DisableSoundSampleContext()
+		NULL, //ARM9: bool stopSoundStream(struct fd * tgdsStructFD1, struct fd * tgdsStructFD2, int * internalCodecType)
+		NULL  //ARM9: void updateStream() 
+	);
+	#endif
+	
+	//Stage 1
+	#ifdef ARM7
+	initializeLibUtils7(
+		NULL, //ARM7 & ARM9
+		NULL, //ARM7
+		NULL, //ARM7
+		NULL, //ARM7: void TIMER1Handler()
+		NULL, //ARM7: void stopSound()
+		NULL, //ARM7: void setupSound()
+		NULL, //ARM7: initSoundSampleContext()
+		NULL, //ARM7 & ARM9: void EnableSoundSampleContext(int SndSamplemode)
+		NULL  //ARM7 & ARM9: void DisableSoundSampleContext()
+	);
+	#endif
+}

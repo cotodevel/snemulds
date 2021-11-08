@@ -68,15 +68,5 @@ struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7Malloc
 	//Memory Setup: ARM7 TGDS 64K = 0x03800000 ~ 0x03810000. TGDS Sound Streaming code: Custom ARM7 Sound
 	WRAM_CR = WRAM_32KARM9_0KARM7;
 	
-	//libutils
-	/*
-	initializeLibUtils(
-		NULL, //HandleFifoNotEmptyWeakRefLibUtils_fn: NULL because TGDS project doesn't use extended FIFO calls from libutils
-		NULL, //wifiUpdateVBLANKARM7LibUtils_fn: NULL because TGDS project doesn't use extended FIFO calls from libutils
-		NULL, //wifiInterruptARM7LibUtils_fn: NULL because TGDS project doesn't use extended FIFO calls from libutils
-		NULL //timerWifiInterruptARM9LibUtils_fn: NULL because TGDS project doesn't use extended FIFO calls from libutils
-	);
-	*/
-	
 	return customMemoryAllocator;
 }
