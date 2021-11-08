@@ -208,27 +208,49 @@ void update_spc_ports(){
 }
 
 
-#ifdef ARM9
-//Callback update sample implementation
+//project specific stuff
 
-__attribute__((section(".itcm")))
-void updateSoundContextStreamPlaybackUser(u32 srcFrmt){
+#ifdef ARM9
+
+void updateStreamCustomDecoder(u32 srcFrmt){
+
 }
+
+void freeSoundCustomDecoder(u32 srcFrmt){
+
+}
+
 #endif
 
-void setupSoundUser(u32 srcFrmtInst){
-	#ifdef ARM7
+
+//Libutils setup: TGDS project doesn't use any libutils extensions.
+void setupLibUtils(){
+	//libutils:
+	
+	//Stage 0
+	#ifdef ARM9
+	initializeLibUtils9(
+		NULL, //ARM7 & ARM9
+		NULL, //ARM9 
+		NULL, //ARM7 & ARM9: void EnableSoundSampleContext(int SndSamplemode)
+		NULL, //ARM7 & ARM9: void DisableSoundSampleContext()
+		NULL, //ARM9: bool stopSoundStream(struct fd * tgdsStructFD1, struct fd * tgdsStructFD2, int * internalCodecType)
+		NULL  //ARM9: void updateStream() 
+	);
 	#endif
 	
-	#ifdef ARM9
-	#endif
-}
-
-void stopSoundUser(u32 srcFrmt){
+	//Stage 1
 	#ifdef ARM7
-	#endif
-	
-	#ifdef ARM9
+	initializeLibUtils7(
+		NULL, //ARM7 & ARM9
+		NULL, //ARM7
+		NULL, //ARM7
+		NULL, //ARM7: void TIMER1Handler()
+		NULL, //ARM7: void stopSound()
+		NULL, //ARM7: void setupSound()
+		NULL, //ARM7: initSoundSampleContext()
+		NULL, //ARM7 & ARM9: void EnableSoundSampleContext(int SndSamplemode)
+		NULL  //ARM7 & ARM9: void DisableSoundSampleContext()
+	);
 	#endif
 }
-

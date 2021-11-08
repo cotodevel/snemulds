@@ -23,11 +23,20 @@ GNU General Public License for more details.
 #include "guiTGDS.h"
 #include "gui_widgets.h"
 #include "consoleTGDS.h"
+#include "soundTGDS.h"
+
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+//TGDS Soundstreaming API
+extern int internalCodecType;
+extern struct fd * _FileHandleVideo; 
+extern struct fd * _FileHandleAudio;
+extern bool stopSoundStreamUser();
+extern void closeSoundUser();
 
 extern int argc;
 extern sint8 **argv;
@@ -38,6 +47,7 @@ extern bool handleSPCSelect;
 
 extern char *GUI_getROMList(sint8 *rompath);
 extern char *GUI_getSPCList(sint8 *spcpath);
+extern int TGDSProjectReturnFromLinkedModule();
 
 #ifdef __cplusplus
 }

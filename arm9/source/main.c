@@ -45,6 +45,43 @@
 #include "guiTGDS.h"
 #include "core.h"
 #include "nds_cp15_misc.h"
+#include "soundTGDS.h"
+
+//TGDS Soundstreaming API
+int internalCodecType = SRC_NONE; //Returns current sound stream format: WAV, ADPCM or NONE
+struct fd * _FileHandleVideo = NULL; 
+struct fd * _FileHandleAudio = NULL;
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+bool stopSoundStreamUser(){
+	if(SoundStreamStopSoundStreamARM9LibUtilsCallback != NULL){
+		return SoundStreamStopSoundStreamARM9LibUtilsCallback(_FileHandleVideo, _FileHandleAudio, &internalCodecType);
+	}
+	return false;
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void closeSoundUser() {
+	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
+}
+
+
+
+
+
+
 
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
 
@@ -470,15 +507,30 @@ int selectSong(char *name)
 	return 0;
 }
 
+int TGDSProjectReturnFromLinkedModule() {
+	return -1;
+}
+
 //---------------------------------------------------------------------------------
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("O2")))
 #endif
 
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".itcm")))
 int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
+	
+	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
+	
+	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
+	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
+	REG_IE |= (IRQ_HBLANK| IRQ_VBLANK | IRQ_VCOUNT);		
+	
+	//Set up PPU IRQ Vertical Line
+	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
+	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	
 	bool isTGDSCustomConsole = false;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
@@ -506,15 +558,10 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
 	
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
-	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
-	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
-	REG_IE |= (IRQ_HBLANK| IRQ_VBLANK | IRQ_VCOUNT);		
-	
-	//Set up PPU IRQ Vertical Line
-	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
-	
-	DisableIrq(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
-	DisableSoundSampleContext();
+	irqDisable(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
+	if(SoundSampleContextDisableARM7LibUtilsCallback != NULL){
+		SoundSampleContextDisableARM7LibUtilsCallback();
+	}
 	swiDelay(1000);
 	
 #ifndef DSEMUL_BUILD	

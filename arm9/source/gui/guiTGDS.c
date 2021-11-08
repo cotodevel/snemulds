@@ -438,7 +438,7 @@ int GUI_update()
 	//Async events
 	scanKeys();
 	int new_event = 0;
-	int pressed = keysPressed(); 	// buttons pressed this loop
+	int pressed = keysDown(); 	// buttons pressed this loop
 	int released = keysReleased();
 	int held = keysHeld();				//touch screen
 	int repeated = keysRepeated();

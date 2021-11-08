@@ -38,7 +38,7 @@ d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_
 MAPFILE = $(DIR_ARM9).map
 SHARED_FLAGS	=	-march=armv5te	-mthumb-interwork
 AS_ASFLAGS		=	$(SHARED_FLAGS)	-defsym debug=0	-defsym	appver='$(EXECUTABLE_VERSION)'	-defsym	ARM9='1'
-CC_ASFLAGS		=	$(SHARED_FLAGS)	-Wall	-DNDS -DARM9	-marm	-O2 -ffast-math -fomit-frame-pointer -fno-exceptions	-MMD -MP	-Ddebug=0	-nostdinc	-Dappver='$(EXECUTABLE_VERSION)'
+CC_ASFLAGS		=	$(SHARED_FLAGS)	-Wall	-DNDS -DARM9	-marm	-Os -s	-fno-exceptions	-MMD -MP	-Ddebug=0	-nostdinc	-Dappver='$(EXECUTABLE_VERSION)'
 CPP_FLAGS		=	$(SHARED_FLAGS)	$(CC_ASFLAGS)
 BUILD			= 	$(BUILD_ARM9)
 DIR_SRC			=	$(DIRS_ARM9_SRC)
@@ -118,7 +118,7 @@ $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 $(ELF_ARM9): $(OBJPROG)
 	-@echo '$@ Unstripped. STRIP Start!'
 	-mv build/${@:.elf=-nonstripped_dsi.elf}	$(CURDIR)
-	$(OBJSTRIP)	-s -R .comment -R .gnu.version	$<
+	$(OBJSTRIP)	-s --strip-debug	$<	
 	-mv	$<	$@
 	
 $(BINSTRIP_RULE_9): $(ELF_ARM9)

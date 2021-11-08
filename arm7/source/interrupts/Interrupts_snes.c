@@ -35,6 +35,14 @@ void Timer0handlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void Timer1handlerUser(){
+	
+}
+
+
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void Timer2handlerUser(){
 	#if PROFILING_ON
 		long long begin = TIMER2_DATA + ((long long)TIMER3_DATA << 19);
 	#endif
@@ -61,13 +69,6 @@ void Timer1handlerUser(){
 		SPC_IPC->cpuTime += end - begin;
 	//    SPC_IPC->dspTime += (TIMER2_DATA + ((long long)TIMER3_DATA << 19)) - end;
 	#endif
-}
-
-
-#ifdef ARM9
-__attribute__((section(".itcm")))
-#endif
-void Timer2handlerUser(){
 }
 
 #ifdef ARM9
