@@ -132,16 +132,6 @@ _start:
 	add                 r3,r2,#(256)                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy
 	
-	/*  Clear BSS */
-	ldr                 r0,=__bss_vma_start
-	ldr                 r1,=__bss_vma_end
-	bl clear
-	
-	@Clear vma sections used before
-	ldr                 r0,=__lib__end__
-	ldr                 r1,=__vma_stub_end__
-	bl clear
-	
 	/* Wait until ARM7 reads firmware and we initialize ARM9 from this flag */
 	waitForFirmwareARM7Setup:
 		ldr r0,=(0x027FF000 + 0x5D)	@(uint8)Console Type: 

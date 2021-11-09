@@ -380,6 +380,12 @@ int checkConfiguration(char *name, int crc)
 	}
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int loadROM(struct sGUISelectorItem * name)
 {
 	//wait until release A button
@@ -509,9 +515,8 @@ int TGDSProjectReturnFromLinkedModule() {
 
 //---------------------------------------------------------------------------------
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O2")))
+__attribute__((optimize("O0")))
 #endif
-
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
