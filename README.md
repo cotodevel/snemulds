@@ -31,7 +31,7 @@ Properly Saving / Loading SRAM:
 	- Save in-game, check Options -> SRAM saving and wait for a "SRAM written" message to appear. 
 	Right after uncheck this option before reloading other games or shutting down console. This ensures your savefile is kept safely.
 
-Latest stable release: https://bitbucket.org/Coto88/SnemulDS/get/TGDS1.6-Snemulds.zip
+Latest stable release: https://bitbucket.org/Coto88/SnemulDS/get/TGDS1.65.zip
 
 Changelog:
 
