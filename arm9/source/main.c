@@ -77,12 +77,6 @@ void closeSoundUser() {
 	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
 }
 
-
-
-
-
-
-
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
 
 uint32 screen_mode;
@@ -507,6 +501,8 @@ int selectSong(char *name)
 	return 0;
 }
 
+char args[8][MAX_TGDSFILENAME_LENGTH];
+char *argvs[8];
 int TGDSProjectReturnFromLinkedModule() {
 	return -1;
 }
@@ -520,10 +516,8 @@ __attribute__((optimize("O2")))
 __attribute__ ((optnone))
 #endif
 __attribute__((section(".itcm")))
-int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
-	
+int main(int argc, char ** argv){
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-	
 	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
 	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
 	REG_IE |= (IRQ_HBLANK| IRQ_VBLANK | IRQ_VCOUNT);		
@@ -539,9 +533,20 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
 	GUI_setLanguage(fwlanguage);
 	GUI_clear();
 	
+	//xmalloc init removes args, so save them
+	int i = 0;
+	for(i = 0; i < argc; i++){
+		argvs[i] = argv[i];
+	}
+
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
 	
+	//argv destroyed here because of xmalloc init, thus restore them
+	for(i = 0; i < argc; i++){
+		argv[i] = argvs[i];
+	}
+
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	flush_icache_all();
 	flush_dcache_all();
@@ -557,7 +562,6 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
 	}
 	
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
-	
 	irqDisable(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	if(SoundSampleContextDisableARM7LibUtilsCallback != NULL){
 		SoundSampleContextDisableARM7LibUtilsCallback();
@@ -579,14 +583,9 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
 	initSNESEmpty();
 
 	// Clear "HDMA"
-	int i;
 	for (i = 0; i < 192; i++){
 		GFX.lineInfo[i].mode = -1;
 	}
-#ifndef	DSEMUL_BUILD	
-	//for (i = 0; i < 100; i++)
-	//	IRQVBlankWait();
-#endif	
 	
 	// Load SNEMUL.CFG
 	GUI_printf("Load conf1");
@@ -603,21 +602,20 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]){
 	//ARGV Support: 
 	if (argc > 1) {
 		strcpy(&CFG.ROMFile[0], (const char *)argv[1]);
+		switchToTGDSConsoleColors();
 		guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
+		switchToSnemulDSConsoleColors();
 	}
 	else{
 		guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMList(startFilePath);
 	}
 	loadROM(&guiSelItem);
-
 	if (!(argc > 1)) {
 		GUI_deleteROMSelector(); 	//Should also free ROMFile
 	}
-	
 	GUI_createMainMenu();	//Start GUI
 	
-	while (1)
-	{
+	while (1){
 		if(REG_DISPSTAT & DISP_VBLANK_IRQ){
 			//Sync Events
 			if(handleROMSelect==true){
