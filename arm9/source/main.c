@@ -604,6 +604,36 @@ int main(int argc, char ** argv){
 	memset(&guiSelItem, 0, sizeof(guiSelItem));
 	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
 	
+	//Choose Touchscreen controller mode if TWL mode
+	if(__dsimode == true){
+		//Send args
+		printf("TWL Mode detected. Want to use TWL touchscreen?");
+		printf("(X) Yes. ");
+		printf("(Y) No. (Legacy NTR touchscreen) ");
+		
+		while(1==1){
+			scanKeys();
+			if(keysDown()&KEY_X){
+				scanKeys();
+				while(keysHeld() & KEY_X){
+					scanKeys();
+				}
+				//SnemulDS -> use TWL TSC
+				TWLSetTouchscreenTWLMode();
+				break;
+			}
+			if(keysDown()&KEY_Y){
+				scanKeys();
+				while(keysHeld() & KEY_Y){
+					scanKeys();
+				}
+				//TGDS-Projects -> legacy NTR TSC compatibility
+				TWLSetTouchscreenNTRMode();
+				break;
+			}
+		}
+	}
+	
 	//ARGV Support: 
 	if (argc > 1) {
 		strcpy(&CFG.ROMFile[0], (const char *)argv[1]);
