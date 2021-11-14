@@ -250,7 +250,8 @@ void setupLibUtils(){
 		NULL, //ARM7: void setupSound()
 		NULL, //ARM7: initSoundSampleContext()
 		NULL, //ARM7 & ARM9: void EnableSoundSampleContext(int SndSamplemode)
-		NULL  //ARM7 & ARM9: void DisableSoundSampleContext()
+		NULL,  //ARM7 & ARM9: void DisableSoundSampleContext()
+		NULL   //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
 	);
 	#endif
 }
