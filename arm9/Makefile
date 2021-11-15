@@ -119,6 +119,7 @@ $(ELF_ARM9): $(OBJPROG)
 	-@echo '$@ Unstripped. STRIP Start!'
 	-mv build/${@:.elf=-nonstripped_dsi.elf}	$(CURDIR)
 	$(OBJSTRIP)	-s --strip-debug	$<	
+	$(OBJSTRIP)	-s --strip-debug	${@:.elf=-nonstripped_dsi.elf}
 	-mv	$<	$@
 	
 $(BINSTRIP_RULE_9): $(ELF_ARM9)
