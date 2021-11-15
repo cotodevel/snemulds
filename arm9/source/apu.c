@@ -32,12 +32,25 @@ GNU General Public License for more details.
 // Definitions
 ////////////////////////////////////////////////////////////////////////////
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	APU_reset()
 {
     APU_command(SNEMULDS_APUCMD_RESET); //APU_command(0x00000001);
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	APU_nice_reset()
 {
 #ifndef IN_EMULATOR	
@@ -47,11 +60,25 @@ void	APU_nice_reset()
 	
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	APU_pause()
 {
     APU_command(SNEMULDS_APUCMD_PAUSE); //APU_command(0x00000002);
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	APU_stop()
 {
 #ifndef IN_EMULATOR	
@@ -64,6 +91,13 @@ void	APU_stop()
 #endif	
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	APU_playSpc(u8 * inSPCBuffer)
 {
 	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
@@ -79,6 +113,13 @@ void	APU_playSpc(u8 * inSPCBuffer)
 }
 
 //Requires an empty buffer[0x10200] @ inSPCBuffer, saves ARM7 SNES APUMEMORY into it
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	APU_saveSpc(u8 * inSPCBuffer)
 {
 	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
@@ -95,6 +136,13 @@ void	APU_saveSpc(u8 * inSPCBuffer)
 	coherent_user_range_by_size((uint32)inSPCBuffer, (int)0x10200);
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	APU_loadSpc(u8 * inSPCBuffer)
 {
 	coherent_user_range_by_size((uint32)inSPCBuffer, (int)0x10200);	
@@ -110,13 +158,26 @@ void	APU_loadSpc(u8 * inSPCBuffer)
 	}
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	APU_clear()
 {
 	APU_command(SNEMULDS_APUCMD_CLRMIXERBUF); //APU_command(0x00000005);
 	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = 0;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void APU_command(uint32 command){
 	//prevent APU from desync
 	SendFIFOWords(command, 0);

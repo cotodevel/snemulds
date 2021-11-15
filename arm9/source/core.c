@@ -418,6 +418,13 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 	return offs+len;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Os")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void DMA_transfert(uchar port)
 {
   uint		tmp;
@@ -498,6 +505,13 @@ void DMA_transfert(uchar port)
   //END_PROFILE(DMA, 4);
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Os")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void		HDMA_transfert(unsigned char port){
   uint		len;
   uchar		*ptr, *ptr2, repeat;

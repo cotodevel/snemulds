@@ -34,7 +34,7 @@ USA
 
 //Definition that overrides the weaksymbol expected from toolchain to init ARM9's TGDS memory allocation
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O1")))
+__attribute__((optimize("O0")))
 #endif
 
 #if (!defined(__GNUC__) && defined(__clang__))
@@ -48,7 +48,7 @@ struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7Malloc
 	customMemoryAllocator->ARM7MallocSize = ARM7MallocSize;
 	
 	customMemoryAllocator->ARM9MallocStartaddress = (u32)sbrk(0);
-	customMemoryAllocator->memoryToAllocate = (3300*1024); 
+	customMemoryAllocator->memoryToAllocate = (3400*1024); 
 	customMemoryAllocator->CustomTGDSMalloc9 = (TGDSARM9MallocHandler)&Xmalloc;
 	customMemoryAllocator->CustomTGDSCalloc9 = (TGDSARM9CallocHandler)&Xcalloc;
 	customMemoryAllocator->CustomTGDSFree9 = (TGDSARM9FreeHandler)&Xfree;
