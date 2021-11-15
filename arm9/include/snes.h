@@ -127,14 +127,24 @@ struct s_snes
 //#define PPU_PORT	((ushort *)(0x23E0000))
 //#define DMA_PORT	((ushort *)(0x23E4000))
 #define SNES_SRAM_ADDRESS ((uchar *)(0x23E6000))
-#define SNES_ROM_ADDRESS ((uchar *)(0x20C0000))
 
 //Rom Page variables:
-#define ROM_MAX_SIZE	(int)(3*1024*1024)
-//#define ROM_STATIC_SIZE	(1*1024*1024)
-//#define ROM_PAGING_SIZE	(2*1024*1024)
+#define ROM_MAX_SIZE	(int)((2*1024*1024) + (512*1024))
 #define ROM_STATIC_SIZE	(int)(64*1024)
 #define ROM_PAGING_SIZE	(int)(ROM_MAX_SIZE-ROM_STATIC_SIZE)
-#define SNES_ROM_PAGING_ADDRESS (SNES_ROM_ADDRESS+ROM_STATIC_SIZE)
 
+#endif
+
+
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+extern u8 * romAddr;
+extern u8 *getROMAddress();
+extern void setROMAddress(u8 * romadd);
+extern u8 * getSNES_ROM_PAGING_ADDRESS();
+
+#ifdef __cplusplus
+}
 #endif

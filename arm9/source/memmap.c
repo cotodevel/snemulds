@@ -25,6 +25,13 @@
 #include "memmap.h"
 #include "utilsTGDS.h"
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void WriteProtectROM()
 {
 	int c;
@@ -39,6 +46,13 @@ void WriteProtectROM()
 	}
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void FixMap()
 {
 	int c;
@@ -52,6 +66,13 @@ void FixMap()
 	}
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void MapRAM()
 {
 	int c;
@@ -74,6 +95,13 @@ void MapRAM()
 	}
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void InitLoROMMap(int mode)
 {
 	int 	c;
@@ -184,6 +212,13 @@ void InitLoROMMap(int mode)
 	WriteProtectROM();
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void InitHiROMMap(int mode)
 {
 	int 	c;
@@ -272,7 +307,14 @@ uchar *ROM_paging= NULL;
 uint16 *ROM_paging_offs= NULL;
 int ROM_paging_cur = 0;
 
-void mem_clear_paging()
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void mem_init_paging()
 {
 	if (ROM_paging)
 	{
@@ -282,17 +324,14 @@ void mem_clear_paging()
 		ROM_paging = NULL;
 		ROM_paging_offs = NULL;
 	}
-}
-
-void mem_init_paging()
-{
+	
 	/*	ROM_paging = TGDSARM9Malloc(ROM_PAGING_SIZE);
 	 if (!ROM_paging)
 	 {
 	 printf("Not enough memory for ROM paging.\n");
 	 while(1);
 	 }*/
-	ROM_paging = SNES_ROM_PAGING_ADDRESS;
+	ROM_paging = getSNES_ROM_PAGING_ADDRESS();
 	memset(ROM_paging, 0, ROM_PAGING_SIZE);
 	ROM_paging_offs = TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
 	if (!ROM_paging_offs)
@@ -305,7 +344,13 @@ void mem_init_paging()
 	ROM_paging_cur = 0;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void mem_setCacheBlock(int block, uchar *ptr)
 {
 	int i;
@@ -325,7 +370,13 @@ void mem_setCacheBlock(int block, uchar *ptr)
 	}
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void mem_removeCacheBlock(int block)
 {
 	int i;
@@ -345,7 +396,13 @@ void mem_removeCacheBlock(int block)
 	}
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 uint8 *mem_checkReload(int block)
 {
 	int i;
@@ -411,10 +468,16 @@ uint8 *mem_checkReload(int block)
 	return ptr+(block&7)*8192-(block << 13);
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void InitMap()
 {
 	int i;
-	
 	for (i = 0; i < 256*8; i++)
 		MAP[i] = (uint8*)MAP_NONE;	
 
@@ -430,7 +493,14 @@ void InitMap()
 }
 
 
-/*inline */uint8 IO_getbyte(int addr, uint32 address)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+uint8 IO_getbyte(int addr, uint32 address)
 {
 	uint8 result;
 
@@ -462,8 +532,14 @@ void InitMap()
 
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
-/*inline */void IO_setbyte(int addr, uint32 address, uint8 byte)
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void IO_setbyte(int addr, uint32 address, uint8 byte)
 {
 	switch ((int)addr)
 	{
@@ -495,8 +571,14 @@ void InitMap()
 	}
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
-/*inline */uint16 IO_getword(int addr, uint32 address)
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+uint16 IO_getword(int addr, uint32 address)
 {
 	uint16 result;
 
@@ -533,8 +615,14 @@ void InitMap()
 	}
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
-/*inline */void IO_setword(int addr, uint32 address, uint16 word)
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void IO_setword(int addr, uint32 address, uint16 word)
 {
 	switch ((int)addr)
 	{
@@ -572,6 +660,13 @@ void InitMap()
 
 //#include "memmap.h"
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 uchar mem_getbyte(uint32 offset,uchar bank)
 {
 	int address = (bank<<16)+offset;
@@ -592,7 +687,13 @@ uchar mem_getbyte(uint32 offset,uchar bank)
 	return IO_getbyte((int)addr, address);
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 {
 	int address = (bank<<16)+offset;
@@ -611,7 +712,13 @@ void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 	IO_setbyte((int)addr, address, byte);
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 ushort mem_getword(uint32 offset,uchar bank)
 {
 	int address = (bank<<16)+offset;
@@ -631,7 +738,13 @@ ushort mem_getword(uint32 offset,uchar bank)
 	return IO_getword((int)addr, address);
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void mem_setword(uint32 offset, uchar bank, ushort word)
 {
 	int address = (bank<<16)+offset;
@@ -652,6 +765,13 @@ void mem_setword(uint32 offset, uchar bank, ushort word)
 	IO_setword((int)addr, address, word);
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void *mem_getbaseaddress(uint16 offset, uchar bank)
 {
 	int block;
@@ -682,7 +802,13 @@ void *mem_getbaseaddress(uint16 offset, uchar bank)
 	}
 }
 
-//
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void *map_memory(uint16 offset, uchar bank)
 {
 	int block;

@@ -438,12 +438,8 @@ int loadROM(struct sGUISelectorItem * name)
 		clrscr();
 		memset(CFG.ROMFile, 0, sizeof(CFG.ROMFile));
 		strcpy(CFG.ROMFile, romname);
-		void *ptr = TGDSARM9Malloc(4);
-		GUI_printf("ptr=%p... ", ptr);
-		TGDSARM9Free(ptr);
-
-		mem_clear_paging(); // FIXME: move me...
-		ROM = (char *) SNES_ROM_ADDRESS;
+		
+		ROM = (char *) getROMAddress();
 		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 		
 		swiDelay(1);
@@ -583,6 +579,13 @@ int main(int argc, char ** argv){
 	
 	memset(&startFilePath, 0, sizeof(startFilePath));
 	memset(&startSPCFilePath, 0, sizeof(startSPCFilePath));
+	
+	//prepare ROM map once
+	if(romAddr == NULL){
+		u8 * ROMMap = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE);
+		setROMAddress(ROMMap);
+	}
+	
 	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = getsIPCSharedTGDSSpecific()->APU_ADDR_ANS = getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
 	update_spc_ports();
 	initSNESEmpty();
@@ -644,6 +647,7 @@ int main(int argc, char ** argv){
 	else{
 		guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMList(startFilePath);
 	}
+	
 	loadROM(&guiSelItem);
 	if (!(argc > 1)) {
 		GUI_deleteROMSelector(); 	//Should also free ROMFile

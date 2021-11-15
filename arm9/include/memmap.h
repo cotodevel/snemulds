@@ -43,7 +43,6 @@ extern uchar *ROM_paging;
 extern uint16 *ROM_paging_offs;
 extern int ROM_paging_cur;
 
-extern void mem_clear_paging();
 extern void mem_init_paging();
 extern void mem_setCacheBlock(int block, uchar *ptr);
 extern void mem_removeCacheBlock(int block);
