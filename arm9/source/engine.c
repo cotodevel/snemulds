@@ -105,6 +105,13 @@ int saveSRAM()
 unsigned char interrupted;
 extern long Cycles;
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int	changeROM(char *ROM, int size)
 {
   CFG.frame_rate = 1;
@@ -196,6 +203,13 @@ int initSNESEmpty(){
 }
 
 __attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Os")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int go()
 {
   if (CPU.IsBreak) return 0;
