@@ -23,7 +23,7 @@ export SOURCE_MAKEFILE7 = custom
 export SOURCE_MAKEFILE9 = custom
 
 #Shared
-include $(DEFAULT_GCC_PATH_WIN)/Makefile.basenewlib
+include $(DEFAULT_GCC_PATH)/Makefile.basenewlib
 
 #Custom
 # Project Specific
@@ -123,6 +123,7 @@ $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
 	$(NDSTOOL)	-v	-c $@	-7  arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 arm9/$(BINSTRIP_RULE_9) -e9  0x02000000 -b icon.bmp "SNEmulDS $(EXECUTABLE_VERSION_HEADER) ; SNES Emulator for DS; by archeide bubble2k gladius" 
 	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7  arm7/arm7_dsi.bin	-e7  0x03800000 -9 arm9/arm9_dsi.bin -e9  0x02000000
+	-mv ${@:.nds=.srl}	/E
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------
