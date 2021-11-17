@@ -557,8 +557,7 @@ int main(int argc, char ** argv){
 	{
 		GUI_printf(_STR(IDS_FS_SUCCESS));
 	}
-	else if(ret == -1)
-	{
+	else{
 		GUI_printf(_STR(IDS_FS_FAILED));
 	}
 	
