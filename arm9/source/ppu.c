@@ -2173,7 +2173,7 @@ void draw_screen()
     GFX.was_not_blanked = 0; 			
     GFX.Blank_Screen = 0;   
     if (CFG.WaitVBlank/* && GFX.speed > 95*/) {
-    	
+    	IRQWait(1, IRQ_VBLANK);
 	}
 #if 1    	
     else
