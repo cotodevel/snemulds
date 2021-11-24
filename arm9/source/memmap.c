@@ -314,31 +314,19 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-void mem_init_paging()
-{
-	if (ROM_paging)
-	{
-//		printf("Memory paging cleared...\n");
-		//		TGDSARM9Free(ROM_paging);
+void mem_init_paging(){
+	if (ROM_paging){
 		TGDSARM9Free(ROM_paging_offs);
 		ROM_paging = NULL;
 		ROM_paging_offs = NULL;
 	}
 	
-	/*	ROM_paging = TGDSARM9Malloc(ROM_PAGING_SIZE);
-	 if (!ROM_paging)
-	 {
-	 printf("Not enough memory for ROM paging.\n");
-	 while(1);
-	 }*/
 	ROM_paging = getSNES_ROM_PAGING_ADDRESS();
 	memset(ROM_paging, 0, ROM_PAGING_SIZE);
 	ROM_paging_offs = TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
-	if (!ROM_paging_offs)
-	{
+	if (!ROM_paging_offs){
 		printf("Not enough memory for ROM paging (2).\n");
-		while (1)
-			;
+		while(1==1){}
 	}
 	memset(ROM_paging_offs, 0xFF, (ROM_PAGING_SIZE/PAGE_SIZE)*2);
 	ROM_paging_cur = 0;
@@ -405,52 +393,33 @@ __attribute__ ((optnone))
 #endif
 uint8 *mem_checkReload(int block)
 {
-	int i;
-	uchar *ptr;
-	int ret;
-
-	//	FS_flog("==> %d\n", block);
+	int i;uchar *ptr;int ret;
 	LOG("==> %d\n", block);
 
-	if (!CFG.LargeROM)
-	return NULL;
-
-#if 0	
-	if (CFG.ExtRAMSize > 0) // FIXME ExtRAMUsed
-
-	{
-		//ptr = ram_unlock();
-		ptr = (uint8 *)0x8000000 + SNES.ROMHeader + (block & 0x1FF)*8192 -(block << 13);
-		return ptr;
+	if (!CFG.LargeROM){
+		return NULL;
 	}
-#endif	
-
 	i = (block & 0x1FF) >> PAGE_OFFSET;
-
+	
 	//LOG("checkReload %d %d\r\n", i, ROM_paging_cur);
-
-	if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF)
-	{
+	if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF){
 		/* Check that we are not unloading program code */
 		uint32 cPC = ((S&0xFFFF) << 16)|(uint32)((sint32)PCptr+(sint32)SnesPCOffset);
 		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET;
-		if (ROM_paging_offs[ROM_paging_cur] == PC_blk)
-		{
-			LOG("Detected PC unloading, pass it...\n");
+		if (ROM_paging_offs[ROM_paging_cur] == PC_blk){
+			LOG("Detected PC unloading, skip it...\n");
 			ROM_paging_cur++;
-			if (ROM_paging_cur >= ROM_PAGING_SIZE/PAGE_SIZE)
-			ROM_paging_cur = 0;
+			if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_SIZE) - 1) ){
+				ROM_paging_cur = 0;
+			}
 		}
-		if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF)
-		{
-			//  		LOG("remove %d\r\n", ROM_paging_offs[ROM_paging_cur]);
+		if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF){
 			mem_removeCacheBlock(ROM_paging_offs[ROM_paging_cur]);
 		}
 	}
 
 	ROM_paging_offs[ROM_paging_cur] = i;
 	ptr = ROM_paging+(ROM_paging_cur*PAGE_SIZE);
-	
 	coherent_user_range_by_size((uint32)ptr, (int)PAGE_SIZE);
 	
 	//	LOG("@%d(%d) => blk %d\n", i*PAGE_SIZE, SNES.ROMHeader+i*PAGE_SIZE, ROM_paging_cur);
@@ -460,9 +429,9 @@ uint8 *mem_checkReload(int block)
 	mem_setCacheBlock(i, ptr); // Give Read-only memory
 
 	ROM_paging_cur++;
-	if (ROM_paging_cur >= ROM_PAGING_SIZE/PAGE_SIZE)
+	if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_SIZE) - 1) ){
 		ROM_paging_cur = 0;
-
+	}
 	//FS_flog("%d %p\n", i, ptr+(block&7)*8192-(block << 13));
 	LOG("<== %d %p\n", block, ptr+(block&7)*8192-(block << 13));
 	return ptr+(block&7)*8192-(block << 13);

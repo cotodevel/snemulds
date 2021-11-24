@@ -8,9 +8,7 @@ master: Development branch. Use TGDS1.6-Snemulds: branch for stable features.
 SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes)... 
 This is based from real 0.6.a sources archeide left years ago and I managed to find.
 
-End-users:
-
-Instructions:
+Usage:
     - Download and copy, /arm7dldi-ntr -> SnemulDS.nds (NTR mode) or /arm7dldi-twl (TWL mode) -> SnemulDS.srl from /release folder, snemul.cfg as well, in SD:/ root . 
 	  If it prompts for overwrite: Yes to All. 
     - Create a /snes folder in SD: root, and put your homebrew games on it
@@ -30,6 +28,9 @@ Save / Load States:
 Properly Saving / Loading SRAM:
 	- Save in-game, check Options -> SRAM saving and wait for a "SRAM written" message to appear. 
 	Right after uncheck this option before reloading other games or shutting down console. This ensures your savefile is kept safely.
+
+Screen Sync (Vblank Enabled / Vblank Disabled):
+	- If the game runs too slow for you, disable vblank. The default and recommended setting is enabled Vblank for most games otherwise these will run too fast becoming unplayable.
 
 Latest stable release: https://bitbucket.org/Coto88/SnemulDS/get/TGDS1.65.zip
 
