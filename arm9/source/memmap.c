@@ -15,6 +15,8 @@
  GNU General Public License for more details.
  */
 
+//Note: Do not put any of the memory paging in ITCM, it'll break the whole thing.
+
 #include <string.h>
 #include <stdlib.h>
 #include "core.h"
@@ -385,7 +387,7 @@ void mem_removeCacheBlock(int block)
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("Os")))
 #endif
 
 #if (!defined(__GNUC__) && defined(__clang__))
@@ -420,19 +422,15 @@ uint8 *mem_checkReload(int block)
 
 	ROM_paging_offs[ROM_paging_cur] = i;
 	ptr = ROM_paging+(ROM_paging_cur*PAGE_SIZE);
-	coherent_user_range_by_size((uint32)ptr, (int)PAGE_SIZE);
-	
-	//	LOG("@%d(%d) => blk %d\n", i*PAGE_SIZE, SNES.ROMHeader+i*PAGE_SIZE, ROM_paging_cur);
+	coherent_user_range_by_size((uint32)ptr, (int)PAGE_SIZE);	//Make coherent old page before destroy (could be being in cpu cache)
 	ret = FS_loadROMPage(ptr, SNES.ROMHeader+i*PAGE_SIZE, PAGE_SIZE);
-	//	LOG("ret = %d %x %x %x %x\n", ret, ptr[0], ptr[1], ptr[2], ptr[3]);
-	
+	coherent_user_range_by_size((uint32)ptr, (int)PAGE_SIZE);	//Make coherent new page
 	mem_setCacheBlock(i, ptr); // Give Read-only memory
 
 	ROM_paging_cur++;
 	if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_SIZE) - 1) ){
 		ROM_paging_cur = 0;
 	}
-	//FS_flog("%d %p\n", i, ptr+(block&7)*8192-(block << 13));
 	LOG("<== %d %p\n", block, ptr+(block&7)*8192-(block << 13));
 	return ptr+(block&7)*8192-(block << 13);
 }
