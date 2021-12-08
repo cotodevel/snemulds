@@ -1,0 +1,31 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\include",
+                "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\lib\\newlib-nano-2.1-nds\\headers7",
+                "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\lib\\newlib-nano-2.1-nds\\headers9",
+                "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\lib\\newlib-nano-2.1-nds\\include",
+                "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\lib\\newlib-nano-2.1-nds\\includeWoopsi",
+                "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\lib\\newlib-nano-2.1-nds\\includeWoopsi\\fonts",
+                "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\lib\\newlib-nano-2.1-nds\\newlib-nds-headers",
+                "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\lib\\newlib-nano-2.1-nds\\newlib-nds-headers\\bits",
+                "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\lib\\newlib-nano-2.1-nds\\newlib-nds-headers\\machine",
+                "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\lib\\newlib-nano-2.1-nds\\newlib-nds-headers\\sys"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.19041.0",
+            "compilerPath": "C:\\toolchain_generic\\6.2_2016q4\\bin\\arm-eabi-gcc.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-arm"
+        }
+    ],
+    "version": 4
+}
