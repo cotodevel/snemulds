@@ -4,16 +4,23 @@ NTR/TWL SDK: TGDS1.65
 
 # SnemulDS 0.6c
 
-master: Development branch. Use TGDS1.6-Snemulds: branch for stable features.
+master: Development branch. Use TGDS1.65: branch for stable features.
 SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes)... 
 This is based from real 0.6.a sources archeide left years ago and I managed to find.
 
-Usage:
-    - Download and copy, /arm7dldi-ntr -> SnemulDS.nds (NTR mode) or /arm7dldi-twl (TWL mode) -> SnemulDS.srl from /release folder, snemul.cfg as well, in SD:/ root . 
+NTR Mode Usage:
+    - Download and copy, /arm7dldi-ntr -> SnemulDS.nds (NTR mode) from /release folder, snemul.cfg as well, in SD:/ root . 
 	  If it prompts for overwrite: Yes to All. 
     - Create a /snes folder in SD: root, and put your homebrew games on it
 	- SPC Playback: Optionally, create a /spc folder in SD: root, and put your SPC files on it. You can choose and play a SPC File in the "SPC Jukebox" option. 
 
+TWL Mode Usage:
+    - Download and copy all files from /release/arm7dldi-twl folder, snemul.cfg as well, in SD:/ root . 
+	  If it prompts for overwrite: Yes to All. 
+    - Create a /snes folder in SD: root, and put your homebrew games on it
+	- SPC Playback: Optionally, create a /spc folder in SD: root, and put your SPC files on it. You can choose and play a SPC File in the "SPC Jukebox" option. 
+	- Now open TWiLightMenu (you must set it up first, so you can run TWL mode apps), and run ToolchainGenericDS-multiboot.srl. 
+	  Then select SnemulDS.srl from the menu, choose ARG (A button) and select the snes file to run. That's it!
 Hotkeys:
 	While SnemulDS runs a game, it is possible to perform the following hotkeys:
 	- L + R + START + Right: 	Swap Menu Screen/Emulator framebuffer between Top / Bottom Screen. When framebuffer is set to bottom screen, the top screen will turn off.
