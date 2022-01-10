@@ -612,19 +612,33 @@ int main(int argc, char ** argv){
 		TWLSetTouchscreenNTRMode();
 	}
 	
-	//ARGV Support: 
-	if (argc > 1) {
-		strcpy(&CFG.ROMFile[0], (const char *)argv[1]);
-		switchToTGDSConsoleColors();
-		guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
-		switchToSnemulDSConsoleColors();
-	}
-	else{
-		guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMList(startFilePath);
+	char tmpName[256];
+	char ext[256];
+	bool validFile = false;
+	
+	//ARGV Support: Only supported through TGDS chainloading.
+	if (argc > 2) {
+		//arg 0: original NDS caller
+		//arg 1: this NDS binary
+		//arg 2: this NDS binary's ARG0: filepath
+		//is sfc/smc? then valid
+		strcpy(&CFG.ROMFile[0], (const char *)argv[2]);
+		strcpy(tmpName, &CFG.ROMFile[0]);	
+		separateExtension(tmpName, ext);
+		strlwr(ext);
+		if( (strcmp(ext,".sfc") == 0) || (strcmp(ext,".smc") == 0) || (strcmp(ext,".fig") == 0) ){
+			switchToTGDSConsoleColors();
+			guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
+			switchToSnemulDSConsoleColors();			
+			validFile = true;
+		}
 	}
 	
+	if(validFile == false){
+		guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMList(startFilePath);
+	}
 	loadROM(&guiSelItem);
-	if (!(argc > 1)) {
+	if (validFile == false) { 
 		GUI_deleteROMSelector(); 	//Should also free ROMFile
 	}
 	GUI_createMainMenu();	//Start GUI
