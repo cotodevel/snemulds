@@ -196,3 +196,14 @@ static inline void draw_tile_sprite(int TILENB, int X, int Y, int SIZEX)
 }
 
 #endif
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern bool VblankWaitNDSTWLMode;
+
+#ifdef __cplusplus
+}
+#endif

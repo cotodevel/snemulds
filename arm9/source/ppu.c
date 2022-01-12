@@ -2164,6 +2164,10 @@ void	PPU_line_render_scaled()
     }
 }
 
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
+bool VblankWaitNDSTWLMode = false;
 
 void draw_screen()
 {
@@ -2173,7 +2177,9 @@ void draw_screen()
     GFX.was_not_blanked = 0; 			
     GFX.Blank_Screen = 0;   
     if (CFG.WaitVBlank/* && GFX.speed > 95*/) {
-    	IRQWait(1, IRQ_VBLANK);
+    	if (VblankWaitNDSTWLMode == true){
+			IRQWait(1, IRQ_VBLANK);
+		}
 	}
 #if 1    	
     else

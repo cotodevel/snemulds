@@ -470,7 +470,7 @@ int loadROM(struct sGUISelectorItem * name)
 			GUI_printf("CRC = %08x ", crc);
 		}
 	
-		changeROM(ROM-ROMheader, size);
+		changeROM(ROM-ROMheader, size, crc);
 		checkConfiguration(name->filenameFromFS_getDirectoryListMethod, crc);
 	
 		//Apply topScreen / bottomScreen setting

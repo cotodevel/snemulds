@@ -112,7 +112,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int	changeROM(char *ROM, int size)
+int	changeROM(char *ROM, int size, int crc)
 {
   CFG.frame_rate = 1;
   CFG.DSP1 = CFG.SuperFX = 0;
@@ -135,9 +135,22 @@ int	changeROM(char *ROM, int size)
     load_ROM(ROM, size);
     SNES.ROM_info.title[20] = '\0';
     int i = 20;
-    while (i >= 0 && SNES.ROM_info.title[i] == ' ')
+    while (i >= 0 && SNES.ROM_info.title[i] == ' '){
     	SNES.ROM_info.title[i--] = '\0';
-
+	}
+	
+	//Hardware enabled VBLANK IRQ whitelist
+	if(strncmp((char*)&SNES.ROM_info.title[0], "DIDDY'S KONG QUEST", 18) == 0){
+		VblankWaitNDSTWLMode = true;
+	}
+	else if((strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY", 19) == 0) && (crc != 0x8670e9c2)){ //DKC1 yes, DKC3 no
+		VblankWaitNDSTWLMode = true;
+	}
+	//TWL/NTR mode doesn't get 
+	else{
+		VblankWaitNDSTWLMode = false;
+	}
+	
     GUI_showROMInfos(size);
     
     reset_SNES();	
