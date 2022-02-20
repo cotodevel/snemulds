@@ -387,7 +387,7 @@ void mem_removeCacheBlock(int block)
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("Os")))
+__attribute__((optimize("O0")))
 #endif
 
 #if (!defined(__GNUC__) && defined(__clang__))
