@@ -80,16 +80,6 @@ struct sIPCSharedTGDSSpecific{
 #define SNEMULDS_APUCMD_SAVESPC 0xffff00a6
 #define SNEMULDS_APUCMD_LOADSPC 0xffff00a7
 
-//Standardized SnemulDS defs
-#define APU_RAM_ADDRESS     ((uint8*)(0x6010000))	//uses VRAM Block as APU WORK RAM
-
-//TGDS Memory Layout ARM7/ARM9 Cores
-#define TGDS_ARM7_MALLOCSTART (u32)(0x06000000)	//unused
-#define TGDS_ARM7_MALLOCSIZE (int)(32*1024)		//unused
-#define TGDSDLDI_ARM7_ADDRESS (u32)(0x06000000 + (64*1024) - (0x4000))
-
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -112,4 +102,14 @@ extern void update_spc_ports();
 
 #ifdef __cplusplus
 }
+#endif
+
+//Standardized SnemulDS defs + TGDS Memory Layout ARM7/ARM9 Cores
+#define TGDS_ARM7_MALLOCSTART (u32)(0x03800000) //ARM7 TWL end is : 0x0380d9b4, and ARM7 NTR is 6K behind that
+#define TGDS_ARM7_MALLOCSIZE (int)(512)
+
+#define SNES_PLAYBUFFER_ADDRESS     ((u32)(0x06000000)) // 0x06000000 ~ 32K: Sound output buffer
+#define TGDSDLDI_ARM7_ADDRESS (u32)(SNES_PLAYBUFFER_ADDRESS + (32*1024)) 	// 0x06008000 ~ 32K: DLDI
+#define APU_RAM_ADDRESS     ((uint8*)(TGDSDLDI_ARM7_ADDRESS + (32*1024)))	//0x06010000 ~ 64K APU WORK RAM
+
 #endif

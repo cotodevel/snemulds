@@ -66,15 +66,11 @@ SECTIONS
 		KEEP(*(.init))
 	} > EWRAM = 0xFF
 	
-	. = ALIGN(4);
-	
 	.dldiSection      :	SUBALIGN(4)
 	{
 		KEEP(*(.initDldiSection))
 		KEEP(*(.dldiSection))
 	} > EWRAM = 0xFF
-	
-	. = ALIGN(4);
 	
 	.text      :	SUBALIGN(4)
 	{
@@ -89,8 +85,6 @@ SECTIONS
 		KEEP(*(.text.*))
 	} > EWRAM = 0xFF
 	
-	. = ALIGN(4);
-	
 	.data : SUBALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__data_start__ = ABSOLUTE(.));
 		KEEP(*(.data))
@@ -99,8 +93,6 @@ SECTIONS
 		KEEP(*(.gnu.linkonce.t*))
 		PROVIDE (__data_end__ = ABSOLUTE(.));
 	} > EWRAM = 0xff
-	
-	. = ALIGN(4);
 	
 	.rodata : SUBALIGN(4) {			/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__rodata_start__ = ABSOLUTE(.));
@@ -111,8 +103,6 @@ SECTIONS
 		PROVIDE (__rodata_end__ = ABSOLUTE(.));
 	} > EWRAM = 0xff
 	
-	. = ALIGN(4);
-	
 	.bss :	SUBALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__bss_vma_start = ABSOLUTE(.));
 		KEEP(*(.dynbss*))
@@ -122,8 +112,6 @@ SECTIONS
 		PROVIDE (__bss_vma_end = ABSOLUTE(.));
 	} > EWRAM
 	
-	. = ALIGN(4);
-	
 	.ARM.exidx : SUBALIGN(4) {			/* not used at all, but some code rely on ARM debugging symbols */
 		PROVIDE (__exidx_start = ABSOLUTE(.));
 		KEEP(*(.ARM.exidx))
@@ -132,8 +120,6 @@ SECTIONS
 		KEEP(*(.gnu.linkonce.armexidx.*))
 		PROVIDE (__exidx_end = ABSOLUTE(.));
 	} > EWRAM = 0xff
-	
-	. = ALIGN(4);
 	
 	__itcm_vma_start = LOADADDR(.itcm);
 	.itcm      : SUBALIGN(4)
@@ -156,8 +142,6 @@ SECTIONS
 	} > DTCM AT > EWRAM
 	__dtcm_vma_end__ = .;
 	
-	. = ALIGN(4);
-	
 	.fini : SUBALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__fini_start__ = ABSOLUTE(.));
 		*(.fini)
@@ -166,8 +150,8 @@ SECTIONS
 	} > EWRAM = 0xff
 	
 	PROVIDE (__lib__end__ = __fini_end__);
-	. = ALIGN(0x40);
-	PROVIDE (__vma_stub_end__ = __lib__end__ + 0x40);
+	. = ALIGN(0x4);
+	PROVIDE (__vma_stub_end__ = __lib__end__ + 0x4);
 
 	/*
      	* Stabs le debugging sections.
