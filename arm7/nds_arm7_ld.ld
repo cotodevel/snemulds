@@ -45,89 +45,77 @@ OUTPUT_ARCH(arm)
 ENTRY(_start)
 SECTIONS
 {
-	.init : { __init_start__ = .;
+	.init : SUBALIGN(4)	{ __init_start__ = .;
 		*(.init*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__init_end__ = .;
 	__preinit_array_start__ = .;
-	.preinit_array : { 
+	.preinit_array : SUBALIGN(4)	{ 
 		*(.preinit_array*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__preinit_array_end__ = .;
 	__init_array_start__ = .;
-	.init_array : { 
+	.init_array : SUBALIGN(4)	{ 
 		*(.init_array*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	init_array_end__ = .;
 	__fini_array_start__ = .;
-	.fini_array : {
+	.fini_array : SUBALIGN(4)	{
 		*(.fini_array*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__fini_array_end__ = .;
 	__text_start__ = .;
-	.text : {
+	.text : SUBALIGN(4)	{
 		*(.text)
 		*(.text*)
 		*(.gnu.linkonce.t*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__text_end__ = .;
 	__bss_vma_start = .;
-	.bss : {
+	.bss : SUBALIGN(4)	{
 		*(.dynbss*)
 		*(.bss)
 		*(.gnu.linkonce.b*.)
 		*(COMMON)					/* libc requires these for uninitialized objects, include any heap uninit vars*/
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__bss_vma_end = .;
 	__sbss_start__ = .;
-	.sbss : {
+	.sbss : SUBALIGN(4)	{
 		*(.sbss*)
-		. = ALIGN(4);
 	}> IWRAM = 0xff
 	__sbss_vma_end = .;
 	__data_start__ = .;
-	.data : {
+	.data : SUBALIGN(4)	{
 		*(.data)
 		*(.data.*)
 		*(.gnu.linkonce.d*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__data_end__ = .;
 	__rodata_start__ = .;
-	.rodata : { 
+	.rodata : SUBALIGN(4)	{ 
 		*(.rdata)
 		*(.rodata)
 		*(.rodata.*)
     	*(.gnu.linkonce.r.*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__rodata_end__ = .;
 	__eh_frame_start__ = .;
-	.eh_frame : {
+	.eh_frame : SUBALIGN(4)	{
 		*(.eh_frame*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__eh_frame_end__ = .;
 	__jcr_start__ = .;
-	.jcr : {
+	.jcr : SUBALIGN(4)	{
 		*(.jcr*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__jcr_end__ = .;
 	__vfp11_veneer_start__ = .;
-	.vfp11_veneer : {
+	.vfp11_veneer : SUBALIGN(4)	{
 		*(.vfp11_veneer*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__vfp11_veneer_end__ = .;
 	__exidx_start = .;
-    .ARM.exidx   : {		/* newlib C++ require these constructors */
+    .ARM.exidx   : SUBALIGN(4)	{		/* newlib C++ require these constructors */
 		*(.ARM.exidx)
 		*(.ARM.exidx*)
 		*(.gnu.linkonce.armexidx.)
@@ -135,33 +123,28 @@ SECTIONS
 	} > IWRAM = 0xff
     __exidx_end = .;
 	__v4_bx_start__ = .;
-	.v4_bx : {
+	.v4_bx : SUBALIGN(4)	{
 		*(.v4_bx*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__v4_bx_end__ = .;
 	__iplt_start__ = .;
-	.iplt : {
+	.iplt : SUBALIGN(4)	{
 		*(.iplt*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__iplt_end__ = .;
 	__igot_plt_start__ = .;
-	.igot.plt : {
+	.igot.plt : SUBALIGN(4)	{
 		*(.igot.plt*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__igot_plt_end__ = .;
 	__rel_dyn_start__ = .;
-	.rel.dyn : { 
+	.rel.dyn : SUBALIGN(4)	{ 
 		*(.rel.dyn*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__rel_dyn_end__ = .;
 	__fini_start__ = .;
-	.fini : {
+	.fini : SUBALIGN(4)	{
 		*(.fini*)
-		. = ALIGN(4);
 	} > IWRAM = 0xff
 	__fini_end__ = .;
 	__lib__end__ = __fini_end__;

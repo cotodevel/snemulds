@@ -1,7 +1,0 @@
-%rename link                old_link
-
-*link:
-%(old_link) -T ./special_nds_arm9_ld.ld%s
-
-*startfile:
-./build/special_nds_arm_ld_crt0%O%s crti%O%s crtbegin%O%s
