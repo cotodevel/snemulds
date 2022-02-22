@@ -518,6 +518,10 @@ __attribute__ ((optnone))
 #endif
 __attribute__((section(".itcm")))
 int main(int argc, char ** argv){
+	REG_IME = 0;
+	setSnemulDSSpecial0xFFFF0000MPUSettings();
+	REG_IME = 1;
+	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
 	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
