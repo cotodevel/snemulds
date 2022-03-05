@@ -567,9 +567,6 @@ int main(int argc, char ** argv){
 	
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	irqDisable(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
-	if(SoundSampleContextDisableARM7LibUtilsCallback != NULL){
-		SoundSampleContextDisableARM7LibUtilsCallback();
-	}
 	swiDelay(1000);
 	
 #ifndef DSEMUL_BUILD	
