@@ -104,6 +104,12 @@ uint32 SNES_LEFT = 0;
 __attribute__((section(".dtcm")))
 uint32 SNES_RIGHT = 0;
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int get_joypad()
 {
 	int res = 0;
@@ -352,6 +358,12 @@ void write_joypad2(uint16 bits){
 }
 
 // A OPTIMISER
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int PPU_fastDMA_2118_1(int offs, int bank, int len)
 {
 	int i;
@@ -506,9 +518,8 @@ void DMA_transfert(uchar port)
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("Ofast")))
 #endif
-
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
