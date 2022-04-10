@@ -47,7 +47,6 @@ extern bool handleSPCSelect;
 
 extern char *GUI_getROMList(sint8 *rompath);
 extern char *GUI_getSPCList(sint8 *spcpath);
-extern int TGDSProjectReturnFromLinkedModule();
 extern char args[8][MAX_TGDSFILENAME_LENGTH];
 extern char *argvs[8];
 
