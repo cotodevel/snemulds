@@ -249,7 +249,8 @@ void setupLibUtils(){
 		NULL, //ARM7: void stopSound()
 		NULL, //ARM7: void setupSound()
 		NULL, //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
-		NULL  //ARM7 & ARM9: DeInitWIFI()
+		NULL, //ARM7 & ARM9: DeInitWIFI()
+		NULL  //ARM7: micInterrupt()
 	);
 	#endif
 }
