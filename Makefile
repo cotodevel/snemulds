@@ -79,7 +79,6 @@ export DIRS_ARM9_SRC = data/	\
 			source/gui/	\
 			source/gui/gui_draw/	\
 			source/TGDSMemoryAllocator/	\
-			source/wnifilib/	\
 			../common/	\
 			../common/templateCode/source/	\
 			../common/templateCode/data/arm9/	
@@ -87,16 +86,18 @@ export DIRS_ARM9_SRC = data/	\
 export DIRS_ARM9_HEADER = data/	\
 			build/	\
 			include/	\
+			source/	\
+			source/interrupts/	\
 			source/gui/	\
 			source/gui/gui_draw/	\
 			source/TGDSMemoryAllocator/	\
-			source/wnifilib/	\
 			../common/	\
 			../common/templateCode/source/	\
 			../common/templateCode/data/arm9/	\
+			build/	\
 			../$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/include/
 			
-# Build Target(s)
+# Build Target(s)	(both processors here)
 all: $(EXECUTABLE_FNAME)
 #all:	debug
 
@@ -121,8 +122,8 @@ endif
 
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
-	$(NDSTOOL)	-v	-c $@	-7  arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 arm9/$(BINSTRIP_RULE_9) -e9  0x02000000 -b icon.bmp "SNEmulDS $(EXECUTABLE_VERSION_HEADER) ; SNES Emulator for DS; by archeide bubble2k gladius" 
-	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7  arm7/arm7_dsi.bin	-e7  0x03800000 -9 arm9/arm9-nonstripped_dsi.elf
+	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/arm9/$(BINSTRIP_RULE_9) -e9  0x02000000 -b icon.bmp "SNEmulDS $(EXECUTABLE_VERSION_HEADER) ; SNES Emulator for DS; by archeide bubble2k gladius" 
+	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7  $(CURDIR)/arm7/arm7_dsi.bin	-e7  0x03800000 -9 arm9/arm9-nonstripped_dsi.elf
 	-mv ${@:.nds=.srl}	/E
 	-@echo 'ndstool end: built: $@'
 	
