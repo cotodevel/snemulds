@@ -41,7 +41,7 @@ extern void closeSoundUser();
 extern int argc;
 extern sint8 **argv;
 extern int main(int argc, char **argv);
-extern int loadROM(struct sGUISelectorItem *name);
+extern bool loadROM(struct sGUISelectorItem *name);
 extern bool handleROMSelect;
 extern bool handleSPCSelect;
 

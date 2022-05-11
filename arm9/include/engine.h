@@ -34,13 +34,13 @@ extern int loadSRAM();
 extern int saveSRAM();
 extern uint8 interrupted;
 
-extern int initSNESEmpty();
+extern int initSNESEmpty(int firstTime);
 extern int OldPC;
 extern int go();
 extern void show_opcode(sint8 *buf, uint8 opcode, int pc, int pb, unsigned short flags);
 extern int trace_CPU();
 extern void trace_CPUFast();
-extern int changeROM(sint8 *ROM, int size, int crc);
+extern bool reloadROM(sint8 *ROM, int size, int crc, char * name);
 
 #ifdef __cplusplus
 }

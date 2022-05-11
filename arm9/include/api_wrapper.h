@@ -45,7 +45,6 @@ extern void	applyOptions();
 
 extern void packOptions(uint8 *ptr);
 extern void unpackOptions(int version, uint8 *ptr);
-extern int 	checkConfiguration(sint8 *name, int crc);
 
 
 #ifdef __cplusplus
