@@ -130,8 +130,9 @@ struct s_snes
 
 //Rom Page variables:
 #define ROM_MAX_SIZE	(int)((2*1024*1024) + (512*1024))
-#define ROM_STATIC_SIZE	(int)(64*1024)
-#define ROM_PAGING_SIZE	(int)(ROM_MAX_SIZE-ROM_STATIC_SIZE)
+#define	PAGE_SIZE		(int)(64*1024)
+#define ROM_PAGING_SIZE	(int)(ROM_MAX_SIZE-PAGE_SIZE)
+#define PAGE_OFFSET		3
 
 #endif
 

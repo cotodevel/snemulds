@@ -27,6 +27,10 @@
 #include "memmap.h"
 #include "utilsTGDS.h"
 
+uchar *ROM_paging= NULL;
+uint16 *ROM_paging_offs= NULL;
+int ROM_paging_cur = 0;
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -120,7 +124,7 @@ void InitLoROMMap(int mode)
 	{
 		// Use Paging system... 
 		// Only a part of RAM is used static
-		maxRAM = ROM_STATIC_SIZE;
+		maxRAM = PAGE_SIZE;
 	}
 	
 	for (c = 0; c < 0x200; c += 8)
@@ -237,7 +241,7 @@ void InitHiROMMap(int mode)
 	{
 		// Use Paging system... 
 		// Only a part of RAM is used static
-		maxRAM = ROM_STATIC_SIZE;
+		maxRAM = PAGE_SIZE;
 	}
 	
 	for (c = 0; c < 0x200; c += 8)
@@ -298,40 +302,6 @@ void InitHiROMMap(int mode)
 	MapRAM();
 	FixMap();
 	WriteProtectROM();
-}
-
-/*#define	PAGE_SIZE		8192
- #define PAGE_OFFSET		0*/
-#define	PAGE_SIZE		ROM_STATIC_SIZE
-#define PAGE_OFFSET		3
-
-uchar *ROM_paging= NULL;
-uint16 *ROM_paging_offs= NULL;
-int ROM_paging_cur = 0;
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void mem_init_paging(){
-	if (ROM_paging){
-		TGDSARM9Free(ROM_paging_offs);
-		ROM_paging = NULL;
-		ROM_paging_offs = NULL;
-	}
-	
-	ROM_paging = getSNES_ROM_PAGING_ADDRESS();
-	memset(ROM_paging, 0, ROM_PAGING_SIZE);
-	ROM_paging_offs = TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
-	if (!ROM_paging_offs){
-		printf("Not enough memory for ROM paging (2).\n");
-		while(1==1){}
-	}
-	memset(ROM_paging_offs, 0xFF, (ROM_PAGING_SIZE/PAGE_SIZE)*2);
-	ROM_paging_cur = 0;
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -442,21 +412,18 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-void InitMap()
-{
+void InitMap(){
 	int i;
-	for (i = 0; i < 256*8; i++)
+	for (i = 0; i < 256*8; i++){
 		MAP[i] = (uint8*)MAP_NONE;	
-
+	}
 	int mode = (!CFG.LargeROM) ? NOT_LARGE : USE_PAGING; 
-	
-	if (SNES.HiROM)
+	if (SNES.HiROM){
 		InitHiROMMap(mode);
-	else
+	}
+	else{
 		InitLoROMMap(mode);
-	
-	if (mode == USE_PAGING)
-		mem_init_paging();
+	}
 }
 
 
