@@ -112,8 +112,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int	changeROM(char *ROM, int size, int crc)
-{
+bool	reloadROM(char *ROM, int size, int crc, char * name){
   CFG.frame_rate = 1;
   CFG.DSP1 = CFG.SuperFX = 0;
   CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
@@ -127,37 +126,89 @@ int	changeROM(char *ROM, int size, int crc)
   CFG.SpritePr[2] = 1;
   CFG.SpritePr[3] = 1;
   
-#ifdef IN_EMULATOR
+  #ifdef IN_EMULATOR
   CFG.Sound_output = 0;
-#endif
+  #endif
 
 	// Write SRAM
-    load_ROM(ROM, size);
-    SNES.ROM_info.title[20] = '\0';
-    int i = 20;
-    while (i >= 0 && SNES.ROM_info.title[i] == ' '){
-    	SNES.ROM_info.title[i--] = '\0';
-	}
-	
-	//Hardware enabled VBLANK IRQ whitelist
-	if(strncmp((char*)&SNES.ROM_info.title[0], "DIDDY'S KONG QUEST", 18) == 0){
-		VblankWaitNDSTWLMode = true;
-	}
-	else if((strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY", 19) == 0) && (crc != 0x8670e9c2)){ //DKC1 yes, DKC3 no
-		VblankWaitNDSTWLMode = true;
-	}
-	//TWL/NTR mode doesn't get 
-	else{
-		VblankWaitNDSTWLMode = false;
-	}
-	
+  load_ROM(ROM, size);
+  SNES.ROM_info.title[20] = '\0';
+  int i = 20;
+  while (i >= 0 && SNES.ROM_info.title[i] == ' '){
+    SNES.ROM_info.title[i--] = '\0';
+  }
+  
+  //if the same pattern repeats, treat it as not snes file
+  bool validSnesFile = false;
+  i = 0;
+  int romfilenameSize = strlen(SNES.ROM_info.title);
+  while(i < romfilenameSize){
+    if(SNES.ROM_info.title[(romfilenameSize-1) - i] != SNES.ROM_info.title[i]){
+      validSnesFile = true;
+    }
+    i++;
+  }
+  /*
+  if(validSnesFile == true){
+    GUI_printf("VALID: %s", SNES.ROM_info.title);
+  }
+  else{
+    GUI_printf("INVALID: %s", SNES.ROM_info.title);
+  }
+  while(1==1){}
+  */
+  if( (romfilenameSize > 4) && (validSnesFile == true)){
+    //Hardware enabled VBLANK IRQ whitelist
+    if(strncmp((char*)&SNES.ROM_info.title[0], "DIDDY'S KONG QUEST", 18) == 0){
+      VblankWaitNDSTWLMode = true;
+    }
+    else if((strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY", 19) == 0) && (crc != 0x8670e9c2)){ //DKC1 yes, DKC3 no
+      VblankWaitNDSTWLMode = true;
+    }
+    //TWL/NTR mode doesn't get 
+    else{
+      VblankWaitNDSTWLMode = false;
+    }
     GUI_showROMInfos(size);
-    
     reset_SNES();	
-	// Clear screen
-	// Read SRAM
+    // Clear screen
+    // Read SRAM
     loadSRAM();	
-	return 0;
+
+    // Load configuration file
+	  readOptionsFromConfig("Global");
+	  char *section= NULL;
+	  if (is_section_exists(SNES.ROM_info.title)){
+	    section = SNES.ROM_info.title;
+	  }
+	  else if (is_section_exists(FS_getFileName(name))){
+		  section = FS_getFileName(name);
+	  }
+	  else if ((section = find_config_section_with_hex("crc", crc))){
+	  }
+	  else if ((section = find_config_section_with_string("title2", SNES.ROM_info.title))){
+	  }
+	  else if ((section = find_config_section_with_hex("crc2", crc))){
+	  }
+	  else if ((section = find_config_section_with_string("title3", SNES.ROM_info.title))){
+	  }
+	  else if ((section = find_config_section_with_hex("crc3", crc))){
+	  }
+	  else if ((section = find_config_section_with_string("title4", SNES.ROM_info.title))){
+	  }
+	  else if ((section = find_config_section_with_hex("crc4", crc))){
+	  }
+	  if (section != NULL){
+		  GUI_printf("Section : %s ", section);
+		  readOptionsFromConfig(section);
+	  }
+	  //Apply topScreen / bottomScreen setting
+	  if(CFG.TopScreenEmu == 0){
+		  SnemulDSLCDSwap();
+	  }
+    return validSnesFile;
+  }
+  return false;
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -166,7 +217,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int initSNESEmpty(){
+int initSNESEmpty(int firstTime){
 	
 	//First of all: ARM7 APU Core
 	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
@@ -193,20 +244,20 @@ int initSNESEmpty(){
 	//CFG.Sound_output = 0;
 	CFG.FastDMA = 1;
 	CFG.Transparency = 1;
-
-	memset(&SNES, 0, sizeof(SNES));
-	memset(&SNESC, 0, sizeof(SNESC));
-
+  	memset(&SNES, 0, sizeof(SNES));
+	  
 	//  SNES.flog = fopen("snemul.log", "w");
 	//	SNES.flog = stdout;
-
-	/* allocate memory */
-	SNESC.ROM = NULL;  /* Should be a fixed allocation */
-	//SNESC.RAM = (uchar *)TGDSARM9Malloc(0x020000);
-	SNESC.RAM = (uchar *)SNES_RAM_ADDRESS;
-	SNESC.VRAM = (uchar *)TGDSARM9Malloc(0x010000);
-	//SNESC.BSRAM = (uchar *)TGDSARM9Malloc(0x8000);
-	SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
+  if(firstTime == true){
+    memset(&SNESC, 0, sizeof(SNESC));
+    /* allocate memory */
+	  SNESC.ROM = NULL;  /* Should be a fixed allocation */
+	  	//SNESC.RAM = (uchar *)TGDSARM9Malloc(0x020000);
+	  	SNESC.RAM = (uchar *)SNES_RAM_ADDRESS;
+    	SNESC.VRAM = (uchar *)TGDSARM9Malloc(0x010000);
+    	//SNESC.BSRAM = (uchar *)TGDSARM9Malloc(0x8000);
+	  	SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
+	}
 	init_GFX();
 
 	GFX.Graph_enabled = 1;

@@ -336,58 +336,13 @@ void unpackOptions(int version, uint8 *ptr)
 	applyOptions();
 }
 
-__attribute__((optimize("-O0")))
-int checkConfiguration(char *name, int crc)
-{
-	// Check configuration file
-	readOptionsFromConfig("Global");
-
-	char *section= NULL;
-	if (is_section_exists(SNES.ROM_info.title))
-	{
-		section = SNES.ROM_info.title;
-	}
-	else if (is_section_exists(FS_getFileName(name)))
-	{
-		section = FS_getFileName(name);
-	}
-	else if ((section = find_config_section_with_hex("crc", crc)))
-	{
-	}
-	else if ((section = find_config_section_with_string("title2", SNES.ROM_info.title)))
-	{
-	}
-	else if ((section = find_config_section_with_hex("crc2", crc)))
-	{
-	}
-	else if ((section = find_config_section_with_string("title3", SNES.ROM_info.title)))
-	{
-	}
-	else if ((section = find_config_section_with_hex("crc3", crc)))
-	{
-	}
-	else if ((section = find_config_section_with_string("title4", SNES.ROM_info.title)))
-	{
-	}
-	else if ((section = find_config_section_with_hex("crc4", crc)))
-	{
-	}
-
-	if (section != NULL)
-	{
-		GUI_printf("Section : %s ", section);
-		readOptionsFromConfig(section);
-	}
-}
-
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int loadROM(struct sGUISelectorItem * name)
-{
+bool loadROM(struct sGUISelectorItem * nameItem){
 	//wait until release A button
 	scanKeys();
 	u32 keys = keysPressed();
@@ -397,7 +352,7 @@ int loadROM(struct sGUISelectorItem * name)
 	}
 	
 	//file
-	if(name->StructFDFromFS_getDirectoryListMethod == FT_FILE){
+	if(nameItem->StructFDFromFS_getDirectoryListMethod == FT_FILE){
 		int size;
 		char romname[MAX_TGDSFILENAME_LENGTH+1] = {0};
 		int ROMheader;
@@ -408,13 +363,13 @@ int loadROM(struct sGUISelectorItem * name)
 		
 		//filename already has correct format
 		if (
-			(name->filenameFromFS_getDirectoryListMethod[0] == '0')
+			(nameItem->filenameFromFS_getDirectoryListMethod[0] == '0')
 			&&
-			(name->filenameFromFS_getDirectoryListMethod[1] == ':')
+			(nameItem->filenameFromFS_getDirectoryListMethod[1] == ':')
 			&&
-			(name->filenameFromFS_getDirectoryListMethod[2] == '/')
+			(nameItem->filenameFromFS_getDirectoryListMethod[2] == '/')
 		){
-			strcpy(romname, name->filenameFromFS_getDirectoryListMethod);
+			strcpy(romname, nameItem->filenameFromFS_getDirectoryListMethod);
 		}
 		//otherwise build format
 		else{
@@ -422,7 +377,7 @@ int loadROM(struct sGUISelectorItem * name)
 			if (romname[strlen(romname)-1] != '/'){
 				strcat(romname, "/");
 			}
-			strcat(romname, name->filenameFromFS_getDirectoryListMethod);
+			strcat(romname, nameItem->filenameFromFS_getDirectoryListMethod);
 		}
 		
 		//There's a bug when rendering certain UI elements, some garbage may appear near the end of the filename, todo
@@ -455,30 +410,21 @@ int loadROM(struct sGUISelectorItem * name)
 		GUI_printf(" - - ");
 		GUI_printf(" - - ");
 		GUI_printf("File:%s - Size:%d", CFG.ROMFile, size);
-		if (size-ROMheader > ROM_MAX_SIZE)
-		{
+		if (size-ROMheader > ROM_MAX_SIZE){
 			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, ROM_STATIC_SIZE+ROMheader);
 			CFG.LargeROM = 1;
 			crc = crc32(0, ROM, ROM_STATIC_SIZE);
 			GUI_printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
 		}
-		else
-		{
+		else{
 			FS_loadROM(ROM-ROMheader, CFG.ROMFile);
 			CFG.LargeROM = 0;
 			crc = crc32(0, ROM, size-ROMheader);
 			GUI_printf("CRC = %08x ", crc);
 		}
-	
-		changeROM(ROM-ROMheader, size, crc);
-		checkConfiguration(name->filenameFromFS_getDirectoryListMethod, crc);
-	
-		//Apply topScreen / bottomScreen setting
-		if(CFG.TopScreenEmu == 0){
-			SnemulDSLCDSwap();
-		}
+		return reloadROM(ROM-ROMheader, size, crc, nameItem->filenameFromFS_getDirectoryListMethod);
 	}
-	return 0;
+	return false;
 }
 
 int selectSong(char *name)
@@ -585,7 +531,8 @@ int main(int argc, char ** argv){
 	
 	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = getsIPCSharedTGDSSpecific()->APU_ADDR_ANS = getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
 	update_spc_ports();
-	initSNESEmpty();
+	bool firstTime = true;
+	initSNESEmpty(firstTime);
 
 	// Clear "HDMA"
 	for (i = 0; i < 192; i++){
@@ -601,9 +548,6 @@ int main(int argc, char ** argv){
 	GUI_getConfig();	
 	GUI_printf("Load conf4");
 	
-	memset(&guiSelItem, 0, sizeof(guiSelItem));
-	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
-	
 	//Touchscreen mode: legacy-NTR TGDS mode while in TWL mode works if reloading from ToolchainGenericDS-multiboot TWL. 
 	if(__dsimode == true){
 		//TGDS-Projects -> legacy NTR TSC compatibility
@@ -612,8 +556,10 @@ int main(int argc, char ** argv){
 	
 	char tmpName[256];
 	char ext[256];
-	bool validFile = false;
-	
+	strcpy(&CFG.ROMFile[0], "");
+	memset(&guiSelItem, 0, sizeof(guiSelItem));
+	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
+
 	//ARGV Support: Only supported through TGDS chainloading.
 	if (argc > 2) {
 		//arg 0: original NDS caller
@@ -621,22 +567,22 @@ int main(int argc, char ** argv){
 		//arg 2: this NDS binary's ARG0: filepath
 		//is sfc/smc? then valid
 		strcpy(&CFG.ROMFile[0], (const char *)argv[2]);
-		strcpy(tmpName, &CFG.ROMFile[0]);	
-		separateExtension(tmpName, ext);
-		strlwr(ext);
-		if( (strcmp(ext,".sfc") == 0) || (strcmp(ext,".smc") == 0) || (strcmp(ext,".fig") == 0) ){
-			switchToTGDSConsoleColors();
-			guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
-			switchToSnemulDSConsoleColors();			
-			validFile = true;
+		
+		switchToTGDSConsoleColors();
+		guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
+		switchToSnemulDSConsoleColors();
+	}
+	//Handle file load
+	bool isSnesFile = false;
+	do{
+		if (!(argc > 2)) {
+			guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMList(startFilePath);
 		}
+		isSnesFile = loadROM(&guiSelItem);
 	}
-	
-	if(validFile == false){
-		guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMList(startFilePath);
-	}
-	loadROM(&guiSelItem);
-	if (validFile == false) { 
+	while(isSnesFile == false);
+	///////////////////////////////////////////
+	if (!(argc > 2)) { 
 		GUI_deleteROMSelector(); 	//Should also free ROMFile
 	}
 	GUI_createMainMenu();	//Start GUI
@@ -647,15 +593,31 @@ int main(int argc, char ** argv){
 			if(handleROMSelect==true){
 				handleROMSelect=false;
 				
-				if (CFG.Sound_output || CFG.Jukebox)
+				if (CFG.Sound_output || CFG.Jukebox){
 					APU_pause();
+				}
+
+				//snes init
+				getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = getsIPCSharedTGDSSpecific()->APU_ADDR_ANS = getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
+				update_spc_ports();
+				bool firstTime = false;
+				initSNESEmpty(firstTime);
+
+				// Clear "HDMA"
+				for (i = 0; i < 192; i++){
+					GFX.lineInfo[i].mode = -1;
+				}
 				
-				memset(&guiSelItem, 0, sizeof(guiSelItem));
-				char * fileName = GUI_getROMList(startFilePath);
-				guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
-				guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)fileName;
-				loadROM(&guiSelItem);
-				
+				//Handle file load
+				bool isSnesFile = false;
+				do{
+					memset(&guiSelItem, 0, sizeof(guiSelItem));
+					guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
+					guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMList(startFilePath);
+					isSnesFile = loadROM(&guiSelItem);
+				}
+				while(isSnesFile == false);
+				///////////////////////////////////////////
 				GUI_createMainMenu();	//	Start GUI
 			}
 			
