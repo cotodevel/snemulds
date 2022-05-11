@@ -561,21 +561,19 @@ int main(int argc, char ** argv){
 	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
 
 	//ARGV Support: Only supported through TGDS chainloading.
+	bool isSnesFile = false;
 	if (argc > 2) {
 		//arg 0: original NDS caller
 		//arg 1: this NDS binary
 		//arg 2: this NDS binary's ARG0: filepath
 		//is sfc/smc? then valid
 		strcpy(&CFG.ROMFile[0], (const char *)argv[2]);
-		
-		switchToTGDSConsoleColors();
 		guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
-		switchToSnemulDSConsoleColors();
+		isSnesFile = true;
 	}
 	//Handle file load
-	bool isSnesFile = false;
 	do{
-		if (!(argc > 2)) {
+		if (isSnesFile == false) {
 			guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMList(startFilePath);
 		}
 		isSnesFile = loadROM(&guiSelItem);
