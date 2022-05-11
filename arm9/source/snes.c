@@ -364,5 +364,5 @@ void setROMAddress(u8 * romadd){
 //////////////////////////////////////
 __attribute__((section(".itcm")))
 u8 * getSNES_ROM_PAGING_ADDRESS(){
-	return (getROMAddress()+ROM_STATIC_SIZE);
+	return (getROMAddress()+PAGE_SIZE);
 }

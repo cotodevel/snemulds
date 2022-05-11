@@ -4,6 +4,11 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/arm9/include",
+                "${workspaceFolder}/arm9/source",
+                "${workspaceFolder}/arm9/source/gui",
+                "${workspaceFolder}/arm9/source/interrupts",
+                "${workspaceFolder}/arm9/source/TGDSMemoryAllocator",
                 "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\include",
                 "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\lib\\newlib-nano-2.1-nds\\headers7",
                 "C:\\toolchain_generic\\6.2_2016q4\\arm-eabi\\lib\\newlib-nano-2.1-nds\\headers9",

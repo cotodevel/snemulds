@@ -394,12 +394,9 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		memset(CFG.ROMFile, 0, sizeof(CFG.ROMFile));
 		strcpy(CFG.ROMFile, romname);
 		
-		ROM = (char *) getROMAddress();
+		ROM = (char *)SNESC.ROM;
 		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 		
-		swiDelay(1);
-		dmaFillHalfWord(0, 0, (uint32)ROM, (uint32)ROM_MAX_SIZE - (512*1024));	////Clear memory: ROM will use it
-	
 		size = FS_getFileSize((char*)&CFG.ROMFile[0]);
 		ROMheader = size & 8191;
 		if (ROMheader != 0&& ROMheader != 512){
@@ -411,9 +408,9 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		GUI_printf(" - - ");
 		GUI_printf("File:%s - Size:%d", CFG.ROMFile, size);
 		if (size-ROMheader > ROM_MAX_SIZE){
-			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, ROM_STATIC_SIZE+ROMheader);
+			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, PAGE_SIZE+ROMheader);
 			CFG.LargeROM = 1;
-			crc = crc32(0, ROM, ROM_STATIC_SIZE);
+			crc = crc32(0, ROM, PAGE_SIZE);
 			GUI_printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
 		}
 		else{
@@ -522,12 +519,6 @@ int main(int argc, char ** argv){
 	
 	memset(&startFilePath, 0, sizeof(startFilePath));
 	memset(&startSPCFilePath, 0, sizeof(startSPCFilePath));
-	
-	//prepare ROM map once
-	if(romAddr == NULL){
-		u8 * ROMMap = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE);
-		setROMAddress(ROMMap);
-	}
 	
 	getsIPCSharedTGDSSpecific()->APU_ADDR_CNT = getsIPCSharedTGDSSpecific()->APU_ADDR_ANS = getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
 	update_spc_ports();

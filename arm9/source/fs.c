@@ -55,7 +55,7 @@ GNU General Public License for more details.
 #include "consoleTGDS.h"
 #include "about.h"
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
-
+#include "memmap.h"
 /* *********************** FAT ************************ */
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -103,6 +103,12 @@ int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
 	if (fPaging){
 		fclose(fPaging);
 	}
+	
+	//Set up ROM paging initial state
+	memset(ROM_paging, 0, ROM_PAGING_SIZE);
+	memset(ROM_paging_offs, 0xFF, (ROM_PAGING_SIZE/PAGE_SIZE)*2);
+	ROM_paging_cur = 0;
+
 	fPaging = fopen(filename, "r");
 	sint32 fd = fileno(fPaging);
 	if(fd < 0){
