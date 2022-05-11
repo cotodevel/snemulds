@@ -19,7 +19,7 @@
 #TGDS1.6 compatible Makefile
 
 #ToolchainGenericDS specific: Use Makefiles from either TGDS, or custom
-export SOURCE_MAKEFILE7 = custom
+export SOURCE_MAKEFILE7 = default
 export SOURCE_MAKEFILE9 = custom
 
 #Shared
@@ -123,7 +123,7 @@ endif
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
 	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/arm9/$(BINSTRIP_RULE_9) -e9  0x02000000 -b icon.bmp "SNEmulDS $(EXECUTABLE_VERSION_HEADER) ; SNES Emulator for DS; by archeide bubble2k gladius" 
-	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7  $(CURDIR)/arm7/arm7_dsi.bin	-e7  0x03800000 -9 arm9/arm9-nonstripped_dsi.elf
+	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7  $(CURDIR)/arm7/${BINSTRIP_RULE_7:.bin=_twl.bin}	-e7  0x03800000 -9 $(CURDIR)/arm9/${BINSTRIP_RULE_9:.bin=_twl.bin} -e9  0x02000000
 	-mv ${@:.nds=.srl}	/E
 	-@echo 'ndstool end: built: $@'
 	
