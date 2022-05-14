@@ -550,6 +550,8 @@ int main(int argc, char ** argv){
 	strcpy(&CFG.ROMFile[0], "");
 	memset(&guiSelItem, 0, sizeof(guiSelItem));
 	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
+	
+	switchToTGDSConsoleColors();
 
 	//ARGV Support: Only supported through TGDS chainloading.
 	bool isSnesFile = false;
@@ -574,6 +576,8 @@ int main(int argc, char ** argv){
 	if (!(argc > 2)) { 
 		GUI_deleteROMSelector(); 	//Should also free ROMFile
 	}
+	
+	switchToSnemulDSConsoleColors();
 	GUI_createMainMenu();	//Start GUI
 	
 	while (1){
