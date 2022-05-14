@@ -83,7 +83,7 @@ int loadSRAM()
     {
     	strcpy(sramFile, CFG.ROMFile);
 		strcpy(strrchr(sramFile, '.'), ".SRM");
-    	FS_loadFile(sramFile, (char*)SNESC.SRAM, SNESC.SRAMMask+1);
+    	FS_loadFileFatFS(sramFile, (char*)SNESC.SRAM, SNESC.SRAMMask+1);
     }	
 	return 0;    
 }
@@ -97,7 +97,7 @@ int saveSRAM()
 	{
 		strcpy(sramFile, CFG.ROMFile);
 		strcpy(strrchr(sramFile, '.'), ".SRM");		
-		FS_saveFile(sramFile, (char*)SNESC.SRAM, SNESC.SRAMMask+1,false);	//force_file_creation == false here (we could destroy or corrupt saves..)
+		FS_saveFileFatFS(sramFile, (char*)SNESC.SRAM, SNESC.SRAMMask+1,false);	//force_file_creation == false here (we could destroy or corrupt saves..)
 	}
 	return 0;
 }
@@ -250,19 +250,16 @@ int initSNESEmpty(int firstTime){
     memset(&SNESC, 0, sizeof(SNESC));
     /* allocate memory */
     //ROM: End of EWRAM so it can safely be rewritten
-	  setROMAddress(TGDSARM9Malloc(ROM_MAX_SIZE));
-    SNESC.ROM = getROMAddress();
+    SNESC.ROM = SNES_ROM_ADDRESS;
 	  //SNESC.RAM = (uchar *)TGDSARM9Malloc(0x020000);
 	  SNESC.RAM = (uchar *)SNES_RAM_ADDRESS;
     SNESC.VRAM = (uchar *)TGDSARM9Malloc(0x010000);
     //SNESC.BSRAM = (uchar *)TGDSARM9Malloc(0x8000);
 	  SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
-    ROM_paging = getSNES_ROM_PAGING_ADDRESS();
+    ROM_paging = SNES_ROM_PAGING_ADDRESS;
     ROM_paging_offs = TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
 
     if(
-      (getROMAddress() == NULL)
-      ||
       (SNESC.RAM == NULL)
       ||
       (SNESC.VRAM == NULL)

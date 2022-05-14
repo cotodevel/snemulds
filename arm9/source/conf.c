@@ -100,7 +100,7 @@ static int config_installed = FALSE;
 
 long file_size(char *filename)
 {
-	return FS_getFileSize(filename);
+	return FS_getFileSizeFatFS(filename);
 }
 
 static void save_config(CONFIG *cfg)

@@ -344,25 +344,3 @@ void	load_ROM(char *ROM, int ROM_size)
     memcpy(&SNES.ROM_info, &HiROM_info, sizeof(ROM_Info));
   }
 }
-
-__attribute__((section(".dtcm")))
-u8 * romAddr = NULL;
-
-__attribute__((section(".itcm")))
-u8 *getROMAddress(){
-	if(romAddr == NULL){
-		printf("romAddr is NULL! Fix this");
-		while(1==1){}
-	}
-	return romAddr;
-}
-
-__attribute__((section(".itcm")))
-void setROMAddress(u8 * romadd){
-	romAddr = romadd;
-}
-//////////////////////////////////////
-__attribute__((section(".itcm")))
-u8 * getSNES_ROM_PAGING_ADDRESS(){
-	return (getROMAddress()+PAGE_SIZE);
-}

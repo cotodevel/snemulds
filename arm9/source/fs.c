@@ -26,6 +26,7 @@ GNU General Public License for more details.
 #include "posixHandleTGDS.h"
 #include "utilsTGDS.h"
 
+#include "ff.h"
 #include "fs.h"
 #include "consoleTGDS.h"
 #include "nds_cp15_misc.h"
@@ -53,7 +54,6 @@ GNU General Public License for more details.
 #include "dsregs_asm.h"
 #include "typedefsTGDS.h"
 #include "consoleTGDS.h"
-#include "about.h"
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 #include "memmap.h"
 /* *********************** FAT ************************ */
@@ -65,29 +65,38 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int	FS_loadROM(sint8 *ROM, sint8 *filename)
-{
-	FILE	*f;
+int	FS_loadROM(sint8 *ROM, sint8 *filename){
 	FS_lock();
-	f = fopen(filename, "r");
-	fseek(f, 0, SEEK_END);
-	int size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	fread(ROM, 1, size, f);
-	GUI_printf("Read done: %s:%d", filename, size);
-	fclose(f);
+	f_close(&fPagingFD);
+	int flags = charPosixToFlagPosix("r");
+	BYTE mode = posixToFatfsAttrib(flags);
+	FRESULT result = f_open(&fPagingFD, (const TCHAR*)filename, mode);
+	if(result != FR_OK){
+		FS_unlock();
+		GUI_printf("FS_loadROM:epic fail :%s", filename);
+		while(1==1){}
+		return -1;
+	}
 	
 	//Prevent Cache problems.
-	coherent_user_range_by_size((uint32)ROM, (int)size);
-	
-	FS_unlock();
+	f_lseek (
+			&fPagingFD,   /* Pointer to the file object structure */
+			(DWORD)0       /* File offset in unit of byte */
+		);
+	int size = f_size(&fPagingFD);
+	int readSize;
+	result = f_read(&fPagingFD, ROM, (int)size, (UINT*)&readSize);
+	coherent_user_range_by_size((uint32)ROM, (int)size); //Prevent Cache problems.
+	GUI_printf("Read done: %d bytes ", readSize);
+	f_close(&fPagingFD);
 
+	FS_unlock();
 	return 1;
 }
 
 
-FILE * fPaging ;
+FIL fPagingFD;
+int fPagingFDInternal = -1;
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -99,33 +108,40 @@ __attribute__ ((optnone))
 int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
 {
 	FS_lock();
-	
-	if (fPaging){
-		fclose(fPaging);
-	}
+	f_close(&fPagingFD);
 	
 	//Set up ROM paging initial state
 	memset(ROM_paging, 0, ROM_PAGING_SIZE);
 	memset(ROM_paging_offs, 0xFF, (ROM_PAGING_SIZE/PAGE_SIZE)*2);
 	ROM_paging_cur = 0;
 
-	fPaging = fopen(filename, "r");
-	sint32 fd = fileno(fPaging);
-	if(fd < 0){
+	int flags = charPosixToFlagPosix("r");
+	BYTE mode = posixToFatfsAttrib(flags);
+	FRESULT result = f_open(&fPagingFD, (const TCHAR*)filename, mode);
+	
+	if(result != FR_OK){
 		FS_unlock();
+		GUI_printf("FS_loadROMForPaging:epic fail :%s", filename);
+		while(1==1){}
 		return -1;
 	}
 	
-	int ret = fread(ROM, 1, size, fPaging);
+	//Prevent Cache problems.
+	f_lseek (
+			&fPagingFD,   /* Pointer to the file object structure */
+			(DWORD)0       /* File offset in unit of byte */
+		);
+
+	int ret;
+	result = f_read(&fPagingFD, ROM, (int)size, (UINT*)&ret);
+	if(ret != size){
+		return -1;
+	}
+
 	FS_unlock();
 	
 	//Prevent Cache problems.
 	coherent_user_range_by_size((uint32)ROM, (int)size);
-	
-	if(ret != size){
-		return -1;
-	}
-	
 	return 0;
 }
 
@@ -138,32 +154,117 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 int	FS_loadROMPage(sint8 *buf, unsigned int pos, int size){
-	
-	int ret;	
+	FRESULT ret;	
 	FS_lock();
 	
-	if(!fPaging){
-		return -1;
-	}
-	
-	ret = fseek(fPaging, pos, SEEK_SET);
-	
-	if (ret < 0)
+	ret = f_lseek (
+			&fPagingFD,   /* Pointer to the file object structure */
+			(DWORD)pos       /* File offset in unit of byte */
+		);
+
+	int readSize;
+	ret = f_read(&fPagingFD, (u8*)buf, size, (UINT*)&readSize);
+
+	if (ret != FR_OK)
 	{
 		FS_unlock();
 		return -1;
 	}
-	
-	
-	ret = fread(buf, 1, size, fPaging);
-	
+
 	//Prevent Cache problems.
 	coherent_user_range_by_size((uint32)buf, (int)size);
 	
-	return ret;
+	return readSize;
 }
 
 int	FS_shouldFreeROM()
 {
 	return 1;
+}
+
+//Reimplement these to use fatfs directly and save RAM. Which means the FIL object is internal
+int	FS_loadFileFatFS(sint8 *filename, sint8 *buf, int size){
+	FS_lock();
+	FIL thisFD;
+	f_close(&thisFD);
+	int flags = charPosixToFlagPosix("r");
+	BYTE mode = posixToFatfsAttrib(flags);
+	FRESULT result = f_open(&thisFD, (const TCHAR*)filename, mode);
+	if(result != FR_OK){
+		FS_unlock();
+		//GUI_printf("FS_loadFileFatFS:epic fail :%s", filename); //this is completely normal as there may not be a save file the first time romfile is loaded
+		//while(1==1){}
+		return -1;
+	}
+	
+	//Prevent Cache problems.
+	f_lseek (
+			&thisFD,   /* Pointer to the file object structure */
+			(DWORD)0       /* File offset in unit of byte */
+		);
+	int readSize;
+	result = f_read(&thisFD, buf, (int)size, (UINT*)&readSize);
+	coherent_user_range_by_size((uint32)buf, (int)size); //Prevent Cache problems.
+	//GUI_printf("Read done: %d bytes ", readSize);
+	f_close(&thisFD);
+
+	FS_unlock();
+	return 1;
+}
+
+int	FS_saveFileFatFS(sint8 *filename, sint8 *buf, int size,bool force_file_creation){
+	FIL thisFD;
+	f_close(&thisFD);
+	char var[16];
+	if(force_file_creation == true){
+		sprintf((sint8*)var,"%s","w+");
+	}
+	else{
+		sprintf((sint8*)var,"%s","w");
+	}
+	int flags = charPosixToFlagPosix(var);
+	BYTE mode = posixToFatfsAttrib(flags);
+	FRESULT result = f_open(&thisFD, (const TCHAR*)filename, mode);
+	if(result != FR_OK){
+		FS_unlock();
+		GUI_printf("FS_saveFileFatFS:epic fail :%s", filename);
+		while(1==1){}
+		return -1;
+	}
+	
+	//Prevent Cache problems.
+	f_lseek (
+			&thisFD,   /* Pointer to the file object structure */
+			(DWORD)0       /* File offset in unit of byte */
+		);
+	
+	coherent_user_range_by_size((uint32)buf, (int)size); //Prevent Cache problems.
+	int writtenSize;
+	result = f_write(&thisFD, buf, (int)size, (UINT*)&writtenSize);
+	//GUI_printf("Written: %d bytes ", readSize);
+	f_close(&thisFD);
+
+	if (result != FR_OK)
+	{
+		FS_unlock();
+		return -1;
+	}
+	return 0;
+}
+
+int	FS_getFileSizeFatFS(sint8 *filename){
+	FIL thisFD;
+	f_close(&thisFD);
+	int flags = charPosixToFlagPosix("r");
+	BYTE mode = posixToFatfsAttrib(flags);
+	FRESULT result = f_open(&thisFD, (const TCHAR*)filename, mode);
+	if(result != FR_OK){
+		FS_unlock();
+		GUI_printf("FS_getFileSizeFatFS:epic fail :%s", filename);
+		while(1==1){}
+		return -1;
+	}
+	int size = f_size(&thisFD);
+	f_close(&thisFD);
+	return size;
 }
