@@ -397,7 +397,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		ROM = (char *)SNESC.ROM;
 		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 		
-		size = FS_getFileSize((char*)&CFG.ROMFile[0]);
+		size = FS_getFileSizeFatFS((char*)&CFG.ROMFile[0]);
 		ROMheader = size & 8191;
 		if (ROMheader != 0&& ROMheader != 512){
 			ROMheader = 512;
@@ -435,7 +435,7 @@ int selectSong(char *name)
 	if(spcFile == NULL){
 		return -1;
 	}
-	if(FS_loadFile(CFG.Playlist, (char*)spcFile, 0x10200) < 0){
+	if(FS_loadFileFatFS(CFG.Playlist, (char*)spcFile, 0x10200) < 0){
 		//GUI_printf("selectSong(): Load error: %s", CFG.Playlist);
 		TGDSARM9Free(spcFile);
 		return -1;

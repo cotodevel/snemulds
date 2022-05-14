@@ -20,6 +20,7 @@ GNU General Public License for more details.
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
+#include "ff.h"
 
 #include <sys/reent.h>
 #include <sys/select.h>
@@ -50,7 +51,8 @@ extern int		FS_loadAllFile(sint8 *filename, sint8 *buf, int *size);
 extern int		FS_shouldFreeROM();
 extern int		FS_chdir(const sint8 *path);
 extern sint8 	*FS_getFileName(sint8 *filename);
-
+extern FIL fPagingFD;
+extern int fPagingFDInternal;
 #ifdef __cplusplus
 }
 #endif

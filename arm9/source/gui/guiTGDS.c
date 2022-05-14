@@ -93,13 +93,13 @@ int GUI_loadPalette(sint8 *path)
 	int 	size;
 	int		i;
 	
-	size = FS_getFileSize(path);
+	size = FS_getFileSizeFatFS(path);
 	if (size <= 0)
 		return -1;	
 	
 	data = TGDSARM9Malloc(size);
 	
-	FS_loadFile(path, (sint8 *)data, size);
+	FS_loadFileFatFS(path, (sint8 *)data, size);
 	
     for (i = 0; i < MIN(size, GUI_PAL*3); i+=3) 
 	  	BG_PALETTE_SUB[i/3] = RGB8(data[i],data[i+1],data[i+2]);
@@ -113,7 +113,7 @@ t_GUIImage	*GUI_loadImage(sint8 *path, int width, int height, int flags)
 	t_GUIImage	*ptr = NULL;	
 	int 	size;
 	
-	size = FS_getFileSize(path);
+	size = FS_getFileSizeFatFS(path);
 	if (size <= 0)
 		return NULL;
 	
@@ -124,7 +124,7 @@ t_GUIImage	*GUI_loadImage(sint8 *path, int width, int height, int flags)
 			return NULL;
 		
 		ptr->data = (uint8*)(ptr)+sizeof(t_GUIImage);   
-		FS_loadFile(path, ptr->data, size);             
+		FS_loadFileFatFS(path, ptr->data, size);             
 		
 	}
 	if (flags == IMG_NOLOAD)

@@ -33,15 +33,6 @@ USA
 #include <string.h>
 #include <stdlib.h>
 
-#define MAP_RELOAD      (u32)(0x80000000)
-#define MAP_PPU         (u32)(0x81000000)
-#define MAP_CPU         (u32)(0x82000000)
-#define MAP_DSP         (u32)(0x83000000)
-#define MAP_LOROM_SRAM  (u32)(0x84000000)
-#define MAP_HIROM_SRAM  (u32)(0x85000000)
-#define MAP_NONE        (u32)(0x86000000)
-#define MAP_LAST        (u32)(0x8F000000)
-
 #define bzero(p, s)	memset(p, 0, s)
 
 //snes irqs

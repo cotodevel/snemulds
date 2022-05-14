@@ -46,9 +46,9 @@ struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7Malloc
 	customMemoryAllocator->customMalloc = isCustomTGDSMalloc;
 	customMemoryAllocator->ARM7MallocStartAddress = ARM7MallocStartAddress;
 	customMemoryAllocator->ARM7MallocSize = ARM7MallocSize;
-	
-	customMemoryAllocator->ARM9MallocStartaddress = (u32)sbrk(0);
-	customMemoryAllocator->memoryToAllocate = (3400*1024); 
+	extern u32 __end;
+	customMemoryAllocator->ARM9MallocStartaddress = (u32)&__end;
+	customMemoryAllocator->memoryToAllocate = (480*1024); 
 	customMemoryAllocator->CustomTGDSMalloc9 = (TGDSARM9MallocHandler)&Xmalloc;
 	customMemoryAllocator->CustomTGDSCalloc9 = (TGDSARM9CallocHandler)&Xcalloc;
 	customMemoryAllocator->CustomTGDSFree9 = (TGDSARM9FreeHandler)&Xfree;
