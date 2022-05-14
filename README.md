@@ -9,7 +9,7 @@ SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a fro
 This is based from real 0.6.a sources archeide left years ago and I managed to find.
 
 Usage:
-    - Download and copy all files from /release/arm7dldi-twl folder, snemul.cfg as well, in SD:/ root . 
+    - Download and copy all files from /release/arm7dldi-[ntr/twl], snemul.cfg as well, in SD:/ root. [NDS] mode is for DS mode, and [TWL] for DSi mode. 
 	  If it prompts for overwrite: Yes to All. 
     - Create a /snes folder in SD: root, and put your homebrew games on it
 	- SPC Playback: Optionally, create a /spc folder in SD: root, and put your SPC files on it. You can choose and play a SPC File in the "SPC Jukebox" option. 
