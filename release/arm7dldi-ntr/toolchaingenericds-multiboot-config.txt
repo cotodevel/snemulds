@@ -1,0 +1,5 @@
+[Global]
+# ToolchainGenericDS-multiboot global settings 
+
+tgdsutilsremotebooteripaddr = 192.168.43.22
+tgdsutilsremotebooterport = 80
