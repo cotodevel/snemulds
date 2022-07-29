@@ -46,6 +46,7 @@
 #include "core.h"
 #include "nds_cp15_misc.h"
 #include "soundTGDS.h"
+#include "spitscTGDS.h"
 
 //TGDS Soundstreaming API
 int internalCodecType = SRC_NONE; //Returns current sound stream format: WAV, ADPCM or NONE
@@ -539,9 +540,8 @@ int main(int argc, char ** argv){
 	GUI_getConfig();	
 	GUI_printf("Load conf4");
 	
-	//Touchscreen mode: legacy-NTR TGDS mode while in TWL mode works if reloading from ToolchainGenericDS-multiboot TWL. 
+	//TGDS-Projects -> legacy NTR TSC compatibility
 	if(__dsimode == true){
-		//TGDS-Projects -> legacy NTR TSC compatibility
 		TWLSetTouchscreenNTRMode();
 	}
 	
