@@ -2076,7 +2076,13 @@ SBCD_m1:
     tst    r1, #SnesFlagE
     biceq   SnesCV, SnesCV, #SnesFlagC
     orrne   SnesCV, SnesCV, #SnesFlagC
-    AddPC   \pcinc, \cycles
+    
+	.ifeq   mBit-8 @Emulation mode? XY are 8 bit
+    eoreq     SnesX, SnesX, #0xff00 @SnesMXDI == NVZC Flags
+    eoreq     SnesY, SnesY, #0xff00 
+	.endif
+	
+	AddPC   \pcinc, \cycles
 .endm
 
 .macro OpSEI mode, pcinc, cycles
