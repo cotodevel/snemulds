@@ -286,33 +286,61 @@ void	load_ROM(char *ROM, int ROM_size)
   memcpy(&LoROM_info, SNESC.ROM+0x7FC0, sizeof(ROM_Info));
   memcpy(&HiROM_info, SNESC.ROM+0xFFC0, sizeof(ROM_Info));
 
+bool hirom = false;
+bool foundByHeader = false;
 // conditions necessaires
-  if (filesize < 0x80000 ||
+  if (
       *(unsigned short *)&SNESC.ROM[0xfffc] == 0xFFFF ||
       *(unsigned short *)&SNESC.ROM[0xfffc] < 0x8000) {
     SNES.HiROM = 0; 
     memcpy(&SNES.ROM_info, (void*)&LoROM_info, sizeof(ROM_Info));
-    return;
+    foundByHeader = true;
+    hirom = false;
   }
-  if (*(unsigned short *)&SNESC.ROM[0x7ffc] == 0xFFFF ||
+  else if (*(unsigned short *)&SNESC.ROM[0x7ffc] == 0xFFFF ||
       *(unsigned short *)&SNESC.ROM[0x7ffc] < 0x8000) {
     SNES.HiROM = 1; 
     memcpy(&SNES.ROM_info, (void*)&HiROM_info, sizeof(ROM_Info));
-    return;
+    foundByHeader = true;
+    hirom = true;
   }
 
 // conditions suffisantes
-  if ((LoROM_info.checksum ^ LoROM_info.checksum_c) == 0xFFFF) {
+  else if ((LoROM_info.checksum ^ LoROM_info.checksum_c) == 0xFFFF) {
     SNES.HiROM = 0;
     memcpy(&SNES.ROM_info, (void*)&LoROM_info, sizeof(ROM_Info));
-    return;
+    foundByHeader = true;
+    hirom = false;
   }
-  if ((HiROM_info.checksum ^ HiROM_info.checksum_c) == 0xFFFF) {
+  else if ((HiROM_info.checksum ^ HiROM_info.checksum_c) == 0xFFFF) {
     SNES.HiROM = 1; 
     memcpy(&SNES.ROM_info, (void*)&HiROM_info, sizeof(ROM_Info));
-    return;
+    foundByHeader = true; 
+    hirom = true;
   }
 
+  if(foundByHeader == true){
+    if(hirom == true){
+    	/*
+    	clrscr();
+    	printf("---");
+    	printf("---");
+    	printf("HiROM.");
+    	while(1==1){}
+    	*/
+    	return;
+  	}
+  	else{
+    	/*
+    	clrscr();
+    	printf("---");
+    	printf("---");
+    	printf("LoROM.");
+    	while(1==1){}
+    	*/
+    	return;
+  	}
+  }
 // algorithme de ZoOp
   SNES.HiROM = 0;
 
