@@ -138,15 +138,13 @@ CPURET.sfc -> Pass
 CPUROL.sfc -> Pass
 CPUROR.sfc -> Pass
 CPUSTR.sfc -> Pass
+CPUSBC.sfc -> Pass
 
 
 CPU Opcodes Failing:
-
 CPUTRN.sfc -> Fail
-CPUSBC.sfc -> Fail
 CPUPHL.sfc -> Fail
 CPUMOV.sfc -> Fail
-
 
 
 Coto.
