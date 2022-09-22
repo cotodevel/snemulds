@@ -96,4 +96,57 @@ Gladius for Sound Core
 
 PeterLemon: https://github.com/PeterLemon/SNES for allowing to fix some CPU bugs
 
+#################################################################################################
+
+Snemulds 2022 Core Tests:
+
+PlotLineMode7.sfc -> Pass
+PlotPixelMode7.sfc -> Pass
+
+8x8BGMap8BPP32x32.sfc -> Pass
+8x8BGMap8BPP32x64.sfc -> Pass
+8x8BGMap8BPP64x32.sfc -> Pass
+8x8BGMap8BPP64x64.sfc -> Pass
+8x8BGMapTileFlip.sfc -> Pass
+
+BANKWRAM.sfc -> Pass
+BANKLoROMSlowROM.sfc -> Pass
+BANKLoROMFastROM.sfc -> Pass
+BANKHiROMSlowROM.sfc -> Pass
+BANKHiROMFastROM.sfc -> Pass
+
+BANKWRAM.sfc -> Pass
+
+
+CPU Opcodes implemented OK:
+CPUADC.sfc -> Pass
+CPUAND.sfc -> Pass
+CPUASL.sfc -> Pass
+CPUBIT.sfc -> Pass
+CPUBRA.sfc -> Pass
+CPUCMP.sfc -> Pass
+CPUDEC.sfc -> Pass
+CPUEOR.sfc -> Pass
+CPUINC.sfc -> Pass
+CPUJMP.sfc -> Pass
+CPULDR.sfc -> Pass
+CPULSR.sfc -> Pass
+CPUMSC.sfc -> Pass
+CPUORA.sfc -> Pass
+CPUPSR.sfc -> Pass
+CPURET.sfc -> Pass
+CPUROL.sfc -> Pass
+CPUROR.sfc -> Pass
+CPUSTR.sfc -> Pass
+
+
+CPU Opcodes Failing:
+
+CPUTRN.sfc -> Fail
+CPUSBC.sfc -> Fail
+CPUPHL.sfc -> Fail
+CPUMOV.sfc -> Fail
+
+
+
 Coto.
