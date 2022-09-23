@@ -139,7 +139,7 @@ bool	reloadROM(char *ROM, int size, int crc, char * name){
   }
   
   //if the same pattern repeats, treat it as not snes file
-  bool validSnesFile = false;
+  bool validSnesFile = false; //if debugging, set this to true
   i = 0;
   int romfilenameSize = strlen(SNES.ROM_info.title);
   while(i < romfilenameSize){
@@ -157,7 +157,7 @@ bool	reloadROM(char *ROM, int size, int crc, char * name){
   }
   while(1==1){}
   */
-  if( (romfilenameSize > 4) && (validSnesFile == true)){
+  if( (validSnesFile == true)){
     //Hardware enabled VBLANK IRQ whitelist
     if(strncmp((char*)&SNES.ROM_info.title[0], "DIDDY'S KONG QUEST", 18) == 0){
       VblankWaitNDSTWLMode = true;
