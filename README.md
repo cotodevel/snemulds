@@ -88,10 +88,12 @@ SnemulDS 0.6:
 Known issues:
 	-   Fix Mode 0 (no transparency/broken)
 
-Thanks to:
+Many thanks to:
 
 Archeide for the emulator & source code
 Bubble2k for CPU core
 Gladius for Sound Core
+
+PeterLemon: https://github.com/PeterLemon/SNES for allowing to fix some CPU bugs
 
 Coto.

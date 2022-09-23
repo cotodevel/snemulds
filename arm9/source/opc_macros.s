@@ -999,6 +999,9 @@ ADCD_m0:    @ r1 = 0000XXxx, SnesA = AAaa0000
     orrcs   SnesCV, SnesCV, #SnesFlagC
     biccc   SnesCV, SnesCV, #SnesFlagC
     
+	orrvc   SnesCV, SnesCV, #SnesFlagV
+    bicvs   SnesCV, SnesCV, #SnesFlagV
+
     ldmfd	sp!, {r3}
     
     AddPC   \pcinc, \cycles
@@ -1039,12 +1042,15 @@ ADCD_m1: @ Took from SnesAdvance
 
     @ elegant ADC from Snes Advance
     @
-    movs    r0, SnesCV, lsr #2      @ get carry flag
+    movs    r0, SnesCV, lsr #2      @ get carry flag (SnesCV @ $CCCCWEEF (bit 1=carry, bit 0=overflow)) + 1 to move it to Carry ARM flag 
+	@(ARM PSR CS : Carry Set Set if the C flag is set after an arithmetical operation OR a shift operation, the result of which cannot be represented in 32bits. You can think of the C flag as the 33rd bit of the result.)
+
     subcs   r1, r1, #(1<<mBit)
     adcs    SnesA, SnesA, r1, ror #mBit
-    bic     SnesCV, SnesCV, #(SnesFlagC+SnesFlagV)
-    orrcs   SnesCV, SnesCV, #SnesFlagC
+	orrcs   SnesCV, SnesCV, #SnesFlagC
     orrvs   SnesCV, SnesCV, #SnesFlagV
+    biccc     SnesCV, SnesCV, #(SnesFlagC)
+    bicvc     SnesCV, SnesCV, #(SnesFlagV)
     mov     SnesNZ, SnesA, lsr #16
     
     AddPC   0, 0
