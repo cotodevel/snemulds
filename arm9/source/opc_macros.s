@@ -1423,6 +1423,9 @@ SBCD_m0:
     biccc   SnesCV, SnesCV, #SnesFlagC
     orrcs   SnesCV, SnesCV, #SnesFlagC
     
+	orrvs   SnesCV, SnesCV, #SnesFlagV
+    bicvc   SnesCV, SnesCV, #SnesFlagV
+	
     ldmfd   sp!, {r3}
 	AddPC   0, 0
 
@@ -1446,6 +1449,10 @@ SBCD_m1:
 	mov     SnesNZ, SnesA, lsr #16
     biccc   SnesCV, SnesCV, #SnesFlagC
     orrcs   SnesCV, SnesCV, #SnesFlagC
+	
+	orrvs   SnesCV, SnesCV, #SnesFlagV
+    bicvc   SnesCV, SnesCV, #SnesFlagV
+
 	AddPC   0, 0
 .endm
 
@@ -1468,9 +1475,10 @@ SBCD_m1:
     .else
         and     SnesA, SnesA, #0xff000000
     .endif
-    bic     SnesCV, SnesCV, #(SnesFlagV+SnesFlagC)
     orrcs   SnesCV, SnesCV, #SnesFlagC
     orrvs   SnesCV, SnesCV, #SnesFlagV
+    biccc     SnesCV, SnesCV, #(SnesFlagC)
+    bicvc     SnesCV, SnesCV, #(SnesFlagV)
     mov     SnesNZ, SnesA, lsr #16
     
     AddPC   0, 0
