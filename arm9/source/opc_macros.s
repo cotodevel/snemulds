@@ -2014,7 +2014,7 @@ SBCD_m1:
 @ Decompose the P register
 @   r1: Snes P register
 @-------------------------------------------------------------------------
-.macro DecomposeP   fast = 1
+.macro DecomposeP   fast = 0
     bic     SnesCV, SnesCV, #0xF
     tst    r1, #SnesP_C
     orrne   SnesCV, SnesCV, #SnesFlagC
@@ -2026,9 +2026,10 @@ SBCD_m1:
     orrne   SnesNZ, SnesNZ, #SnesFlagNH
     tst    r1, #SnesP_Z
     orreq   SnesNZ, SnesNZ, #1
-                                            @ r1 = nvmxdizc
-    bic     r1, r1, #0xffffffc3             @ r1 = 00mxdi00
+	stmdb r13!,{r1}				@ r1 = nvmxdizc = means SNES Processor Status Register (default PSR encoding format). Save it because....
+    bic     r1, r1, #0xffffffc3 @ r1 = 00mxdi00 (alt. non standard)
     SetMXDI \fast
+	ldmia r13!,{r1} 			@Instead of destroying the SNES PSR flag, restore earlier CPU PSR context + keep it for upcoming usage.
 .endm
 
 
@@ -2214,9 +2215,10 @@ SBCD_m1:
     AddPC   \pcinc, \cycles
 .endm
 
+@PHP (Push Processor Status Register)
 .macro OpPHP mode, pcinc, cycles
-    ComposeP
-    Push8
+    ComposeP	@generates -> r1 = 00000000 00000000 00000000 NVMXDIZC(b)
+    Push8		@Save r1 into stack
     AddPC   \pcinc, \cycles
 .endm
 
@@ -2244,10 +2246,13 @@ SBCD_m1:
     AddPC   \pcinc, \cycles
 .endm
 
+@PLP (Pull Processor Status Register)
 .macro OpPLP mode, pcinc, cycles
-    Pop8
-    DecomposeP
-    AddPC   \pcinc, \cycles
+	Pop8	@grab r1 from stack
+	DecomposeP	@Reload SNES PSR context from r1
+	tst    r1, #SnesP_V	@ r1 = nvmxdizc	(https://ersanio.gitbook.io/assembly-for-the-snes/processor-flags-and-registers/flags)
+	orreq   SnesCV, SnesCV, #SnesFlagV
+	AddPC   \pcinc, \cycles
 .endm
 
 
