@@ -139,10 +139,10 @@ CPUROL.sfc -> Pass
 CPUROR.sfc -> Pass
 CPUSTR.sfc -> Pass
 CPUSBC.sfc -> Pass
+CPUTRN.sfc -> Pass (Emulation mode may require some tweaking)
 
 
 CPU Opcodes Failing:
-CPUTRN.sfc -> Fail
 CPUPHL.sfc -> Fail
 CPUMOV.sfc -> Fail
 
