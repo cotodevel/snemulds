@@ -1751,7 +1751,6 @@ SBCD_m1:
 .endm
 
 .macro OpMVP mode, pcinc, cycles
-				@ FIXME ???
     \mode
     sub     SnesPC, SnesPC, #1
 

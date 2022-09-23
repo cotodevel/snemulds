@@ -141,10 +141,13 @@ CPUSTR.sfc -> Pass
 CPUSBC.sfc -> Pass
 CPUTRN.sfc -> Pass (Emulation mode may require some tweaking)
 CPUPHL.sfc -> Pass
+CPUMOV.sfc -> Pass
 
 
-CPU Opcodes Failing:
-CPUMOV.sfc -> Fail
+(SNES) CPU Opcodes Failing:
+None! Non coprocessor games should be very playable now!
 
+
+Note: Other coprocessor opcodes aren't implemented.
 
 Coto.
