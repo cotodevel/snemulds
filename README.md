@@ -145,7 +145,7 @@ CPUMOV.sfc -> Pass
 
 
 (SNES) CPU Opcodes Failing:
-None! Non coprocessor games should be very playable now!
+None! Non coprocessor games should be somewhat playable now. There are still bugs on the cross-boundary pages (SNES ARM CPU core related)
 
 
 Note: Other coprocessor opcodes aren't implemented.
