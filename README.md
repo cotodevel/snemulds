@@ -155,4 +155,19 @@ None! Non coprocessor games should be somewhat playable now. There are still bug
 
 Note: Other coprocessor opcodes aren't implemented.
 
+
+----
+
+SnemulDS APU Tests:
+
+SPC700DEC.sfc -> Pass
+SPC700EOR.sfc -> Pass
+SPC700INC.sfc -> Pass
+SPC700ORA.sfc -> Pass
+
+SPC700ADC.sfc -> Fail
+SPC700AND.sfc -> Fail
+SPC700SBC.sfc -> Fail
+
+
 Coto.
