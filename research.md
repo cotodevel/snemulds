@@ -28,7 +28,3 @@ IO_getword
 IO_setword 
 
 which are glued to 4) (see above). 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Todo SnemulDS on VS2012:
-Use Data Bank Register to reload a Page and Program Bank Register to reload a Page while in Snes9X, remove original Snes9X Snes IO mapper and use the SnemulDS one.
