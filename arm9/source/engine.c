@@ -309,7 +309,7 @@ int go()
 		return 0;
 	}
 	
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&getsIPCSharedTGDSSpecific()->APU2);
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&SNEMULDS_IPC->APU2);
 	CPU.HCycles = SNES.UsedCycles;	
     if (DMA_PORT[0x00]&0x10) 
     {

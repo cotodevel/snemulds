@@ -917,7 +917,7 @@ uint32	R213F(uint32 addr)
 __attribute__((section(".itcm")))      
 uint32	R2140(uint32 addr)
 {
-	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = getsIPCSharedTGDSSpecific();
+	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSIPCUSER->APU2);
 	//	LOG("0 %02x (%04x, %04x)\n", TGDSIPCUSER->PORT_SPC_TO_SNES[0], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
       if (!CFG.Sound_output)
@@ -944,7 +944,7 @@ static int oldapupc;
 __attribute__((section(".itcm")))      
 uint32	R2141(uint32 addr)
 {
-	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = getsIPCSharedTGDSSpecific();
+	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSIPCUSER->APU2);
 	//int newapupc = ((*(uint32*)(0x27E0000)) & 0xFFFF);
 	
@@ -992,7 +992,7 @@ uint32	R2141(uint32 addr)
 __attribute__((section(".itcm")))      
 uint32	R2142(uint32 addr)
 {
-	  struct sIPCSharedTGDSSpecific* TGDSIPCUSER = getsIPCSharedTGDSSpecific();
+	  struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
       struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSIPCUSER->APU2);
 	  if (!CFG.Sound_output)
 	  {
@@ -1011,7 +1011,7 @@ uint32	R2142(uint32 addr)
 __attribute__((section(".itcm")))
 uint32	R2143(uint32 addr)
 {     
-	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = getsIPCSharedTGDSSpecific();
+	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSIPCUSER->APU2);
 
       if (!CFG.Sound_output)
@@ -1488,7 +1488,7 @@ void	W2133(uint32 addr, uint32 value)
 		dummy++;
 	}
 #endif		          		
-	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = getsIPCSharedTGDSSpecific();
+	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 	if (TGDSIPCUSER->APU_ADDR_BLKP[1])
 	{
 		//LOG("1 b %04x\n", newapupc);
@@ -1520,7 +1520,7 @@ void	W2140(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {    
-		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = getsIPCSharedTGDSSpecific();
+		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 		LOG("0<-%02x\n", value); 
     	if (CFG.SoundPortSync & 0x10)
     		pseudoSleep(SYNC_TIME);
@@ -1545,7 +1545,7 @@ void	W2141(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {
-		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = getsIPCSharedTGDSSpecific();
+		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 		//LOG("1<-%02x\n", value);    	
     	if (CFG.SoundPortSync & 0x20)
     		pseudoSleep(SYNC_TIME);
@@ -1582,7 +1582,7 @@ void	W2142(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {    
-		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = getsIPCSharedTGDSSpecific();
+		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 //    	LOG("2<-%02x\n", value);    	
     	if (CFG.SoundPortSync & 0x40)
     		pseudoSleep(SYNC_TIME);    	
@@ -1608,7 +1608,7 @@ void	W2143(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {  
-		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = getsIPCSharedTGDSSpecific();
+		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 //    	LOG("3<-%02x\n", value);    	
     	if (CFG.SoundPortSync & 0x80)
     		pseudoSleep(SYNC_TIME);    	
