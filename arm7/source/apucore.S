@@ -272,16 +272,13 @@ zeroAndHighPageMemWrite8:
 .ENDM
 
 .MACRO adcFromR0
-	@ Set CVH flags @todo: these three flags are set forcefully, in fact, these three should be set according the ARM 'adc' ARM processor register flags. 
-    tst r1, #1 << 6
-    orrne APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG @V flag
-    tst r1, #CYCLES_H_FLAG
-    orrne APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG @H flag
     @ Get C bit into C flag
     movs r1, APU_CYCLES, lsr #1
     subcs r0, r0, #0x100
     adcs APU_REG_A, APU_REG_A, r0, ror #8
     mov APU_NZ, APU_REG_A, lsr #24
+	orrls APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG @Half-carry flag
+	bichi APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG
 	biccc APU_CYCLES, APU_CYCLES, #(CYCLES_C_FLAG)
     bicvc APU_CYCLES, APU_CYCLES, #(CYCLES_V_FLAG)
 	orrvs APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG
