@@ -30,6 +30,7 @@ struct s_cfg
 
   int	DSP1;
   int	SuperFX;
+  int   CX4;
   int	Sound_output;
 
   int	joypad_disabled; /* used to disable the joypad in the GUI */

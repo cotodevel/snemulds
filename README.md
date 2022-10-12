@@ -68,6 +68,11 @@ Latest stable release: https://bitbucket.org/Coto88/SnemulDS/get/TGDS1.65.zip
 
 Changelog:
 
+SnemulDS 0.6d:
+	- Added CX4 co processor support! Megaman X2 / Megaman X3 it's entirely playable now. (tweak sprite priority settings if necessary)
+	- fixed even more CPU bugs. This narrows down games not booting due to cross-boundary pages or to APU synchronization issues!
+	
+
 SnemulDS 0.6c:
 	- fix TWL mode touchscreen!
 	

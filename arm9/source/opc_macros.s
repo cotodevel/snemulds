@@ -431,15 +431,6 @@ GNU General Public License for more details.
 2:
 .endm
 
-.macro WriteData24 index=0
-    strb    r1,[r0, #(\index)]
-    mov     r1, r1, lsr #8
-    strb    r1,[r0, #(\index+1)]
-    mov     r1, r1, lsr #8
-    strb    r1,[r0, #(\index+2)]
-.endm
-
-
 @=========================================================================
 @ New Addressing Mode Macros:
 @ returns:
