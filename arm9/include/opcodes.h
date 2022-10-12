@@ -60,7 +60,7 @@ GNU General Public License for more details.
 
 #include "common.h"
 
-#define NB_CYCLES 139
+#define NB_CYCLES 137
 
 #endif
 

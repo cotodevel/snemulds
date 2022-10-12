@@ -683,7 +683,7 @@ int trace_CPU()
 #endif
 */
 
-  Cycles = -((sint32)SaveR8 >> 14);
+  Cycles = -1; //-((sint32)SaveR8 >> 14);
   
   if (Cycles <= 0)
   	return 0;

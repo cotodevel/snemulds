@@ -80,7 +80,7 @@ void CPU_pack(){
 	CPU.A = REAL_A;
 	CPU.X = X;
 	CPU.Y = Y;
-	Cycles = -((sint32)SaveR8 >> 14);
+	Cycles = -1; //-((sint32)SaveR8 >> 14);
   
 	CPU.S = S >> 16;
 	CPU.P = 0; 

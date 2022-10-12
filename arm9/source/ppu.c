@@ -2189,7 +2189,7 @@ void draw_screen(){
 	//BRIGHTNESS = (2<<14) | ((0x0f - GFX.brightness));
 	REG_MASTER_BRIGHT = (2<<14) | ((0x0f - GFX.brightness)<<1);
     
-	if((REG_VCOUNT&0xFF) <= 190){ //draw 2 times per frame 
+	if((REG_VCOUNT&0xFF) <= 189){ //draw 2 times per frame 
 		return;
 	}
 
