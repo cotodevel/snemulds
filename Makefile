@@ -27,7 +27,7 @@ include $(DEFAULT_GCC_PATH)/Makefile.basenewlib
 
 #Custom
 # Project Specific
-export TGDSPROJECTNAME = SNEmulDS
+export TGDSPROJECTNAME = SNEmulDS_dsp
 export EXECUTABLE_FNAME = $(TGDSPROJECTNAME).nds
 export EXECUTABLE_VERSION_HEADER =	0.6d
 export EXECUTABLE_VERSION =	"$(EXECUTABLE_VERSION_HEADER)"
