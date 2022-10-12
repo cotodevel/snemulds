@@ -53,7 +53,7 @@ struct s_apu2
 	u8 T0Enabled;
     u8 T1Enabled;
     u8 T2Enabled;
-};
+}__attribute__((packed));
 
 struct sIPCSharedTGDSSpecific{
 	uint32 * IPC_ADDR;
@@ -80,11 +80,17 @@ struct sIPCSharedTGDSSpecific{
 #define SNEMULDS_APUCMD_SAVESPC 0xffff00a6
 #define SNEMULDS_APUCMD_LOADSPC 0xffff00a7
 
+#ifdef ARM7
+#define SNEMULDS_IPC ((struct sIPCSharedTGDSSpecific*)(NDS_CACHED_SCRATCHPAD + (80*4)))
+#endif
+
+#ifdef ARM9
+#define SNEMULDS_IPC ((struct sIPCSharedTGDSSpecific*)(NDS_UNCACHED_SCRATCHPAD + (80*4)))
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-extern struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
 
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2);

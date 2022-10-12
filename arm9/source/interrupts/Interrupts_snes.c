@@ -58,7 +58,7 @@ void Timer3handlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void HblankUser(){
-	getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0xFFFFFFFF;
+	SNEMULDS_IPC->APU_ADDR_CMD = 0xFFFFFFFF;
 
 	if (REG_VCOUNT >= 192)
 	{
@@ -74,7 +74,7 @@ void HblankUser(){
 
 	//	h_blank=1;
 	end:
-	getsIPCSharedTGDSSpecific()->APU_ADDR_CMD = 0;
+	SNEMULDS_IPC->APU_ADDR_CMD = 0;
 	
     //GUI_printf("hblank! \n");	
 }
@@ -86,7 +86,7 @@ void VblankUser(){
 	
 	GFX.DSFrame++;
 	GFX.v_blank=1;
-	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = getsIPCSharedTGDSSpecific();
+	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSIPCUSER->APU2);
 	// FIX APU cycles	
 	//*APU_ADDR_CNT += 262;
