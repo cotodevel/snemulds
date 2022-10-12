@@ -47,6 +47,7 @@
 #include "nds_cp15_misc.h"
 #include "soundTGDS.h"
 #include "spitscTGDS.h"
+#include "dsp1.h"
 
 //TGDS Soundstreaming API
 int internalCodecType = SRC_NONE; //Returns current sound stream format: WAV, ADPCM or NONE
@@ -109,7 +110,7 @@ uint8 LayersConf[10][4] =
 { 3, 3, 3, 3 },
 { 2, 2, 2, 2 },
 { 1, 1, 1, 1 },
-{ 0, 0, 0, 0 },
+{ 0, 2, 3, 3 },
 { 2, 3, 0, 1 },
 { 2, 0, 3, 1 },
 { 2, 1, 0, 3 }, 
@@ -185,12 +186,6 @@ void readOptionsFromConfig(char *section)
 		CFG.LayerPr[1] = (BGManualPriority>>3) & 3;
 		CFG.LayerPr[2] = (BGManualPriority>>6) & 3;
 		CFG.LayerPr[3] = (BGManualPriority>>9) & 3;
-
-		CFG.LayerPr[0] = get_config_int(section, "BG1Pr", CFG.LayerPr[0]) & 3;
-		CFG.LayerPr[1] = get_config_int(section, "BG2Pr", CFG.LayerPr[1]) & 3;
-		CFG.LayerPr[2] = get_config_int(section, "BG3Pr", CFG.LayerPr[2]) & 3;
-		CFG.LayerPr[3] = get_config_int(section, "BG4Pr", CFG.LayerPr[3]) & 3;
-
 	}
 	else
 		PPU_ChangeLayerConf(CFG.LayersConf);
@@ -421,8 +416,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			GUI_printf("CRC = %08x ", crc);
 		}
 		
-		S9xInitC4((char*)&CFG.ROMFile[0]); //must be called after SNES mem allocation takes place + rom already has been closed
-		
+		S9xResetDSP1();
 		return reloadROM(ROM-ROMheader, size, crc, nameItem->filenameFromFS_getDirectoryListMethod);
 	}
 	return false;
@@ -584,7 +578,8 @@ int main(int argc, char ** argv){
 	GUI_createMainMenu();	//Start GUI
 	
 	while (1){
-		if(REG_DISPSTAT & DISP_VBLANK_IRQ){
+
+		if(((REG_VCOUNT&0xFF) >= 180)){ //GUI updated once
 			//Sync Events
 			if(handleROMSelect==true){
 				handleROMSelect=false;

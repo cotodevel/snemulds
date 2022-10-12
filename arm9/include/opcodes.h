@@ -54,14 +54,13 @@ GNU General Public License for more details.
 	else CPU_NextCycles = 0;	\
 }
 
-
 //CPU Hardware
 #ifndef __opcodes_cpu_snemul__
 #define __opcodes_cpu_snemul__
 
 #include "common.h"
 
-#define NB_CYCLES 180
+#define NB_CYCLES 139
 
 #endif
 

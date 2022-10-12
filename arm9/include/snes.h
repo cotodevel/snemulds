@@ -43,8 +43,7 @@ struct s_snescore
   uchar		*RAM;
   uchar		*VRAM;
   uchar		*SRAM;
-  uchar		*BSRAM; /* Battery-saved RAM of non-SuperFX ROM */  
-  uchar		*C4RAM; //CX4 WorkRAM (0x2000)
+  uchar		*BSRAM; /* Battery-saved RAM of non-SuperFX ROM */ 
   int		SRAMMask;  
 };
 
@@ -125,8 +124,7 @@ struct s_snes
 #define MAP_DSP         0x83000000
 #define MAP_LOROM_SRAM  0x84000000
 #define MAP_HIROM_SRAM  0x85000000
-#define MAP_CX4         0x86000000	//I/O  00-3F,80-BF:6000-7FFF
-#define MAP_NONE        0x8E000000
+#define MAP_NONE        0x86000000
 #define MAP_LAST        0x8F000000
 
 //Rom Page variables
@@ -150,8 +148,6 @@ struct s_snes
 
 /* DS Memory */
 #define SNES_RAM_ADDRESS	((uint8 *)(0x023C0000))
-#define CX4_RAM_ADDRESS	((uint8 *)(0x023EE000)) //3K
-#define CX4_ROMPAGE_ADDRESS	((uint8 *)(0x023EF000)) //0x11000 (need only 64K). Only 1k left!
 
 #endif
 

@@ -1245,18 +1245,19 @@ void	GUI_showROMInfos(int size){
     	GUI_printf("%s LoROM ", _STR(IDS_ROM_TYPE));
     GUI_printf("%s %s ", _STR(IDS_COUNTRY), SNES.ROM_info.countrycode < 2 ? "NTSC" : "PAL");	
 
-	//Is CX4 coprocessor?
-	if((u8)SNES.ROM_info.ROMtype == 0xf3){
-		CFG.CX4 = 1;
-		GUI_printf("CX4 game detected.");
+	//Is DSP1 coprocessor?
+	if((u8)SNES.ROM_info.ROMtype == (u8)0x5){
+		CFG.DSP1 = 1;
+		VblankWaitNDSTWLMode = false;
 	}
+	else{
+		GUI_printf("NOT DSP game detected.");
+		GUI_printf("Use SnemulDS TGDS1.65 branch.");
+		GUI_printf("Halting.");
+		while(1==1){}
+	}
+	//GUI_printf("GUI_showROMInfos: cart type: 0x%x", (u8)SNES.ROM_info.ROMtype);
 }
-
-
-void LOG(sint8 * ftm, ...){
-
-}
-
 
 
 int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)

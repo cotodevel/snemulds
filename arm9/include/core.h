@@ -65,8 +65,6 @@ typedef void (*voidfuncptr)();
 typedef void (*IOWriteFunc)(uint32 addr, uint32 byte);
 typedef uint32 (*IOReadFunc)(uint32 addr);
 
-#define NB_CYCLES 180
-
 struct s_cpu
 {
   uint16	IRQ, NMI, BRK, COP; /* interruption address */
@@ -101,8 +99,6 @@ struct s_cpu
 
 /* speed hack */
   int           LastAddress;
-  int           WaitAddress;
-  int           WaitCycles;
   uint32		HCycles;
   
   int 			IsBreak;

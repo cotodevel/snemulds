@@ -92,6 +92,7 @@ typedef struct
 extern "C" {
 #endif
 
+extern int lastVcount;
 extern uint32 bittab[256];
 extern uint32 bittab8[16];
 extern void DRAW_PLANE(uint8 BG,uint8  BG_MODE);

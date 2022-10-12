@@ -195,7 +195,6 @@ int get_joypad()
 			if (joypad_conf_mode)
 				return 0;			
 			CFG.BG_priority ^= 1;
-			LOG("BG_pri = %d\n", CFG.BG_priority);
 			joypad_conf_mode = 1;
 			return 0;			
 		}
@@ -214,7 +213,6 @@ int get_joypad()
 			if (joypad_conf_mode)
 				return 0;			
 			CFG.Debug2 --;
-			LOG("Debug = %d\n", CFG.Debug);
 			return 0;			
 		}				
 		if (keys & KEY_DOWN)
@@ -222,7 +220,6 @@ int get_joypad()
 			if (joypad_conf_mode)
 				return 0;			
 			CFG.Debug2 ++;
-			LOG("Debug = %d\n", CFG.Debug);
 			return 0;			
 		}		
 		joypad_conf_mode = 0;		
@@ -463,7 +460,7 @@ void DMA_transfert(uchar port)
   	  if (SNES.V_Count < GFX.ScreenHeight && 
   	  	  SNES.V_Count+(DMA_len / NB_CYCLES) >= GFX.ScreenHeight)
   	  	SNES.DelayedNMI = 1;
-	  SNES.V_Count += (DMA_len / NB_CYCLES);
+	  SNES.V_Count += (DMA_len / (NB_CYCLES));
 	   
   }  
 
@@ -738,13 +735,11 @@ __attribute__((section(".itcm")))
 uint32	R4210(uint32 addr)
 {
 //FIXME
-  	  if (HCYCLES < NB_CYCLES-6 && SNES.V_Count == GFX.ScreenHeight-1)    
-     // if (Cycles >= CPU.Cycles-6 && SNES.V_Count == GFX.ScreenHeight-1)    
+  	  if (HCYCLES < NB_CYCLES-6 && SNES.V_Count == GFX.ScreenHeight-1)
       {
         CPU.NMIActive = 1; DMA_PORT[0x10] = 0; return 0x80;
       }
       SET_WAITCYCLESDELAY(0);
-      if (SNES.V_Count == GFX.ScreenHeight-1) SET_WAITCYCLESDELAY(6);
       if (DMA_PORT[0x10]&0x80) {
         DMA_PORT[0x10] &= ~0x80; return 0x80;
       }
@@ -762,18 +757,13 @@ uint32	R4211(uint32 addr)
 __attribute__((section(".itcm")))
 uint32	R4212(uint32 addr)
 {
-      SET_WAITCYCLESDELAY(0);
-      if (HCYCLES < NB_CYCLES - 65) SET_WAITCYCLESDELAY(60);
-      if (SNES.V_Count == GFX.ScreenHeight-1)
-        SET_WAITCYCLESDELAY(6);
       DMA_PORT[0x12] =
         SNES.V_Count >= GFX.ScreenHeight && SNES.V_Count < GFX.ScreenHeight+3;
 	  // FiXME
 	  if (HCYCLES > 120)
         DMA_PORT[0x12] |= 0x40;
 // FIXME            
-	  if (SNES.v_blank || (HCYCLES < NB_CYCLES-6 && SNES.V_Count == GFX.ScreenHeight-1))
-//      if (SNES.v_blank || (Cycles >= CPU.Cycles-6 && SNES.V_Count == GFX.ScreenHeight-1))     
+	  if (SNES.v_blank || (SNES.V_Count == GFX.ScreenHeight-1))  
           DMA_PORT[0x12] |= 0x80;
       return DMA_PORT[0x12];
 }
@@ -951,15 +941,6 @@ uint32	R2141(uint32 addr)
 /*	 if (TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x33 || TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x11 && 
 	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f)
 	 APU_printLog();*/
-#if 0	 
-	 if (TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x33 /*&& 
-	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f*/)
-	 LOG(".");
-
-	 if (/*TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x33 || */TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x11 /*&& 
-	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f*/)
-	//LOG("1 %02x (%04x, %04x)", TGDSIPCUSER->PORT_SPC_TO_SNES[1], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
-#endif	
 	
 /*	if (newapupc != 0)
 	{
@@ -1521,7 +1502,6 @@ void	W2140(uint32 addr, uint32 value)
     if (CFG.Sound_output)
     {    
 		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
-		LOG("0<-%02x\n", value); 
     	if (CFG.SoundPortSync & 0x10)
     		pseudoSleep(SYNC_TIME);
 		if (CFG.SoundPortSync & 1)
@@ -1975,31 +1955,6 @@ void	HDMA_write()
 }    
 
 
-
-/* SuperFX */
-
-/*void SuperFXExec()
-{
-  if (CFG.SuperFX)
-    {
-      if ((SuperFX.Regs[GSU_SFR]&FLG_G) &&
-	  (SuperFX.Regs[GSU_SCMR]&0x18) == 0x18)
-	{
-          int GSUStatus;
-
-          SuperFXEmulate((SuperFX.Regs[GSU_CLSR]&1)?1330:650);
-          GSUStatus = SuperFX.Regs[GSU_SFR]|(SuperFX.Regs[GSU_SFR+1]<<8);
-          if ((GSUStatus&(FLG_G|FLG_IRQ)) == FLG_IRQ)
-	    {
-		// Trigger a GSU IRQ.
-              CPU.SavedCycles = CPU.Cycles;
-              CPU.IRQState |= IRQ_GSU;
-              CPU.Cycles = 0;
-	    }
-	}
-    }
-}*/
-
 void	read_joypads()
 {
   SNES.joypads[0] = 0;
@@ -2023,8 +1978,6 @@ void	read_mouse()
       delta_x = SNES.mouse_x-SNES.prev_mouse_x;
       delta_y = SNES.mouse_y-SNES.prev_mouse_y;
       
-      if (delta_x || delta_y)
-            LOG("%x %x\n", delta_x, delta_y);   
 
       if (delta_x > 63)
 	{

@@ -39,19 +39,6 @@ GNU General Public License for more details.
 @ Timing counters 
 @-------------------------------------------------------------------------
     .equ        CYCLE_SHIFT,                14
-    .equ        SCANLINE_SHIFT,             20
-
-    .equ        NUM_SCANLINES,              262
-    
-    @ version 0.27 fix
-
-    .equ        CYCLES_PER_SCANLINE,        226
-    .equ        CYCLES_HBLANK,              182
-    
-    .equ        CYCLES_PER_SCANLINE_FAST,   304     @ whats the basis for this? *shrug*
-    .equ        CYCLES_HBLANK_FAST,         244
-    @ version 0.27 fix end
-
 
 @-------------------------------------------------------------------------
 @ Interrupt Vectors

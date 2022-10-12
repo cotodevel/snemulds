@@ -26,7 +26,7 @@
 #include "cfg.h"
 #include "memmap.h"
 #include "utilsTGDS.h"
-#include "c4.h"
+#include "dsp1.h"
 
 uchar *ROM_paging= NULL;
 uint16 *ROM_paging_offs= NULL;
@@ -135,8 +135,8 @@ void InitLoROMMap(int mode)
 
 		MAP[c+1] = MAP[c+0x401] = (uchar *)MAP_PPU; //PPU 2100h-21FFh  I/O Ports (B-Bus) 
 		MAP[c+2] = MAP[c+0x402] = (uchar *)MAP_CPU; //CPU 4000h-41FFh  I/O Ports (manual joypad access)
-		if(CFG.CX4 == 1){
-			MAP[c+3] = MAP[c+0x403] = (uchar *)MAP_CX4;
+		if(CFG.DSP1 == 1){
+			MAP[c+3] = MAP[c+0x403] = (uchar *)MAP_DSP;
 		}
 		else{
 			MAP[c+3] = MAP[c+0x403] = (uchar *)MAP_NONE;
@@ -158,7 +158,7 @@ void InitLoROMMap(int mode)
 		}
 	}
 
-	if (CFG.DSP1)
+	if (CFG.DSP1 == 1)
 	{
 		for (c = 0x180; c < 0x200; c += 8)
 		{
@@ -207,7 +207,7 @@ void InitLoROMMap(int mode)
 			SNES.BlockIsROM[i+0x200] = SNES.BlockIsROM[i+0x600] = TRUE;
 	}
 
-	if (CFG.DSP1)
+	if (CFG.DSP1 == 1)
 	{
 		for (c = 0; c < 0x80; c++)
 		{
@@ -254,7 +254,7 @@ void InitHiROMMap(int mode)
 
 		MAP[c+1] = MAP[c+0x401] = (uchar *)MAP_PPU;
 		MAP[c+2] = MAP[c+0x402] = (uchar *)MAP_CPU;
-		if (CFG.DSP1)
+		if (CFG.DSP1 == 1)
 			MAP[c+3] = MAP[c+0x403] = (uchar *)MAP_DSP;
 		else
 			MAP[c+3] = MAP[c+0x403] = (uchar *)MAP_NONE;
@@ -379,7 +379,6 @@ uint8 *mem_checkReload(int block){
 		uint32 cPC = ((S&0xFFFF) << 16)|(uint32)((sint32)PCptr+(sint32)SnesPCOffset);
 		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET;
 		if (ROM_paging_offs[ROM_paging_cur] == PC_blk){
-			LOG("Detected PC unloading, skip it...\n");
 			ROM_paging_cur++;
 			if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_SIZE) - 1) ){
 				ROM_paging_cur = 0;
@@ -401,7 +400,6 @@ uint8 *mem_checkReload(int block){
 	if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_SIZE) - 1) ){
 		ROM_paging_cur = 0;
 	}
-	LOG("<== %d %p\n", block, ptr+(block&7)*8192-(block << 13));
 	return ptr+(block&7)*8192-(block << 13);
 }
 
@@ -456,8 +454,8 @@ uint8 IO_getbyte(int addr, uint32 address){
 	}
 	break;
 
-	case MAP_CX4:{
-		return (S9xGetC4 ((address) & 0xffff));
+	case MAP_DSP:{
+		return (S9xGetDSP (address & 0xffff));
 	}
 	break;
 
@@ -499,8 +497,8 @@ void IO_setbyte(int addr, uint32 address, uint8 byte){
 		SNES.SRAMWritten = 1;
 		return;
 	}break;
-	case MAP_CX4:{
-		S9xSetC4(byte, address & 0xffff);
+	case MAP_DSP:{
+		S9xSetDSP(byte, address & 0xffff);
 		return;
 	}
 	break;
@@ -547,9 +545,9 @@ uint16 IO_getword(int addr, uint32 address)
 		result |= SNESC.SRAM[(address+1)&SNESC.SRAMMask]<<8;
 		return result;
 	}break;
-	case MAP_CX4:{
-		return (S9xGetC4 (address & 0xffff) |
-			(S9xGetC4 ((address + 1) & 0xffff) << 8));
+	case MAP_DSP:{
+		return (S9xGetDSP (address & 0xffff) |
+			(S9xGetDSP ((address + 1) & 0xffff) << 8));
 	}
 	break;
 	case MAP_HIROM_SRAM:{
@@ -594,9 +592,9 @@ void IO_setword(int addr, uint32 address, uint16 word){
 		SNES.SRAMWritten = 1;
 		return;
 	}break;
-	case MAP_CX4:{
-		S9xSetC4 (word & 0xff, address & 0xffff);
-		S9xSetC4 ((uint8) (word >> 8), (address + 1) & 0xffff);
+	case MAP_DSP:{
+		S9xSetDSP ((uint8) word, (address & 0xffff));
+		S9xSetDSP (word >> 8, (address & 0xffff) + 1);
 		return;
 	}
 	break;
@@ -791,10 +789,6 @@ void *map_memory(uint16 offset, uchar bank)
 	case MAP_HIROM_SRAM:
 		return SNESC.SRAM+(((address&0x7fff)-0x6000+
 						((address&0xf0000)>>3))&SNESC.SRAMMask);
-	case MAP_CX4:{
-		return SNESC.C4RAM + (offset&0x1FFF); //(snes.h: intercept #define MAP_CX4         0x86000000	//I/O  00-3F,80-BF:6000-7FFF)
-	}
-	break;						
 	default:
 		return 0;
 	}
