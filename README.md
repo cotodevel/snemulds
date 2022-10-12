@@ -150,7 +150,11 @@ CPUMOV.sfc -> Pass
 
 
 (SNES) CPU Opcodes Failing:
-None! Non coprocessor games should be somewhat playable now. There are still bugs on the cross-boundary pages (SNES ARM CPU core related)
+None! 
+
+CX4 coprocessor and the rest of non-coprocessor games should be playable now. 
+There are still bugs on the cross-boundary pages, which means the SnemulDS ROM mapper on over 4M games is broken and requires fixing.
+If the NDS had enough memory yeah, all games would have worked right away, but we'll see what can be done about it ;-)
 
 
 Note: Other coprocessor opcodes aren't implemented.
