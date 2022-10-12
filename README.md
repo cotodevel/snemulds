@@ -172,5 +172,24 @@ SPC700AND.sfc -> Pass
 SPC700SBC.sfc -> Pass
 SPC700ADC.sfc -> Pass
 
+--
+Snes9X debugger should be:
+
+opcodes: (*CPU.PC++;)
+
+120 (Registers.PC: 0x8000)
+24  (Registers.PC: 0x8000)
+24  (Registers.PC: 0x8000)
+156 (Registers.PC: 0x8000)
+156 (Registers.PC: 0x8000)
+156 (Registers.PC: 0x8000)
+169 (Registers.PC: 0x8000)
+143 (Registers.PC: 0x8000)
+34 (Registers.PC: 0x8000)
+156 (Registers.PC: 0x8000)
+169 (Registers.PC: 0x8000)
+141 (Registers.PC: 0x8000)
+169 (Registers.PC: 0x8000)
+141 (Registers.PC: 0x8000)
 
 Coto.

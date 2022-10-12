@@ -366,11 +366,8 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-uint8 *mem_checkReload(int block)
-{
+uint8 *mem_checkReload(int block){
 	int i;uchar *ptr;int ret;
-	LOG("==> %d\n", block);
-
 	if (!CFG.LargeROM){
 		return NULL;
 	}
@@ -430,12 +427,8 @@ void InitMap(){
 }
 
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
+#ifdef ARM9
+__attribute__((section(".itcm")))
 #endif
 uint8 IO_getbyte(int addr, uint32 address){
 	
@@ -480,12 +473,8 @@ uint8 IO_getbyte(int addr, uint32 address){
 	}
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
+#ifdef ARM9
+__attribute__((section(".itcm")))
 #endif
 void IO_setbyte(int addr, uint32 address, uint8 byte){
 	
@@ -528,12 +517,8 @@ void IO_setbyte(int addr, uint32 address, uint8 byte){
 	}
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
+#ifdef ARM9
+__attribute__((section(".itcm")))
 #endif
 uint16 IO_getword(int addr, uint32 address)
 {
@@ -580,12 +565,8 @@ uint16 IO_getword(int addr, uint32 address)
 	}
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
+#ifdef ARM9
+__attribute__((section(".itcm")))
 #endif
 void IO_setword(int addr, uint32 address, uint16 word){
 	
