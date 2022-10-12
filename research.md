@@ -28,6 +28,3 @@ IO_getword
 IO_setword 
 
 which are glued to 4) (see above). 
-
-
-todo: detect CX4 Games (MMX2 & MMX3) and enable CX4 map through a setting flag, otherwise load normal SNES games. Then merge into master
