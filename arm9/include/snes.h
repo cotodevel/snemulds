@@ -150,7 +150,8 @@ struct s_snes
 
 /* DS Memory */
 #define SNES_RAM_ADDRESS	((uint8 *)(0x023C0000))
-#define CX4_RAM_ADDRESS	((uint8 *)(0x023EE000))
+#define CX4_RAM_ADDRESS	((uint8 *)(0x023EE000)) //3K
+#define CX4_ROMPAGE_ADDRESS	((uint8 *)(0x023EF000)) //0x11000 (need only 64K). Only 1k left!
 
 #endif
 

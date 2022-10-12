@@ -110,10 +110,7 @@ void S9xInitC4(char * C4ROMFilename){
 	#endif
 	#ifdef ARM9
 	f_close(&fPagingFD);
-	if(currentCX4ROMPage != NULL){ //NDS
-		TGDSARM9Free(currentCX4ROMPage); //NDS
-	}
-	currentCX4ROMPage = TGDSARM9Malloc(64*1024); //NDS
+	currentCX4ROMPage = (uint8 *)CX4_ROMPAGE_ADDRESS; //NDS
 	int flags = charPosixToFlagPosix("r");
 	BYTE mode = posixToFatfsAttrib(flags);
 	FRESULT result = f_open(&fPagingFD, (const TCHAR*)C4ROMFilename, mode);
