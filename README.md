@@ -169,9 +169,10 @@ SPC700EOR.sfc -> Pass
 SPC700INC.sfc -> Pass
 SPC700ORA.sfc -> Pass
 SPC700AND.sfc -> Pass
+SPC700SBC.sfc -> Pass
+
 
 SPC700ADC.sfc -> Fail
-SPC700SBC.sfc -> Fail
 
 
 Coto.
