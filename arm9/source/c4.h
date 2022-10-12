@@ -75,6 +75,15 @@
 #ifndef _C4_H_
 #define _C4_H_
 
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+
+#ifdef _MSC_VER
+#include "port.h"
+#endif
+
+#ifdef ARM9
 #include "typedefsTGDS.h"
 
 typedef signed char int8;
@@ -111,16 +120,6 @@ typedef long long int64;
                        (*((uint8 *) (s) + 2) << 16))
 			
 
-#define WRITE_3WORD(s, d) *(uint8 *) (s) = (uint8) ((d) >> 0), \
-                          *((uint8 *) (s) + 1) = (uint8) ((d) >> 8),\
-                          *((uint8 *) (s) + 2) = (uint8) ((d) >> 16)
-						  
-
-#define READ_3WORD(s) ( (*((uint8 *) (s)) << 0) |\
-                       (*((uint8 *) (s) + 1) << 8) |\
-                       (*((uint8 *) (s) + 2) << 16))
-                       
-
 #define SAR(b, n) ((b)>>(n))
 
 //Snes9X specific
@@ -130,8 +129,12 @@ typedef long long int64;
 #define MEMMAP_SHIFT 12
 #define MEMMAP_MASK (MEMMAP_BLOCK_SIZE - 1)
 
+#endif
+
+#ifdef ARM9
 #ifdef __cplusplus
 extern "C" {
+#endif
 #endif
 
 extern int16 C4WFXVal;
@@ -159,9 +162,22 @@ void C4Op0D();
 extern int16 C4CosTable[];
 extern int16 C4SinTable[];
 
+extern unsigned char CX4ROMBuffer[4 * 1024];
+extern uint8 * currentCX4ROMPage;
+extern int currentCX4ROMPagePtr;
+
+extern uint8 readCX4ValueFromROM(uint32 SNESAddress);
+extern void CX4CopyFromROM(uint32 SNESAddress, uint8 * targetBuffer, int targetBufferSize);
+extern void S9xInitC4(char * C4ROMFilename);
+
+#ifdef _MSC_VER
+extern FILE * curC4FileHandle;
+#endif
+
+extern int curC4FileHandleSize;
+
+#ifdef ARM9
 //c4emu.c
-extern uint8 *CX4FetchROMFromSNESAddress(uint32 Address);
-extern void S9xInitC4 ();
 extern uint8 S9xGetC4 (uint16 Address);
 extern uint8 C4TestPattern [12 * 4];
 extern void C4ConvOAM(void);
@@ -175,9 +191,12 @@ extern void S9xC4ProcessSprites();
 extern void S9xSetC4 (uint8 byte, uint16 Address);
 extern int16 C4SinTable[512];
 extern int16 C4CosTable[512];
+#endif
 
+#ifdef ARM9
 #ifdef __cplusplus
 }
+#endif
 #endif
 
 #endif

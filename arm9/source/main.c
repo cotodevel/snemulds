@@ -420,6 +420,9 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			crc = crc32(0, ROM, size-ROMheader);
 			GUI_printf("CRC = %08x ", crc);
 		}
+		
+		S9xInitC4((char*)&CFG.ROMFile[0]); //must be called after SNES mem allocation takes place + rom already has been closed
+		
 		return reloadROM(ROM-ROMheader, size, crc, nameItem->filenameFromFS_getDirectoryListMethod);
 	}
 	return false;

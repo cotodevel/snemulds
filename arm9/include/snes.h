@@ -139,6 +139,7 @@ struct s_snes
 #define	PAGE_SIZE		(64*1024)
 #define ROM_PAGING_SIZE	(ROM_MAX_SIZE-PAGE_SIZE)
 #define SNES_ROM_PAGING_ADDRESS (SNES_ROM_ADDRESS+PAGE_SIZE)
+
 #define DS_SRAM          ((uint8*)0x0A000000)
 #define MAP  ((uint8 **)(0x06898000))
 #define WMAP ((uint8 **)(0x0689A000))

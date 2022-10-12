@@ -260,7 +260,6 @@ int initSNESEmpty(int firstTime){
     ROM_paging = SNES_ROM_PAGING_ADDRESS;
     ROM_paging_offs = TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
     SNESC.C4RAM = (uchar *)CX4_RAM_ADDRESS;
-	S9xInitC4(); //must be called after SNES mem allocation takes place
     
     if(
       (SNESC.RAM == NULL)
