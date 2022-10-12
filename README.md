@@ -2,7 +2,7 @@
 
 NTR/TWL SDK: TGDS1.65
 
-# SnemulDS 0.6c
+# SnemulDS 0.6d
 
 master: Development branch. Use TGDS1.65: branch for stable features.
 SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes)... 
