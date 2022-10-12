@@ -50,6 +50,7 @@ GNU General Public License for more details.
 #include "about.h"
 #include "utilsTGDS.h"
 #include "clockTGDS.h"
+#include "c4.h"
 
 //struct s_snes SNES;
 //struct s_cfg CFG;
@@ -114,7 +115,7 @@ __attribute__ ((optnone))
 #endif
 bool	reloadROM(char *ROM, int size, int crc, char * name){
   CFG.frame_rate = 1;
-  CFG.DSP1 = CFG.SuperFX = 0;
+  CFG.CX4 = CFG.DSP1 = CFG.SuperFX = 0;
   CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
   CFG.MouseXAddr = CFG.MouseYAddr = CFG.MouseMode = 0;
   CFG.SoundPortSync = 0;
@@ -258,7 +259,9 @@ int initSNESEmpty(int firstTime){
 	  SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
     ROM_paging = SNES_ROM_PAGING_ADDRESS;
     ROM_paging_offs = TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
-
+    SNESC.C4RAM = (uchar *)CX4_RAM_ADDRESS;
+	S9xInitC4(); //must be called after SNES mem allocation takes place
+    
     if(
       (SNESC.RAM == NULL)
       ||

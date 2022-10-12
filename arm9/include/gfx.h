@@ -144,7 +144,7 @@ struct s_gfx
   int           SubScreen, FIXED_color_addsub, SUBSCREEN_addsub;
 
   uint16	*DSMapAddress;
-  uint32	VRAM_ptr; // Start of BG Tiles mem, used by convert function
+  uint32	VRAM_ptr; // Start of BG Tiles mem, used by SNES->DS convert function
   
   t_GFX_lineInfo	lineInfo[192];	
 

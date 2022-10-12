@@ -237,7 +237,7 @@ vramSetup * SNEMULDS_2DVRAM_SETUP(){
 	vramSetupDefault->vramBankSetupInst[VRAM_H_INDEX].vrambankCR = VRAM_H_LCDC_MODE;
 	vramSetupDefault->vramBankSetupInst[VRAM_H_INDEX].enabled = true;
 	
-	//vramSetBankI(VRAM_I_LCD);
+	//vramSetBankI(VRAM_I_LCD); //I       16K   0    -     68A0000h-68A3FFFh
 	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].vrambankCR = VRAM_I_LCDC_MODE;
 	vramSetupDefault->vramBankSetupInst[VRAM_I_INDEX].enabled = true;
 	
@@ -1244,6 +1244,12 @@ void	GUI_showROMInfos(int size){
     else 
     	GUI_printf("%s LoROM ", _STR(IDS_ROM_TYPE));
     GUI_printf("%s %s ", _STR(IDS_COUNTRY), SNES.ROM_info.countrycode < 2 ? "NTSC" : "PAL");	
+
+	//Is CX4 coprocessor?
+	if((u8)SNES.ROM_info.ROMtype == 0xf3){
+		CFG.CX4 = 1;
+		GUI_printf("CX4 game detected.");
+	}
 }
 
 
@@ -1286,21 +1292,21 @@ int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 		
 		if (ptr == NULL) 
 		{
-			// Nous avons touché la fin de la chaine
-			if (good_space == subtext[cnt]) // Pas d'espace positionné, plus rien à faire
+			// Nous avons touchï¿½ la fin de la chaine
+			if (good_space == subtext[cnt]) // Pas d'espace positionnï¿½, plus rien ï¿½ faire
 				break;
-			// S'il on est là c'est qui faut couper la chaine avant
+			// S'il on est lï¿½ c'est qui faut couper la chaine avant
 		}
 		
-		if (good_space != subtext[cnt]) // Si l'espace a été positionné
+		if (good_space != subtext[cnt]) // Si l'espace a ï¿½tï¿½ positionnï¿½
 		{
 			if (ptr)
-				*ptr = ' '; // Le dernier essai doit être effacé
-			*good_space = 0; // Le bon espace est marqué
+				*ptr = ' '; // Le dernier essai doit ï¿½tre effacï¿½
+			*good_space = 0; // Le bon espace est marquï¿½
 		} else
 			good_space = ptr; // Pas de bon espace, alors coupons un mot trop grand
 				
-		cur_text = good_space+1; // Nouveau mot après l'espace
+		cur_text = good_space+1; // Nouveau mot aprï¿½s l'espace
 		//printf("=> %s", cur_text);		
 		subtext[++cnt] = cur_text; 
 	}

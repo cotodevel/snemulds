@@ -380,7 +380,7 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 			for (i = 0; i < len; i += 2)
 			{
 				if ((i & 15) == 0) 
-					check_tile();
+					check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));
 				PPU_PORT[0x16]++;
 			}
 			return offs+len;
@@ -388,7 +388,7 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 		for (i = 0; i < len; i+=2)
 		{
 //			if ((i & 15) == 0) 
-				check_tile();			
+				check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));			
 			SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] = ptr[i];   
 			SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] = ptr[i+1];
 			if (!GFX.FS_incr) {
@@ -411,7 +411,7 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 		for (i = 0; i < len; i+=2)
 		{
 //			if ((i & 15) == 0) 
-				check_tile();
+				check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));
 			SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] = ptr[i];
 			PPU_PORT[0x16] += GFX.SC_incr;
 			if (GFX.FS_incr) {
@@ -1349,11 +1349,11 @@ void	W2118(uint32 addr, uint32 value)
 {
    	 if (PPU_PORT[0x15]&0x80) {
            if (SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] != value)
-			 check_tile();
+			 check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));
            SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] = value;
          } else {
            if (SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] != value)
-			 check_tile();
+			 check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));
            SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] = value;
            PPU_PORT[0x16] += GFX.SC_incr;
            if (GFX.FS_incr) {
@@ -1374,11 +1374,11 @@ void	W2119(uint32 addr, uint32 value)
 {
    	 if ((PPU_PORT[0x15]&0x80) == 0) {
            if (SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] != value)
-				check_tile();
+				check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));
            SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] = value;
          } else {
            if (SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] != value)
-			 check_tile();
+			 check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));
            SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] = value;
            if (!GFX.FS_incr) {
              PPU_PORT[0x16] += GFX.SC_incr;
