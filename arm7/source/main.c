@@ -133,17 +133,17 @@ int main(int _argc, char **_argv) {
 			//if (scanlineCount >= 66) {
 			//	scanlineCount -= 66;
 			//	samplesToMix = 17;
-			//	cyclesToExecute = spcCyclesPerSec / (32000 / 3);
+			//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 3);
 			//} else {
 			//	samplesToMix = 16;
-			//	cyclesToExecute = spcCyclesPerSec / (32000 / 2);
+			//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 2);
 			//}
-			cyclesToExecute = spcCyclesPerSec / (32000 / 2);
+			cyclesToExecute = spcCyclesPerSec / (MIXRATE / 2);
 			ApuExecute(cyclesToExecute);
 			
 			if (scanlineCount >= 16) {
 				scanlineCount -= 16;		
-				samplesToMix = 32;
+				samplesToMix = DSPMIXBUFSIZE;
 				if (apuMixPosition + samplesToMix > MIXBUFSIZE * 2) {
 					int tmp = (apuMixPosition + samplesToMix) - (MIXBUFSIZE * 2);
 					if (tmp != samplesToMix) {
