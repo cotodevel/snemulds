@@ -38,7 +38,7 @@
 #include "utilsTGDS.h"
 #include "dmaTGDS.h"
 #include "keypadTGDS.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "biosTGDS.h"
 #include "crc32.h"
 #include "engine.h"

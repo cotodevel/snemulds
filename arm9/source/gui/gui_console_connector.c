@@ -53,7 +53,7 @@ GNU General Public License for more details.
 #include "cfg.h"
 #include "ppu.h"
 #include "conf.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "snapshot.h"
 #include "about.h"
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.

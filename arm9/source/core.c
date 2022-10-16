@@ -25,7 +25,7 @@ GNU General Public License for more details.
 #include "dsregs.h"
 #include "ipcfifoTGDSUser.h"
 #include "apu_shared.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "ppu.h"
 
 #ifdef WIN32

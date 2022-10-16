@@ -81,7 +81,7 @@
 #endif
 
 #ifdef ARM9
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #endif
 
 #ifdef WIN32

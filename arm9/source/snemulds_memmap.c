@@ -24,7 +24,7 @@
 #include "common.h"
 #include "snes.h"
 #include "cfg.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "utilsTGDS.h"
 #include "c4.h"
 

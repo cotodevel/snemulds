@@ -37,7 +37,7 @@ USA
 
 #ifdef ARM9
 #include <stdbool.h>
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "common.h"
 #include "cfg.h"
 #include "main.h"

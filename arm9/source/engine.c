@@ -42,7 +42,7 @@ GNU General Public License for more details.
 #include "ppu.h"
 #include "main.h"
 #include "conf.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "guiTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #include "nds_cp15_misc.h"

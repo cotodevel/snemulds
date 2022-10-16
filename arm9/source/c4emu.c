@@ -85,7 +85,7 @@
 
 #ifdef ARM9
 #include "snes.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "fatfslayerTGDS.h"
 #include "fs.h"
 #include "ppu.h"

@@ -26,7 +26,7 @@ GNU General Public License for more details.
 //#include "superfx.h"
 #include "opcodes.h"
 #include "ppu.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "ipcfifoTGDSUser.h"
 
 #define bzero(p, s)	memset(p, 0, s)

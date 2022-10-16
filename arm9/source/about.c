@@ -35,7 +35,7 @@ USA
 #include "main.h"
 #include "conf.h"
 #include "fs.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "consoleTGDS.h"
 #include "opcodes.h"
 #include "common.h"
