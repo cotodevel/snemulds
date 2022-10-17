@@ -412,7 +412,7 @@ __attribute__ ((optnone))
 void InitMap(){
 	int i;
 	for (i = 0; i < 256*8; i++){
-		MAP[i] = (uint8*)SNEMULDS_MAP_NONE;	
+		MAP[i] = (uint8*)SNEMULDS_MAP_RELOAD;
 	}
 	int mode = (!CFG.LargeROM) ? NOT_LARGE : USE_PAGING; 
 	if (SNES.HiROM){
