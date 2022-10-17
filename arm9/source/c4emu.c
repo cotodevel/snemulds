@@ -118,7 +118,7 @@ void S9xInitC4(char * C4ROMFilename){
 		FS_unlock();
 		GUI_printf("S9xInitC4():epic fail :%s", C4ROMFilename);
 		while(1==1){}
-		return -1;
+		return;
 	}
 	#endif
 

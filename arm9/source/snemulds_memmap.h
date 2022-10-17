@@ -26,6 +26,16 @@ GNU General Public License for more details.
 #define SPECIAL_MAP(p) ((int)(p) & 0x80000000)
 #define REGULAR_MAP(p) (!((int)(p) & 0x80000000))  	
 
+//indirect mapped memory
+#define SNEMULDS_MAP_RELOAD      0x80000000
+#define SNEMULDS_MAP_PPU         0x81000000
+#define SNEMULDS_MAP_CPU         0x82000000
+#define SNEMULDS_MAP_DSP         0x83000000
+#define SNEMULDS_MAP_LOROM_SRAM  0x84000000
+#define SNEMULDS_MAP_HIROM_SRAM  0x85000000
+#define SNEMULDS_MAP_CX4         0x86000000	//I/O  00-3F,80-BF:6000-7FFF
+#define SNEMULDS_MAP_NONE        0x8E000000
+#define SNEMULDS_MAP_LAST        0x8F000000
 
 #endif /*MEMMAP_H_*/
 
@@ -50,11 +60,11 @@ extern uint8 IO_getbyte(int addr, uint32 address);
 extern void IO_setbyte(int addr, uint32 address, uint8 byte);
 extern uint16 IO_getword(int addr, uint32 address);
 extern void IO_setword(int addr, uint32 address, uint16 word);
-extern uchar mem_getbyte(uint32 offset,uchar bank);
-extern void mem_setbyte(uint32 offset, uchar bank, uchar byte);
-extern ushort mem_getword(uint32 offset,uchar bank);
-extern void mem_setword(uint32 offset, uchar bank, ushort word);
-extern void *mem_getbaseaddress(uint16 offset, uchar bank);
+extern uchar mem_getbyte(uint32 offset,uchar bank, int isProgramBankRegister);
+extern void mem_setbyte(uint32 offset, uchar bank, uchar byte, int isProgramBankRegister);
+extern ushort mem_getword(uint32 offset,uchar bank, int isProgramBankRegister);
+extern void mem_setword(uint32 offset, uchar bank, ushort word, int isProgramBankRegister);
+extern void *mem_getbaseaddress(uint16 offset, uchar bank, int isProgramBankRegister);
 extern void *map_memory(uint16 offset, uchar bank);
 
 #ifdef __cplusplus

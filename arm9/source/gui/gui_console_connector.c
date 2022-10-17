@@ -1253,12 +1253,6 @@ void	GUI_showROMInfos(int size){
 }
 
 
-void LOG(sint8 * ftm, ...){
-
-}
-
-
-
 int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 {
 	int		width = zone->x2 - zone->x1;
