@@ -67,7 +67,6 @@ struct sGUISelectorItem
 extern "C" {
 #endif
 
-extern int GUIScrollBar_handler(t_GUIZone *zone, int message, int param, void *arg);
 extern int GUIButton_handler(t_GUIZone *zone, int message, int param, void *arg);
 extern int GUIImgButton_handler(t_GUIZone *zone, int message, int param, void *arg);
 extern int GUIStrButton_handler(t_GUIZone *zone, int message, int param, void *arg);
@@ -76,7 +75,6 @@ extern int	GUIImage_handler(t_GUIZone *zone, int message, int param, void *arg);
 extern int GUIStatic_handler(t_GUIZone *zone, int message, int param, void *arg);
 extern int GUIStaticEx_handler(t_GUIZone *zone, int message, int param, void *arg);
 extern int GUIChoiceButton_handler(t_GUIZone *zone, int message, int param, void *arg);
-extern t_GUIScreen	*GUI_newSelector(int nb_items, sint8 **items, int title, t_GUIFont *font);
 extern struct sGUISelectorItem GUISelector_getSelected(t_GUIScreen *scr, int *index);
 extern void GUI_deleteSelector(t_GUIScreen *scr);
 extern t_GUIScreen	*GUI_newList(int nb_items, int max_size, int title, t_GUIFont *font);
