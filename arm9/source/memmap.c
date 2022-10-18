@@ -373,7 +373,6 @@ uint8 *mem_checkReload(int block){
 	}
 	i = (block & 0x1FF) >> PAGE_OFFSET;
 	
-	//LOG("checkReload %d %d\r\n", i, ROM_paging_cur);
 	if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF){
 		/* Check that we are not unloading program code */
 		uint32 cPC = ((S&0xFFFF) << 16)|(uint32)((sint32)PCptr+(sint32)SnesPCOffset);

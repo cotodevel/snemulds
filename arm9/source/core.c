@@ -136,11 +136,6 @@ int get_joypad()
 			if ((keys & KEY_RIGHT))
 			{
 				struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
-				/* LOG("%04x %04x %02x %02x %04x %04x\n", CPU.PC,
-				(uint32)((sint32)PCptr+(sint32)SnesPCOffset),
-				TGDSIPC->PORT_SNES_TO_SPC[1], PORT_SPC_TO_SNES[1],
-				 (*(uint32*)(0x27E0000)) & 0xFFFF, *(uint16 *)(APU_RAM_ADDRESS+0x18));
-				*/
 				//TGDSIPC->PORT_SNES_TO_SPC[1] = 0x44; 		
 			}
 			
@@ -909,8 +904,7 @@ uint32	R2140(uint32 addr)
 {
 	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSIPCUSER->APU2);
-	//	LOG("0 %02x (%04x, %04x)\n", TGDSIPCUSER->PORT_SPC_TO_SNES[0], (*(uint32*)(0x27E0000)) & 0xFFFF, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
-      if (!CFG.Sound_output)
+	  if (!CFG.Sound_output)
       { /* APU Skipper */
         switch ((APU2->skipper_cnt1++)%11) {
           case 0: return PPU_PORT[0x40];
@@ -944,8 +938,6 @@ uint32	R2141(uint32 addr)
 	
 /*	if (newapupc != 0)
 	{
-	if (newapupc != oldapupc)
-		LOG("%04x %04x\n", newapupc);
 	oldapupc = newapupc;
 	}*/
 	
@@ -1459,8 +1451,6 @@ void	W2133(uint32 addr, uint32 value)
 
 /*
  * #if 0	
-	if (value == 0x55 && (newapupc & 0xf000) == 0xf000)
-	LOG("%02x 1 (%04x, %04x)\n", value, newapupc, (uint32)((sint32)PCptr+(sint32)SnesPCOffset));
 #else
 	if (value == 0x55 && (newapupc & 0xf000) == 0xf000)
 	{
@@ -1472,10 +1462,9 @@ void	W2133(uint32 addr, uint32 value)
 	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 	if (TGDSIPCUSER->APU_ADDR_BLKP[1])
 	{
-		//LOG("1 b %04x\n", newapupc);
 		while (TGDSIPCUSER->APU_ADDR_BLKP[1]);
 #if 0
-  		LOG("1 w %02x %04x\n", value, *(uint16 *)(APU_RAM_ADDRESS+0x18));
+  		
 #else  		
 	{
 	int i;
@@ -1526,8 +1515,7 @@ void	W2141(uint32 addr, uint32 value)
     if (CFG.Sound_output)
     {
 		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
-		//LOG("1<-%02x\n", value);    	
-    	if (CFG.SoundPortSync & 0x20)
+		if (CFG.SoundPortSync & 0x20)
     		pseudoSleep(SYNC_TIME);
 		if (CFG.SoundPortSync & 2)
 		{
@@ -1563,7 +1551,6 @@ void	W2142(uint32 addr, uint32 value)
     if (CFG.Sound_output)
     {    
 		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
-//    	LOG("2<-%02x\n", value);    	
     	if (CFG.SoundPortSync & 0x40)
     		pseudoSleep(SYNC_TIME);    	
 		if (CFG.SoundPortSync & 4)
@@ -1589,7 +1576,6 @@ void	W2143(uint32 addr, uint32 value)
     if (CFG.Sound_output)
     {  
 		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
-//    	LOG("3<-%02x\n", value);    	
     	if (CFG.SoundPortSync & 0x80)
     		pseudoSleep(SYNC_TIME);    	
 		if (CFG.SoundPortSync & 8)
@@ -1897,8 +1883,6 @@ uint8	DMA_port_read(uint32 address)
 void HDMA_write_port(uchar port, uint8 *data)
 {
   uint32 	PPUport = SNES.HDMA_port[port];
-  
-  //LOG("HDMA %02x %04x %p\n", SNES.HDMA_info[port], 0x2100+PPUport, data);  
   switch(SNES.HDMA_info[port])
   {
     case 0x00 :
