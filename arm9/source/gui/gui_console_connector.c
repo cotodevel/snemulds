@@ -187,10 +187,8 @@ bool InitProjectSpecificConsole(){
 	GUI.Palette[39] = RGB8(255, 255, 255); // White
 	
 	//InitializeConsole(DefaultSessionConsole); //no, use native SnemulDS console engine, not the modified one by TGDS
-	
 	GUI.consoleAtTopScreen = false;	//GUI console at bottom screen
-	GUI.consoleBacklightOn = true;	//Backlight On for console
-	
+	GUI.consoleBacklightOn = true;	//Backlight On for console	
 	return true;
 }
 
@@ -623,10 +621,22 @@ int GFXConfigHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			save_config_file();
 			break;			
 		}
-		TGDSARM9Free(GUI.screen);
+		GUI_deleteSelector(GUI.screen);
 		GUI_switchScreen(scr_main);	
 		return 1;
 	}
+
+	/////////////////////////////////////
+	//uncaught events cause GUI closure
+	default:{
+		GUI.ScanJoypad = 0;
+		SNES.Stopped = 0;
+		GUI.exit = 1;
+		GUI_deleteSelector(GUI.screen);
+		GUI_switchScreen(scr_main);	
+	}break;
+	/////////////////////////////////////
+
 	}
 	return 0;
 }
@@ -655,12 +665,12 @@ int AdvancedHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		{
 			t_GUIScreen *scr = buildGFXConfigMenu();
 			scr->handler = GFXConfigHandler;
-			TGDSARM9Free(GUI.screen);
+			GUI_deleteSelector(GUI.screen);
 			GUI_switchScreen(scr);
 			return 1;
 		}
 		}
-		TGDSARM9Free(GUI.screen);
+		GUI_deleteSelector(GUI.screen);
 		GUI_switchScreen(scr_main);	
 		return 1;
 	}
@@ -759,6 +769,18 @@ int LayersOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			GUI_switchScreen(scr_main);			
 			return 1;		
 		}
+		
+		/////////////////////////////////////
+		//uncaught events cause GUI closure
+		default:{
+			GUI.ScanJoypad = 0;
+			SNES.Stopped = 0;
+			GUI.exit = 1;
+			GUI_deleteSelector(GUI.screen);
+			GUI_switchScreen(scr_main);	
+		}break;
+		/////////////////////////////////////
+		
 	}
 	return 0;
 }
@@ -851,6 +873,18 @@ int ScreenOptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			GUI_switchScreen(scr_main);			
 			return 1;
 		}
+
+		/////////////////////////////////////
+		//uncaught events cause GUI closure
+		default:{
+			GUI.ScanJoypad = 0;
+			SNES.Stopped = 0;
+			GUI.exit = 1;
+			GUI_deleteSelector(GUI.screen);
+			GUI_switchScreen(scr_main);	
+		}break;
+		/////////////////////////////////////
+		
 	}
 	return 0;
 }
@@ -1286,21 +1320,21 @@ int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 		
 		if (ptr == NULL) 
 		{
-			// Nous avons touch� la fin de la chaine
-			if (good_space == subtext[cnt]) // Pas d'espace positionn�, plus rien � faire
+			// Nous avons touchï¿½ la fin de la chaine
+			if (good_space == subtext[cnt]) // Pas d'espace positionnï¿½, plus rien ï¿½ faire
 				break;
-			// S'il on est l� c'est qui faut couper la chaine avant
+			// S'il on est lï¿½ c'est qui faut couper la chaine avant
 		}
 		
-		if (good_space != subtext[cnt]) // Si l'espace a �t� positionn�
+		if (good_space != subtext[cnt]) // Si l'espace a ï¿½tï¿½ positionnï¿½
 		{
 			if (ptr)
-				*ptr = ' '; // Le dernier essai doit �tre effac�
-			*good_space = 0; // Le bon espace est marqu�
+				*ptr = ' '; // Le dernier essai doit ï¿½tre effacï¿½
+			*good_space = 0; // Le bon espace est marquï¿½
 		} else
 			good_space = ptr; // Pas de bon espace, alors coupons un mot trop grand
 				
-		cur_text = good_space+1; // Nouveau mot apr�s l'espace
+		cur_text = good_space+1; // Nouveau mot aprï¿½s l'espace
 		//printf("=> %s", cur_text);		
 		subtext[++cnt] = cur_text; 
 	}
