@@ -78,7 +78,7 @@
 
 #include "snes.h"
 #include <math.h>
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "ppu.h"
 #include "c4.h"
 

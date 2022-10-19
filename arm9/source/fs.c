@@ -55,7 +55,7 @@ GNU General Public License for more details.
 #include "typedefsTGDS.h"
 #include "consoleTGDS.h"
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
-#include "memmap.h"
+#include "snemulds_memmap.h"
 /* *********************** FAT ************************ */
 
 #if (defined(__GNUC__) && !defined(__clang__))

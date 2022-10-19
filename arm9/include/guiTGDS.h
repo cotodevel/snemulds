@@ -119,7 +119,6 @@ extern "C" {
 extern char startFilePath[MAX_TGDSFILENAME_LENGTH+1];
 extern char startSPCFilePath[MAX_TGDSFILENAME_LENGTH+1];
 
-extern	void	LOG(sint8 *fmt, ...);
 extern t_GUIScreen	*GUI_newScreen(int nb_elems);
 extern void	GUI_setZone(t_GUIScreen *scr, int i,int x1, int y1, int x2, int y2);
 extern void	GUI_linkObject(t_GUIScreen *scr, int i, void *data, t_GUIHandler handler);

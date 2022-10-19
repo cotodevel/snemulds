@@ -75,7 +75,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "c4.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 
 short C4WFXVal;
 short C4WFYVal;

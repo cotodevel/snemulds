@@ -1,7 +1,6 @@
 #include <stdio.h>
-#include "posixHandleTGDS.h"
 #include <string.h>
-
+#include "posixHandleTGDS.h"
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "gui_widgets.h"
@@ -103,91 +102,6 @@ int	GUIList_handler(t_GUIZone *zone, int message, int param, void *arg)
 		zone->handler(zone, GUI_DRAW, 0, 0);
 		return 1;
 	}
-	}
-	return 0;
-}
-
-int	GUIScrollBar_handler(t_GUIZone *zone, int message, int param, void *arg)
-{
-	t_GUIScrollBar *this = (t_GUIScrollBar *)zone->data;
-	
-	switch (message)
-	{
-	case GUI_DRAW:
-	{
-		GUI_drawBar(zone, GUI_DARKGREY, 0, 0, 32, zone->y2-zone->y1);
-		GUI_drawBar(zone, GUI_GREY, 0, this->value * (zone->y2 - zone->y1) / this->max, 
-						32, (this->value+this->range) * (zone->y2-zone->y1) / this->max);
-		return 1;
-	}
-	break;
-	case GUI_EVENT:
-	{
-		if (param == GUI_EVENT_STYLUS)
-		{
-			t_GUIEvent	*ev = (t_GUIEvent *)arg;
-			switch (ev->event)
-			{
-			case EVENT_STYLUS_PRESSED:
-			{
-				int value, pos;
-				
-				pos = ev->stl.y-zone->y1;
-				value = pos * this->max / (zone->y2-zone->y1);
-				
-				this->pos = -1;
-				if (pos >= this->value * (zone->y2 - zone->y1) / this->max &&
-					pos <= (this->value+this->range) * (zone->y2 - zone->y1) / this->max)
-				{
-					this->pos = pos;
-					this->drag_pos = pos - this->value * (zone->y2 - zone->y1) / this->max;
-					return 1;
-				}
-				
-				if (value < 0)
-					value = 0;
-				if (value > this->max-this->range)
-					value = this->max-this->range;
-				if (this->value != value)
-				{
-					this->value = value;					
-					//printf2(0, 20, "%d %d | %d", value, this->pos); 
-					zone->handler(zone, GUI_DRAW, 0, 0);				
-					GUI_dispatchMessage(GUI.screen, GUI_SCROLLED, this->value, this);
-				}
-				return 1;
-			}
-			case EVENT_STYLUS_DRAGGED:
-			{
-				if (this->pos == -1)
-					return 1;	
-				
-				int pos, value;
-				pos = this->pos + ev->stl.dy;	
-				if (pos < 0)
-					return 0;
-				value = (pos - this->drag_pos) * this->max / (zone->y2 - zone->y1);
-				if (value < 0 || value > this->max - this->range)
-					return 0;
-//				printf2(0, 21, "%d %d %d | %d %d", value, this->pos, pos, this->max, this->range);				
-				this->pos = pos;
-				if (this->value != value)
-				{
-					this->value = value;
-					zone->handler(zone, GUI_DRAW, 0, 0);
-				
-					GUI_dispatchMessage(GUI.screen, GUI_SCROLLED, this->value, this);
-				}
-				return 1;
-			}
-			}
-		}
-	}
-	break;
-	case GUI_LIST_CHANGED:
-		this->value = param;
-		zone->handler(zone, GUI_DRAW, 0, 0);
-		return 1;
 	}
 	return 0;
 }
@@ -405,46 +319,6 @@ int	GUIImage_handler(t_GUIZone *zone, int message, int param, void *arg)
 	return 0;
 }
 
-t_GUIScreen	*GUI_newSelector(int nb_items, sint8 **items, int title, t_GUIFont *font)
-{
-	t_GUIScreen	*scr_select;
-	
-	scr_select = GUI_newScreen(5);
-	GUI_setZone(scr_select, 0, 0, 32, 256-40, 32+128);
-	GUI_setZone(scr_select, 1, 0, 0, 256, 32);
-	GUI_setZone(scr_select, 2, 256-32, 32, 256, 32+128);
-	GUI_setZone(scr_select, 3, 0, 192-20, 128, 192);
-	GUI_setZone(scr_select, 4, 128, 192-20, 256, 192);
-
-	int	i;
-	for (i = 0; i < 5; i++)
-		scr_select->zones[i].font = font;
-	  
-    t_GUIList *list = TGDSARM9Malloc(sizeof(t_GUIList));
-    memset(list, 0, sizeof(t_GUIList));
-	list->nb_items = nb_items;
-	list->items = items;
-	GUI_linkObject(scr_select, 0, list, GUIList_handler);
-
-	if (nb_items > GUI_getZoneTextHeight(&scr_select->zones[0]))
-	{
-	t_GUIScrollBar *sb = TGDSARM9Malloc(sizeof(t_GUIScrollBar));
-	memset(sb, 0, sizeof(t_GUIScrollBar));
-	sb->range = GUI_getZoneTextHeight(&scr_select->zones[0]);
-	sb->max = nb_items;
-	GUI_linkObject(scr_select, 2, sb, GUIScrollBar_handler);
-	}
-	
-	scr_select->curs = 0;
-	
-	GUI_linkObject(scr_select, 1, (void *)title, GUIStatic_handler);
-	
-	GUI_linkStrButton(scr_select, 3, IDS_OK, KEY_A);
-	GUI_linkStrButton(scr_select, 4, IDS_CANCEL, KEY_B);
-	
-	return scr_select;
-}
-
 struct sGUISelectorItem GUISelector_getSelected(t_GUIScreen *scr, int *index) 
 {
 	struct sGUISelectorItem guiSelectorItem;
@@ -480,12 +354,7 @@ struct sGUISelectorItem GUISelector_getSelected(t_GUIScreen *scr, int *index)
 
 void GUI_deleteSelector(t_GUIScreen *scr)
 {
-	t_GUIList *list = scr->zones[0].data;
-	TGDSARM9Free(list->items);
-	if (scr->zones[2].data)
-		TGDSARM9Free(scr->zones[2].data);
-	TGDSARM9Free(scr->zones[0].data);
-	TGDSARM9Free(scr);
+	GUI_deleteList(scr);
 }
 
 t_GUIScreen	*GUI_newList(int nb_items, int max_size, int title, t_GUIFont *font)
@@ -530,10 +399,18 @@ void	GUI_setItem(t_GUIScreen *scr, int i, sint8 *s, int max_size)
 	strncpy(list->items[i], s, max_size);
 }
 
-void GUI_deleteList(t_GUIScreen *scr)
-{
-	t_GUIList *list = scr->zones[0].data;
-	TGDSARM9Free(list->items);
-	TGDSARM9Free(scr->zones[0].data);
-	TGDSARM9Free(scr);
+void GUI_deleteList(t_GUIScreen *scr){
+	if(scr != NULL){
+		int i = 0;
+		for(i = 0; i < 41; i++){
+			t_GUIList *list = scr->zones[i].data;
+			if(list != NULL){
+				if(list->items != NULL){
+					TGDSARM9Free(list->items);
+				}
+				TGDSARM9Free(scr->zones[i].data);
+			}
+		}
+		TGDSARM9Free(scr);
+	}
 }
