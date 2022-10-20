@@ -100,36 +100,44 @@ SECTIONS
     }
     __exidx_end = .;
 	. = ALIGN(4);
-	/* Sharem Work Memory */
-	___arm9sharedwram_vma_start = .;
-    .arm9sharedwram :
+	/* Stub to hook ITCM + other independent sections*/
+	.arm9stub :
     {
-        arm9sharedwram = .;
-        *(.arm9sharedwram)
+        arm9stub = .;
+        *(.arm9stub)
 		. = ALIGN(4);
     }
-    . = ADDR (.arm9sharedwram) + SIZEOF (.arm9sharedwram);
-    ___arm9sharedwram_vma_end__ = .;
-	. = ALIGN(4);
+    . = ADDR (.arm9stub) + SIZEOF (.arm9stub);
+    . = ALIGN(4);
 	/* ITCM */
 	__itcm_vma_start = .;
-	.itcm _itcm_start : AT ( ADDR (.arm9sharedwram) + SIZEOF (.arm9sharedwram) )
+	.itcm _itcm_start : AT ( ADDR (.arm9stub) + SIZEOF (.arm9stub) )
     {
         KEEP(*(.itcm))
 		. = ALIGN(4);
     } 
-    . = ADDR (.arm9sharedwram) + SIZEOF (.arm9sharedwram) + SIZEOF (.itcm);
+    . = ADDR (.arm9stub) + SIZEOF (.arm9stub) + SIZEOF (.itcm);
     __itcm_vma_end__ = .;
 	. = ALIGN(4);
 	/* DTCM */
 	__dtcm_vma_start = .;
-    .dtcm _dtcm_start : AT ( ADDR (.arm9sharedwram) + SIZEOF (.arm9sharedwram) + SIZEOF (.itcm) )
+    .dtcm _dtcm_start : AT ( ADDR (.arm9stub) + SIZEOF (.arm9stub) + SIZEOF (.itcm) )
     {
         KEEP(*(.dtcm))
 		. = ALIGN(4);
     } 
-    . = ADDR (.arm9sharedwram) + SIZEOF (.arm9sharedwram) + SIZEOF (.itcm) + SIZEOF (.dtcm);
+    . = ADDR (.arm9stub) + SIZEOF (.arm9stub) + SIZEOF (.itcm) + SIZEOF (.dtcm);
 	__dtcm_vma_end__ = .;
+	. = ALIGN(4);
+	___arm9sharedwram_vma_start = .;
+    .arm9sharedwram _arm9sharedwram_start : AT ( ADDR (.arm9stub) + SIZEOF (.arm9stub) + SIZEOF (.itcm) + SIZEOF (.dtcm) )
+    {
+        KEEP(*(.arm9sharedwram))
+		*(.arm9sharedwram)
+		. = ALIGN(4);
+    } 
+    . = ADDR (.arm9stub) + SIZEOF (.arm9stub) + SIZEOF (.itcm) + SIZEOF (.dtcm) + SIZEOF (.arm9sharedwram);
+	___arm9sharedwram_vma_end__ = .;
 	. = ALIGN(4);
 	__vma_stub_end__ = .;
     __end = __vma_stub_end__ + 0x100;
