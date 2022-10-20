@@ -5,7 +5,7 @@ NTR/TWL SDK: TGDS1.65
 # SnemulDS 0.6d
 
 master: Development branch. Use TGDS1.65: branch for stable features.
-SnemulDS 0.6b Original Sources (because codebase it´s not either 0.5 or 0.6a from snemuldsx source codes)... 
+SnemulDS 0.6b Original Sources (because codebase itÂ´s not either 0.5 or 0.6a from snemuldsx source codes)... 
 This is based from real 0.6.a sources archeide left years ago and I managed to find.
 
 Usage:
@@ -150,9 +150,27 @@ CPUMOV.sfc -> Pass
 
 
 (SNES) CPU Opcodes Failing:
-None! Non coprocessor games should be somewhat playable now. There are still bugs on the cross-boundary pages (SNES ARM CPU core related)
+None! 
 
+CX4 coprocessor and the rest of non-coprocessor games should be playable now. 
+There are still bugs on the cross-boundary pages, which means the SnemulDS ROM mapper on over 4M games is broken and requires fixing.
+If the NDS had enough memory yeah, all games would have worked right away, but we'll see what can be done about it ;-)
 
 Note: Other coprocessor opcodes aren't implemented.
+
+
+----
+
+SnemulDS APU Tests:
+
+SPC700DEC.sfc -> Pass
+SPC700EOR.sfc -> Pass
+SPC700INC.sfc -> Pass
+SPC700ORA.sfc -> Pass
+SPC700AND.sfc -> Pass
+
+SPC700ADC.sfc -> Fail
+SPC700SBC.sfc -> Fail
+
 
 Coto.
