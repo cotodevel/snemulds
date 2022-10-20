@@ -272,7 +272,7 @@ zeroAndHighPageMemWrite8:
 .ENDM
 
 .MACRO adcFromR0
-	@ Set CVH flags
+	@ Set CVH flags @todo: these three flags are set forcefully, in fact, these three should be set according the ARM 'adc' ARM processor register flags. 
     tst r1, #1 << 6
     orrne APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG @V flag
     tst r1, #CYCLES_H_FLAG
@@ -304,7 +304,7 @@ zeroAndHighPageMemWrite8:
 .ENDM
 
 .MACRO sbcFromR0
-	@ Set CVH flags
+	@ Set CVH flags @todo: these three flags are set forcefully, in fact, these three should be set according the ARM 'sbc' ARM processor register flags. 
     tst r1, #1 << 6
     orrne APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG @V flag
     tst r1, #CYCLES_H_FLAG
