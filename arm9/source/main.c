@@ -579,7 +579,7 @@ int main(int argc, char ** argv){
 	
 	while (1){
 
-		if(((REG_VCOUNT&0xFF) >= 180)){ //GUI updated once
+		if(((REG_VCOUNT&0xFF) >= 190)){ //GUI updated once
 			//Sync Events
 			if(handleROMSelect==true){
 				handleROMSelect=false;

@@ -40,7 +40,7 @@ GNU General Public License for more details.
 #define REAL_A ((SaveR8 & 0x00000080) ? \
 			(A >> 24 | (SnesB&0xFF000000) >> 16) : (A >> 16))
 #define REAL_CYCLES (-((sint32)SaveR8 >> 14))
-#define HCYCLES (CPU.HCycles+CPU.Cycles+((sint32)SaveR8 >> 14))
+#define HCYCLES (CPU.HCycles+(CPU.Cycles-16)+((sint32)SaveR8 >> 14))
 #define ADD_CYCLES(x)	(SaveR8 +=((x)<<14))
 //#define FIX_VCOUNT		{ if ((sint32)SaveR8 > 0) { SNES.VCount++; (sint32)SaveR8 -= NB_CYCLES; ) }  
 #define SET_WAITCYCLES(c) {	\
@@ -49,9 +49,7 @@ GNU General Public License for more details.
 
 #define SET_WAITCYCLESDELAY(delay) {	\
 	CPU_WaitAddress = CPU_LoopAddress; \
-	uint32 tmp = NB_CYCLES-delay-CPU.Cycles-CPU.HCycles; \
-	if (tmp < 0) CPU_NextCycles = (tmp) << 14; \
-	else CPU_NextCycles = 0;	\
+	CPU_NextCycles = -1; \
 }
 
 //CPU Hardware

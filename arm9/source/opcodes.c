@@ -171,15 +171,15 @@ uint16	pullw()
 	return w;
 }
 
-
-void CPU_goto(int cycles)
-{	
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+void CPU_goto(int cycles){
 	CPU.Cycles = cycles;
-		
 	CPU_unpack();
 	
 //	*APU_ADDR_BLK = 0;
-	CPU_goto2(cycles);
+	CPU_goto2(cycles-6);
 //	*APU_ADDR_BLK = 1;
 	CPU.packed = 0;
 

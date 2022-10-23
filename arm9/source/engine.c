@@ -103,7 +103,6 @@ int saveSRAM()
 }
 
 unsigned char interrupted;
-extern long Cycles;
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
