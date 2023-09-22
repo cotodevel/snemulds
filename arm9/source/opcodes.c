@@ -105,8 +105,7 @@ void CPU_unpack(){
 	if (CPU.unpacked){
 		return;	
 	}
-	int isProgramBankRegister = 0; //it's Data Bank Register
-	SnesPCOffset = -(sint32)mem_getbaseaddress(CPU.PC, CPU.PB, isProgramBankRegister);
+	SnesPCOffset = -(sint32)mem_getbaseaddress(CPU.PC, CPU.PB);
 	PCptr = map_memory(CPU.PC, CPU.PB);
 
 	S = CPU.PB;
