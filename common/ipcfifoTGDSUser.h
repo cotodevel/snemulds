@@ -72,13 +72,14 @@ struct sIPCSharedTGDSSpecific{
 
 // Project Specific
 #define SNEMULDS_SETUP_ARM7 (u32)(0xffff00a0)
-#define SNEMULDS_APUCMD_RESET 0xffff00a1
-#define SNEMULDS_APUCMD_PAUSE 0xffff00a2
-#define SNEMULDS_APUCMD_PLAYSPC 0xffff00a3
-#define SNEMULDS_APUCMD_SPCDISABLE 0xffff00a4
-#define SNEMULDS_APUCMD_CLRMIXERBUF 0xffff00a5
-#define SNEMULDS_APUCMD_SAVESPC 0xffff00a6
-#define SNEMULDS_APUCMD_LOADSPC 0xffff00a7
+#define SNEMULDS_APUCMD_RESET (u32)(0xffff00a1)
+#define SNEMULDS_APUCMD_PAUSE (u32)(0xffff00a2)
+#define SNEMULDS_APUCMD_PLAYSPC (u32)(0xffff00a3)
+#define SNEMULDS_APUCMD_SPCDISABLE (u32)(0xffff00a4)
+#define SNEMULDS_APUCMD_CLRMIXERBUF (u32)(0xffff00a5)
+#define SNEMULDS_APUCMD_SAVESPC (u32)(0xffff00a6)
+#define SNEMULDS_APUCMD_LOADSPC (u32)(0xffff00a7)
+#define SNEMULDS_APUCMD_FORCESYNCON (u32)(0xffff00a8)
 
 #ifdef ARM7
 #define SNEMULDS_IPC ((struct sIPCSharedTGDSSpecific*)(NDS_CACHED_SCRATCHPAD + (80*4)))
@@ -100,11 +101,6 @@ extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 //project specific
 extern uint32 ADDR_PORT_SNES_TO_SPC;
 extern uint32 ADDR_PORT_SPC_TO_SNES;
-
-#ifdef ARM9
-extern void update_ram_snes();
-#endif
-
 extern void update_spc_ports();
 
 #ifdef __cplusplus

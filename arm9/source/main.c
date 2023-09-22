@@ -580,6 +580,11 @@ int main(int argc, char ** argv){
 	switchToSnemulDSConsoleColors();
 	GUI_createMainMenu();	//Start GUI
 	
+	//Some games require specific hacks to run
+    if(strncmp((char*)&SNES.ROM_info.title[0], "BREATH OF FIRE 2", 16) == 0){
+      APU_command(SNEMULDS_APUCMD_FORCESYNCON);
+    }
+	
 	while (1){
 		if(REG_DISPSTAT & DISP_VBLANK_IRQ){
 			//Sync Events

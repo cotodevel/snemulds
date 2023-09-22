@@ -61,6 +61,10 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 	switch (cmd1) {
 		//ARM7 command handler
 		#ifdef ARM7
+		case (SNEMULDS_APUCMD_FORCESYNCON):{
+			APUSYNC=true;
+		}break;
+		
 		case (SNEMULDS_SETUP_ARM7):{
 			playBuffer = (uint16*)SNES_PLAYBUFFER_ADDRESS;
 			int i   = 0;
@@ -167,12 +171,6 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 }
 
 //project specific stuff
-#ifdef ARM9
-//small hack to update SNES_ADDRESS at opcodes2.s
-void update_ram_snes(){
-    //snes_ram_address = (uint32)&snes_ram_bsram[0x6000];
-}
-#endif
 
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
