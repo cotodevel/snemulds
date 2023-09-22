@@ -75,18 +75,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "c4.h"
-
-#ifdef WIN32
-#include "snes9x_memmap.h"
-#endif
-
-#ifdef ARM9
 #include "snemulds_memmap.h"
-#endif
-
-#ifdef WIN32
-extern "C" {
-#endif
 
 short C4WFXVal;
 short C4WFYVal;
@@ -228,8 +217,4 @@ void C4LoaDMem(char *C4RAM)
           S9xGetMemPointer(READ_3WORD(C4RAM+0x1f40)),
           READ_WORD(C4RAM+0x1f43));
 }
-#endif
-
-#ifdef WIN32
-}//end extern C
 #endif

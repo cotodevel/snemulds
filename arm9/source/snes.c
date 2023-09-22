@@ -96,13 +96,13 @@ void	reset_GFX()
 
 void	reset_CPU()
 {
-  CPU.IRQ = mem_getword(0xffee, 0, 0);
-  CPU.NMI = mem_getword(0xffea, 0, 0);
-  CPU.BRK = mem_getword(0xffe6, 0, 0);
+  CPU.IRQ = mem_getword(0xffee, 0);
+  CPU.NMI = mem_getword(0xffea, 0);
+  CPU.BRK = mem_getword(0xffe6, 0);
   BRKaddress = CPU.BRK; 
-  CPU.COP = mem_getword(0xffe4, 0, 0);
+  CPU.COP = mem_getword(0xffe4, 0);
   COPaddress = CPU.COP;
-  CPU.PC  = mem_getword(0xfffc, 0, 0);
+  CPU.PC  = mem_getword(0xfffc, 0);
   CPU.D = CPU.PB = CPU.DB = 0;
   CPU.P = P_E | P_M | P_X | P_I;
   CPU.A = CPU.X = CPU.Y = 0;
@@ -110,7 +110,7 @@ void	reset_CPU()
 
   CPU_init();	
   PCptr = (u8*)map_memory(CPU.PC, CPU.PB);
-  SnesPCOffset = -((sint32)mem_getbaseaddress(CPU.PC, CPU.PB, 0));
+  SnesPCOffset = -((sint32)mem_getbaseaddress(CPU.PC, CPU.PB));
   //GUI_printf("PCptr = %08x\n", PCptr);
   CPU.IsBreak = 0;
   CPU.packed = CPU.unpacked = 0;

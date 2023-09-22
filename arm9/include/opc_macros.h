@@ -75,10 +75,8 @@ inline uchar   direct_getbyte(uint32 offset)
   {	
   	return SNES.RAM[_offset];
   }
-  else{
-  	int isProgramBankRegister = 0; //it's Data Bank Register
-	return mem_getbyte(_offset, 0, isProgramBankRegister);	
-  }
+  else
+  	return mem_getbyte(_offset, 0);	
 }
 
 inline uchar   direct_getbyte2(uint32 offset)
@@ -88,10 +86,8 @@ inline uchar   direct_getbyte2(uint32 offset)
   {
   	return SNES.RAM[_offset+2];
   }
-  else{
-  	int isProgramBankRegister = 0; //it's Data Bank Register
-	return mem_getbyte(_offset+2, 0, isProgramBankRegister);	
-  }
+  else
+  	return mem_getbyte(_offset+2, 0);	
 }
 
 inline void	direct_setbyte(uint32 offset, uchar byte)
@@ -99,10 +95,8 @@ inline void	direct_setbyte(uint32 offset, uchar byte)
   uint16 _offset = (uint16)(D+offset);	
   if (_offset < 0x2000)
   	SNES.RAM[_offset] = byte;
-  else{
-  	int isProgramBankRegister = 0; //it's Data Bank Register
-	mem_setbyte(_offset, 0, byte, isProgramBankRegister);	
-  }
+  else
+  	mem_setbyte(_offset, 0, byte);	
 }
 
 inline ushort  direct_getword(uint32 offset)
@@ -112,10 +106,8 @@ inline ushort  direct_getword(uint32 offset)
   {
   	return GET_WORD16(SNES.RAM+_offset);
   }
-  else{
-  	int isProgramBankRegister = 0; //it's Data Bank Register
-	return mem_getword(_offset, 0, isProgramBankRegister);	
-  }
+  else
+  	return mem_getword(_offset, 0);	
 }
 
 inline void  direct_setword(uint32 offset, uint16 word)
@@ -123,10 +115,8 @@ inline void  direct_setword(uint32 offset, uint16 word)
   uint16 _offset = (uint16)(D+offset);
   if (_offset < 0x2000)
   	SET_WORD16(SNES.RAM+_offset, word)
-  else{
-	int isProgramBankRegister = 0; //it's Data Bank Register
-  	mem_setword(_offset, 0, word, isProgramBankRegister);	
-  }
+  else
+  	mem_setword(_offset, 0, word);	
 }
 
 inline uint8 rol_b(uint8 a)

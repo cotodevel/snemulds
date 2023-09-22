@@ -420,9 +420,6 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			crc = crc32(0, ROM, size-ROMheader);
 			GUI_printf("CRC = %08x ", crc);
 		}
-		
-		S9xInitC4((char*)&CFG.ROMFile[0]); //must be called after SNES mem allocation takes place + rom already has been closed
-		
 		return reloadROM(ROM-ROMheader, size, crc, nameItem->filenameFromFS_getDirectoryListMethod);
 	}
 	return false;
@@ -582,6 +579,11 @@ int main(int argc, char ** argv){
 	
 	switchToSnemulDSConsoleColors();
 	GUI_createMainMenu();	//Start GUI
+	
+	//Some games require specific hacks to run
+    if(strncmp((char*)&SNES.ROM_info.title[0], "BREATH OF FIRE 2", 16) == 0){
+      APU_command(SNEMULDS_APUCMD_FORCESYNCON);
+    }
 	
 	while (1){
 		if(REG_DISPSTAT & DISP_VBLANK_IRQ){

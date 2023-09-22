@@ -1320,21 +1320,21 @@ int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 		
 		if (ptr == NULL) 
 		{
-			// Nous avons touchï¿½ la fin de la chaine
-			if (good_space == subtext[cnt]) // Pas d'espace positionnï¿½, plus rien ï¿½ faire
+			// Nous avons touchÃ¯Â¿Â½ la fin de la chaine
+			if (good_space == subtext[cnt]) // Pas d'espace positionnÃ¯Â¿Â½, plus rien Ã¯Â¿Â½ faire
 				break;
-			// S'il on est lï¿½ c'est qui faut couper la chaine avant
+			// S'il on est lÃ¯Â¿Â½ c'est qui faut couper la chaine avant
 		}
 		
-		if (good_space != subtext[cnt]) // Si l'espace a ï¿½tï¿½ positionnï¿½
+		if (good_space != subtext[cnt]) // Si l'espace a Ã¯Â¿Â½tÃ¯Â¿Â½ positionnÃ¯Â¿Â½
 		{
 			if (ptr)
-				*ptr = ' '; // Le dernier essai doit ï¿½tre effacï¿½
-			*good_space = 0; // Le bon espace est marquï¿½
+				*ptr = ' '; // Le dernier essai doit Ã¯Â¿Â½tre effacÃ¯Â¿Â½
+			*good_space = 0; // Le bon espace est marquÃ¯Â¿Â½
 		} else
 			good_space = ptr; // Pas de bon espace, alors coupons un mot trop grand
 				
-		cur_text = good_space+1; // Nouveau mot aprï¿½s l'espace
+		cur_text = good_space+1; // Nouveau mot aprÃ¯Â¿Â½s l'espace
 		//printf("=> %s", cur_text);		
 		subtext[++cnt] = cur_text; 
 	}

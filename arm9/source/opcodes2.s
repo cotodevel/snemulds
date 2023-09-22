@@ -1064,12 +1064,22 @@ CPU_init:
 	str		SnesMemMap,	SaveMemoryMap
 	str		EmuDecoder, SaveEmuDecoder  
 
+/*
+#define MAP_RELOAD      0x80000000
+#define MAP_PPU         0x81000000
+#define MAP_CPU         0x82000000
+#define MAP_DSP         0x83000000
+#define MAP_LOROM_SRAM  0x84000000
+#define MAP_HIROM_SRAM  0x85000000
+#define MAP_NONE        0x86000000
+#define MAP_LAST        0x8F000000
+*/
 /*	ldr		r0, =MemFunctions
 	ldr		r1, =Read8Reload
 	str		r1, [r0, #0]	
 	ldr		r1, =MemPPU
 	str		r1, [r0, #0]
-	ldr		r1, =SNEMULDS_MAP_CPU
+	ldr		r1, =MAP_CPU
 	str		r1, [r0, #0]	
 	ldr		r1, =
 	str		r1, [r0, #0]	

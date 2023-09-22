@@ -89,8 +89,7 @@ void check_sprite_addr()
 		GFX.spr_bank ^= 1;
 		GFX.spr_addr[GFX.spr_bank] = GFX.spr_addr_base+GFX.spr_addr_select;
 		GFX.spr_addr_vcount[GFX.spr_bank] = SNES.V_Count;		
-	}
-		
+	}	
 //	GFX.tiles_dirty = 1;	
 //	GFX.Sprites_table_dirty = 1;
 //    if (GFX.Sprites_table_dirty)
@@ -249,13 +248,11 @@ void	PPU_add_tile_address(int bg)
   ds_tile_zone = PPU_get_tile_address(GFX.tile_address[bg], bg_mode);
   if (ds_tile_zone == -1)
   { 
-	 
 	  // FIXME : 256 colors should allocate two tile zones
 	  if (bg_mode == 8 && mode != 7)
 	  	ds_tile_zone = PPU_allocate_tilezone2();
 	  else
-	  	ds_tile_zone = PPU_allocate_tilezone();
-	  
+	  	ds_tile_zone = PPU_allocate_tilezone();  
 	  // Clear previous linked zone
 	  for (i = 0; i < 4*8; i++)
 	  	if (SNESToDS_TileAddress[i] == &TileZones[ds_tile_zone]) 
@@ -373,12 +370,7 @@ void     add_tile_4(int tile_addr_base, uint16 *vram_addr, int tilenb)
       c |= bittab[tile_ptr[0x11]]<<3;
 	  *VRAM_ptr++ = c;            
     }
-  //GFX.tiles4b_def[tile_addr/32] = (tile_addr_base>>13)+1;
-/*	if (tile_addr_base == 8192 && tilenb*32 >= 3*8192)
-	{
-		return;
-	}*/
-  
+  //GFX.tiles4b_def[tile_addr/32] = (tile_addr_base>>13)+1;  
   GFX.tiles4b_def[tile_addr/32] = 4;     
 }
 
@@ -471,7 +463,7 @@ int		PPU_AddTile2InCache(t_TileZone *tilezone, int addr)
 int		PPU_AddTile4InCache(t_TileZone *tilezone, int addr)
 {	
   	if (!NeedFlush4b)
-  	{
+  	{		
   	  	//add_tile_4(TileZones[tilezone].base, (addr-TileZones[tilezone].base)/32);
   	  	if (!(GFX.tiles4b_def[addr/32] & 0x80))
   	  	{
@@ -537,7 +529,6 @@ void check_tile(int addr)
   		if (tilezone3->depth == 2)
   			leave = PPU_AddTile2InCache(tilezone3, addr);  		
   	}
-
   	// FIXME: 256 colors not handled here yet
   	if (leave)
   		return;  	  	
@@ -1044,8 +1035,7 @@ int		map_duplicate4(int snes_block)
 void draw_plane_32_30(unsigned char bg, unsigned char bg_mode)
 {
   int nb_tilex, nb_tiley;
-  int tile_size;	
-
+  int tile_size;
   if ((GFX.map_def[GFX.map_slot[bg]] & (1<<bg)) && 
   	  (GFX.tiles_def[GFX.tile_address[bg]>>13] & (1<<bg)))
   {
@@ -1103,8 +1093,7 @@ void draw_plane_32_30(unsigned char bg, unsigned char bg_mode)
 void draw_plane_64_30(unsigned char bg, unsigned char bg_mode)
 {
   int 	nb_tilex, nb_tiley;
-  int	tile_size;  
-
+  int	tile_size;
   if ((GFX.map_def[GFX.map_slot[bg]]   & (1<<bg)) &&
   	  (GFX.map_def[GFX.map_slot[bg]+1] & (1<<bg)) &&
   	  (GFX.tiles_def[GFX.tile_address[bg]>>13] & (1<<bg)))
@@ -1519,6 +1508,7 @@ void PPU_RenderLineMode1(uint32 NB_BG, uint32 MODE_1, uint32 MODE_2, uint32 MODE
    	else
   	if (GFX.map_size[2] == BG_32x64)
    		BG3TilePriority = GFX.BG3TilePriority[((SNES.V_Count+PPU_PORT[0x12])/8)&63];
+		
   }
 
    
@@ -1552,6 +1542,7 @@ void PPU_RenderLineMode1(uint32 NB_BG, uint32 MODE_1, uint32 MODE_2, uint32 MODE
 
   /* SPRITE MAINSCREEN : 1 0 */
   if ((SB&0x04) && (PPU_PORT[0x05]&8) && BG3TilePriority > 0) order[2] = 0;
+
   }
   else
   {
@@ -2182,12 +2173,6 @@ void draw_screen()
       case 7 : renderMode7(); break;
     }
 
-  
-/*  
-#ifdef TIMER_Y  
-#else
-#endif
-*/
 #if 1
 {
 /*	int max = 0;

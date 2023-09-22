@@ -468,28 +468,16 @@ void DMA_transfert(uchar port)
   if ((DMA_info&0x80) == 0) {
     for (tmp = 0;tmp < DMA_len;tmp++) {
       switch (DMA_info&7) {
-        case 0x00 :{
-          int isProgramBankRegister = 0; //it's Data Bank Register
-		  PPU_port_write(PPU_port,mem_getbyte(DMA_address,DMA_bank,isProgramBankRegister)); 
-		}break;
-        case 0x01 :{
-          int isProgramBankRegister = 0; //it's Data Bank Register
-		  PPU_port_write(PPU_port+(tmp&1),mem_getbyte(DMA_address,DMA_bank,isProgramBankRegister)); 
-		}break;
-        case 0x02 :{
-          int isProgramBankRegister = 0; //it's Data Bank Register
-		  PPU_port_write(PPU_port,mem_getbyte(DMA_address,DMA_bank,isProgramBankRegister)); 
-		}  
-		break;
-        case 0x03 :{
-          int isProgramBankRegister = 0; //it's Data Bank Register
-		  PPU_port_write(PPU_port+(tmp&2)/2,mem_getbyte(DMA_address,DMA_bank,isProgramBankRegister)); 
-		}
-		break;
-        case 0x04 :{
-          int isProgramBankRegister = 0; //it's Data Bank Register
-		  PPU_port_write(PPU_port+(tmp&3),mem_getbyte(DMA_address,DMA_bank,isProgramBankRegister)); 
-		}break;
+        case 0x00 :
+          PPU_port_write(PPU_port,mem_getbyte(DMA_address,DMA_bank)); break;
+        case 0x01 :
+          PPU_port_write(PPU_port+(tmp&1),mem_getbyte(DMA_address,DMA_bank)); break;
+        case 0x02 :
+          PPU_port_write(PPU_port,mem_getbyte(DMA_address,DMA_bank)); break;
+        case 0x03 :
+          PPU_port_write(PPU_port+(tmp&2)/2,mem_getbyte(DMA_address,DMA_bank)); break;
+        case 0x04 :
+          PPU_port_write(PPU_port+(tmp&3),mem_getbyte(DMA_address,DMA_bank)); break;
       }
       if (!(DMA_info & 0x08)) {
         if (DMA_info & 0x10) DMA_address--; else DMA_address++;
@@ -498,26 +486,16 @@ void DMA_transfert(uchar port)
   } else {
     for (tmp = 0;tmp<DMA_len;tmp++) {
       switch (DMA_info & 7) {
-        case 0x00 :{
-          int isProgramBankRegister = 0; //it's Data Bank Register
-		  mem_setbyte(DMA_address,DMA_bank,PPU_port_read(PPU_port),isProgramBankRegister); 
-		}break;
-        case 0x01 :{
-          int isProgramBankRegister = 0; //it's Data Bank Register
-		  mem_setbyte(DMA_address,DMA_bank,PPU_port_read(PPU_port+(tmp&1)),isProgramBankRegister); 
-		}break;
-        case 0x02 :{
-          int isProgramBankRegister = 0; //it's Data Bank Register
-		  mem_setbyte(DMA_address,DMA_bank,PPU_port_read(PPU_port),isProgramBankRegister); 
-		}break;
-        case 0x03 :{
-          int isProgramBankRegister = 0; //it's Data Bank Register
-		  mem_setbyte(DMA_address,DMA_bank,PPU_port_read(PPU_port+(tmp&2)/2),isProgramBankRegister); 
-		}break;
-        case 0x04 :{
-          int isProgramBankRegister = 0; //it's Data Bank Register
-		  mem_setbyte(DMA_address,DMA_bank,PPU_port_read(PPU_port+(tmp&3)),isProgramBankRegister); 
-		}break;
+        case 0x00 :
+          mem_setbyte(DMA_address,DMA_bank,PPU_port_read(PPU_port)); break;
+        case 0x01 :
+          mem_setbyte(DMA_address,DMA_bank,PPU_port_read(PPU_port+(tmp&1))); break;
+        case 0x02 :
+          mem_setbyte(DMA_address,DMA_bank,PPU_port_read(PPU_port)); break;
+        case 0x03 :
+          mem_setbyte(DMA_address,DMA_bank,PPU_port_read(PPU_port+(tmp&2)/2)); break;
+        case 0x04 :
+          mem_setbyte(DMA_address,DMA_bank,PPU_port_read(PPU_port+(tmp&3))); break;
       }
       if (!(DMA_info & 0x08)) {
         if (DMA_info & 0x10) DMA_address--; else DMA_address++;
@@ -967,11 +945,16 @@ uint32	R2141(uint32 addr)
 #if 0	 
 	 if (TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x33 /*&& 
 	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f*/)
-	 
 	 if (/*TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x33 || */TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x11 /*&& 
 	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f*/)
 #endif	
-
+	
+/*	if (newapupc != 0)
+	{
+	
+	oldapupc = newapupc;
+	}*/
+	
 	//*(uint32*)(0x27E0000) = 0;	
       if (!CFG.Sound_output)
       { /* APU Skipper */
@@ -1482,9 +1465,7 @@ void	W2133(uint32 addr, uint32 value)
 
 /*
  * #if 0	
-	if (value == 0x55 && (newapupc & 0xf000) == 0xf000){
-		
-	}
+	
 #else
 	if (value == 0x55 && (newapupc & 0xf000) == 0xf000)
 	{
@@ -1498,7 +1479,7 @@ void	W2133(uint32 addr, uint32 value)
 	{
 		while (TGDSIPCUSER->APU_ADDR_BLKP[1]);
 #if 0
-  		
+
 #else  		
 	{
 	int i;
@@ -1914,8 +1895,9 @@ uint8	DMA_port_read(uint32 address)
 2105 : bg mode
  */ 
 
-void HDMA_write_port(uchar port, uint8 *data){
-  uint32 	PPUport = SNES.HDMA_port[port];
+void HDMA_write_port(uchar port, uint8 *data)
+{
+  uint32 	PPUport = SNES.HDMA_port[port];  
   switch(SNES.HDMA_info[port])
   {
     case 0x00 :
@@ -2019,10 +2001,6 @@ void	read_mouse()
             ((SNES.mouse_b&1)<<6)|((SNES.mouse_b&2)<<6);
       delta_x = SNES.mouse_x-SNES.prev_mouse_x;
       delta_y = SNES.mouse_y-SNES.prev_mouse_y;
-      
-      if (delta_x || delta_y){
-        
-	  }
       if (delta_x > 63)
 	{
 	  delta_x = 63;
