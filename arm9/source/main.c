@@ -448,13 +448,13 @@ char args[8][MAX_TGDSFILENAME_LENGTH];
 char *argvs[8];
 
 //---------------------------------------------------------------------------------
+__attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("Os")))
 #endif
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-__attribute__((section(".itcm")))
 int main(int argc, char ** argv){
 	REG_IME = 0;
 	setSnemulDSSpecial0xFFFF0000MPUSettings();
@@ -539,7 +539,7 @@ int main(int argc, char ** argv){
 	
 	//TGDS-Projects -> legacy NTR TSC compatibility
 	if(__dsimode == true){
-		TWLSetTouchscreenNTRMode();
+		TWLSetTouchscreenTWLMode();
 	}
 	
 	char tmpName[256];
