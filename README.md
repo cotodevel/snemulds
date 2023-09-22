@@ -156,6 +156,7 @@ CX4 coprocessor and the rest of non-coprocessor games should be playable now.
 There are still bugs on the cross-boundary pages, which means the SnemulDS ROM mapper on over 4M games is broken and requires fixing.
 If the NDS had enough memory yeah, all games would have worked right away, but we'll see what can be done about it ;-)
 
+
 Note: Other coprocessor opcodes aren't implemented.
 
 
@@ -168,9 +169,10 @@ SPC700EOR.sfc -> Pass
 SPC700INC.sfc -> Pass
 SPC700ORA.sfc -> Pass
 SPC700AND.sfc -> Pass
+SPC700SBC.sfc -> Pass
+
 
 SPC700ADC.sfc -> Fail
-SPC700SBC.sfc -> Fail
 
 
 Coto.

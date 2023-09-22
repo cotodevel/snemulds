@@ -277,12 +277,8 @@ zeroAndHighPageMemWrite8:
     subcs r0, r0, #0x100
     adcs APU_REG_A, APU_REG_A, r0, ror #8
     mov APU_NZ, APU_REG_A, lsr #24
-	orrls APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG @Half-carry flag
-	bichi APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG
-	biccc APU_CYCLES, APU_CYCLES, #(CYCLES_C_FLAG)
-    bicvc APU_CYCLES, APU_CYCLES, #(CYCLES_V_FLAG)
-	orrvs APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG
-	biccc r0, r0, #(CYCLES_C_FLAG)
+    bic APU_CYCLES, APU_CYCLES, #(CYCLES_C_FLAG | CYCLES_V_FLAG)
+    orrvs APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG
     @ Will be set in fetchSetC
 .ENDM
 
@@ -301,12 +297,15 @@ zeroAndHighPageMemWrite8:
 .ENDM
 
 .MACRO sbcFromR0
+	@ Set CVH flags
+    tst r1, #1 << 6
+    orrne APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG @V flag
+    tst r1, #CYCLES_H_FLAG
+    orrne APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG @H flag
 	@ Get C bit into C flag
     movs r1, APU_CYCLES, lsr #1
     sbcs APU_REG_A, APU_REG_A, r0, lsl #24
     mov APU_NZ, APU_REG_A, lsr #24
-	orrgt APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG @Half-carry flag
-	bicle APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG
     biccc APU_CYCLES, APU_CYCLES, #(CYCLES_C_FLAG)
     bicvc APU_CYCLES, APU_CYCLES, #(CYCLES_V_FLAG)
 	orrvs APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG
