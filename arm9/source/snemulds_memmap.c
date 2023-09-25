@@ -27,6 +27,7 @@
 #include "snemulds_memmap.h"
 #include "utilsTGDS.h"
 #include "c4.h"
+#include "ipcfifoTGDSUser.h"
 
 uchar *ROM_paging= NULL;
 uint16 *ROM_paging_offs= NULL;

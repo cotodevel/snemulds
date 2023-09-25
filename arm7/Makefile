@@ -40,15 +40,15 @@ d_objs_arm7:=	${file_arm7_src_c:.c=.d}	${file_arm7_src_s:.s=.d}	${file_arm7_src_
 #ARM7 specific definitions.	-fno-common so we force initialized data to rodata
 MAPFILE = $(DIR_ARM7).map
 AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_7)	$(SPECIFIC_AS_COMPILER_FLAGS_7)		$(GLOBAL_AS_COMPILER_FLAGS)
-CC_ASFLAGS		=	-marm	-Os	-fno-short-enums	-mthumb-interwork	-DARM7	-Dappver='$(EXECUTABLE_VERSION)'
+CC_ASFLAGS		=	-marm	-Os	-fno-short-enums	-mthumb-interwork	-fno-exceptions		-nostdlib	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-tree-loop-distribute-patterns -fno-builtin -fomit-frame-pointer	-ffast-math	-DARM7	-Dappver='$(EXECUTABLE_VERSION)'
 CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	-fno-rtti	
 BUILD			= 	$(BUILD_ARM7)
 DIR_SRC			=	$(DIRS_ARM7_SRC)	$(DIRS_ARM7_HEADER)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm7.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	:=	-specs=nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),--fix-v4bx,-z,defs
-LDFLAGS_DSI	:=	-specs=nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,arm7-nonstripped_dsi.map,--fix-v4bx,-z,defs
+LDFLAGS	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),-z,defs,--fix-v4bx
+LDFLAGS_DSI	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/dsi_arm7_ld.specs	-Wl,--no-gc-sections,-Map,arm7-nonstripped_dsi.map,-z,defs,--fix-v4bx
 LIBRARIES_NTR =	-lutils7	-l$(TARGET_LIBRARY_TGDS_NTR_7)	-lhardware7		-lstdc++	-lcnano7	-lgcc
 LIBRARIES_TWL =	-lutils7i	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lhardware7i	-lstdc++	-lcnano7	-lgcc
 
@@ -111,13 +111,15 @@ $(TARGET_LIBRARY_CRT0_FILE_7).o:	$(TARGET_LIBRARY_LINKER_FILE_7)
 	-@echo 'S Compile start: crt0s'
 	rm -fr $(BUILD)/$(TARGET_LIBRARY_CRT0_FILE_7).o
 	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o	$(OBJDIR)/$@	-c	$<
+	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm7_ld.ld $(CURDIR)
+	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm7_ld.specs $(CURDIR)
 	-@echo 'S Compile end: crt0s'
 
 #Linkage. 
 $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	-@echo 'Entering Linking phase'
 	-$(CC) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
-	-$(CC) $^	$(LDFLAGS_DSI)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_TWL)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o ${@:.elf=_dsi.elf}
+	-$(CC) $^	$(LDFLAGS_DSI)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_TWL)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o	${@:.elf=_dsi.elf}
 	-@echo 'Leaving Linking phase. Output: $@'
 
 #xxxx-nonstripped.elf -> xxxx.elf STRIP operation
@@ -125,16 +127,16 @@ $(ELF_ARM7): $(OBJPROG)
 	-@echo '$@ Unstripped. STRIP Start!'
 	-mv build/${@:.elf=-nonstripped_dsi.elf}	$(CURDIR)
 	$(OBJSTRIP)	-s -R .comment -R .gnu.version	$<
+	$(OBJSTRIP)	-s -R .comment -R .gnu.version	${@:.elf=-nonstripped_dsi.elf}
 	-mv	$<	$@
 	
 $(BINSTRIP_RULE_7): $(ELF_ARM7)
 	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
 	$(OBJCOPY) 	-S -O binary	$<	$@
-	-rm	$<
 	$(OBJCOPY) 	-S -O binary	${<:.elf=-nonstripped_dsi.elf}	${@:.bin=_twl.bin}
-	-rm	${<:.elf=-nonstripped_dsi.elf}
+	-rm	$<
 ################################################################################################
 	
 clean:
 	-@echo 'cleanup $(DIR_ARM7)'
-	-@rm -fr $(BINSTRIP_RULE_7)	${BINSTRIP_RULE_7:.bin=_twl.bin}	$(MAPFILE)	$(CURDIR)/arm7-nonstripped_dsi.elf $(CURDIR)/arm7-nonstripped_dsi.map
+	-@rm -fr $(BINSTRIP_RULE_7)	$(MAPFILE)	$(CURDIR)/nds_arm7_ld.specs	$(CURDIR)/nds_arm7_ld.ld	$(CURDIR)/arm7-nonstripped_dsi.elf $(CURDIR)/arm7-nonstripped_dsi.map	${BINSTRIP_RULE_7:.bin=_twl.bin}

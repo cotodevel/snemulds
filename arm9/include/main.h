@@ -25,8 +25,6 @@ GNU General Public License for more details.
 #include "consoleTGDS.h"
 #include "soundTGDS.h"
 
-#define TGDSPROJECTNAME ((char*)"snemulds")
-
 #endif
 
 #ifdef __cplusplus

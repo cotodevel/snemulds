@@ -22,7 +22,7 @@ GNU General Public License for more details.
     .equ	MemoryWriteMap,		0x0689A000
     
 /*    .equ    snesWramBase,       0x027C0000*/
-	.equ    snesWramBase,       0x023C0000              
+	.equ    snesWramBase,       0x02FC0000              
 /*    .equ    snesWramBase,       0x02200000              @ either 0x2100000 or 0x6800000*/
 /*    .equ    snesVramBase,       0x02220000*/
 

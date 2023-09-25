@@ -71,7 +71,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			for (i = 0; i < MIXBUFSIZE * 4; i++) {
 				playBuffer[i] = 0;
 			}
-			update_spc_ports(); //APU Ports from SnemulDS properly binded with Assembly APU Core
+			update_spc_ports(); //ARM7: APU Ports from SnemulDS properly binded with Assembly APU Core
 			ApuReset();
 			DspReset();
 			SetupSound();
@@ -172,9 +172,34 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 
 //project specific stuff
 
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
+int ROM_MAX_SIZE = 0;
+
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
+int ROM_PAGING_SIZE = 0;
+
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
-    struct s_apu2 *APU2 = (struct s_apu2 *)(&SNEMULDS_IPC->APU2);
+	if(__dsimode == true){
+		#ifdef ARM9
+		ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
+		#endif
+	}
+	else{
+		#ifdef ARM9
+		ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
+		#endif
+	}
+    
+	#ifdef ARM9
+	ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
+	#endif
+	
+	struct s_apu2 *APU2 = (struct s_apu2 *)(&SNEMULDS_IPC->APU2);
 	//must reflect to ipcfifoTGDSUser.h defs
 	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&SNEMULDS_IPC->PORT_SPC_TO_SNES[0];
 	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)&SNEMULDS_IPC->PORT_SNES_TO_SPC[0]; 
