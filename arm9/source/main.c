@@ -539,7 +539,7 @@ int main(int argc, char ** argv){
 	
 	//TGDS-Projects -> legacy NTR TSC compatibility
 	if(__dsimode == true){
-		TWLSetTouchscreenTWLMode();
+		TWLSetTouchscreenNTRMode();
 	}
 	
 	char tmpName[256];
