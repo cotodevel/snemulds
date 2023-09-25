@@ -130,26 +130,23 @@ struct s_snes
 #define MAP_LAST        0x8F000000
 
 //Rom Page variables
-#define EMPTYMEM		(ushort *)(0x23E0000)
+#define EMPTYMEM		(ushort *)(0x2FE0000)
 //#define PPU_PORT	((ushort *)(0x23E0000))
 //#define DMA_PORT	((ushort *)(0x23E4000))
-#define SNES_SRAM_ADDRESS ((uchar *)(0x23E6000))
+#define SNES_SRAM_ADDRESS ((uchar *)(0x2FE6000))
 #define SNES_ROM_ADDRESS ((uchar *)(0x20C0000))
-#define ROM_MAX_SIZE	(3*1024*1024)
+
+#define ROM_MAX_SIZE_NTRMODE	(3*1024*1024)
+#define ROM_MAX_SIZE_TWLMODE	((6*1024*1024)+(4096))
+
 #define	PAGE_SIZE		(64*1024)
-#define ROM_PAGING_SIZE	(ROM_MAX_SIZE-PAGE_SIZE)
 #define SNES_ROM_PAGING_ADDRESS (SNES_ROM_ADDRESS+PAGE_SIZE)
 #define DS_SRAM          ((uint8*)0x0A000000)
-#define MAP  ((uint8 **)(0x06898000))
-#define WMAP ((uint8 **)(0x0689A000))
-//#define MAP ((uchar **)(0x27E0000))
-//#define MAP ((uchar **)(0xB000014))
-//#define MAP SNES.Map
 #define PAGE_OFFSET		3	//page offset in SNES regs
 
 /* DS Memory */
-#define SNES_RAM_ADDRESS	((uint8 *)(0x023C0000))
-#define CX4_RAM_ADDRESS	((uint8 *)(0x023EE000))
+#define SNES_RAM_ADDRESS	((uint8 *)(0x02FC0000))
+#define CX4_RAM_ADDRESS	((uint8 *)(0x02FEE000))
 
 #endif
 

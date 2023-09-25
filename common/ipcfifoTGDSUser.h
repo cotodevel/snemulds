@@ -81,18 +81,17 @@ struct sIPCSharedTGDSSpecific{
 #define SNEMULDS_APUCMD_LOADSPC (u32)(0xffff00a7)
 #define SNEMULDS_APUCMD_FORCESYNCON (u32)(0xffff00a8)
 
-#ifdef ARM7
-#define SNEMULDS_IPC ((struct sIPCSharedTGDSSpecific*)(NDS_CACHED_SCRATCHPAD + (80*4)))
-#endif
+//NTR mode:
+//SNES_ROM_ADDRESS ((uchar *)(0x20C0000)) + ROM_MAX_SIZE_NTRMODE = 0x023CC000 < 0x27FF000 (NTR: Mirror #1 4MB)
 
-#ifdef ARM9
-#define SNEMULDS_IPC ((struct sIPCSharedTGDSSpecific*)(NDS_UNCACHED_SCRATCHPAD + (80*4)))
-#endif
+//TWL mode:
+//SNES_ROM_ADDRESS ((uchar *)(0x20C0000)) + ROM_MAX_SIZE_TWLMODE = 0x026CC000 < 0x27FF000 (TWL: 16MB IPC shared)
+
+#define SNEMULDS_IPC ((struct sIPCSharedTGDSSpecific*)( ((int)0x27FF000) + (80*4)))
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2);
@@ -102,6 +101,11 @@ extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern uint32 ADDR_PORT_SNES_TO_SPC;
 extern uint32 ADDR_PORT_SPC_TO_SNES;
 extern void update_spc_ports();
+
+//ARM7 & ARM9 shared
+extern int ROM_MAX_SIZE;
+
+extern int ROM_PAGING_SIZE;
 
 #ifdef __cplusplus
 }

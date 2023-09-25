@@ -33,6 +33,8 @@ Properly Saving / Loading SRAM:
 Screen Sync (Vblank Enabled / Vblank Disabled):
 	- If the game runs too slow for you, disable vblank. The default and recommended setting is enabled Vblank for most games otherwise these will run too fast becoming unplayable.
 
+TWL Mode:
+	-SnemulDS TWL mode has extended memory (16MB), so hacks like Megaman X3 Zero Project are supported and known to work. (TGDS1.65 branch)
 
 ____Remoteboot____
 Also, it's recommended to use the remoteboot feature. It allows to send the current TGDS Project over wifi removing the necessity

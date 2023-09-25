@@ -46,8 +46,8 @@ struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7Malloc
 	customMemoryAllocator->customMalloc = isCustomTGDSMalloc;
 	customMemoryAllocator->ARM7MallocStartAddress = ARM7MallocStartAddress;
 	customMemoryAllocator->ARM7MallocSize = ARM7MallocSize;
-	extern u32 __end;
-	customMemoryAllocator->ARM9MallocStartaddress = (u32)&__end;
+	extern u32 __vma_stub_end__;
+	customMemoryAllocator->ARM9MallocStartaddress = (u32)&__vma_stub_end__;
 	customMemoryAllocator->memoryToAllocate = (480*1024); //240K of free memory :(, this means GUI won't segfault now but ROM probably will (3MB or less) and will require a reload everytime GUI is tweaked
 	customMemoryAllocator->CustomTGDSMalloc9 = (TGDSARM9MallocHandler)&Xmalloc;
 	customMemoryAllocator->CustomTGDSCalloc9 = (TGDSARM9CallocHandler)&Xcalloc;

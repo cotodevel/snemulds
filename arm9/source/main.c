@@ -452,25 +452,13 @@ char *argvs[8];
 
 //---------------------------------------------------------------------------------
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("Os")))
 #endif
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
 __attribute__((section(".itcm")))
 int main(int argc, char ** argv){
-	REG_IME = 0;
-	setSnemulDSSpecial0xFFFF0000MPUSettings();
-	REG_IME = 1;
-	
-	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
-	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
-	REG_IE |= (IRQ_HBLANK| IRQ_VBLANK | IRQ_VCOUNT);		
-	
-	//Set up PPU IRQ Vertical Line
-	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
-	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	
 	bool isTGDSCustomConsole = false;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
@@ -507,7 +495,28 @@ int main(int argc, char ** argv){
 	}
 	
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
+	
+	REG_IME = 0;
+	setSnemulDSSpecial0xFFFF0000MPUSettings();
+	//TGDS-Projects -> legacy NTR TSC compatibility
+	if(__dsimode == true){
+		TWLSetTouchscreenNTRMode();
+		//Enable 16M EWRAM
+		u32 SFGEXT9 = *(u32*)0x04004008;
+		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger) = 16MB
+		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
+		*(u32*)0x04004008 = SFGEXT9;
+	}
+	
+	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
+	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
+	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
+	REG_IE |= (IRQ_HBLANK| IRQ_VBLANK);		
+	
+	//Set up PPU IRQ Vertical Line
+	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
 	irqDisable(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
+	REG_IME = 1;
 	swiDelay(1000);
 	
 #ifndef DSEMUL_BUILD	
@@ -540,10 +549,6 @@ int main(int argc, char ** argv){
 	GUI_getConfig();	
 	GUI_printf("Load conf4");
 	
-	//TGDS-Projects -> legacy NTR TSC compatibility
-	if(__dsimode == true){
-		TWLSetTouchscreenNTRMode();
-	}
 	
 	char tmpName[256];
 	char ext[256];
@@ -555,10 +560,11 @@ int main(int argc, char ** argv){
 
 	//ARGV Support: Only supported through TGDS chainloading.
 	bool isSnesFile = false;
-	if (argc > 2) {
+	if (argc > 3) {
 		//arg 0: original NDS caller
 		//arg 1: this NDS binary
 		//arg 2: this NDS binary's ARG0: filepath
+		//arg 3: "dummy.arg"
 		//is sfc/smc? then valid
 		strcpy(&CFG.ROMFile[0], (const char *)argv[2]);
 		guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
@@ -573,7 +579,7 @@ int main(int argc, char ** argv){
 	}
 	while(isSnesFile == false);
 	///////////////////////////////////////////
-	if (!(argc > 2)) { 
+	if (!(argc > 3)) { 
 		GUI_deleteROMSelector(); 	//Should also free ROMFile
 	}
 	
