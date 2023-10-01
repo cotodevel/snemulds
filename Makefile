@@ -23,7 +23,13 @@ export SOURCE_MAKEFILE7 = custom
 export SOURCE_MAKEFILE9 = custom
 
 #Shared
-include $(DEFAULT_GCC_PATH)/Makefile.basenewlib
+ifeq ($(TGDS_ENV),windows)
+	include $(DEFAULT_GCC_PATH)/Makefile.basenewlib
+else
+	export TGDS_ENV := linux
+	export DEFAULT_GCC_PATH := /usr/arm-none-eabi/lib/newlib-nano-2.1-nds/6.2_2016q4/
+	include $(DEFAULT_GCC_PATH)Makefile.basenewlib
+endif
 
 #Custom
 # Project Specific
