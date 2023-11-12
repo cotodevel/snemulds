@@ -105,7 +105,7 @@ void	APU_playSpc(u8 * inSPCBuffer)
 	fifomsg[40] = (uint32)0xFFFFC070;
 	
 	//prevent APU from desync
-	SendFIFOWordsITCM(SNEMULDS_APUCMD_PLAYSPC, (u32)inSPCBuffer);	//APU_command(0x00000003);
+	SendFIFOWords(SNEMULDS_APUCMD_PLAYSPC, (u32)inSPCBuffer);	//APU_command(0x00000003);
 	
 	while((uint32)fifomsg[40] == (uint32)0xFFFFC070){
 		swiDelay(2);
@@ -127,7 +127,7 @@ void	APU_saveSpc(u8 * inSPCBuffer)
 	fifomsg[40] = (uint32)0xFFFFC070;
 	
 	//prevent APU from desync
-	SendFIFOWordsITCM(SNEMULDS_APUCMD_SAVESPC, (u32)inSPCBuffer);	//APU_command(0x00000006);
+	SendFIFOWords(SNEMULDS_APUCMD_SAVESPC, (u32)inSPCBuffer);	//APU_command(0x00000006);
 	
 	while((uint32)fifomsg[40] == (uint32)0xFFFFC070){
 		swiDelay(2);
@@ -151,7 +151,7 @@ void	APU_loadSpc(u8 * inSPCBuffer)
 	fifomsg[40] = (uint32)0xFFFFC070;
 	
 	//prevent APU from desync
-	SendFIFOWordsITCM(SNEMULDS_APUCMD_LOADSPC, (u32)inSPCBuffer);	//APU_command(0x00000007);
+	SendFIFOWords(SNEMULDS_APUCMD_LOADSPC, (u32)inSPCBuffer);	//APU_command(0x00000007);
 	
 	while((uint32)fifomsg[40] == (uint32)0xFFFFC070){
 		swiDelay(2);

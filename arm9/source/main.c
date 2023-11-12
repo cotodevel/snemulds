@@ -463,9 +463,6 @@ int main(int argc, char ** argv){
 	
 	bool isTGDSCustomConsole = false;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
 	GUI_init(isTGDSCustomConsole);
-	sint32 fwlanguage = (sint32)getLanguage();
-	GUI_setLanguage(fwlanguage);
-	GUI_clear();
 	
 	//xmalloc init removes args, so save them
 	int i = 0;
@@ -475,6 +472,10 @@ int main(int argc, char ** argv){
 
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
+	
+	sint32 fwlanguage = (sint32)getLanguage(); //get language once User Settings have been loaded
+	GUI_setLanguage(fwlanguage);
+	GUI_clear();
 	
 	//argv destroyed here because of xmalloc init, thus restore them
 	for(i = 0; i < argc; i++){
@@ -500,7 +501,7 @@ int main(int argc, char ** argv){
 	setSnemulDSSpecial0xFFFF0000MPUSettings();
 	//TGDS-Projects -> legacy NTR TSC compatibility
 	if(__dsimode == true){
-		TWLSetTouchscreenNTRMode();
+		TWLSetTouchscreenTWLMode();
 		//Enable 16M EWRAM
 		u32 SFGEXT9 = *(u32*)0x04004008;
 		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger) = 16MB

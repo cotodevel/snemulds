@@ -223,7 +223,7 @@ int initSNESEmpty(int firstTime){
 	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 	setValueSafe(&fifomsg[10], (uint32)SNEMULDS_SETUP_ARM7);
-	SendFIFOWordsITCM(SNEMULDS_SETUP_ARM7, 0xFF);
+	SendFIFOWords(SNEMULDS_SETUP_ARM7, 0xFF);
 	while((u32)getValueSafe(&fifomsg[10]) != (u32)0){
 		swiDelay(1);
 	}
