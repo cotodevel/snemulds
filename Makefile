@@ -38,11 +38,9 @@ export EXECUTABLE_FNAME = $(TGDSPROJECTNAME).nds
 export EXECUTABLE_VERSION_HEADER =	0.6d
 export EXECUTABLE_VERSION =	"$(EXECUTABLE_VERSION_HEADER)"
 export TGDSPKG_TARGET_PATH := '//'
-export TGDSREMOTEBOOTER_SERVER_IP_ADDR := '192.168.1.83'
+export TGDSREMOTEBOOTER_SERVER_IP_ADDR := '192.168.43.185'
 export TGDSREMOTEBOOTER_SERVER_PORT := 1040
 #The ndstool I use requires to have the elf section removed, so these rules create elf headerless- binaries.
-export BINSTRIP_RULE_7 =	arm7.bin
-export BINSTRIP_RULE_9 =	arm9.bin
 export DIR_ARM7 = arm7
 export BUILD_ARM7	=	build
 export DIR_ARM9 = arm9
@@ -52,10 +50,24 @@ export ELF_ARM9 = arm9.elf
 export NONSTRIPELF_ARM7 = arm7-nonstripped.elf
 export NONSTRIPELF_ARM9 = arm9-nonstripped.elf
 
+export DECOMPRESSOR_BOOTCODE_9 = tgds_multiboot_payload
+export DECOMPRESSOR_BOOTCODE_9i = tgds_multiboot_payload_twl
+
+export BINSTRIP_RULE_7 :=	$(DIR_ARM7).bin
+export BINSTRIP_RULE_arm7bootldr =	arm7bootldr.bin
+
+export BINSTRIP_RULE_9 :=	$(DIR_ARM9).bin
+
+export BINSTRIP_RULE_COMPRESSED_9 :=	$(DECOMPRESSOR_BOOTCODE_9).bin
+export BINSTRIP_RULE_COMPRESSED_9i :=	$(DECOMPRESSOR_BOOTCODE_9i).bin
+
 export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
+export TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9 = nds_arm_ld_crt0
+
 export TARGET_LIBRARY_LINKER_FILE_7 = $(TARGET_LIBRARY_CRT0_FILE_7).S
 export TARGET_LIBRARY_LINKER_FILE_9 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_9).S
+export TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9 = ../$(DECOMPRESSOR_BOOTCODE_9)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).S
 
 export TARGET_LIBRARY_TGDS_NTR_7 = toolchaingen7
 export TARGET_LIBRARY_TGDS_NTR_9 = toolchaingen9
