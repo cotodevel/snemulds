@@ -473,6 +473,9 @@ int main(int argc, char ** argv){
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
 	
+	isTGDSCustomConsole = false;
+	GUI_init(isTGDSCustomConsole);
+
 	sint32 fwlanguage = (sint32)getLanguage(); //get language once User Settings have been loaded
 	GUI_setLanguage(fwlanguage);
 	GUI_clear();
@@ -500,14 +503,6 @@ int main(int argc, char ** argv){
 	REG_IME = 0;
 	setSnemulDSSpecial0xFFFF0000MPUSettings();
 	//TGDS-Projects -> legacy NTR TSC compatibility
-	if(__dsimode == true){
-		TWLSetTouchscreenTWLMode();
-		//Enable 16M EWRAM
-		u32 SFGEXT9 = *(u32*)0x04004008;
-		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger) = 16MB
-		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
-		*(u32*)0x04004008 = SFGEXT9;
-	}
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
@@ -518,14 +513,23 @@ int main(int argc, char ** argv){
 	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
 	irqDisable(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	REG_IME = 1;
+	
+	if(__dsimode == true){
+		TWLSetTouchscreenTWLMode();
+		
+		//Enable 16M EWRAM //causes TWL TSC coords to be 0. Todo: implement 16M RAM + TSC on specific games
+		/*
+		u32 SFGEXT9 = *(u32*)0x04004008;
+		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger) = 16MB
+		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
+		*(u32*)0x04004008 = SFGEXT9;
+		*/
+	}
 	swiDelay(1000);
 	
 #ifndef DSEMUL_BUILD	
 	GUI.printfy = 32;
-	//GUI_align_printf(GUI_TEXT_ALIGN_CENTER, SNEMULDS_TITLE);
-	//GUI_align_printf(GUI_TEXT_ALIGN_CENTER, SNEMULDS_SUBTITLE);
     GUI.printfy += 32; // FIXME
-	//GUI_align_printf(GUI_TEXT_ALIGN_CENTER, _STR(4));
 #endif	
 	
 	memset(&startFilePath, 0, sizeof(startFilePath));
@@ -550,14 +554,31 @@ int main(int argc, char ** argv){
 	GUI_getConfig();	
 	GUI_printf("Load conf4");
 	
-	
-	char tmpName[256];
-	char ext[256];
 	strcpy(&CFG.ROMFile[0], "");
 	memset(&guiSelItem, 0, sizeof(guiSelItem));
 	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
 	
 	switchToTGDSConsoleColors();
+	
+	//#define TSCDEBUG
+	#ifdef TSCDEBUG
+	clrscr();
+	printf("--");
+	printf("--");
+	printf("--");
+	
+	while(1==1){
+		scanKeys();
+		u32 keys = keysDown();
+		if(keys & KEY_TOUCH){
+			struct touchPosition touch;
+			// Deal with the Stylus.
+			XYReadScrPosUser(&touch);
+			
+			printf("px: %d  py: %d ",touch.px, touch.py);
+		}
+	}
+	#endif
 
 	//ARGV Support: Only supported through TGDS chainloading.
 	bool isSnesFile = false;
