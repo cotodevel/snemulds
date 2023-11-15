@@ -337,6 +337,8 @@ void unpackOptions(int version, uint8 *ptr)
 	applyOptions();
 }
 
+static u8 savedUserSettings[1024*4];
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -392,18 +394,60 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		}
 		
 		clrscr();
+		printf("----");
+		printf("----");
+		printf("----");
+		
 		memset(CFG.ROMFile, 0, sizeof(CFG.ROMFile));
 		strcpy(CFG.ROMFile, romname);
 		
-		ROM = (char *)SNESC.ROM;
-		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
+		//Handle special cases for TWL extended mem games like Megaman X3 Zero Project
+		coherent_user_range_by_size((uint32)0x027FF000, (int)sizeof(savedUserSettings));	
+		memcpy((void*)&savedUserSettings[0], (const void*)0x027FF000, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
 		
+		ROM = (char *)SNES_ROM_ADDRESS;
 		size = FS_getFileSizeFatFS((char*)&CFG.ROMFile[0]);
 		ROMheader = size & 8191;
 		if (ROMheader != 0&& ROMheader != 512){
 			ROMheader = 512;
 		}
-	
+
+		FS_loadFileFatFS(CFG.ROMFile, ROM, PAGE_SIZE+ROMheader);
+		load_ROM(ROM, size);
+		SNES.ROM_info.title[20] = '\0';
+		int i = 20;
+		while (i >= 0 && SNES.ROM_info.title[i] == ' '){
+			SNES.ROM_info.title[i--] = '\0';
+		}
+		if(
+			(__dsimode == true)
+			&&
+			(strncmp((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0)
+		){
+			//Enable 16M EWRAM (TWL)
+			u32 SFGEXT9 = *(u32*)0x04004008;
+			//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
+			*(u32*)0x04004008 = SFGEXT9;
+			ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
+			printf("Extended TWL Mem.");
+		}
+		else{
+			if(__dsimode == true){
+				//Enable 4M EWRAM (TWL)
+				u32 SFGEXT9 = *(u32*)0x04004008;
+				//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+				SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x0 << 14);
+				*(u32*)0x04004008 = SFGEXT9;	
+			}
+			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
+			printf("Normal NTR Mem.");
+		}
+
+		ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
+		bool firstTime = true;
+		initSNESEmpty(firstTime);
+		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 		clrscr();
 		GUI_printf(" - - ");
 		GUI_printf(" - - ");
@@ -420,6 +464,8 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			crc = crc32(0, ROM, size-ROMheader);
 			GUI_printf("CRC = %08x ", crc);
 		}
+		coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
+		memcpy((const void*)0x027FF000, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
 		return reloadROM(ROM-ROMheader, size, crc, nameItem->filenameFromFS_getDirectoryListMethod);
 	}
 	return false;
@@ -516,14 +562,6 @@ int main(int argc, char ** argv){
 	
 	if(__dsimode == true){
 		TWLSetTouchscreenTWLMode();
-		
-		//Enable 16M EWRAM //causes TWL TSC coords to be 0. Todo: implement 16M RAM + TSC on specific games
-		/*
-		u32 SFGEXT9 = *(u32*)0x04004008;
-		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger) = 16MB
-		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
-		*(u32*)0x04004008 = SFGEXT9;
-		*/
 	}
 	swiDelay(1000);
 	
@@ -537,9 +575,7 @@ int main(int argc, char ** argv){
 	
 	SNEMULDS_IPC->APU_ADDR_CNT = SNEMULDS_IPC->APU_ADDR_ANS = SNEMULDS_IPC->APU_ADDR_CMD = 0;
 	update_spc_ports();
-	bool firstTime = true;
-	initSNESEmpty(firstTime);
-
+	
 	// Clear "HDMA"
 	for (i = 0; i < 192; i++){
 		GFX.lineInfo[i].mode = -1;
