@@ -184,27 +184,6 @@ int ROM_PAGING_SIZE = 0;
 
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
-	
-	#ifdef ARM9
-	
-	//todo: right after TWL TSC + 16M RAM is working 
-	/*
-	if(__dsimode == true){
-		#ifdef ARM9
-		ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
-		#endif
-	}
-	else{
-		#ifdef ARM9
-		ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
-		#endif
-	}
-    */
-	ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
-	
-	ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
-	#endif
-	
 	struct s_apu2 *APU2 = (struct s_apu2 *)(&SNEMULDS_IPC->APU2);
 	//must reflect to ipcfifoTGDSUser.h defs
 	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&SNEMULDS_IPC->PORT_SPC_TO_SNES[0];
