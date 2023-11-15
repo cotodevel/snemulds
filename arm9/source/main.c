@@ -337,6 +337,7 @@ void unpackOptions(int version, uint8 *ptr)
 	applyOptions();
 }
 
+bool uninitializedEmu = false;
 static u8 savedUserSettings[1024*4];
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -445,8 +446,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		}
 
 		ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
-		bool firstTime = true;
-		initSNESEmpty(firstTime);
+		initSNESEmpty(&uninitializedEmu);
 		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 		clrscr();
 		GUI_printf(" - - ");
@@ -572,9 +572,9 @@ int main(int argc, char ** argv){
 	
 	memset(&startFilePath, 0, sizeof(startFilePath));
 	memset(&startSPCFilePath, 0, sizeof(startSPCFilePath));
-	
 	SNEMULDS_IPC->APU_ADDR_CNT = SNEMULDS_IPC->APU_ADDR_ANS = SNEMULDS_IPC->APU_ADDR_CMD = 0;
 	update_spc_ports();
+	uninitializedEmu = true;
 	
 	// Clear "HDMA"
 	for (i = 0; i < 192; i++){
@@ -663,7 +663,7 @@ int main(int argc, char ** argv){
 				SNEMULDS_IPC->APU_ADDR_CNT = SNEMULDS_IPC->APU_ADDR_ANS = SNEMULDS_IPC->APU_ADDR_CMD = 0;
 				update_spc_ports();
 				bool firstTime = false;
-				initSNESEmpty(firstTime);
+				initSNESEmpty(&uninitializedEmu);
 
 				// Clear "HDMA"
 				for (i = 0; i < 192; i++){
