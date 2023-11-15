@@ -218,7 +218,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int initSNESEmpty(bool firstTime){
+int initSNESEmpty(bool * firstTime){
 	//First of all: ARM7 APU Core
 	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
@@ -247,7 +247,7 @@ int initSNESEmpty(bool firstTime){
 	  
 	//  SNES.flog = fopen("snemul.log", "w");
 	//	SNES.flog = stdout;
-	if(firstTime == true){
+	if(*firstTime == true){
 		memset(&SNESC, 0, sizeof(SNESC));
 		/* allocate memory */
 		//SNESC.RAM = (uchar *)TGDSARM9Malloc(0x020000);
@@ -270,6 +270,7 @@ int initSNESEmpty(bool firstTime){
 			GUI_printf("Failed RAM alloc. Halt");
 			while(1==1){}
 		}
+		*firstTime = false;
 	}
 	if(ROM_paging_offs != NULL){
 		TGDSARM9Free(ROM_paging_offs);
