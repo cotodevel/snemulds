@@ -332,6 +332,9 @@ void unpackOptions(int version, uint8 *ptr)
 	applyOptions();
 }
 
+bool uninitializedEmu = false;
+static u8 savedUserSettings[1024*4];
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -387,18 +390,59 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		}
 		
 		clrscr();
+		printf("----");
+		printf("----");
+		printf("----");
+		
 		memset(CFG.ROMFile, 0, sizeof(CFG.ROMFile));
 		strcpy(CFG.ROMFile, romname);
 		
-		ROM = (char *)SNESC.ROM;
-		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
+		//Handle special cases for TWL extended mem games like Megaman X3 Zero Project
+		coherent_user_range_by_size((uint32)0x027FF000, (int)sizeof(savedUserSettings));	
+		memcpy((void*)&savedUserSettings[0], (const void*)0x027FF000, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
 		
+		ROM = (char *)SNES_ROM_ADDRESS;
 		size = FS_getFileSizeFatFS((char*)&CFG.ROMFile[0]);
 		ROMheader = size & 8191;
 		if (ROMheader != 0&& ROMheader != 512){
 			ROMheader = 512;
 		}
-	
+
+		FS_loadFileFatFS(CFG.ROMFile, ROM, PAGE_SIZE+ROMheader);
+		load_ROM(ROM, size);
+		SNES.ROM_info.title[20] = '\0';
+		int i = 20;
+		while (i >= 0 && SNES.ROM_info.title[i] == ' '){
+			SNES.ROM_info.title[i--] = '\0';
+		}
+		if(
+			(__dsimode == true)
+			&&
+			(strncmp((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0)
+		){
+			//Enable 16M EWRAM (TWL)
+			u32 SFGEXT9 = *(u32*)0x04004008;
+			//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
+			*(u32*)0x04004008 = SFGEXT9;
+			ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
+			printf("Extended TWL Mem.");
+		}
+		else{
+			if(__dsimode == true){
+				//Enable 4M EWRAM (TWL)
+				u32 SFGEXT9 = *(u32*)0x04004008;
+				//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+				SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x0 << 14);
+				*(u32*)0x04004008 = SFGEXT9;	
+			}
+			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
+			printf("Normal NTR Mem.");
+		}
+
+		ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
+		initSNESEmpty(&uninitializedEmu);
+		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 		clrscr();
 		GUI_printf(" - - ");
 		GUI_printf(" - - ");
@@ -415,7 +459,8 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			crc = crc32(0, ROM, size-ROMheader);
 			GUI_printf("CRC = %08x ", crc);
 		}
-		
+		coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
+		memcpy((const void*)0x027FF000, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
 		S9xResetDSP1();
 		return reloadROM(ROM-ROMheader, size, crc, nameItem->filenameFromFS_getDirectoryListMethod);
 	}
@@ -456,25 +501,10 @@ __attribute__((optimize("Os")))
 __attribute__ ((optnone))
 #endif
 int main(int argc, char ** argv){
-	REG_IME = 0;
-	setSnemulDSSpecial0xFFFF0000MPUSettings();
-	REG_IME = 1;
-	
-	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
-	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
-	REG_IE |= (IRQ_HBLANK| IRQ_VBLANK | IRQ_VCOUNT);		
-	
-	//Set up PPU IRQ Vertical Line
-	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
-	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	
 	bool isTGDSCustomConsole = false;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
 	GUI_init(isTGDSCustomConsole);
-	sint32 fwlanguage = (sint32)getLanguage();
-	GUI_setLanguage(fwlanguage);
-	GUI_clear();
 	
 	//xmalloc init removes args, so save them
 	int i = 0;
@@ -484,6 +514,13 @@ int main(int argc, char ** argv){
 
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
+	
+	isTGDSCustomConsole = false;
+	GUI_init(isTGDSCustomConsole);
+
+	sint32 fwlanguage = (sint32)getLanguage(); //get language once User Settings have been loaded
+	GUI_setLanguage(fwlanguage);
+	GUI_clear();
 	
 	//argv destroyed here because of xmalloc init, thus restore them
 	for(i = 0; i < argc; i++){
@@ -504,25 +541,37 @@ int main(int argc, char ** argv){
 	}
 	
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
+	
+	REG_IME = 0;
+	setSnemulDSSpecial0xFFFF0000MPUSettings();
+	//TGDS-Projects -> legacy NTR TSC compatibility
+	
+	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
+	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
+	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
+	REG_IE |= (IRQ_HBLANK| IRQ_VBLANK);		
+	
+	//Set up PPU IRQ Vertical Line
+	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
 	irqDisable(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
+	REG_IME = 1;
+	
+	if(__dsimode == true){
+		TWLSetTouchscreenTWLMode();
+	}
 	swiDelay(1000);
 	
 #ifndef DSEMUL_BUILD	
 	GUI.printfy = 32;
-	//GUI_align_printf(GUI_TEXT_ALIGN_CENTER, SNEMULDS_TITLE);
-	//GUI_align_printf(GUI_TEXT_ALIGN_CENTER, SNEMULDS_SUBTITLE);
     GUI.printfy += 32; // FIXME
-	//GUI_align_printf(GUI_TEXT_ALIGN_CENTER, _STR(4));
 #endif	
 	
 	memset(&startFilePath, 0, sizeof(startFilePath));
 	memset(&startSPCFilePath, 0, sizeof(startSPCFilePath));
-	
 	SNEMULDS_IPC->APU_ADDR_CNT = SNEMULDS_IPC->APU_ADDR_ANS = SNEMULDS_IPC->APU_ADDR_CMD = 0;
 	update_spc_ports();
-	bool firstTime = true;
-	initSNESEmpty(firstTime);
-
+	uninitializedEmu = true;
+	
 	// Clear "HDMA"
 	for (i = 0; i < 192; i++){
 		GFX.lineInfo[i].mode = -1;
@@ -537,25 +586,39 @@ int main(int argc, char ** argv){
 	GUI_getConfig();	
 	GUI_printf("Load conf4");
 	
-	//TGDS-Projects -> legacy NTR TSC compatibility
-	if(__dsimode == true){
-		TWLSetTouchscreenNTRMode();
-	}
-	
-	char tmpName[256];
-	char ext[256];
 	strcpy(&CFG.ROMFile[0], "");
 	memset(&guiSelItem, 0, sizeof(guiSelItem));
 	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
 	
 	switchToTGDSConsoleColors();
+	
+	//#define TSCDEBUG
+	#ifdef TSCDEBUG
+	clrscr();
+	printf("--");
+	printf("--");
+	printf("--");
+	
+	while(1==1){
+		scanKeys();
+		u32 keys = keysDown();
+		if(keys & KEY_TOUCH){
+			struct touchPosition touch;
+			// Deal with the Stylus.
+			XYReadScrPosUser(&touch);
+			
+			printf("px: %d  py: %d ",touch.px, touch.py);
+		}
+	}
+	#endif
 
 	//ARGV Support: Only supported through TGDS chainloading.
 	bool isSnesFile = false;
-	if (argc > 2) {
+	if (argc > 3) {
 		//arg 0: original NDS caller
 		//arg 1: this NDS binary
 		//arg 2: this NDS binary's ARG0: filepath
+		//arg 3: "dummy.arg"
 		//is sfc/smc? then valid
 		strcpy(&CFG.ROMFile[0], (const char *)argv[2]);
 		guiSelItem.filenameFromFS_getDirectoryListMethod = (char*)&CFG.ROMFile[0];
@@ -570,12 +633,17 @@ int main(int argc, char ** argv){
 	}
 	while(isSnesFile == false);
 	///////////////////////////////////////////
-	if (!(argc > 2)) { 
+	if (!(argc > 3)) { 
 		GUI_deleteROMSelector(); 	//Should also free ROMFile
 	}
 	
 	switchToSnemulDSConsoleColors();
 	GUI_createMainMenu();	//Start GUI
+	
+	//Some games require specific hacks to run
+    if(strncmp((char*)&SNES.ROM_info.title[0], "BREATH OF FIRE 2", 16) == 0){
+      APU_command(SNEMULDS_APUCMD_FORCESYNCON);
+    }
 	
 	while (1){
 
@@ -592,7 +660,7 @@ int main(int argc, char ** argv){
 				SNEMULDS_IPC->APU_ADDR_CNT = SNEMULDS_IPC->APU_ADDR_ANS = SNEMULDS_IPC->APU_ADDR_CMD = 0;
 				update_spc_ports();
 				bool firstTime = false;
-				initSNESEmpty(firstTime);
+				initSNESEmpty(&uninitializedEmu);
 
 				// Clear "HDMA"
 				for (i = 0; i < 192; i++){

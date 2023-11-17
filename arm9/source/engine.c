@@ -216,12 +216,12 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int initSNESEmpty(int firstTime){
+int initSNESEmpty(bool * firstTime){
 	//First of all: ARM7 APU Core
 	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 	setValueSafe(&fifomsg[10], (uint32)SNEMULDS_SETUP_ARM7);
-	SendFIFOWordsITCM(SNEMULDS_SETUP_ARM7, 0xFF);
+	SendFIFOWords(SNEMULDS_SETUP_ARM7, 0xFF);
 	while((u32)getValueSafe(&fifomsg[10]) != (u32)0){
 		swiDelay(1);
 	}
@@ -241,38 +241,40 @@ int initSNESEmpty(int firstTime){
 	//CFG.Sound_output = 0;
 	CFG.FastDMA = 1;
 	CFG.Transparency = 1;
-  memset(&SNES, 0, sizeof(SNES));
+	memset(&SNES, 0, sizeof(SNES));
 	  
 	//  SNES.flog = fopen("snemul.log", "w");
 	//	SNES.flog = stdout;
-  if(firstTime == true){
-    memset(&SNESC, 0, sizeof(SNESC));
-    /* allocate memory */
-    //ROM: End of EWRAM so it can safely be rewritten
-    SNESC.ROM = SNES_ROM_ADDRESS;
-	  //SNESC.RAM = (uchar *)TGDSARM9Malloc(0x020000);
-	  SNESC.RAM = (uchar *)SNES_RAM_ADDRESS;
-    SNESC.VRAM = (uchar *)TGDSARM9Malloc(0x010000);
-    //SNESC.BSRAM = (uchar *)TGDSARM9Malloc(0x8000);
-	  SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
-    ROM_paging = SNES_ROM_PAGING_ADDRESS;
-    ROM_paging_offs = TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
-    
-    if(
-      (SNESC.RAM == NULL)
-      ||
-      (SNESC.VRAM == NULL)
-      ||
-      (SNESC.BSRAM == NULL)
-      ||
-      (ROM_paging == NULL)
-      ||
-      (ROM_paging_offs == NULL)
-    ){
-      GUI_printf("Failed RAM alloc. Halt");
-      while(1==1){}
-  }
-
+	if(*firstTime == true){
+		memset(&SNESC, 0, sizeof(SNESC));
+		/* allocate memory */
+		//SNESC.RAM = (uchar *)TGDSARM9Malloc(0x020000);
+		SNESC.RAM = (uchar *)SNES_RAM_ADDRESS;
+		SNESC.VRAM = (uchar *)TGDSARM9Malloc(0x010000);
+		//SNESC.BSRAM = (uchar *)TGDSARM9Malloc(0x8000);
+		SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
+		ROM_paging = SNES_ROM_PAGING_ADDRESS;
+		if(
+			(SNESC.RAM == NULL)
+			  ||
+			  (SNESC.VRAM == NULL)
+			  ||
+			  (SNESC.BSRAM == NULL)
+			  ||
+			  (ROM_paging == NULL)
+		){
+			GUI_printf("Failed RAM alloc. Halt");
+			while(1==1){}
+		}
+		*firstTime = false;
+	}
+	if(ROM_paging_offs != NULL){
+		TGDSARM9Free(ROM_paging_offs);
+	}
+	ROM_paging_offs = TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
+	if(ROM_paging_offs == NULL){
+		GUI_printf("Failed RAM alloc: ROM_paging_offs. Halt");
+		while(1==1){}
 	}
 	init_GFX();
 	GFX.Graph_enabled = 1;

@@ -192,8 +192,6 @@ int	FS_loadFileFatFS(sint8 *filename, sint8 *buf, int size){
 	FRESULT result = f_open(&thisFD, (const TCHAR*)filename, mode);
 	if(result != FR_OK){
 		FS_unlock();
-		//GUI_printf("FS_loadFileFatFS:epic fail :%s", filename); //this is completely normal as there may not be a save file the first time romfile is loaded
-		//while(1==1){}
 		return -1;
 	}
 	
@@ -205,7 +203,6 @@ int	FS_loadFileFatFS(sint8 *filename, sint8 *buf, int size){
 	int readSize;
 	result = f_read(&thisFD, buf, (int)size, (UINT*)&readSize);
 	coherent_user_range_by_size((uint32)buf, (int)size); //Prevent Cache problems.
-	//GUI_printf("Read done: %d bytes ", readSize);
 	f_close(&thisFD);
 
 	FS_unlock();

@@ -25,8 +25,6 @@ GNU General Public License for more details.
 #include "consoleTGDS.h"
 #include "soundTGDS.h"
 
-#define TGDSPROJECTNAME ((char*)"snemulds")
-
 #endif
 
 #ifdef __cplusplus
@@ -51,6 +49,7 @@ extern char *GUI_getROMList(sint8 *rompath);
 extern char *GUI_getSPCList(sint8 *spcpath);
 extern char args[8][MAX_TGDSFILENAME_LENGTH];
 extern char *argvs[8];
+extern bool uninitializedEmu;
 
 #ifdef __cplusplus
 }
