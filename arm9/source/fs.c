@@ -182,7 +182,8 @@ int	FS_shouldFreeROM()
 	return 1;
 }
 
-//Reimplement these to use fatfs directly and save RAM. Which means the FIL object is internal
+//Reimplemented these so they're using fatfs directly and save RAM. 
+//Note: FATFS barely works because SnemulDS has run out of memory. So snemul.cfg will likely corrupt.
 int	FS_loadFileFatFS(sint8 *filename, sint8 *buf, int size){
 	FS_lock();
 	FIL thisFD;
