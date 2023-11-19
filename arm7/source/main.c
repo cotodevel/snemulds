@@ -133,12 +133,12 @@ int main(int _argc, char **_argv) {
 			//if (scanlineCount >= 66) {
 			//	scanlineCount -= 66;
 			//	samplesToMix = 17;
-			//	cyclesToExecute = spcCyclesPerSec / (32000 / 3);
+			//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 3);
 			//} else {
 			//	samplesToMix = 16;
-			//	cyclesToExecute = spcCyclesPerSec / (32000 / 2);
+			//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 2);
 			//}
-			cyclesToExecute = spcCyclesPerSec / (32000 / 2);
+			cyclesToExecute = spcCyclesPerUpdate;
 			ApuExecute(cyclesToExecute);
 			
 			if (scanlineCount >= 16) {
