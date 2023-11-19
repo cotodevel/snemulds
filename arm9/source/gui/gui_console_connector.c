@@ -977,21 +977,18 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			CFG.EnableSRAM = (int)arg >> 24;
 			return 1;
 		
-		case 6: //multiplayer
-		if(CFG.LocalPlayMode == 0){
-			//local nifi: 
-			CFG.LocalPlayMode = 1;
-		}
-		else if(CFG.LocalPlayMode == 1){			
-			//local nifi:
-			CFG.LocalPlayMode = 2;
-		}
-		else if(CFG.LocalPlayMode == 2){			
-			//single player:
-			CFG.LocalPlayMode = 0;
-		}
-		return 1;
-	
+		case 6:{ //reset cfg
+			bool ret = resetSnemulDSConfig();
+			GUI_printf("--");
+			if(ret == true){
+				GUI_printf("reset cfg OK");
+			}
+			else{
+				GUI_printf("reset cfg Error");
+			}
+			return 1;
+		}break;
+		
 		case 14: // IDSAVE			
 			saveOptionsToConfig(SNES.ROM_info.title);
 			return 1;						
@@ -1043,9 +1040,9 @@ t_GUIScreen *buildOptionsMenu(){
 	//scr->zones[6].state |= GUI_ST_DISABLED;
 	//scr instance , scr index, X pixel pos , pixel Y pos , zone Y, zone width
 	GUI_setZone   (scr, 12, 90, 94, 100+16, 84+10); // static
-	GUI_linkObject(scr, 12, GUI_STATIC_LEFT(IDS_MULTIPLAYER_MODE, 0), GUIStaticEx_handler);
-	GUI_setZone   (scr, 6, 100+24, 84, 256, 84+10); // multiplayer mode
-	GUI_linkObject(scr, 6, GUI_CHOICE(IDS_MULTIPLAYER_MODE+1, 3, CFG.LocalPlayMode), GUIChoiceButton_handler);
+	GUI_linkObject(scr, 12, GUI_STATIC_LEFT(IDS_RESETCFG, 0), GUIStaticEx_handler);
+	GUI_setZone   (scr, 6, 100+24, 84, 256, 84+10); // reset snemul.cfg
+	GUI_linkObject(scr, 6, GUI_CHOICE(IDS_RESETCFG+1, 1, 0), GUIChoiceButton_handler);
 	
 	
 	// Three elements
@@ -1084,8 +1081,7 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	if (msg == GUI_DRAW)
 		consoleClear(DefaultSessionConsole);
 	if (msg == GUI_COMMAND)
-	{
-		//GUI_console_printf(0, 0, "Command %d", param);		
+	{	
 		if (param == 0) // ROM list
 		{
 		    //////////////////////////Halt emu, give control to GUI, and wait for A/B events//////////////////////////
