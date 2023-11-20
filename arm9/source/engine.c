@@ -218,11 +218,12 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int initSNESEmpty(bool * firstTime){
+int initSNESEmpty(bool * firstTime, u32 APUFixes){
 	//First of all: ARM7 APU Core
 	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 	setValueSafe(&fifomsg[10], (uint32)SNEMULDS_SETUP_ARM7);
+	setValueSafe(&fifomsg[11], (uint32)APUFixes);
 	SendFIFOWords(SNEMULDS_SETUP_ARM7, 0xFF);
 	while((u32)getValueSafe(&fifomsg[10]) != (u32)0){
 		swiDelay(1);

@@ -271,7 +271,7 @@ zeroAndHighPageMemWrite8:
     writeMem8
 .ENDM
 
-.MACRO adcFromR0
+.MACRO adcFromR0APUNormal
     @ Get C bit into C flag
     movs r1, APU_CYCLES, lsr #1
     subcs r0, r0, #0x100
@@ -282,6 +282,21 @@ zeroAndHighPageMemWrite8:
 	orrls APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG @Half-carry flag
 	biccc r0, r0, #(CYCLES_C_FLAG)
     @ Will be set in fetchSetC
+.ENDM
+
+.MACRO adcFromR0APUFix
+	@ Get C bit into C flag
+	movs r1, APU_CYCLES, lsr #1
+	subcs r0, r0, #0x100
+	adcs APU_REG_A, APU_REG_A, r0, ror #8
+	mov APU_NZ, APU_REG_A, lsr #24
+	orrls APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG @Half-carry flag
+	bichi APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG
+	biccc APU_CYCLES, APU_CYCLES, #(CYCLES_C_FLAG)
+	bicvc APU_CYCLES, APU_CYCLES, #(CYCLES_V_FLAG)
+	orrvs APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG
+	biccc r0, r0, #(CYCLES_C_FLAG)
+	@ Will be set in fetchSetC
 .ENDM
 
 .MACRO adcToMem
@@ -298,7 +313,7 @@ zeroAndHighPageMemWrite8:
     writeMem8ZeroPage
 .ENDM
 
-.MACRO sbcFromR0
+.MACRO sbcFromR0APUNormal
     @ Get C bit into C flag
     movs r1, APU_CYCLES, lsr #1
     sbcs APU_REG_A, APU_REG_A, r0, lsl #24
@@ -306,6 +321,19 @@ zeroAndHighPageMemWrite8:
     bic APU_CYCLES, APU_CYCLES, #(CYCLES_C_FLAG | CYCLES_V_FLAG | CYCLES_H_FLAG)
     orrvs APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG
 	orrls APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG @Half-carry flag
+	biccc r0, r0, #(CYCLES_C_FLAG)
+.ENDM
+
+.MACRO sbcFromR0APUFix
+    @ Get C bit into C flag
+    movs r1, APU_CYCLES, lsr #1
+	sbcs APU_REG_A, APU_REG_A, r0, lsl #24
+	mov APU_NZ, APU_REG_A, lsr #24
+	orrgt APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG @Half-carry flag
+	bicle APU_CYCLES, APU_CYCLES, #CYCLES_H_FLAG
+	biccc APU_CYCLES, APU_CYCLES, #(CYCLES_C_FLAG)
+	bicvc APU_CYCLES, APU_CYCLES, #(CYCLES_V_FLAG)
+	orrvs APU_CYCLES, APU_CYCLES, #CYCLES_V_FLAG
 	biccc r0, r0, #(CYCLES_C_FLAG)
 .ENDM
 
@@ -875,7 +903,20 @@ APU_PC_save:
 //   ADC    A,#inm      88    2     2     A <- A+inm+C            NV..H..ZC
 op88:
     ldrb r0, [APU_PC], #1
-    adcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixop88
+	bne handleAPUNormalop88
+handleAPUFixop88:
+	adcFromR0APUFix
+	b quitop88
+handleAPUNormalop88:
+	adcFromR0APUNormal
+quitop88:
+	pop {r14}
     fetchSetC 2
 
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -883,7 +924,20 @@ op88:
 op86:
     add r12, APU_DP, APU_REG_X, lsr #24
     readMem8
-    adcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixop86
+	bne handleAPUNormalop86
+handleAPUFixop86:
+	adcFromR0APUFix
+	b quitop86
+handleAPUNormalop86:
+	adcFromR0APUNormal
+quitop86:
+	pop {r14}
     fetchSetC 3
     
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -891,7 +945,20 @@ op86:
 op84:
     loadDp
     readMem8
-    adcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixop84
+	bne handleAPUNormalop84
+handleAPUFixop84:
+	adcFromR0APUFix
+	b quitop84
+handleAPUNormalop84:
+	adcFromR0APUNormal
+quitop84:
+	pop {r14}
     fetchSetC 3
 
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -899,7 +966,20 @@ op84:
 op94:
     loadDpOfs APU_REG_X
     readMem8
-    adcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixop94
+	bne handleAPUNormalop94
+handleAPUFixop94:
+	adcFromR0APUFix
+	b quitop94
+handleAPUNormalop94:
+	adcFromR0APUNormal
+quitop94:
+	pop {r14}
     fetchSetC 4
     
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -907,7 +987,20 @@ op94:
 op85:
     loadImm
     readMem8
-    adcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixop85
+	bne handleAPUNormalop85
+handleAPUFixop85:
+	adcFromR0APUFix
+	b quitop85
+handleAPUNormalop85:
+	adcFromR0APUNormal
+quitop85:
+	pop {r14}
     fetchSetC 4
     
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -915,7 +1008,20 @@ op85:
 op95:
     loadImmOfs APU_REG_X
     readMem8
-    adcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixop95
+	bne handleAPUNormalop95
+handleAPUFixop95:
+	adcFromR0APUFix
+	b quitop95
+handleAPUNormalop95:
+	adcFromR0APUNormal
+quitop95:
+	pop {r14}
     fetchSetC 5
 
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -923,7 +1029,20 @@ op95:
 op96:
     loadImmOfs APU_REG_Y
     readMem8
-    adcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixop96
+	bne handleAPUNormalop96
+handleAPUFixop96:
+	adcFromR0APUFix
+	b quitop96
+handleAPUNormalop96:
+	adcFromR0APUNormal
+quitop96:
+	pop {r14}
     fetchSetC 5
 
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -931,7 +1050,20 @@ op96:
 op87:
     loadDpX
     readMem8
-    adcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixop87
+	bne handleAPUNormalop87
+handleAPUFixop87:
+	adcFromR0APUFix
+	b quitop87
+handleAPUNormalop87:
+	adcFromR0APUNormal
+quitop87:
+	pop {r14}
     fetchSetC 6
 
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -939,7 +1071,20 @@ op87:
 op97:
     loadDpY
     readMem8
-    adcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixop97
+	bne handleAPUNormalop97
+handleAPUFixop97:
+	adcFromR0APUFix
+	b quitop97
+handleAPUNormalop97:
+	adcFromR0APUNormal
+quitop97:
+	pop {r14}
     fetchSetC 6
     
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -971,7 +1116,20 @@ op98:
 //   SBC    A,#inm      A8    2     2     A <- A-inm-!C           NV..H..ZC
 opA8:
     ldrb r0, [APU_PC], #1
-    sbcFromR0
+	push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixopA8
+	bne handleAPUNormalopA8
+handleAPUFixopA8:
+	sbcFromR0APUFix
+	b quitopA8
+handleAPUNormalopA8:
+	sbcFromR0APUNormal
+quitopA8:
+	pop {r14}
     fetchSetC 2
     
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -979,7 +1137,20 @@ opA8:
 opA6:
     add r12, APU_DP, APU_REG_X, lsr #24
     readMem8
-    sbcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixopA6
+	bne handleAPUNormalopA6
+handleAPUFixopA6:
+	sbcFromR0APUFix
+	b quitopA6
+handleAPUNormalopA6:
+	sbcFromR0APUNormal
+quitopA6:
+	pop {r14}
     fetchSetC 3
 
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -987,7 +1158,20 @@ opA6:
 opA4:
     loadDp
     readMem8
-    sbcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixopA4
+	bne handleAPUNormalopA4
+handleAPUFixopA4:
+	sbcFromR0APUFix
+	b quitopA4
+handleAPUNormalopA4:
+	sbcFromR0APUNormal
+quitopA4:
+	pop {r14}
     fetchSetC 3
     
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -995,7 +1179,20 @@ opA4:
 opB4:
     loadDpOfs APU_REG_X
     readMem8
-    sbcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixopB4
+	bne handleAPUNormalopB4
+handleAPUFixopB4:
+	sbcFromR0APUFix
+	b quitopB4
+handleAPUNormalopB4:
+	sbcFromR0APUNormal
+quitopB4:
+	pop {r14}
     fetchSetC 4
    
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -1003,7 +1200,20 @@ opB4:
 opA5:
     loadImm
     readMem8
-    sbcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixopA5
+	bne handleAPUNormalopA5
+handleAPUFixopA5:
+	sbcFromR0APUFix
+	b quitopA5
+handleAPUNormalopA5:
+	sbcFromR0APUNormal
+quitopA5:
+	pop {r14}
     fetchSetC 4
     
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -1011,7 +1221,20 @@ opA5:
 opB5:
     loadImmOfs APU_REG_X
     readMem8
-    sbcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixopB5
+	bne handleAPUNormalopB5
+handleAPUFixopB5:
+	sbcFromR0APUFix
+	b quitopB5
+handleAPUNormalopB5:
+	sbcFromR0APUNormal
+quitopB5:
+	pop {r14}
     fetchSetC 5
     
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -1019,7 +1242,20 @@ opB5:
 opB6:
     loadImmOfs APU_REG_Y
     readMem8
-    sbcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixopB6
+	bne handleAPUNormalopB6
+handleAPUFixopB6:
+	sbcFromR0APUFix
+	b quitopB6
+handleAPUNormalopB6:
+	sbcFromR0APUNormal
+quitopB6:
+	pop {r14}
     fetchSetC 5
     
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -1027,7 +1263,20 @@ opB6:
 opA7:
     loadDpX
     readMem8
-    sbcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixopA7
+	bne handleAPUNormalopA7
+handleAPUFixopA7:
+	sbcFromR0APUFix
+	b quitopA7
+handleAPUNormalopA7:
+	sbcFromR0APUNormal
+quitopA7:
+	pop {r14}
     fetchSetC 6
     
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag
@@ -1035,7 +1284,20 @@ opA7:
 opB7:
     loadDpY
     readMem8
-    sbcFromR0
+    push {r14}
+    mov r14, #0x03800000
+	orr r14,r14,#0xc0
+	ldr r14, [r14]
+	tst r14, #1
+	beq handleAPUFixopB7
+	bne handleAPUNormalopB7
+handleAPUFixopB7:
+	sbcFromR0APUFix
+	b quitopB7
+handleAPUNormalopB7:
+	sbcFromR0APUNormal
+quitopB7:
+	pop {r14}
     fetchSetC 6   
 
 // Mnemonic  Operand  Code Bytes Cycles Operation                    Flag

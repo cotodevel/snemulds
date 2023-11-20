@@ -81,7 +81,8 @@ void closeSoundUser() {
 
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
 
-uint32 screen_mode;
+static u32 apuFix = 0;
+uint32 screen_mode = 0;
 int APU_MAX = 262;
 
 __attribute__((section(".dtcm")))
@@ -469,7 +470,20 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		}
 
 		ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
-		initSNESEmpty(&uninitializedEmu);
+		
+		//APU Fixes for proper sound speed
+		if(
+			(strncmp((char*)&SNES.ROM_info.title[0], "MEGAMAN X3", 10) == 0)
+			||
+			(strncmp((char*)&SNES.ROM_info.title[0], "MEGAMAN X2", 10) == 0)
+			){
+			apuFix = 0;
+			GUI_printf("APU Fix");
+		}
+		else{
+			apuFix = 1;
+		}
+		initSNESEmpty(&uninitializedEmu, apuFix);
 		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 		clrscr();
 		GUI_printf(" - - ");
@@ -693,7 +707,7 @@ int main(int argc, char ** argv){
 				SNEMULDS_IPC->APU_ADDR_CNT = SNEMULDS_IPC->APU_ADDR_ANS = SNEMULDS_IPC->APU_ADDR_CMD = 0;
 				update_spc_ports();
 				bool firstTime = false;
-				initSNESEmpty(&uninitializedEmu);
+				initSNESEmpty(&uninitializedEmu, apuFix);
 
 				// Clear "HDMA"
 				for (i = 0; i < 192; i++){
