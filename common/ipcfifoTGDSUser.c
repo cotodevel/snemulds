@@ -78,6 +78,8 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			
 			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
+			u32 apuFix7 = getValueSafe(&fifomsg[11]); //u32 APUFixes 
+			*(u32*)0x038000c0 = apuFix7;
 			setValueSafe(&fifomsg[10], (uint32)0);
 		}
 		break;
