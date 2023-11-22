@@ -645,35 +645,39 @@ int GFXConfigHandler(t_GUIZone *zone, int msg, int param, void *arg){
 int AdvancedHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-	case GUI_DRAW:
-		consoleClear(DefaultSessionConsole);
-		return 0;
-	case GUI_COMMAND:
-	{
-		switch (param)
+		case GUI_DRAW:{
+			consoleClear(DefaultSessionConsole);
+			return 0;
+		}break;
+		case GUI_COMMAND:
 		{
-		case 0: // RESET
-			reset_SNES();
-			loadSRAM();
-			break;
-		case 1: // SAVE SRAM
-			saveSRAM();
-			GUI.printfy = 23;
-			GUI_printf("SRAM written");
-			break;
-		case 2: // GFX CONFIG
-		{
-			t_GUIScreen *scr = buildGFXConfigMenu();
-			scr->handler = GFXConfigHandler;
-			GUI_deleteSelector(GUI.screen);
-			GUI_switchScreen(scr);
-			return 1;
-		}
-		}
-		GUI_deleteSelector(GUI.screen);
-		GUI_switchScreen(scr_main);	
-		return 1;
-	}
+			switch (param)
+			{
+				case 0: // RESET
+					reset_SNES();
+					loadSRAM();
+					break;
+				case 1: // SAVE SRAM
+					saveSRAM();
+					GUI.printfy = 23;
+					GUI_printf("SRAM written");
+					break;
+				case 2: // GFX CONFIG
+				{
+					t_GUIScreen *scr = buildGFXConfigMenu();
+					scr->handler = GFXConfigHandler;
+					GUI_deleteSelector(GUI.screen);
+					GUI_switchScreen(scr);
+					return 1;
+				}break;
+				
+				default:{ 
+					GUI_deleteSelector(GUI.screen);
+					GUI_createMainMenu();				
+					return 1;
+				}break;
+			}
+		}break;
 	}
 	return 0;
 }
@@ -945,14 +949,12 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		consoleClear(DefaultSessionConsole);
 		break;
 	case GUI_COMMAND:
-//		printf2(0, 23, "Command %d", param);
 		switch (param)
 		{
 		case 0: // OPTIONS SCREEN
 		{
 			t_GUIScreen *scr = buildScreenMenu();
 			scr->handler = ScreenOptionsHandler;
-				
 			GUI_switchScreen(scr);
 			return 1;			
 		}
@@ -994,9 +996,8 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			return 1;						
 		case 13: // IDAPPLY
 		case 15: // IDCANCEL
-			TGDSARM9Free(GUI.screen);
-			GUI.screen = NULL;
-			GUI_switchScreen(scr_main);			
+			GUI_deleteSelector(GUI.screen);
+			GUI_createMainMenu();
 			return 1;
 		}		
 	}
@@ -1014,6 +1015,8 @@ t_GUIScreen *buildOptionsMenu(){
 	GUI_setZone   (scr, 0, 0, 28, 124, 28+52); // -> Layers menu
 	GUI_linkObject(scr, 0, GUI_PARAM(IDS_SCREEN), GUIStrButton_handler);
 	
+	
+	//"Options -> Backgrouns & Sprites Options" SEGFAULTS
 	GUI_setZone   (scr, 1, 132, 28, 256, 28+52); // -> Layers menu
 	GUI_linkObject(scr, 1, GUI_PARAM(IDS_LAYERS), GUIStrButton_handler);	
 	
@@ -1119,6 +1122,7 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		}
 		if (param == 3) // Options
 		{
+			GUI_deleteSelector(GUI.screen); //prevents segfaults
 			t_GUIScreen *scr = buildOptionsMenu();
 			GUI_switchScreen(scr);
 			return 1;
@@ -1136,13 +1140,14 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		}		
 		if (param == 5) // Advanced
 		{
+			GUI_deleteSelector(GUI.screen); //prevents segfaults
 			t_GUIScreen *scr = buildMenu(3, 1, &smallfont_7_font, &trebuchet_9_font);
 			GUI_linkObject(scr, 9, (void *)IDS_ADVANCED, GUIStatic_handler);
 			GUI_linkObject(scr, 0, GUI_PARAM(IDS_RESET), GUIStrButton_handler);
 			GUI_linkObject(scr, 1, GUI_PARAM(IDS_SAVE_SRAM), GUIStrButton_handler);
 			GUI_linkObject(scr, 2, "GFX Config", GUIStrButton_handler);
 			
-			GUI_linkStrButton(scr, 6, IDS_OK, KEY_X);
+			GUI_linkStrButton(scr, 6, IDS_OK, KEY_A);
 			
 			scr->handler = AdvancedHandler;
 			GUI_switchScreen(scr);
