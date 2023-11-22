@@ -48,6 +48,7 @@
 #include "soundTGDS.h"
 #include "spitscTGDS.h"
 #include "dsp1.h"
+#include "snemul_cfg.h"
 
 //TGDS Soundstreaming API
 int internalCodecType = SRC_NONE; //Returns current sound stream format: WAV, ADPCM or NONE
@@ -335,6 +336,28 @@ void unpackOptions(int version, uint8 *ptr)
 bool uninitializedEmu = false;
 static u8 savedUserSettings[1024*4];
 
+bool resetSnemulDSConfig(){
+	struct LZSSContext LZSSCtx = LZS_DecodeFromBuffer((u8 *)&snemul_cfg[0], (unsigned int)snemul_cfg_size);
+	coherent_user_range_by_size((uint32)LZSSCtx.bufferSource, (int)LZSSCtx.bufferSize);
+	int status = FS_saveFileFatFS("0:/snemul.cfg", (char*)LZSSCtx.bufferSource, LZSSCtx.bufferSize, true);	//force_file_creation == false here (we could destroy or corrupt saves..)
+	TGDSARM9Free(LZSSCtx.bufferSource);
+	if(status == 0){
+		return true;
+	}
+	return false;
+}
+
+void parseCFGFile(){
+	// Load SNEMUL.CFG
+	GUI_printf("Load conf1");
+	set_config_file(getfatfsPath("snemul.cfg"));
+	GUI_printf("Load conf2");
+	readOptionsFromConfig("Global");
+	GUI_printf("Load conf3");
+	GUI_getConfig();	
+	GUI_printf("Load conf4");
+}
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -493,7 +516,6 @@ char args[8][MAX_TGDSFILENAME_LENGTH];
 char *argvs[8];
 
 //---------------------------------------------------------------------------------
-__attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("Os")))
 #endif
@@ -577,14 +599,21 @@ int main(int argc, char ** argv){
 		GFX.lineInfo[i].mode = -1;
 	}
 	
-	// Load SNEMUL.CFG
-	GUI_printf("Load conf1");
-	set_config_file(getfatfsPath("snemul.cfg"));
-	GUI_printf("Load conf2");
-	readOptionsFromConfig("Global");
-	GUI_printf("Load conf3");
-	GUI_getConfig();	
-	GUI_printf("Load conf4");
+	//Parse snemul.cfg
+	parseCFGFile();
+	
+	//Regenerate snemul.cfg if invalid
+	if(strlen(startFilePath) < 3){
+		bool ret = resetSnemulDSConfig();
+		GUI_printf("--");
+		if(ret == true){
+			GUI_printf("Broken CFG File! Rebuild OK");
+		}
+		else{
+			GUI_printf("Broken CFG File! Rebuild Error");
+		}
+		parseCFGFile();
+	}
 	
 	strcpy(&CFG.ROMFile[0], "");
 	memset(&guiSelItem, 0, sizeof(guiSelItem));

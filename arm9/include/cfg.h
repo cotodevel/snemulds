@@ -49,9 +49,7 @@ struct s_cfg
   int	BG3Squish;
   int	YScroll;
   int	WaitVBlank;
-  
-  int	LocalPlayMode; //0 == idle / 1 == local: host / 2 == local: guest
-  
+    
   int	LargeROM;
   
   uint32	LayersConf;  

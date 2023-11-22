@@ -50,6 +50,8 @@ extern char *GUI_getSPCList(sint8 *spcpath);
 extern char args[8][MAX_TGDSFILENAME_LENGTH];
 extern char *argvs[8];
 extern bool uninitializedEmu;
+extern bool resetSnemulDSConfig();
+extern void parseCFGFile();
 
 #ifdef __cplusplus
 }

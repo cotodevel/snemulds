@@ -224,8 +224,6 @@ int	FS_saveFileFatFS(sint8 *filename, sint8 *buf, int size,bool force_file_creat
 	FRESULT result = f_open(&thisFD, (const TCHAR*)filename, mode);
 	if(result != FR_OK){
 		FS_unlock();
-		GUI_printf("FS_saveFileFatFS:epic fail :%s", filename);
-		while(1==1){}
 		return -1;
 	}
 	
@@ -257,8 +255,6 @@ int	FS_getFileSizeFatFS(sint8 *filename){
 	FRESULT result = f_open(&thisFD, (const TCHAR*)filename, mode);
 	if(result != FR_OK){
 		FS_unlock();
-		GUI_printf("FS_getFileSizeFatFS:epic fail :%s", filename);
-		while(1==1){}
 		return -1;
 	}
 	int size = f_size(&thisFD);

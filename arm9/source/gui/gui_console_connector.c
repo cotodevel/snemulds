@@ -645,35 +645,39 @@ int GFXConfigHandler(t_GUIZone *zone, int msg, int param, void *arg){
 int AdvancedHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	switch (msg)
 	{
-	case GUI_DRAW:
-		consoleClear(DefaultSessionConsole);
-		return 0;
-	case GUI_COMMAND:
-	{
-		switch (param)
+		case GUI_DRAW:{
+			consoleClear(DefaultSessionConsole);
+			return 0;
+		}break;
+		case GUI_COMMAND:
 		{
-		case 0: // RESET
-			reset_SNES();
-			loadSRAM();
-			break;
-		case 1: // SAVE SRAM
-			saveSRAM();
-			GUI.printfy = 23;
-			GUI_printf("SRAM written");
-			break;
-		case 2: // GFX CONFIG
-		{
-			t_GUIScreen *scr = buildGFXConfigMenu();
-			scr->handler = GFXConfigHandler;
-			GUI_deleteSelector(GUI.screen);
-			GUI_switchScreen(scr);
-			return 1;
-		}
-		}
-		GUI_deleteSelector(GUI.screen);
-		GUI_switchScreen(scr_main);	
-		return 1;
-	}
+			switch (param)
+			{
+				case 0: // RESET
+					reset_SNES();
+					loadSRAM();
+					break;
+				case 1: // SAVE SRAM
+					saveSRAM();
+					GUI.printfy = 23;
+					GUI_printf("SRAM written");
+					break;
+				case 2: // GFX CONFIG
+				{
+					t_GUIScreen *scr = buildGFXConfigMenu();
+					scr->handler = GFXConfigHandler;
+					GUI_deleteSelector(GUI.screen);
+					GUI_switchScreen(scr);
+					return 1;
+				}break;
+				
+				default:{ 
+					GUI_deleteSelector(GUI.screen);
+					GUI_createMainMenu();				
+					return 1;
+				}break;
+			}
+		}break;
 	}
 	return 0;
 }
@@ -945,14 +949,12 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		consoleClear(DefaultSessionConsole);
 		break;
 	case GUI_COMMAND:
-//		printf2(0, 23, "Command %d", param);
 		switch (param)
 		{
 		case 0: // OPTIONS SCREEN
 		{
 			t_GUIScreen *scr = buildScreenMenu();
 			scr->handler = ScreenOptionsHandler;
-				
 			GUI_switchScreen(scr);
 			return 1;			
 		}
@@ -977,29 +979,25 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			CFG.EnableSRAM = (int)arg >> 24;
 			return 1;
 		
-		case 6: //multiplayer
-		if(CFG.LocalPlayMode == 0){
-			//local nifi: 
-			CFG.LocalPlayMode = 1;
-		}
-		else if(CFG.LocalPlayMode == 1){			
-			//local nifi:
-			CFG.LocalPlayMode = 2;
-		}
-		else if(CFG.LocalPlayMode == 2){			
-			//single player:
-			CFG.LocalPlayMode = 0;
-		}
-		return 1;
-	
+		case 6:{ //reset cfg
+			bool ret = resetSnemulDSConfig();
+			GUI_printf("--");
+			if(ret == true){
+				GUI_printf("reset cfg OK");
+			}
+			else{
+				GUI_printf("reset cfg Error");
+			}
+			return 1;
+		}break;
+		
 		case 14: // IDSAVE			
 			saveOptionsToConfig(SNES.ROM_info.title);
 			return 1;						
 		case 13: // IDAPPLY
 		case 15: // IDCANCEL
-			TGDSARM9Free(GUI.screen);
-			GUI.screen = NULL;
-			GUI_switchScreen(scr_main);			
+			GUI_deleteSelector(GUI.screen);
+			GUI_createMainMenu();
 			return 1;
 		}		
 	}
@@ -1017,6 +1015,8 @@ t_GUIScreen *buildOptionsMenu(){
 	GUI_setZone   (scr, 0, 0, 28, 124, 28+52); // -> Layers menu
 	GUI_linkObject(scr, 0, GUI_PARAM(IDS_SCREEN), GUIStrButton_handler);
 	
+	
+	//"Options -> Backgrounds & Sprites Options" SEGFAULTS
 	GUI_setZone   (scr, 1, 132, 28, 256, 28+52); // -> Layers menu
 	GUI_linkObject(scr, 1, GUI_PARAM(IDS_LAYERS), GUIStrButton_handler);	
 	
@@ -1043,9 +1043,9 @@ t_GUIScreen *buildOptionsMenu(){
 	//scr->zones[6].state |= GUI_ST_DISABLED;
 	//scr instance , scr index, X pixel pos , pixel Y pos , zone Y, zone width
 	GUI_setZone   (scr, 12, 90, 94, 100+16, 84+10); // static
-	GUI_linkObject(scr, 12, GUI_STATIC_LEFT(IDS_MULTIPLAYER_MODE, 0), GUIStaticEx_handler);
-	GUI_setZone   (scr, 6, 100+24, 84, 256, 84+10); // multiplayer mode
-	GUI_linkObject(scr, 6, GUI_CHOICE(IDS_MULTIPLAYER_MODE+1, 3, CFG.LocalPlayMode), GUIChoiceButton_handler);
+	GUI_linkObject(scr, 12, GUI_STATIC_LEFT(IDS_RESETCFG, 0), GUIStaticEx_handler);
+	GUI_setZone   (scr, 6, 100+24, 84, 256, 84+10); // reset snemul.cfg
+	GUI_linkObject(scr, 6, GUI_CHOICE(IDS_RESETCFG+1, 1, 0), GUIChoiceButton_handler);
 	
 	
 	// Three elements
@@ -1084,8 +1084,7 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 	if (msg == GUI_DRAW)
 		consoleClear(DefaultSessionConsole);
 	if (msg == GUI_COMMAND)
-	{
-		//GUI_console_printf(0, 0, "Command %d", param);		
+	{	
 		if (param == 0) // ROM list
 		{
 		    //////////////////////////Halt emu, give control to GUI, and wait for A/B events//////////////////////////
@@ -1123,6 +1122,7 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		}
 		if (param == 3) // Options
 		{
+			GUI_deleteSelector(GUI.screen); //prevents segfaults
 			t_GUIScreen *scr = buildOptionsMenu();
 			GUI_switchScreen(scr);
 			return 1;
@@ -1140,13 +1140,14 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		}		
 		if (param == 5) // Advanced
 		{
+			GUI_deleteSelector(GUI.screen); //prevents segfaults
 			t_GUIScreen *scr = buildMenu(3, 1, &smallfont_7_font, &trebuchet_9_font);
 			GUI_linkObject(scr, 9, (void *)IDS_ADVANCED, GUIStatic_handler);
 			GUI_linkObject(scr, 0, GUI_PARAM(IDS_RESET), GUIStrButton_handler);
 			GUI_linkObject(scr, 1, GUI_PARAM(IDS_SAVE_SRAM), GUIStrButton_handler);
 			GUI_linkObject(scr, 2, "GFX Config", GUIStrButton_handler);
 			
-			GUI_linkStrButton(scr, 6, IDS_OK, KEY_X);
+			GUI_linkStrButton(scr, 6, IDS_OK, KEY_A);
 			
 			scr->handler = AdvancedHandler;
 			GUI_switchScreen(scr);
@@ -1333,21 +1334,21 @@ int GUI_drawAlignText(t_GUIZone *zone, int flags, int y, int col, sint8 *text)
 		
 		if (ptr == NULL) 
 		{
-			// Nous avons touch� la fin de la chaine
-			if (good_space == subtext[cnt]) // Pas d'espace positionn�, plus rien � faire
+			// Nous avons touchÃ¯Â¿Â½ la fin de la chaine
+			if (good_space == subtext[cnt]) // Pas d'espace positionnÃ¯Â¿Â½, plus rien Ã¯Â¿Â½ faire
 				break;
-			// S'il on est l� c'est qui faut couper la chaine avant
+			// S'il on est lÃ¯Â¿Â½ c'est qui faut couper la chaine avant
 		}
 		
-		if (good_space != subtext[cnt]) // Si l'espace a �t� positionn�
+		if (good_space != subtext[cnt]) // Si l'espace a Ã¯Â¿Â½tÃ¯Â¿Â½ positionnÃ¯Â¿Â½
 		{
 			if (ptr)
-				*ptr = ' '; // Le dernier essai doit �tre effac�
-			*good_space = 0; // Le bon espace est marqu�
+				*ptr = ' '; // Le dernier essai doit Ã¯Â¿Â½tre effacÃ¯Â¿Â½
+			*good_space = 0; // Le bon espace est marquÃ¯Â¿Â½
 		} else
 			good_space = ptr; // Pas de bon espace, alors coupons un mot trop grand
 				
-		cur_text = good_space+1; // Nouveau mot apr�s l'espace
+		cur_text = good_space+1; // Nouveau mot aprÃ¯Â¿Â½s l'espace
 		//printf("=> %s", cur_text);		
 		subtext[++cnt] = cur_text; 
 	}
