@@ -479,6 +479,8 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			(strncmp((char*)&SNES.ROM_info.title[0], "MEGAMAN X3", 10) == 0)
 			||
 			(strncmp((char*)&SNES.ROM_info.title[0], "MEGAMAN X2", 10) == 0)
+			||
+			(strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0)
 			){
 			apuFix = 0;
 			GUI_printf("APU Fix");
