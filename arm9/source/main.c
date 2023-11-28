@@ -387,8 +387,6 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		char *ROM;
 		int crc;
 		
-		CFG.LargeROM = 0;
-		
 		//filename already has correct format
 		if (
 			(nameItem->filenameFromFS_getDirectoryListMethod[0] == '0')
@@ -430,7 +428,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		coherent_user_range_by_size((uint32)0x027FF000, (int)sizeof(savedUserSettings));	
 		memcpy((void*)&savedUserSettings[0], (const void*)0x027FF000, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
 		
-		ROM = (char *)SNES_ROM_ADDRESS;
+		ROM = (char *)SNES_ROM_ADDRESS_NTR;
 		size = FS_getFileSizeFatFS((char*)&CFG.ROMFile[0]);
 		ROMheader = size & 8191;
 		if (ROMheader != 0&& ROMheader != 512){
@@ -439,7 +437,6 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 
 		FS_loadFileFatFS(CFG.ROMFile, ROM, PAGE_SIZE+ROMheader);
 		load_ROM(ROM, size);
-		SNES.ROM_info.title[20] = '\0';
 		int i = 20;
 		while (i >= 0 && SNES.ROM_info.title[i] == ' '){
 			SNES.ROM_info.title[i--] = '\0';
@@ -447,7 +444,11 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		if(
 			(__dsimode == true)
 			&&
+			(
 			(strncmp((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0)
+			||
+			(strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0)
+			)
 		){
 			//Enable 16M EWRAM (TWL)
 			u32 SFGEXT9 = *(u32*)0x04004008;
@@ -455,6 +456,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
 			*(u32*)0x04004008 = SFGEXT9;
 			ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
+			ROM = (char *)SNES_ROM_ADDRESS_TWL;
 			printf("Extended TWL Mem.");
 		}
 		else{
@@ -466,9 +468,10 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 				*(u32*)0x04004008 = SFGEXT9;	
 			}
 			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
+			ROM = (char *)SNES_ROM_ADDRESS_NTR;
 			printf("Normal NTR Mem.");
 		}
-
+		ROM_paging = ((int)ROM+PAGE_SIZE); //SNES_ROM_PAGING_ADDRESS;
 		ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
 		
 		//APU Fixes for proper sound speed
@@ -491,13 +494,13 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		GUI_printf("File:%s - Size:%d", CFG.ROMFile, size);
 		if (size-ROMheader > ROM_MAX_SIZE){
 			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, PAGE_SIZE+ROMheader);
-			CFG.LargeROM = 1;
+			CFG.LargeROM = true;
 			crc = crc32(0, ROM, PAGE_SIZE);
 			GUI_printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
 		}
 		else{
 			FS_loadROM(ROM-ROMheader, CFG.ROMFile);
-			CFG.LargeROM = 0;
+			CFG.LargeROM = false;
 			crc = crc32(0, ROM, size-ROMheader);
 			GUI_printf("CRC = %08x ", crc);
 		}

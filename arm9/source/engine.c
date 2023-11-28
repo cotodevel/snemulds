@@ -133,7 +133,6 @@ bool	reloadROM(char *ROM, int size, int crc, char * name){
 
 	// Write SRAM
   load_ROM(ROM, size);
-  SNES.ROM_info.title[20] = '\0';
   int i = 20;
   while (i >= 0 && SNES.ROM_info.title[i] == ' '){
     SNES.ROM_info.title[i--] = '\0';
@@ -163,13 +162,15 @@ bool	reloadROM(char *ROM, int size, int crc, char * name){
     if(strncmp((char*)&SNES.ROM_info.title[0], "DIDDY'S KONG QUEST", 18) == 0){
       VblankWaitNDSTWLMode = true;
     }
-    else if((strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY", 19) == 0) && (crc != 0x8670e9c2)){ //DKC1 yes, DKC3 no
+    else if((strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY", 19) == 0) && (strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) != 0) ){ //DKC1 yes, DKC3 no
       VblankWaitNDSTWLMode = true;
     }
     //TWL/NTR mode doesn't get 
     else{
       VblankWaitNDSTWLMode = false;
     }
+
+    SNES.ROM_info.title[20] = '\0';
     GUI_showROMInfos(size);
     reset_SNES();	
     // Clear screen
@@ -255,7 +256,6 @@ int initSNESEmpty(bool * firstTime, u32 APUFixes){
 		SNESC.VRAM = (uchar *)TGDSARM9Malloc(0x010000);
 		//SNESC.BSRAM = (uchar *)TGDSARM9Malloc(0x8000);
 		SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
-		ROM_paging = SNES_ROM_PAGING_ADDRESS;
 		SNESC.C4RAM = (uchar *)CX4_RAM_ADDRESS;
 		S9xInitC4(); //must be called after SNES mem allocation takes place
 		if(
@@ -264,8 +264,6 @@ int initSNESEmpty(bool * firstTime, u32 APUFixes){
 			  (SNESC.VRAM == NULL)
 			  ||
 			  (SNESC.BSRAM == NULL)
-			  ||
-			  (ROM_paging == NULL)
 		){
 			GUI_printf("Failed RAM alloc. Halt");
 			while(1==1){}
