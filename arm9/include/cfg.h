@@ -50,7 +50,7 @@ struct s_cfg
   int	BG3Squish;
   int	YScroll;
   int	WaitVBlank;
-  int	LargeROM;
+  bool	LargeROM;
   
   uint32	LayersConf;  
   uint8		LayerPr[4];

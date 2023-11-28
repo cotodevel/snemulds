@@ -115,20 +115,24 @@ void InitLoROMMap(int mode)
 	int 	c;
 	int 	i;
 	int		maxRAM = 0;
-	uint8	*largeROM = NULL;
+	uint8	*largeROM = SNESC.ROM;
 
 	if (mode == NOT_LARGE)
 	{
 		// Small ROM, use only SNES ROM size of RAM
 		maxRAM = SNES.ROMSize;
 	}
-	if (mode == USE_PAGING)
+	else if (mode == USE_PAGING)
 	{
 		// Use Paging system... 
 		// Only a part of RAM is used static
 		maxRAM = PAGE_SIZE;
 	}
-	
+	else{
+		printf("Unhandled InitLoROMMap(): %d", mode);
+		printf("Halting.");
+		while(1==1){}
+	}
 	for (c = 0; c < 0x200; c += 8)
 	{
 		MAP[c+0] = MAP[c+0x400] = SNESC.RAM;		//RAM 000h-1FFFh  Mirror of 7E0000h-7E1FFFh (first 8Kbyte of WRAM)
@@ -234,20 +238,24 @@ void InitHiROMMap(int mode)
 	int 	c;
 	int 	i;
 	int		maxRAM = 0;
-	uint8	*largeROM = NULL;
+	uint8	*largeROM = SNESC.ROM;
 
 	if (mode == NOT_LARGE)
 	{
-		// Small ROM, use only SNES ROM size of RAM
+		// Small ROM, use only SNES ROM size of RAM, or if TWL mode maps fully ROM from TWL's EWRAM.
 		maxRAM = SNES.ROMSize;
 	}
-	if (mode == USE_PAGING)
+	else if (mode == USE_PAGING)
 	{
 		// Use Paging system... 
 		// Only a part of RAM is used static
 		maxRAM = PAGE_SIZE;
 	}
-	
+	else{
+		printf("Unhandled InitHiROMMap(): %d", mode);
+		printf("Halting.");
+		while(1==1){}
+	}
 	for (c = 0; c < 0x200; c += 8)
 	{
 		MAP[c+0] = MAP[c+0x400] = SNESC.RAM;
@@ -369,7 +377,7 @@ __attribute__ ((optnone))
 #endif
 uint8 *mem_checkReload(int block){
 	int i;uchar *ptr;int ret;
-	if (!CFG.LargeROM){
+	if (CFG.LargeROM == false){
 		return NULL;
 	}
 	i = (block & 0x1FF) >> PAGE_OFFSET;
@@ -414,7 +422,7 @@ void InitMap(){
 	for (i = 0; i < 256*8; i++){
 		MAP[i] = (uint8*)MAP_NONE;	
 	}
-	int mode = (!CFG.LargeROM) ? NOT_LARGE : USE_PAGING; 
+	int mode = (CFG.LargeROM == false) ? NOT_LARGE : USE_PAGING; 
 	if (SNES.HiROM){
 		InitHiROMMap(mode);
 	}
