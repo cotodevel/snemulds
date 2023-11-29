@@ -456,7 +456,14 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
 			*(u32*)0x04004008 = SFGEXT9;
 			ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
-			ROM = (char *)SNES_ROM_ADDRESS_TWL;
+			//DKC3 needs this
+			if(strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0){
+				ROM = (char *)SNES_ROM_ADDRESS_TWL;
+			}
+			//Otherwise the rest default NTR ROM base, or segfaults occur.
+			else{
+				ROM = (char *)SNES_ROM_ADDRESS_NTR;
+			}
 			printf("Extended TWL Mem.");
 		}
 		else{
