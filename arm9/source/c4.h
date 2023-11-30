@@ -111,16 +111,6 @@ typedef long long int64;
                        (*((uint8 *) (s) + 2) << 16))
 			
 
-#define WRITE_3WORD(s, d) *(uint8 *) (s) = (uint8) ((d) >> 0), \
-                          *((uint8 *) (s) + 1) = (uint8) ((d) >> 8),\
-                          *((uint8 *) (s) + 2) = (uint8) ((d) >> 16)
-						  
-
-#define READ_3WORD(s) ( (*((uint8 *) (s)) << 0) |\
-                       (*((uint8 *) (s) + 1) << 8) |\
-                       (*((uint8 *) (s) + 2) << 16))
-                       
-
 #define SAR(b, n) ((b)>>(n))
 
 //Snes9X specific

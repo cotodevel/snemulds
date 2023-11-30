@@ -478,7 +478,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			ROM = (char *)SNES_ROM_ADDRESS_NTR;
 			printf("Normal NTR Mem.");
 		}
-		ROM_paging = ((int)ROM+PAGE_SIZE); //SNES_ROM_PAGING_ADDRESS;
+		ROM_paging = (uchar *)((int)ROM+PAGE_SIZE); //SNES_ROM_PAGING_ADDRESS;
 		ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
 		
 		//APU Fixes for proper sound speed
@@ -514,7 +514,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			GUI_printf("CRC = %08x ", crc);
 		}
 		coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
-		memcpy((const void*)0x027FF000, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
+		memcpy((void*)0x027FF000, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
 		return reloadROM(ROM-ROMheader, size, crc, nameItem->filenameFromFS_getDirectoryListMethod);
 	}
 	return false;
