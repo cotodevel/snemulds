@@ -552,7 +552,6 @@ __attribute__((optimize("Os")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-__attribute__((section(".itcm")))
 int main(int argc, char ** argv){
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	

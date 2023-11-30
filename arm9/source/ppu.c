@@ -481,7 +481,6 @@ int		PPU_AddTile4InCache(t_TileZone *tilezone, int addr)
 }
 
 
-__attribute__((section(".itcm")))
 void check_tile(int addr)
 {
   GFX.map_def[addr/2048] = 0;
@@ -684,7 +683,7 @@ void update_scroll()
 
 
 
-//__attribute__((section(".itcm")))
+__attribute__((section(".itcm")))
 void	draw_plane(int bg, int bg_mode, int nb_tilex, int nb_tiley, int tile_size)
 {
   int		i, j, map_address;
@@ -1648,7 +1647,6 @@ void PPU_RenderLineMode7(t_GFX_lineInfo *l)
 	l->CY = l->C*(-X0+HOffset)+l->D*(SNES.V_Count-Y0+VOffset)+(Y0<<8);
 }
 
-__attribute__((section(".itcm")))
 void renderMode7(){
 	static int Mode7FrameSkip = 0;
 
@@ -1756,7 +1754,7 @@ void	update_scrollx(int bg)
 #endif
 
 
-__attribute__((section(".itcm")))
+//__attribute__((section(".itcm"))) //if in ITCM, causes crashes after beating DKC3 1st boss
 void	PPU_updateGFX(int line)
 {
 	t_GFX_lineInfo *l = &GFX.lineInfo[line];
