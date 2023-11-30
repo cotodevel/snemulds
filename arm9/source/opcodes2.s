@@ -181,10 +181,7 @@ m1x1Decoder:
 @ version 0.27DS fix end
 
     .section    .itcm, "awx", %progbits
-
     .align 4
-/*    .ascii  ".IWRAMSTART"
-    .align 4*/
     
 @-------------------------------------------------------------------
 @ First bank for DP addressing
