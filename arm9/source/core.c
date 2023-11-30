@@ -360,9 +360,10 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 {
 	int i;
 	uint8	*ptr;
-
+	if(len <= 0){
+		return offs;
+	}
 	ptr = (uint8*)map_memory(offs, bank);
-
 	if (PPU_PORT[0x15]&0x80) {
 		if (!GFX.FS_incr && GFX.SC_incr == 1)
 		{
