@@ -249,7 +249,7 @@ static void init_config(int loaddata)
    }
 
    if (!system_config) {
-      system_config = TGDSARM9Malloc(sizeof(CONFIG));
+      system_config = (CONFIG *)TGDSARM9Malloc(sizeof(CONFIG));
       if (system_config) {
 	 system_config->head = NULL;
 	 system_config->filename = NULL;
@@ -451,7 +451,7 @@ static void set_config(CONFIG **config, char *data, int length, char *filename)
       *config = NULL;
    }
 
-   *config = TGDSARM9Malloc(sizeof(CONFIG));
+   *config = (CONFIG *)TGDSARM9Malloc(sizeof(CONFIG));
    if (!(*config))
       return;
 
@@ -472,7 +472,7 @@ static void set_config(CONFIG **config, char *data, int length, char *filename)
    while (pos < length) {
       pos += get_line(data+pos, length-pos, name, val);
 
-      p = TGDSARM9Malloc(sizeof(CONFIG_ENTRY));
+      p = (CONFIG_ENTRY *)TGDSARM9Malloc(sizeof(CONFIG_ENTRY));
       if (!p)
 	 return;
 
@@ -691,7 +691,7 @@ void hook_config_section(char *section, int (*intgetter)(char *, int), char *(*s
    }
 
    /* add a new hook */
-   hook = TGDSARM9Malloc(sizeof(CONFIG_HOOK));
+   hook = (CONFIG_HOOK *)TGDSARM9Malloc(sizeof(CONFIG_HOOK));
    if (!hook)
       return;
 
@@ -955,7 +955,7 @@ char **get_config_argv(char *section, char *name, int *argc)
  */
 static CONFIG_ENTRY *insert_variable(CONFIG *the_config, CONFIG_ENTRY *p, char *name, char *data)
 {
-   CONFIG_ENTRY *n = TGDSARM9Malloc(sizeof(CONFIG_ENTRY));
+   CONFIG_ENTRY *n = (CONFIG_ENTRY *)TGDSARM9Malloc(sizeof(CONFIG_ENTRY));
 
    if (!n)
       return NULL;

@@ -76,6 +76,7 @@
 	#include <config.h>
 #endif
 
+#include <string.h>
 #include "snes.h"
 #include <math.h>
 #include "snemulds_memmap.h"

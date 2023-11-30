@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <malloc.h>
 #include "typedefsTGDS.h"
 #include "xmem.h"
 
@@ -194,11 +195,11 @@ void Xfree(const void *ptr) {
 	int block,sblock;
 	
 	while (1) {
-		if (ptr < xmem_blocks) {
+		if ((int)ptr < (int)xmem_blocks) {
 			//GUI_printf("XM: Free: NXML %8.8X ",(unsigned int)ptr);
 			break;
 		}
-		if (ptr > (xmem_blocks+(XMEM_BLOCKCOUNT*XMEM_BLOCKSIZE))) {
+		if ((int)ptr > ((int)(xmem_blocks+(XMEM_BLOCKCOUNT*XMEM_BLOCKSIZE))) ) {
 			//GUI_printf("XM: Free: NXMG %8.8X ",(u32)ptr);
 			break;
 		}
