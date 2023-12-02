@@ -38,9 +38,9 @@ sint8*  g_snemulds_str_ita[] =
         "Suoni abilitati",                /* 30 */
         "Suoni disabilitati",                /* 31 */
         "Velocita':",                        /* 32 */
-		"VBlank full ",					/* 33 */
-		"VBlank disabled ",					/* 34 */
-		"VBlank fast ",								/* 35 */
+		"VBlank disabled ",					/* 33 */
+		"VBlank fast ",					/* 34 */
+		"VBlank full ",								/* 35 */
         "Opzioni del Layout Schermo",        /* 36 */
         "Opzioni Backgrounds & Sprites",    /* 37 */
         "Hacks velocita':",                /* 38 */      

@@ -38,9 +38,9 @@ sint8*  g_snemulds_str_dan[] =
 		"Lyd på",				/* 30 */
 		"Lyd fra",				/* 31 */
 		"Hastighed:",						/* 32 */
-		"VBlank full ",					/* 33 */
-		"VBlank disabled ",					/* 34 */
-		"VBlank fast ",								/* 35 */
+		"VBlank disabled ",					/* 33 */
+		"VBlank fast ",					/* 34 */
+		"VBlank full ",								/* 35 */
 		"Skærm indstillinger",		/* 36 */
 		"Baggrunde & Sprites instillinger",	/* 37 */
 		"Speed Hacks:",				/* 38 */		

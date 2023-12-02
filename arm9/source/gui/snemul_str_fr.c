@@ -38,9 +38,9 @@ sint8*  g_snemulds_str_fr[] =
 		"Son activé",						/* 30 */
 		"Son désactivé",					/* 31 */
 		"Vitesse:",						/* 32 */
-		"VBlank full ",					/* 33 */
-		"VBlank disabled ",					/* 34 */
-		"VBlank fast ",								/* 35 */
+		"VBlank disabled ",					/* 33 */
+		"VBlank fast ",					/* 34 */
+		"VBlank full ",								/* 35 */
 		"Options écran",					/* 36 */
 		"Options décors et sprites",					/* 37 */
 		"Optimisations:",				/* 38 */
