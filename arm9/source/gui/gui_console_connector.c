@@ -973,7 +973,10 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			APU_pause();
 			return 1;
 		case 3:{ // Speed
-			CFG.WaitVBlank = !CFG.WaitVBlank;
+			CFG.WaitVBlank++;
+			if(CFG.WaitVBlank > 2){
+				CFG.WaitVBlank = 0;
+			}
 			return 1;
 		}break;	
 		case 5: // Automatic SRAM saving
@@ -1029,7 +1032,7 @@ t_GUIScreen *buildOptionsMenu(){
 	GUI_setZone   (scr, 9, 0, 104, 80, 104+16); // static
 	GUI_linkObject(scr, 9, GUI_STATIC_LEFT(IDS_SPEED, 0), GUIStaticEx_handler);
 	GUI_setZone   (scr, 3, 80, 104, 256, 104+16); // Speed
-	GUI_linkObject(scr, 3, GUI_CHOICE(IDS_SPEED+1, 2, !CFG.WaitVBlank), GUIChoiceButton_handler);
+	GUI_linkObject(scr, 3, GUI_CHOICE(IDS_SPEED+1, 3, !CFG.WaitVBlank), GUIChoiceButton_handler);
 	
 	
 	GUI_setZone   (scr, 11, 24, 144, 256, 144+16); // Auto order static

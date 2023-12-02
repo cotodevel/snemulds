@@ -287,7 +287,7 @@ int go()
   {	
 	if (GFX.v_blank)
 	{
-    	if ( (CFG.WaitVBlank == 0) && GFX.need_update )
+    	if ( GFX.need_update )
     	{
 			draw_screen();
 			GFX.need_update = 0;

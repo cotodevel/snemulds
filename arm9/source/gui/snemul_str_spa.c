@@ -38,9 +38,9 @@ sint8*  g_snemulds_str_spa[] =
 		"Sonido Habilitado",				/* 30 */
 		"Sonido Deshabilitado",				/* 31 */
 		"Velocidad:",						/* 32 */
-		"VBlank enabled ",					/* 33 */
+		"VBlank full ",					/* 33 */
 		"VBlank disabled ",					/* 34 */
-		"",								/* 35 */
+		"VBlank fast ",								/* 35 */
 		"Opciones de pantalla",		/* 36 */
 		"Opciones de Fondos y Sprites",	/* 37 */
 		"Hacks de Velocidad:",				/* 38 */		

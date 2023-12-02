@@ -38,9 +38,9 @@ sint8*  g_snemulds_str_jpn[] =
 		";3]D^5]",						/* 30 */
 		";3]D^5L",					/* 31 */
 		"=K_0D^:",						/* 32 */
-		"VBlank enabled ",					/* 33 */
+		"VBlank full ",					/* 33 */
 		"VBlank disabled ",					/* 34 */
-		"",								/* 35 */
+		"VBlank fast ",								/* 35 */
 		"C^(=L_ Z25L_<.]",					/* 36 */
 		"J292 & =L_W2D 5L_<.]",					/* 37 */
 		"=K_- D^J/8",				/* 38 */

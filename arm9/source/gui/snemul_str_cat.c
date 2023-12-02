@@ -38,9 +38,9 @@ sint8*  g_snemulds_str_cat[] =
 		"Sò activat",				/* 30 */
 		"Sò desactivat",				/* 31 */
 		"Velocitat:",						/* 32 */
-		"VBlank enabled ",					/* 33 */
+		"VBlank full ",					/* 33 */
 		"VBlank disabled ",					/* 34 */
-		"",								/* 35 */
+		"VBlank fast ",								/* 35 */
 		"Opcions del Screen Layout",		/* 36 */
 		"Opcions de Backgrounds i Sprites",	/* 37 */
 		"Optimització",				/* 38 */		
