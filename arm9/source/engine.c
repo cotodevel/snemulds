@@ -158,18 +158,7 @@ bool	reloadROM(char *ROM, int size, int crc, char * name){
   while(1==1){}
   */
   if( (validSnesFile == true)){
-    //Hardware enabled VBLANK IRQ whitelist
-    if(strncmp((char*)&SNES.ROM_info.title[0], "DIDDY'S KONG QUEST", 18) == 0){
-      VblankWaitNDSTWLMode = true;
-    }
-    else if((strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY", 19) == 0) && (strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) != 0) ){ //DKC1 yes, DKC3 no
-      VblankWaitNDSTWLMode = true;
-    }
-    //TWL/NTR mode doesn't get 
-    else{
-      VblankWaitNDSTWLMode = false;
-    }
-
+    
     SNES.ROM_info.title[20] = '\0';
     GUI_showROMInfos(size);
     reset_SNES();	
@@ -233,7 +222,6 @@ int initSNESEmpty(bool * firstTime, u32 APUFixes){
 	CFG.BG3Squish = 0;
 	CFG.WaitVBlank = 0;
 	CFG.YScroll = 0;
-	//CFG.TileMode = 1;
 	CFG.Scaled = 0;
 	CFG.LayersConf = 0;
 
@@ -299,13 +287,12 @@ int go()
   {	
 	if (GFX.v_blank)
 	{
-    	if (!CFG.WaitVBlank && GFX.need_update)
+    	if ( (CFG.WaitVBlank == 0) && GFX.need_update )
     	{
 			draw_screen();
 			GFX.need_update = 0;
     	}
 		GFX.v_blank = 0;
-		//update_joypads();
 		return 0;
 	}
 	
