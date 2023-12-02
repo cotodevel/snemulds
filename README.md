@@ -24,17 +24,17 @@ Remap NDS -> SNES Keys:
 	Save changes, then copy snemul.cfg in SD root. Keys are remapped now.
 
 Save / Load States:
-	- It is experimental. It may or not work consecutively. It's recommended to always save then restore a single state at a time.
+	- It is experimental. It may or not work. It's recommended to always save then restore a single state at a time.
 
 Properly Saving / Loading SRAM:
 	- Save in-game, check Options -> SRAM saving and wait for a "SRAM written" message to appear. 
-	Right after uncheck this option before reloading other games or shutting down console. This ensures your savefile is kept safely.
 
 Screen Sync (Vblank Enabled / Vblank Disabled):
-	- If the game runs too slow for you, disable vblank. The default and recommended setting is enabled Vblank for most games otherwise these will run too fast becoming unplayable.
+	- If the game is running too fast, enable Vblank. Some specific games will need Vblank disabled.
 
 TWL Mode:
 	-SnemulDS TWL mode has extended memory (16MB), so hacks like Megaman X3 Zero Project are supported and known to work. (TGDS1.65 branch)
+	-Donkey Kong Country 3 is playable until the end using SnemulDS TWL mode, but beware, save often as the game tends to crash sometimes.
 
 ____Remoteboot____
 Also, it's recommended to use the remoteboot feature. It allows to send the current TGDS Project over wifi removing the necessity

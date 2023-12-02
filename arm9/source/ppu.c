@@ -2111,24 +2111,16 @@ void	PPU_line_render_scaled()
     }
 }
 
-#ifdef ARM9
-__attribute__((section(".dtcm")))
-#endif
-bool VblankWaitNDSTWLMode = false;
-
 void draw_screen()
 {
-	if (GFX.was_not_blanked == 0)
+	if (GFX.was_not_blanked == 0){
 		return; 
-		
+	}
     GFX.was_not_blanked = 0; 			
     GFX.Blank_Screen = 0;   
-    if (CFG.WaitVBlank/* && GFX.speed > 95*/) {
-    	if (VblankWaitNDSTWLMode == true){
-			IRQWait(1, IRQ_VBLANK);
-		}
+    if (CFG.WaitVBlank == 1) {
+    	IRQWait(1, IRQ_VBLANK);
 	}
-#if 1    	
     else
     {
     	if (!GFX.v_blank)
@@ -2137,7 +2129,6 @@ void draw_screen()
     		return;
     	}
     }
-#endif
    
 	//BRIGHTNESS = (2<<14) | ((0x0f - GFX.brightness));
 	REG_MASTER_BRIGHT = (2<<14) | ((0x0f - GFX.brightness)<<1);

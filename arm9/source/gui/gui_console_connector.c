@@ -972,9 +972,10 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 				APU_clear();
 			APU_pause();
 			return 1;
-		case 3: // Speed
-			CFG.WaitVBlank = !((int)arg >> 24);			
+		case 3:{ // Speed
+			CFG.WaitVBlank = !CFG.WaitVBlank;
 			return 1;
+		}break;	
 		case 5: // Automatic SRAM saving
 			CFG.EnableSRAM = (int)arg >> 24;
 			return 1;
