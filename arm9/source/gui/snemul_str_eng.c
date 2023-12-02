@@ -38,9 +38,9 @@ sint8*  g_snemulds_str_eng[] =
 		"Sound enabled",				/* 30 */
 		"Sound disabled",				/* 31 */
 		"Speed:",						/* 32 */
-		"VBlank full ",					/* 33 */
-		"VBlank disabled ",					/* 34 */
-		"VBlank fast ",								/* 35 */
+		"VBlank disabled ",					/* 33 */
+		"VBlank fast ",					/* 34 */
+		"VBlank full ",								/* 35 */
 		"Screen Layout Options",		/* 36 */
 		"Backgrounds & Sprites Options",	/* 37 */
 		"Speed Hacks:",				/* 38 */		

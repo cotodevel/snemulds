@@ -43,9 +43,9 @@ sint8*  g_snemulds_str_pt[] =
 		"Som ativado",						/* 30 */
 		"Som desativado",					/* 31 */
 		"Velocidade:",						/* 32 */
-		"VBlank full ",					/* 33 */
-		"VBlank disabled ",					/* 34 */
-		"VBlank fast ",								/* 35 */
+		"VBlank disabled ",					/* 33 */
+		"VBlank fast ",					/* 34 */
+		"VBlank full ",								/* 35 */
 		"Opções ecrã",					/* 36 */
 		"Opções décors et sprites",					/* 37 */
 		"Optimizações:",				/* 38 */

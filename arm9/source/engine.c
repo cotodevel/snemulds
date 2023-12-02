@@ -220,7 +220,6 @@ int initSNESEmpty(bool * firstTime, u32 APUFixes){
 	}
 	
 	CFG.BG3Squish = 0;
-	CFG.WaitVBlank = 0;
 	CFG.YScroll = 0;
 	CFG.Scaled = 0;
 	CFG.LayersConf = 0;
