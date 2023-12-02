@@ -2118,12 +2118,12 @@ void draw_screen()
 	}
     GFX.was_not_blanked = 0; 			
     GFX.Blank_Screen = 0;   
-    if (CFG.WaitVBlank == 1) {
+    if (CFG.WaitVBlank == 2) {
     	IRQWait(1, IRQ_VBLANK);
 	}
     else
     {
-    	if (!GFX.v_blank)
+    	if ((!GFX.v_blank) && (CFG.WaitVBlank != 1))
     	{
     		GFX.need_update = 1;
     		return;

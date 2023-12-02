@@ -31,7 +31,11 @@ Properly Saving / Loading SRAM:
 
 Screen Sync (Vblank Enabled / Vblank Disabled):
 	- If the game is running too fast, enable Vblank. Some specific games will need Vblank disabled.
-
+	Vblank fast forces the emulator to draw a whole frame, preventing frameskips, but won't slow down to sync to NDS Vblank interrupts. (fixes TWL mode to match NTR mode rendering speed)
+	Vblank full forces the emulator + NDS Vblank interrupt to draw a whole frame, preventing frameskips. Cause massive slowdown, even more in TWL mode due to ARM9i Vblank bug, but required for some games.
+	
+	Recommended setting is Vblank fast to get a smooth framerate while fast rendering.
+	
 TWL Mode:
 	-SnemulDS TWL mode has extended memory (16MB), so hacks like Megaman X3 Zero Project are supported and known to work. (TGDS1.65 branch)
 	-Donkey Kong Country 3 is playable until the end using SnemulDS TWL mode, but beware, save often as the game tends to crash sometimes.

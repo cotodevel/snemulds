@@ -38,9 +38,9 @@ sint8*  g_snemulds_str_ger[] =
 		"Sound an",				/* 30 */
 		"Sound aus",				/* 31 */
 		"Geschwindigkeit:",						/* 32 */
-		"VBlank enabled ",					/* 33 */
+		"VBlank full ",					/* 33 */
 		"VBlank disabled ",					/* 34 */
-		"",								/* 35 */
+		"VBlank fast ",								/* 35 */
 		"Bildschirm Optionen",		/* 36 */
 		"Hintergrund & Sprites Optionen",	/* 37 */
 		"Speed Hacks:",				/* 38 */		
