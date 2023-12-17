@@ -99,9 +99,7 @@ export DIRS_ARM9_SRC = data/	\
 			source/gui/	\
 			source/gui/gui_draw/	\
 			source/TGDSMemoryAllocator/	\
-			../common/	\
-			../common/templateCode/source/	\
-			../common/templateCode/data/arm9/	
+			../common/	
 			
 export DIRS_ARM9_HEADER = data/	\
 			build/	\
@@ -112,8 +110,6 @@ export DIRS_ARM9_HEADER = data/	\
 			source/gui/gui_draw/	\
 			source/TGDSMemoryAllocator/	\
 			../common/	\
-			../common/templateCode/source/	\
-			../common/templateCode/data/arm9/	\
 			build/	\
 			../$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/include/
 			
