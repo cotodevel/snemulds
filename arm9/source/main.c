@@ -450,9 +450,13 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			(__dsimode == true)
 			&&
 			(
-			(strncmp((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0)
+			(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0)
 			||
-			(strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0)
+			(strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0)
+			||
+			(strncmpi((char*)&SNES.ROM_info.title[0], "STREET FIGHTER ALPHA", 20) == 0)
+			||
+			(strncmpi((char*)&SNES.ROM_info.title[0], "STAR OCEAN", 10) == 0)
 			)
 		){
 			//Enable 16M EWRAM (TWL)
@@ -462,12 +466,18 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			*(u32*)0x04004008 = SFGEXT9;
 			ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
 			//DKC3 needs this
-			if(strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0){
+			if(strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0){
 				ROM = (char *)SNES_ROM_ADDRESS_TWL;
 			}
 			//Otherwise the rest default NTR ROM base, or segfaults occur.
 			else{
 				ROM = (char *)SNES_ROM_ADDRESS_NTR;
+			}
+			if(strncmpi((char*)&SNES.ROM_info.title[0], "STREET FIGHTER ALPHA", 20) == 0){
+				setCpuClock(true); //true: 133Mhz (TWL Mode only)
+			}
+			else{
+				setCpuClock(false); //false: 66Mhz (NTR/TWL default CPU speed)
 			}
 			printf("Extended TWL Mem.");
 		}
@@ -479,6 +489,10 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 				SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x0 << 14);
 				*(u32*)0x04004008 = SFGEXT9;	
 			}
+			else{
+				printf("This SnemulDS build is TWL mode only. Halting system.");
+				while(1==1){}
+			}
 			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
 			ROM = (char *)SNES_ROM_ADDRESS_NTR;
 			printf("Normal NTR Mem.");
@@ -488,11 +502,11 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		
 		//APU Fixes for proper sound speed
 		if(
-			(strncmp((char*)&SNES.ROM_info.title[0], "MEGAMAN X3", 10) == 0)
+			(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X3", 10) == 0)
 			||
-			(strncmp((char*)&SNES.ROM_info.title[0], "MEGAMAN X2", 10) == 0)
+			(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X2", 10) == 0)
 			||
-			(strncmp((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0)
+			(strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0)
 			){
 			apuFix = 0;
 			GUI_printf("APU Fix");

@@ -50,7 +50,8 @@ GNU General Public License for more details.
 #include "about.h"
 #include "utilsTGDS.h"
 #include "clockTGDS.h"
-#include "c4.h"
+#include "sdd1.h"
+#include "sdd1emu.h"
 
 //struct s_snes SNES;
 //struct s_cfg CFG;
@@ -115,7 +116,7 @@ __attribute__ ((optnone))
 #endif
 bool	reloadROM(char *ROM, int size, int crc, char * name){
   CFG.frame_rate = 1;
-  CFG.CX4 = CFG.DSP1 = CFG.SuperFX = 0;
+  CFG.SDD1 = 0;
   CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
   CFG.MouseXAddr = CFG.MouseYAddr = CFG.MouseMode = 0;
   CFG.SoundPortSync = 0;
@@ -225,7 +226,7 @@ int initSNESEmpty(bool * firstTime, u32 APUFixes){
 	CFG.LayersConf = 0;
 
 	CFG.frame_rate = 1;
-	CFG.DSP1 = CFG.SuperFX = 0;
+	CFG.SDD1 = 0;
 	CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
 	CFG.Sound_output = 1;
 	//CFG.Sound_output = 0;
@@ -243,8 +244,7 @@ int initSNESEmpty(bool * firstTime, u32 APUFixes){
 		SNESC.VRAM = (uchar *)TGDSARM9Malloc(0x010000);
 		//SNESC.BSRAM = (uchar *)TGDSARM9Malloc(0x8000);
 		SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
-		SNESC.C4RAM = (uchar *)CX4_RAM_ADDRESS;
-		S9xInitC4(); //must be called after SNES mem allocation takes place
+		S9xResetSDD1 (); //must be called after SNES mem allocation takes place
 		if(
 			(SNESC.RAM == NULL)
 			  ||

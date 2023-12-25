@@ -72,102 +72,21 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 *******************************************************************************/
-#ifndef _C4_H_
-#define _C4_H_
 
-#include "typedefsTGDS.h"
-
-typedef signed char int8;
-typedef short int16;
-typedef long int32;
-typedef long long int64;
-
-#define READ_WORD(s) ( *(uint8 *) (s) |\
-		      (*((uint8 *) (s) + 1) << 8))
-
-#define READ_DWORD(s) ( *(uint8 *) (s) |\
-		       (*((uint8 *) (s) + 1) << 8) |\
-		       (*((uint8 *) (s) + 2) << 16) |\
-		       (*((uint8 *) (s) + 3) << 24))
-
-
-#define WRITE_WORD(s, d) *(uint8 *) (s) = (d), \
-                         *((uint8 *) (s) + 1) = (d) >> 8
-
-
-#define WRITE_DWORD(s, d) *(uint8 *) (s) = (uint8) (d), \
-                          *((uint8 *) (s) + 1) = (uint8) ((d) >> 8),\
-                          *((uint8 *) (s) + 2) = (uint8) ((d) >> 16),\
-                          *((uint8 *) (s) + 3) = (uint8) ((d) >> 24)
-
-
-#define WRITE_3WORD(s, d) *(uint8 *) (s) = (uint8) (d), \
-                          *((uint8 *) (s) + 1) = (uint8) ((d) >> 8),\
-                          *((uint8 *) (s) + 2) = (uint8) ((d) >> 16)
-
-
-#define READ_3WORD(s) ( *(uint8 *) (s) |\
-                       (*((uint8 *) (s) + 1) << 8) |\
-                       (*((uint8 *) (s) + 2) << 16))
-			
-
-#define SAR(b, n) ((b)>>(n))
-
-//Snes9X specific
-#define MEMMAP_BLOCK_SIZE (0x1000)
-#define MEMMAP_NUM_BLOCKS (0x1000000 / MEMMAP_BLOCK_SIZE)
-#define MEMMAP_BLOCKS_PER_BANK (0x10000 / MEMMAP_BLOCK_SIZE)
-#define MEMMAP_SHIFT 12
-#define MEMMAP_MASK (MEMMAP_BLOCK_SIZE - 1)
+#ifndef _SDD1_H_
+#define _SDD1_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern int16 C4WFXVal;
-extern int16 C4WFYVal;
-extern int16 C4WFZVal;
-extern int16 C4WFX2Val;
-extern int16 C4WFY2Val;
-extern int16 C4WFDist;
-extern int16 C4WFScale;
-
-void C4TransfWireFrame();
-void C4TransfWireFrame2();
-void C4CalcWireFrame();
-
-extern int16 C41FXVal;
-extern int16 C41FYVal;
-extern int16 C41FAngleRes;
-extern int16 C41FDist;
-extern int16 C41FDistVal;
-
-void C4Op1F();
-void C4Op15();
-void C4Op0D();
-
-extern int16 C4CosTable[];
-extern int16 C4SinTable[];
-
-//c4emu.c
-extern uint8 *CX4FetchROMFromSNESAddress(uint32 Address);
-extern void S9xInitC4 ();
-extern uint8 S9xGetC4 (uint16 Address);
-extern uint8 C4TestPattern [12 * 4];
-extern void C4ConvOAM(void);
-extern void C4DoScaleRotate(int row_padding);
-extern void C4DrawLine(int32 X1, int32 Y1, int16 Z1, int32 X2, int32 Y2, int16 Z2, uint8 Color);
-extern void C4DrawWireFrame(void);
-extern void C4TransformLines(void);
-extern void C4BitPlaneWave();
-extern void C4SprDisintegrate();
-extern void S9xC4ProcessSprites();
-extern void S9xSetC4 (uint8 byte, uint16 Address);
-extern int16 C4SinTable[512];
-extern int16 C4CosTable[512];
-
+	extern void S9xSetSDD1MemoryMap(uint32 bank, uint32 value);
+	extern void S9xResetSDD1();
+	
 #ifdef __cplusplus
 }
 #endif
 
+
 #endif
+

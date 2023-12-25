@@ -39,9 +39,6 @@ GNU General Public License for more details.
 #include "common.h"
 #include "conf.h"
 
-//#include "superfx.h"
-//#include "sfxinst.h"
-
 //Snes Hardware
 __attribute__((section(".dtcm")))
 __attribute__ ((aligned (4))) struct s_cpu	CPU;
@@ -61,7 +58,10 @@ __attribute__((section(".dtcm")))
 uint16	PPU_PORT[0x90]; // 2100 -> 2183
 
 __attribute__((section(".dtcm")))
-uint16	DMA_PORT[0x180]; // 4200 -> 437F
+uint8	DMA_PORT[0x180]; // 4200 -> 437F
+
+__attribute__((section(".dtcm")))
+uint8	IO_SDD1[8]; // 4800 -> 4807
 
 //Input
 uint32	joypad_conf_mode = 0;
@@ -423,33 +423,37 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 	return offs+len;
 }
 
+__attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
+__attribute__((optimize("Os")))
 #endif
 void DMA_transfert(uchar port)
 {
-  uint		tmp;
-  ushort	PPU_port;
-  ushort	DMA_address;
-  uint		DMA_len;
-  uchar		DMA_bank, DMA_info;
-
-  //START_PROFILE(DMA, 4);
-  DMA_address = DMA_PORT[0x102+port*0x10]+(DMA_PORT[0x103+port*0x10]<<8);
-  DMA_bank = DMA_PORT[0x104+port*0x10];
-  DMA_len = DMA_PORT[0x105+port*0x10]+(DMA_PORT[0x106+port*0x10]<<8);
-  if (DMA_len == 0)
-    DMA_len = 0x10000;
-  PPU_port = 0x2100+DMA_PORT[0x101+port*0x10];
+  uint		tmp=0;
+  ushort	PPU_port=0;
+  ushort	DMA_address=0;
+  uint		DMA_len=0;
+  uchar		DMA_bank=0, DMA_info=0;
+  bool isSDD1DMA = false;
+  u8 * sdd1_IO = (u8 *)&IO_SDD1[0]; //IO_SDD1[8]; // 4800 -> 4807
+  int count = DMA_len = DMA_PORT[0x105+port*0x10]+(DMA_PORT[0x106+port*0x10]<<8);
   DMA_info = DMA_PORT[0x100+port*0x10];
+  PPU_port = 0x2100+DMA_PORT[0x101+port*0x10]; //hack to detect vram writes
+  DMA_address = DMA_PORT[0x102+port*0x10]+(DMA_PORT[0x103+port*0x10]<<8);	//4200 -> 437F
+  DMA_bank = DMA_PORT[0x104+port*0x10];
 
-/*   FS_flog("DMA[%d] %06X->%04X SIZE:%05X VRAM : %04X\n", port,
-      DMA_address+(DMA_bank<<16), PPU_port, DMA_len, PPU_PORT[0x16]);*/
-
+  //identify if S-DD1 DMA transfer
+  if (sdd1_IO[1] > 0){
+	isSDD1DMA = true;
+  }
+  if(isSDD1DMA == true){
+		uint8* in_ptr = mem_getbaseaddress(DMA_address, (uchar)DMA_bank); //SNES IO -> Emulator IO mapper
+		in_ptr += DMA_address;
+		SDD1_decompress(SDD1_WORKBUFFER, in_ptr, count);
+  }
+  if(DMA_len == 0){
+    DMA_len = 0x10000;
+  }
   ADD_CYCLES (DMA_len % NB_CYCLES);
   if (DMA_len >= NB_CYCLES)
   {
@@ -460,31 +464,67 @@ void DMA_transfert(uchar port)
 	   
   }  
 
-  if (CFG.FastDMA && PPU_port == 0x2118 && DMA_info == 1)
+  //VRAM
+  if (CFG.FastDMA && (PPU_port == 0x2118) && (DMA_info == 1) && (isSDD1DMA == false) ) //For normal DMA this should be usually 04h=OAM, 18h=VRAM, 22h=CGRAM, or 80h=WRAM. For HDMA it should be usually some PPU register (eg. for changing scroll offsets midframe).
   {
 	  DMA_address = PPU_fastDMA_2118_1(DMA_address, DMA_bank, DMA_len);
   }
   else
   {
-  if ((DMA_info&0x80) == 0) {
-    for (tmp = 0;tmp < DMA_len;tmp++) {
-      switch (DMA_info&7) {
-        case 0x00 :
-          PPU_port_write(PPU_port,mem_getbyte(DMA_address,DMA_bank)); break;
-        case 0x01 :
-          PPU_port_write(PPU_port+(tmp&1),mem_getbyte(DMA_address,DMA_bank)); break;
-        case 0x02 :
-          PPU_port_write(PPU_port,mem_getbyte(DMA_address,DMA_bank)); break;
-        case 0x03 :
-          PPU_port_write(PPU_port+(tmp&2)/2,mem_getbyte(DMA_address,DMA_bank)); break;
-        case 0x04 :
-          PPU_port_write(PPU_port+(tmp&3),mem_getbyte(DMA_address,DMA_bank)); break;
-      }
-      if (!(DMA_info & 0x08)) {
-        if (DMA_info & 0x10) DMA_address--; else DMA_address++;
-      }
-    }
-  } else {
+  
+  if ((DMA_info&0x80) == 0) {  
+	
+	///////////////////////////////////////////////////////SNES CPU IO -> PPU///////////////////////////////////////////////////////
+	
+	if(isSDD1DMA == true){
+		uint8 *base = (uint8 *)SDD1_WORKBUFFER;
+		int p = 0;
+		for (tmp = 0;tmp < DMA_len;tmp++) {
+		  uchar Work = *(base + p);
+		  switch (DMA_info&7) {
+			case 0x00 :
+			  PPU_port_write(PPU_port, Work); break;
+			case 0x01 :
+			  PPU_port_write(PPU_port+(tmp&1), Work); break;
+			case 0x02 :
+			  PPU_port_write(PPU_port, Work); break;
+			case 0x03 :
+			  PPU_port_write(PPU_port+(tmp&2)/2, Work); break;
+			case 0x04 :
+			  PPU_port_write(PPU_port+(tmp&3), Work); break;
+		  }
+			if (DMA_info & 0x10){ 
+				p--; 
+			}
+			else {
+				p++;
+			}
+		}
+	}
+	else{
+		for (tmp = 0;tmp < DMA_len;tmp++) {
+		  switch (DMA_info&7) {
+			case 0x00 :
+			  PPU_port_write(PPU_port,mem_getbyte(DMA_address,DMA_bank)); break;
+			case 0x01 :
+			  PPU_port_write(PPU_port+(tmp&1),mem_getbyte(DMA_address,DMA_bank)); break;
+			case 0x02 :
+			  PPU_port_write(PPU_port,mem_getbyte(DMA_address,DMA_bank)); break;
+			case 0x03 :
+			  PPU_port_write(PPU_port+(tmp&2)/2,mem_getbyte(DMA_address,DMA_bank)); break;
+			case 0x04 :
+			  PPU_port_write(PPU_port+(tmp&3),mem_getbyte(DMA_address,DMA_bank)); break;
+		  }
+		  if (!(DMA_info & 0x08)) {
+			if (DMA_info & 0x10) DMA_address--; else DMA_address++;
+		  }
+		}
+	}
+	
+  }
+  
+  ///////////////////////////////////////////////////////PPU -> SNES CPU IO///////////////////////////////////////////////////////
+  else {
     for (tmp = 0;tmp<DMA_len;tmp++) {
       switch (DMA_info & 7) {
         case 0x00 :
@@ -507,7 +547,9 @@ void DMA_transfert(uchar port)
   DMA_PORT[0x106+port*0x10] = DMA_PORT[0x105+port*0x10] = 0;
   DMA_PORT[0x102+port*0x10] = DMA_address&0xff;
   DMA_PORT[0x103+port*0x10] = DMA_address>>8;
-  //END_PROFILE(DMA, 4);
+  if(isSDD1DMA == true){
+	sdd1_IO[1] = 0; //end S-DD1 dma transfer
+  }
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -1030,27 +1072,6 @@ uint32	R2180(uint32 addr)
       return PPU_PORT[0x80];
 }
 
-#if 0
-  if (address >= 0x3000 && address < 0x3000 + 768)
-    {
-      uchar	byte;
-
-      if (!CFG.SuperFX)
-        return (0x30);
-
-      byte = SuperFX.Regs[address-0x3000];
-      if (address == 0x3031)
-        {
-/*          CLEAR_IRQ_SOURCE(GSU_IRQ_SOURCE);*/
-          SuperFX.Regs[0x31] = byte&0x7f;
-        }
-      if (address == 0x3030)
-        {
-          SET_WAITCYCLES(0);
-        }
-      return (byte);
-    }
-#endif
 __attribute__((section(".itcm")))
 void	W2100(uint32 addr, uint32 value)
 {
@@ -1171,6 +1192,7 @@ void	W2108(uint32 addr, uint32 value)
 	
 	PPU_PORT[0x08] = value;
 }
+
 __attribute__((section(".itcm")))
 void	W2109(uint32 addr, uint32 value)
 {		
@@ -1807,11 +1829,15 @@ void	DMA_port_write(uint32 address, uint8 byte)
 {
 	if (address >= 0x4200)
 	{
-		if (address < 0x4220)
+		if (address < 0x4220){
 			IOWrite_DMA[address-0x4200](address-0x4200, byte);
-		else
-		if (address < 0x4380)
+		}
+		else if (address < 0x4380){
 			DMA_PORT[address-0x4200]=byte;
+		}
+		else if (address < 0x4808){ //S-DD1: 4800 - 4807 DMA Writes
+			IO_SDD1[address-0x4800]=byte;
+		}
 	}
 	else
 		if (address == 0x4016)
@@ -1826,11 +1852,15 @@ uint8	DMA_port_read(uint32 address)
 {
 	if (address >= 0x4200)
 	{
-		if (address < 0x4220)
+		if (address < 0x4220){
 			return (uint8)IORead_DMA[address-0x4200](address-0x4200);
-		else
-		if (address < 0x4380)
+		}
+		else if (address < 0x4380){
 			return (uint8)DMA_PORT[address-0x4200];
+		}
+		else if (address < 0x4808){ //S-DD1: 4800 - 4807 DMA Writes
+			return (uint8)IO_SDD1[address-0x4800];
+		}
 	}
 	else
 		if (address == 0x4016)
@@ -1840,49 +1870,6 @@ uint8	DMA_port_read(uint32 address)
 			return (uint8)R4017(0x17);
 	return 0; 
 }
-
-#if 0
-  if (address >= 0x3000 && address < 0x3000 + 768)
-    {
-      if (!CFG.SuperFX)
-        return;
-
-      switch (address) {
-        case 0x301F:
-          SuperFX.Regs[0x1F] = value;
-          SuperFX.Regs[GSU_SFR] |= FLG_G;
-          SuperFXExec();
-          return;
-        case 0x3030:
-          if ((SuperFX.Regs[0x30]^value)&FLG_G)
-            {
-              SuperFX.Regs[0x30] = value;
-              if (value&FLG_G)
-                SuperFXExec();
-              else
-                SuperFXFlushCache();
-            }
-          else
-            SuperFX.Regs[0x30] = value;
-          break;
-        case 0x3034:
-        case 0x3036:
-          SuperFX.Regs[address-0x3000] = value & 0x7f;
-          break;
-        case 0x303B:
-          break;
-        default:
-          SuperFX.Regs[address-0x3000] = value;
-          if (address >= 0x3100)
-            {
-              SuperFXCacheWriteAccess(address);
-            }
-          break;
-      }
-      return;
-    }
-#endif
-
 
 /*
  * Port used by chrono trigger:
@@ -1953,32 +1940,6 @@ void	HDMA_write()
     if (HDMASel&0x40 && SNES.HDMA_line < SNES.HDMA_nblines[6]) HDMA_write_port(6);
     if (HDMASel&0x80 && SNES.HDMA_line < SNES.HDMA_nblines[7]) HDMA_write_port(7);*/
 }    
-
-
-
-/* SuperFX */
-
-/*void SuperFXExec()
-{
-  if (CFG.SuperFX)
-    {
-      if ((SuperFX.Regs[GSU_SFR]&FLG_G) &&
-	  (SuperFX.Regs[GSU_SCMR]&0x18) == 0x18)
-	{
-          int GSUStatus;
-
-          SuperFXEmulate((SuperFX.Regs[GSU_CLSR]&1)?1330:650);
-          GSUStatus = SuperFX.Regs[GSU_SFR]|(SuperFX.Regs[GSU_SFR+1]<<8);
-          if ((GSUStatus&(FLG_G|FLG_IRQ)) == FLG_IRQ)
-	    {
-		// Trigger a GSU IRQ.
-              CPU.SavedCycles = CPU.Cycles;
-              CPU.IRQState |= IRQ_GSU;
-              CPU.Cycles = 0;
-	    }
-	}
-    }
-}*/
 
 void	read_joypads()
 {

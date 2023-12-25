@@ -1284,10 +1284,13 @@ void	GUI_showROMInfos(int size){
     	GUI_printf("%s LoROM ", _STR(IDS_ROM_TYPE));
     GUI_printf("%s %s ", _STR(IDS_COUNTRY), SNES.ROM_info.countrycode < 2 ? "NTSC" : "PAL");	
 
-	//Is CX4 coprocessor?
-	if((u8)SNES.ROM_info.ROMtype == 0xf3){
-		CFG.CX4 = 1;
-		GUI_printf("CX4 game detected.");
+	//Is S-DD1 coprocessor?
+	if (((u8)SNES.ROM_info.ROMtype & 0xf0) == 0x40){ //if((u8)SNES.ROM_info.ROMtype == 0xf3)
+		CFG.SDD1 = 1;
+		GUI_printf("SDD1 game detected.");
+	}
+	else{
+		GUI_printf("NOT SDD1 game detected.");
 	}
 }
 

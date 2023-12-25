@@ -26,7 +26,8 @@
 #include "cfg.h"
 #include "snemulds_memmap.h"
 #include "utilsTGDS.h"
-#include "c4.h"
+#include "sdd1.h"
+#include "sdd1emu.h"
 #include "ipcfifoTGDSUser.h"
 
 uchar *ROM_paging= NULL;
@@ -133,6 +134,8 @@ void InitLoROMMap(int mode)
 		printf("Halting.");
 		while(1==1){}
 	}
+	
+	// Banks 00->3f and 80->bf
 	for (c = 0; c < 0x200; c += 8)
 	{
 		MAP[c+0] = MAP[c+0x400] = SNESC.RAM;		//RAM 000h-1FFFh  Mirror of 7E0000h-7E1FFFh (first 8Kbyte of WRAM)
@@ -140,12 +143,8 @@ void InitLoROMMap(int mode)
 
 		MAP[c+1] = MAP[c+0x401] = (uchar *)MAP_PPU; //PPU 2100h-21FFh  I/O Ports (B-Bus) 
 		MAP[c+2] = MAP[c+0x402] = (uchar *)MAP_CPU; //CPU 4000h-41FFh  I/O Ports (manual joypad access)
-		if(CFG.CX4 == 1){
-			MAP[c+3] = MAP[c+0x403] = (uchar *)MAP_CX4;
-		}
-		else{
-			MAP[c+3] = MAP[c+0x403] = (uchar *)MAP_NONE;
-		}
+		MAP[c+3] = MAP[c+0x403] = (uchar *)MAP_NONE;
+		
 		for (i = c+4; i < c+8; i++)
 		{
 			if ( ((c>>1)<<13)-0x8000 < SNES.ROMSize)
@@ -163,21 +162,7 @@ void InitLoROMMap(int mode)
 		}
 	}
 
-	if (CFG.DSP1)
-	{
-		for (c = 0x180; c < 0x200; c += 8)
-		{
-			MAP[c+4] = MAP[c+0x404] = (uchar *)MAP_DSP;
-			MAP[c+5] = MAP[c+0x405] = (uchar *)MAP_DSP;
-			MAP[c+6] = MAP[c+0x406] = (uchar *)MAP_DSP;
-			MAP[c+7] = MAP[c+0x407] = (uchar *)MAP_DSP;
-			SNES.BlockIsROM[c+4] = SNES.BlockIsROM[c+0x404] = FALSE;
-			SNES.BlockIsROM[c+5] = SNES.BlockIsROM[c+0x405] = FALSE;
-			SNES.BlockIsROM[c+6] = SNES.BlockIsROM[c+0x406] = FALSE;
-			SNES.BlockIsROM[c+7] = SNES.BlockIsROM[c+0x407] = FALSE;
-		}
-	}
-
+	// Banks 40->7f and c0->ff
 	for (c = 0; c < 0x200; c += 8)
 	{
 		for (i = c; i < c+4; i++)
@@ -211,15 +196,72 @@ void InitLoROMMap(int mode)
 		for (i = c; i < c+8; i++)
 			SNES.BlockIsROM[i+0x200] = SNES.BlockIsROM[i+0x600] = TRUE;
 	}
+	MapRAM();
+	FixMap();
+	WriteProtectROM();
+}
 
-	if (CFG.DSP1)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void AlphaROMMap(int mode)
+{
+	int 	c;
+	int 	i;
+	int		maxRAM = 0;
+	uint8	*largeROM = SNESC.ROM;
+
+	if (mode == NOT_LARGE)
 	{
-		for (c = 0; c < 0x80; c++)
+		// Small ROM, use only SNES ROM size of RAM
+		maxRAM = SNES.ROMSize;
+	}
+	else if (mode == USE_PAGING)
+	{
+		// Use Paging system... 
+		// Only a part of RAM is used static
+		maxRAM = PAGE_SIZE;
+	}
+	else{
+		printf("Unhandled AlphaROMMap(): %d", mode);
+		printf("Halting.");
+		while(1==1){}
+	}
+	
+	// Banks 00->3f and 80->bf
+	for (c = 0; c < 0x200; c += 8)
+	{
+		MAP[c+0] = MAP[c+0x400] = SNESC.RAM;		//RAM 000h-1FFFh  Mirror of 7E0000h-7E1FFFh (first 8Kbyte of WRAM)
+		SNES.BlockIsRAM[c+0] = SNES.BlockIsRAM[c+0x400] = TRUE;
+
+		MAP[c+1] = MAP[c+0x401] = (uchar *)MAP_PPU; //PPU 2100h-21FFh  I/O Ports (B-Bus) 
+		MAP[c+2] = MAP[c+0x402] = (uchar *)MAP_CPU; //CPU 4000h-41FFh  I/O Ports (manual joypad access)
+		MAP[c+3] = MAP[c+0x403] = (uchar *)MAP_NONE;
+		
+		for (i = c+4; i < c+8; i++)
 		{
-			MAP[c+0x700] = (uchar *)MAP_DSP;
-			SNES.BlockIsROM[c+0x700] = FALSE;
+			if ( ((c>>1)<<13)-0x8000 < SNES.ROMSize)
+			{
+				MAP[i] = MAP[i+0x400] = &SNESC.ROM[(c>>1)<<13]-0x8000;
+				SNES.BlockIsROM[i] = SNES.BlockIsROM[i+0x400] = TRUE;
+			}
 		}
 	}
+	
+	// Banks 40->7f and c0->ff
+	for (c = 0; c < 0x200; c += 8)
+	{
+		for (i = c; i < c+8; i++)
+		{
+			MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[((c>>1)<<14)];
+			SNES.BlockIsROM[i+0x200] = SNES.BlockIsROM[i+0x600] = TRUE;
+		}
+	}
+	
 
 	MapRAM();
 	FixMap();
@@ -263,10 +305,7 @@ void InitHiROMMap(int mode)
 
 		MAP[c+1] = MAP[c+0x401] = (uchar *)MAP_PPU;
 		MAP[c+2] = MAP[c+0x402] = (uchar *)MAP_CPU;
-		if (CFG.DSP1)
-			MAP[c+3] = MAP[c+0x403] = (uchar *)MAP_DSP;
-		else
-			MAP[c+3] = MAP[c+0x403] = (uchar *)MAP_NONE;
+		MAP[c+3] = MAP[c+0x403] = (uchar *)MAP_NONE;
 
 		for (i = c+4; i < c+8; i++)
 		{
@@ -422,12 +461,17 @@ void InitMap(){
 	for (i = 0; i < 256*8; i++){
 		MAP[i] = (uint8*)MAP_NONE;	
 	}
-	int mode = (CFG.LargeROM == false) ? NOT_LARGE : USE_PAGING; 
-	if (SNES.HiROM){
-		InitHiROMMap(mode);
+	int mode = (CFG.LargeROM == false) ? NOT_LARGE : USE_PAGING;
+	if(CFG.SDD1 == 0){
+		if (SNES.HiROM){
+			InitHiROMMap(mode);
+		}
+		else{
+			InitLoROMMap(mode);
+		}
 	}
 	else{
-		InitLoROMMap(mode);
+		AlphaROMMap(mode);
 	}
 }
 
@@ -461,11 +505,6 @@ uint8 IO_getbyte(int addr, uint32 address){
 	}
 	break;
 
-	case MAP_CX4:{
-		return (S9xGetC4 ((address) & 0xffff));
-	}
-	break;
-
 	case MAP_HIROM_SRAM:{
 		if (SNESC.SRAMMask == 0)
 			return 0;
@@ -482,6 +521,15 @@ uint8 IO_getbyte(int addr, uint32 address){
 __attribute__((section(".itcm")))
 #endif
 void IO_setbyte(int addr, uint32 address, uint8 byte){
+	switch (address){
+		//Byte DMA Writes to S-DD1
+		case 0x4804:
+		case 0x4805:
+		case 0x4806:
+		case 0x4807:
+		S9xSetSDD1MemoryMap (((int)address - 0x4804), byte & 7);
+		break;
+	}
 	
 	switch ((int)addr)
 	{
@@ -504,11 +552,6 @@ void IO_setbyte(int addr, uint32 address, uint8 byte){
 		SNES.SRAMWritten = 1;
 		return;
 	}break;
-	case MAP_CX4:{
-		S9xSetC4(byte, address & 0xffff);
-		return;
-	}
-	break;
 	case MAP_HIROM_SRAM:{
 		if (SNESC.SRAMMask == 0)
 			return;
@@ -552,11 +595,6 @@ uint16 IO_getword(int addr, uint32 address)
 		result |= SNESC.SRAM[(address+1)&SNESC.SRAMMask]<<8;
 		return result;
 	}break;
-	case MAP_CX4:{
-		return (S9xGetC4 (address & 0xffff) |
-			(S9xGetC4 ((address + 1) & 0xffff) << 8));
-	}
-	break;
 	case MAP_HIROM_SRAM:{
 		if (SNESC.SRAMMask == 0)
 			return 0;
@@ -599,12 +637,6 @@ void IO_setword(int addr, uint32 address, uint16 word){
 		SNES.SRAMWritten = 1;
 		return;
 	}break;
-	case MAP_CX4:{
-		S9xSetC4 (word & 0xff, address & 0xffff);
-		S9xSetC4 ((uint8) (word >> 8), (address + 1) & 0xffff);
-		return;
-	}
-	break;
 	case MAP_HIROM_SRAM:{
 		if (SNESC.SRAMMask == 0)
 			return;
@@ -796,10 +828,6 @@ void *map_memory(uint16 offset, uchar bank)
 	case MAP_HIROM_SRAM:
 		return SNESC.SRAM+(((address&0x7fff)-0x6000+
 						((address&0xf0000)>>3))&SNESC.SRAMMask);
-	case MAP_CX4:{
-		return SNESC.C4RAM + (offset&0x1FFF); //(snes.h: intercept #define MAP_CX4         0x86000000	//I/O  00-3F,80-BF:6000-7FFF)
-	}
-	break;						
 	default:
 		return 0;
 	}

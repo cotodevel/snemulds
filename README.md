@@ -70,12 +70,12 @@ and toolchaingenericds-multiboot-config.txt (update here, the computer's IP you 
 
 
 
-Latest stable release: https://bitbucket.org/Coto88/SnemulDS/get/TGDS1.65.zip
+Latest stable release: https://bitbucket.org/Coto88/SnemulDS/get/sdd1.zip
 
 Changelog:
 
 SnemulDS 0.6d:
-	- Added CX4 co processor support! Megaman X2 / Megaman X3 it's entirely playable now. (tweak sprite priority settings if necessary)
+	- Added S-DD1 co processor support! Street Fighter Alpha 2 is fully playable now. Star Ocean is UNSUPPORTED. TWL mode ONLY. Because the NTR CPU is too slow to handle this co processor. (tweak sprite priority settings if necessary)
 	- fixed even more CPU bugs. This narrows down games not booting due to cross-boundary pages or to APU synchronization issues!
 	
 
@@ -158,7 +158,7 @@ CPUMOV.sfc -> Pass
 (SNES) CPU Opcodes Failing:
 None! 
 
-CX4 coprocessor and the rest of non-coprocessor games should be playable now. 
+S-DD1 coprocessor and the rest of non-coprocessor games should be playable now. 
 There are still bugs on the cross-boundary pages, which means the SnemulDS ROM mapper on over 4M games is broken and requires fixing.
 If the NDS had enough memory yeah, all games would have worked right away, but we'll see what can be done about it ;-)
 

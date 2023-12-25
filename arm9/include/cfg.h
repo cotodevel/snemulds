@@ -28,9 +28,7 @@ struct s_cfg
   int	BG_Layer;
   int	BG_priority;
 
-  int	DSP1;
-  int	SuperFX;
-  int   CX4;
+  int	SDD1;
   int	Sound_output;
 
   int	joypad_disabled; /* used to disable the joypad in the GUI */

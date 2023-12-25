@@ -683,7 +683,6 @@ void update_scroll()
 
 
 
-__attribute__((section(".itcm")))
 void	draw_plane(int bg, int bg_mode, int nb_tilex, int nb_tiley, int tile_size)
 {
   int		i, j, map_address;

@@ -31,31 +31,6 @@ GNU General Public License for more details.
 
 #define bzero(p, s)	memset(p, 0, s)
 
-#if 0
-struct s_SuperFX	SuperFX;
-
-char    _use_lfn(const char *path)
-{
-  return (1);
-}
-
-void	SuperFX_init()
-{
-  SuperFX.Regs = TGDSARM9Malloc(768);
-  SuperFX.RamBanks = 2;
-  SuperFX.Ram = SNES.ROM+1024*1024*4;
-  SuperFX.RomBanks = (2 * 1024 * 1024) / (32 * 1024);
-  SuperFX.Rom = (uint8 *)SNES.ROM;
-}
-
-void	reset_SuperFX()
-{
-  SuperFX.RomBanks = SNES.ROMSize >> 15;
-  SuperFX.vFlags = 0;
-  SuperFXReset(&SuperFX);
-}
-#endif
-
 void	init_GFX()
 {
   init_render();  
@@ -119,13 +94,6 @@ void	reset_CPU()
 
 void	reset_SNES()
 {
-#if 0
-	if (CFG.SuperFX)
-    reset_SuperFX();
-
-  if (CFG.DSP1)
-    reset_DSP1();
-#endif
   reset_GFX();
 
   bzero(SNES.HDMA_values, 8*256*4);
@@ -143,28 +111,13 @@ void	reset_SNES()
   memset(DMA_PORT+0x100, 0xFF, 0x80*2);
   SNES.JOY_PORT16 = 0;
 
-//  if (!CFG.SuperFX)
     {
       SNESC.SRAMMask = SNES.ROM_info.SRAMsize ?
         ((1 << (SNES.ROM_info.SRAMsize + 3)) * 128) - 1 : 0;
       SNESC.SRAM = SNESC.BSRAM;
       memset(SNESC.SRAM, 0xAA, 0x8000);
     }
-/*  else
-    {
-      SNESC.SRAMMask = 0xFFFF;
-      SNESC.SRAM = SNESC.ROM+1024*1024*4;
-      memset(SNESC.SRAM, 0, 0x20000);
-    }*/
-
-  /*
-  if (CFG.Sound_output)
-    SPC700_emu = 1;
-  else
-    SPC700_emu = 0;
-  SPC700_reset();
-*/
-  struct s_apu2 *APU2 = (struct s_apu2 *)(&SNEMULDS_IPC->APU2);
+   struct s_apu2 *APU2 = (struct s_apu2 *)(&SNEMULDS_IPC->APU2);
 //  if (CFG.Sound_output) 
   	APU_nice_reset();
 

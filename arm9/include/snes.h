@@ -18,9 +18,9 @@ GNU General Public License for more details.
 #ifndef __snes_h__
 #define __snes_h__
 
+#include "typedefsTGDS.h"
 #include <stdio.h>
 #include "common.h"
-
 
 typedef
        struct {
@@ -44,21 +44,15 @@ struct s_snescore
   uchar		*VRAM;
   uchar		*SRAM;
   uchar		*BSRAM; /* Battery-saved RAM of non-SuperFX ROM */  
-  uchar		*C4RAM; //CX4 WorkRAM (0x2000)
   int		SRAMMask;  
 };
 
 #define MAP  ((uchar **)(0x06898000))
 #define WMAP ((uchar **)(0x0689A000))
-//#define MAP ((uchar **)(0x27E0000))
-//#define MAP ((uchar **)(0xB000014))
-//#define MAP SNES.Map
-
 extern struct s_snescore	SNESC;
 extern struct s_snes	SNES;
-//#define SNES	((struct s_snes *)(0x23E0000))
 extern uint16	PPU_PORT[0x90]; // 2100 -> 2183
-extern uint16	DMA_PORT[0x180]; // 4200 -> 437F
+extern uint8	DMA_PORT[0x180]; // 4200 -> 437F
 extern int cnt_alphachar(char *str);
 
 struct s_snes
@@ -66,8 +60,6 @@ struct s_snes
 /* memory mapping */
   uchar    	BlockIsRAM[256*8];
   uchar    	BlockIsROM[256*8];
-/*  uchar    	*Map[256*8];
-  uchar    	*WriteMap[256*8];*/
   int		HiROM;
 
   ROM_Info	ROM_info;
@@ -114,8 +106,6 @@ struct s_snes
   int		stat_GFX;
   int		stat_IOREGS;
   int		stat_DMA;
-/*  int		stat_OPC[256];
-  int		stat_OPC_cnt[256];*/
 };
 
 //indirect mapped memory
@@ -125,14 +115,11 @@ struct s_snes
 #define MAP_DSP         0x83000000
 #define MAP_LOROM_SRAM  0x84000000
 #define MAP_HIROM_SRAM  0x85000000
-#define MAP_CX4         0x86000000	//I/O  00-3F,80-BF:6000-7FFF
 #define MAP_NONE        0x8E000000
 #define MAP_LAST        0x8F000000
 
 //Rom Page variables
 #define EMPTYMEM		(ushort *)(0x2FE0000)
-//#define PPU_PORT	((ushort *)(0x23E0000))
-//#define DMA_PORT	((ushort *)(0x23E4000))
 #define SNES_SRAM_ADDRESS ((uchar *)(0x2FE6000))
 #define SNES_ROM_ADDRESS_NTR ((uchar *)(0x20C0000)) 
 #define SNES_ROM_ADDRESS_TWL ((uchar *)(0x20C9F00))
@@ -146,7 +133,7 @@ struct s_snes
 
 /* DS Memory */
 #define SNES_RAM_ADDRESS	((uint8 *)(0x02FC0000))
-#define CX4_RAM_ADDRESS	((uint8 *)(0x02FEE000))
+#define SDD1_WORKBUFFER	((uint8 *)(0x02FEE000))
 
 #endif
 
@@ -155,7 +142,7 @@ struct s_snes
 extern "C"{
 #endif
 
-///
+extern uint8	IO_SDD1[8]; // 4800 -> 4807
 
 #ifdef __cplusplus
 }
