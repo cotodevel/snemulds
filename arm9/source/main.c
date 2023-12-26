@@ -537,13 +537,12 @@ int main(int argc, char ** argv){
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
 	
-	isTGDSCustomConsole = false;
+	isTGDSCustomConsole = true;
 	GUI_init(isTGDSCustomConsole);
-
+	GUI_clear();
 	sint32 fwlanguage = (sint32)getLanguage(); //get language once User Settings have been loaded
 	GUI_setLanguage(fwlanguage);
-	GUI_clear();
-	
+
 	//argv destroyed here because of xmalloc init, thus restore them
 	for(i = 0; i < argc; i++){
 		argv[i] = argvs[i];
@@ -643,9 +642,9 @@ int main(int argc, char ** argv){
 
 	//ARGV Support: Only supported through TGDS chainloading.
 	bool isSnesFile = false;
-	if (argc > 3) {
+	if (argc > 2) {
 		//arg 0: original NDS caller
-		//arg 1: this NDS binary
+		//arg 1: this NDS binary called
 		//arg 2: this NDS binary's ARG0: filepath
 		//arg 3: "dummy.arg"
 		//is sfc/smc? then valid
@@ -662,7 +661,7 @@ int main(int argc, char ** argv){
 	}
 	while(isSnesFile == false);
 	///////////////////////////////////////////
-	if (!(argc > 3)) { 
+	if (!(argc > 2)) { 
 		GUI_deleteROMSelector(); 	//Should also free ROMFile
 	}
 	
