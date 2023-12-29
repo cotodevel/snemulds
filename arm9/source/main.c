@@ -533,7 +533,7 @@ __attribute__ ((optnone))
 int main(int argc, char ** argv){
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	
-	bool isTGDSCustomConsole = false;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
+	bool isTGDSCustomConsole = true;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
 	GUI_init(isTGDSCustomConsole);
 	
 	//xmalloc init removes args, so save them
