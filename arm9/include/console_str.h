@@ -104,7 +104,6 @@ extern sint8*  g_snemulds_str_dan[];
 
 extern void	CPU_unpack();
 extern void	SNES_update();
-extern void	PPU_update();
 extern void	CPU_pack();
 extern void PPU_ChangeLayerConf(int i);
 extern void saveOptionsToConfig(sint8 *section);

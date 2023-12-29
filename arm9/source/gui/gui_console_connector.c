@@ -1291,12 +1291,6 @@ void	GUI_showROMInfos(int size){
 		CFG.DSP1 = 1;
 		VblankWaitNDSTWLMode = false;
 	}
-	else{
-		GUI_printf("NOT DSP game detected. (0x%x)", (u8)SNES.ROM_info.ROMtype);
-		GUI_printf("Use SnemulDS TGDS1.65 branch.");
-		GUI_printf("Halting.");
-		while(1==1){}
-	}
 	//GUI_printf("GUI_showROMInfos: cart type: 0x%x", (u8)SNES.ROM_info.ROMtype);
 }
 

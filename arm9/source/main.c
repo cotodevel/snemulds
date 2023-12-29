@@ -457,7 +457,11 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 				u32 SFGEXT9 = *(u32*)0x04004008;
 				//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
 				SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x0 << 14);
-				*(u32*)0x04004008 = SFGEXT9;	
+				*(u32*)0x04004008 = SFGEXT9;
+				setCpuClock(true); //true: 133Mhz (TWL Mode only)
+			}
+			else{
+				setCpuClock(false); //false: 66Mhz (NTR/TWL default CPU speed)
 			}
 			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
 			printf("Normal NTR Mem.");
@@ -517,7 +521,7 @@ char *argvs[8];
 
 //---------------------------------------------------------------------------------
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("Os")))
+__attribute__((optimize("Ofast")))
 #endif
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))

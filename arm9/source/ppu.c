@@ -35,7 +35,7 @@ GNU General Public License for more details.
 
 __attribute__((section(".dtcm")))
 uint32 bittab[256];
-//__attribute__((section(".dtcm")))
+__attribute__((section(".dtcm")))
 uint32 bittab8[16];
 
 void    init_render()
@@ -73,6 +73,12 @@ void    init_render()
     }    
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void check_sprite_addr()
 { 	
 	if (GFX.spr_addr_base+GFX.spr_addr_select == GFX.spr_addr[0])
@@ -126,6 +132,12 @@ t_TileZone	*SNESToDS_TileAddress[8*4];
 uint16		ToUpdate2b[100];
 uint16		ToUpdate4b[100];
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int	PPU_get_bgmode(int mode, int bg)
 {
   if (bg == 0)
@@ -156,6 +168,12 @@ int	PPU_get_bgmode(int mode, int bg)
   return 0;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int	PPU_get_tile_address(int tile_address, int bg_mode)
 {
 	int	i;
@@ -170,23 +188,12 @@ int	PPU_get_tile_address(int tile_address, int bg_mode)
 	return -1;
 }
 
-/*
-int	PPU_find_tile_address(int tile_address, int bg_mode)
-{
-	int	i;
-	for (i = 2; i < 8; i++)
-	{
-		if (TileZones[i].depth == bg_mode &&
-		    tile_address >= (TileZones[i].base<<13) && 
-			tile_address <  (TileZones[i].base<<13)+bg_mode*8192)
-		{
-			return i;
-		}
-	} 
-	return -1;
-}
-*/
-
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int	PPU_allocate_tilezone()
 {
 	int	i;
@@ -202,6 +209,12 @@ int	PPU_allocate_tilezone()
 	return less_used; 	
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int	PPU_get_most_used()
 {
 	int	i;
@@ -217,7 +230,12 @@ int	PPU_get_most_used()
 	return most_used; 	
 }
 
-
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int	PPU_allocate_tilezone2()
 {
 	int	i;
@@ -234,6 +252,12 @@ int	PPU_allocate_tilezone2()
 	return less_used; 	
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	PPU_add_tile_address(int bg)
 {
   int 		tile_zone = (GFX.tile_address[bg]>>13);
@@ -329,6 +353,12 @@ void	PPU_add_tile_address(int bg)
   }
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void     add_tile_2(int tile_addr_base, uint16 *vram_addr, int tilenb)
 {
   int		k;
@@ -353,6 +383,12 @@ void     add_tile_2(int tile_addr_base, uint16 *vram_addr, int tilenb)
   GFX.tiles2b_def[tile_addr/16] = 2;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void     add_tile_4(int tile_addr_base, uint16 *vram_addr, int tilenb)
 {
   int		k;
@@ -383,7 +419,12 @@ void     add_tile_4(int tile_addr_base, uint16 *vram_addr, int tilenb)
   GFX.tiles4b_def[tile_addr/32] = 4;     
 }
 
-
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void     add_tile_8(int tile_addr_base, uint16 *vram_addr, int tilenb)
 {
   int		a;
@@ -449,7 +490,12 @@ void     add_tile_8(int tile_addr_base, uint16 *vram_addr, int tilenb)
   GFX.tiles8b_def[tile_addr/64] = 8;    
 }
 
-
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int		PPU_AddTile2InCache(t_TileZone *tilezone, int addr)
 {	
   	if (!NeedFlush2b)
@@ -469,6 +515,12 @@ int		PPU_AddTile2InCache(t_TileZone *tilezone, int addr)
   	return 0;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int		PPU_AddTile4InCache(t_TileZone *tilezone, int addr)
 {	
   	if (!NeedFlush4b)
@@ -549,6 +601,12 @@ void check_tile(int addr)
   GFX.tiles_def[addr/8192] = 0;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	PPU_updateCache()
 {
 	int i;
@@ -607,7 +665,12 @@ void	PPU_updateCache()
 	PPU_add_tile_address(2);
 }
 
-
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	PPU_setMap(int i, int j, int tilenb, int bg, int p, int f)
 {
   uint16 *map_addr = GFX.DSMapAddress;
@@ -645,30 +708,12 @@ void	PPU_setMap(int i, int j, int tilenb, int bg, int p, int f)
 #define DRAW_TILE(I, J, TILENB, BG, P, F) \
 	PPU_setMap(I, J, (TILENB)&1023, BG, P, F) 
 
-/*\
- if (tiles[TILENB][BG][P][F] != NULL) { \
-   draw_rle_sprite(buf_screen, tiles[TILENB][BG][P][F], X, Y); \
-   if (X > 0xf8 && Y > 0xf8) \
-     draw_rle_sprite(buf_screen, tiles[TILENB][BG][P][F], X-0x100, Y-0x100); \
-   if (X > 0xf8) draw_rle_sprite(buf_screen, tiles[TILENB][BG][P][F], X-0x100, Y); \
-   if (Y > 0xf8) draw_rle_sprite(buf_screen, tiles[TILENB][BG][P][F], X, Y-0x100); \
- }
-*/
-
-/* //ori
-void update_scroll()
-{
-   BG0_X0 = PPU_PORT[(0x0D)+(0<<1)];
-   BG0_Y0 = PPU_PORT[(0x0E)+(0<<1)]+GFX.YScroll;
-   BG1_X0 = PPU_PORT[(0x0D)+(1<<1)];
-   BG1_Y0 = PPU_PORT[(0x0E)+(1<<1)]+GFX.YScroll;
-   BG2_X0 = PPU_PORT[(0x0D)+(2<<1)];
-   BG2_Y0 = PPU_PORT[(0x0E)+(2<<1)]+GFX.BG3YScroll;
-   BG3_X0 = PPU_PORT[(0x0D)+(3<<1)];
-   BG3_Y0 = PPU_PORT[(0x0E)+(3<<1)]+GFX.BG3YScroll;
-}
-*/
-
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void update_scroll()
 {
    BG0HOFS = PPU_PORT[(0x0D)+(0<<1)];
@@ -692,8 +737,12 @@ void update_scroll()
   }
 
 
-
-//__attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	draw_plane(int bg, int bg_mode, int nb_tilex, int nb_tiley, int tile_size)
 {
   int		i, j, map_address;
@@ -897,6 +946,12 @@ void	draw_plane(int bg, int bg_mode, int nb_tilex, int nb_tiley, int tile_size)
   }
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	draw_plane_withpriority(int bg, int bg_mode, int nb_tilex, int nb_tiley, int tile_size)
 {
   int		i, map_address;
@@ -976,8 +1031,12 @@ void	draw_plane_withpriority(int bg, int bg_mode, int nb_tilex, int nb_tiley, in
    	}  	
 }
 
-
-
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int		map_duplicate(int snes_block)
 {
 	int	i;
@@ -997,6 +1056,12 @@ int		map_duplicate(int snes_block)
 	return 0;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int		map_duplicate2(int snes_block)
 {
 	int	i;
@@ -1019,6 +1084,12 @@ int		map_duplicate2(int snes_block)
 /*
  * Get 4 empty blocks in MAP VRAM for this infamous 16 pixels tile  mode
  */
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int		map_duplicate4(int snes_block)
 {
 	int	i;
@@ -1040,7 +1111,12 @@ int		map_duplicate4(int snes_block)
 	return 0;
 }
 
-
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void draw_plane_32_30(unsigned char bg, unsigned char bg_mode)
 {
   int nb_tilex, nb_tiley;
@@ -1102,6 +1178,12 @@ void draw_plane_32_30(unsigned char bg, unsigned char bg_mode)
   draw_plane(bg, bg_mode, nb_tilex, nb_tiley, tile_size); 
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void draw_plane_64_30(unsigned char bg, unsigned char bg_mode)
 {
   int 	nb_tilex, nb_tiley;
@@ -1149,6 +1231,12 @@ void draw_plane_64_30(unsigned char bg, unsigned char bg_mode)
   	draw_plane(bg, bg_mode, nb_tilex, nb_tiley, tile_size); 
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void draw_plane_32_60(unsigned char bg, unsigned char bg_mode)
 {
   int 	nb_tilex, nb_tiley;
@@ -1191,6 +1279,12 @@ void draw_plane_32_60(unsigned char bg, unsigned char bg_mode)
   draw_plane(bg, bg_mode, nb_tilex, nb_tiley, tile_size); 
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void draw_plane_64_60(unsigned char bg, unsigned char bg_mode)
 {
   int 	nb_tilex, nb_tiley;
@@ -1239,12 +1333,12 @@ void draw_plane_64_60(unsigned char bg, unsigned char bg_mode)
   draw_plane(bg, bg_mode, nb_tilex, nb_tiley, tile_size);  
 }
 
-
-
-
-
-
-
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void PPU_set_sprites_bank(int bank)
 {
 	int	i;
@@ -1259,7 +1353,14 @@ void PPU_set_sprites_bank(int bank)
 	}
 }
 
-void draw_sprites(/*unsigned char pf*/)
+__attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void draw_sprites()
 {
 	int i, x, y;
 	int spr_size;
@@ -1469,6 +1570,12 @@ void draw_sprites(/*unsigned char pf*/)
     case 3: { draw_plane_64_60(BG, BG_MODE); } break; \
   }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void renderMode1(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
 {
    uint32 SB;
@@ -1489,6 +1596,12 @@ void renderMode1(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
   }  	
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void renderMode3(MODE_1, MODE_2)
 {
   uint32 SB = (PPU_PORT[0x2D]|PPU_PORT[0x2C])&CFG.BG_Layer&((1<<2)-1);
@@ -1502,6 +1615,12 @@ void renderMode3(MODE_1, MODE_2)
 }
 
 // FIXME: mode 0 doesn't work anymore
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void PPU_RenderLineMode1(uint32 NB_BG, uint32 MODE_1, uint32 MODE_2, uint32 MODE_3, uint32 MODE_4, 
 						 t_GFX_lineInfo *l)
 {
@@ -1611,9 +1730,14 @@ void PPU_RenderLineMode1(uint32 NB_BG, uint32 MODE_1, uint32 MODE_2, uint32 MODE
   {
   	l->lBLEND = BLEND_NONE;
   }
-
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void PPU_RenderLineMode3(uint32 MODE_1, uint32 MODE_2, t_GFX_lineInfo *l)
 {
    uint32 	order[2];
@@ -1636,6 +1760,12 @@ void PPU_RenderLineMode3(uint32 MODE_1, uint32 MODE_2, t_GFX_lineInfo *l)
   // FIXME
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void PPU_RenderLineMode7(t_GFX_lineInfo *l)
 {
 	int SB = (CFG.BG_Layer&0x10)|((CFG.BG_Layer & 0x1) << 3);
@@ -1686,6 +1816,12 @@ void renderMode7(){
 	}
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void PPU_reset()
 {
   int i;
@@ -1724,46 +1860,24 @@ void PPU_reset()
   GFX.spr_bank = 0;	
 }
 
-inline void	PPU_setBackColor(uint rgb)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void	PPU_setBackColor(uint rgb)
 {
     BG_PALETTE[0] = rgb;
 }
 
-#if 0
-void	update_scrolly(int bg)
-{
-  int delta;
-
-  if (GFX.tiles_ry[bg] != 8 && PPU_PORT[(0x0E)+bg*2] != GFX.old_scrolly[bg]) {
-    delta = GFX.tiles_ry[bg] + PPU_PORT[(0x0E)+bg*2]-GFX.old_scrolly[bg];
-    if (delta >= 0 && delta < 8)
-      GFX.tiles_ry[bg] = delta;
-    else
-      GFX.tiles_ry[bg] = 8;
-  }
-}
-
-void	update_scrollx(int bg)
-{
-  int i, delta;
-
-  if (GFX.tiles_ry[bg] != 8 && PPU_PORT[(0x0D)+bg*2] != GFX.old_scrollx[bg]) {
-    delta = PPU_PORT[(0x0D)+bg*2]-GFX.old_scrollx[bg];
-
-    if (delta < -7 || delta > 7)
-      GFX.tiles_ry[bg] = 8;
-    else {
-      for (i = 0; i < GFX.tiles_cnt[bg*2]; i++)
-        GFX.tiles_x[bg*2][i] -= delta;
-      for (i = 0; i < GFX.tiles_cnt[bg*2+1]; i++)
-        GFX.tiles_x[bg*2+1][i] -= delta;
-    }
-  }
-}
-#endif
-
-
 __attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	PPU_updateGFX(int line)
 {
 	t_GFX_lineInfo *l = &GFX.lineInfo[line];
@@ -1860,6 +1974,12 @@ void	PPU_updateGFX(int line)
 //	BRIGHTNESS = l->lBRIGHTNESS;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	PPU_line_handle_BG3()
 { 
   int 			  y;
@@ -1916,6 +2036,13 @@ __attribute__((section(".dtcm")))
 #endif
 int lastVcount = 0;
 
+__attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	PPU_line_render(){
 	//Draw a line as long SNES line count is synchronized to NDS horizontal line count, and it hasn't rendered
 	int ndsvc = (REG_VCOUNT&0xFF);
@@ -2028,6 +2155,12 @@ void	PPU_line_render(){
     }
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void	PPU_line_render_scaled()
 {
 	int y;
@@ -2136,8 +2269,12 @@ __attribute__((section(".dtcm")))
 #endif
 bool VblankWaitNDSTWLMode = false;
 
-#ifdef ARM9
 __attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
 #endif
 void draw_screen(){
 	if (GFX.was_not_blanked == 0) 
@@ -2223,9 +2360,12 @@ void draw_screen(){
 #endif 
 }
 
-
-#ifdef ARM9
 __attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
 #endif
 void	PPU_setPalette(int c, uint16 rgb){
 	if ((PPU_PORT[0x05]&7) > 1)
@@ -2250,8 +2390,12 @@ void	PPU_setPalette(int c, uint16 rgb){
 		SPRITE_PALETTE[c-128] = rgb;
 }
 
-#ifdef ARM9
 __attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
 #endif
 void	PPU_setScreen(int value){     
      if ((value & 0xF) >  GFX.brightness)
@@ -2266,8 +2410,12 @@ void	PPU_setScreen(int value){
 	 }
 }
 
-#ifdef ARM9
 __attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Ofast")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
 #endif
 void PPU_update(){
 	int i;

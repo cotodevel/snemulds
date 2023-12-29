@@ -280,11 +280,9 @@ int initSNESEmpty(bool * firstTime){
 	return 0;
 }
 
-__attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("Ofast")))
 #endif
-
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
