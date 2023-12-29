@@ -37,8 +37,11 @@ Properly Saving / Loading SRAM:
 	Right after uncheck this option before reloading other games or shutting down console. This ensures your savefile is kept safely.
 
 Screen Sync (Vblank Enabled / Vblank Disabled):
-	- If the game runs too slow for you, disable vblank. The default and recommended setting is enabled Vblank for most games otherwise these will run too fast becoming unplayable.
-
+	- If the game is running too fast, enable Vblank. Some specific games will need Vblank disabled.
+	Vblank fast forces the emulator to draw a whole frame, preventing frameskips, but won't slow down to sync to NDS Vblank interrupts. (fixes TWL mode to match NTR mode rendering speed)
+	Vblank full forces the emulator + NDS Vblank interrupt to draw a whole frame, preventing frameskips. Cause massive slowdown, even more in TWL mode due to ARM9i Vblank bug, but required for some games.
+	
+	Recommended setting is Vblank fast to get a smooth framerate while fast rendering.
 TWL Mode:
 	-SnemulDS TWL mode has extended memory (16MB), so hacks like Megaman X3 Zero Project are supported and known to work. (TGDS1.65 branch)
 
@@ -77,7 +80,7 @@ Latest DSP release: https://bitbucket.org/Coto88/SnemulDS/get/dsp.zip
 Changelog:
 
 SnemulDS 0.6d:
-	- Added CX4 co processor support! Megaman X2 / Megaman X3 it's entirely playable now. (tweak sprite priority settings if necessary)
+	- Added DSP co processor support! Super Mario Kart & others are entirely playable now. (tweak sprite priority settings if necessary)
 	- fixed even more CPU bugs. This narrows down games not booting due to cross-boundary pages or to APU synchronization issues!
 	
 

@@ -191,9 +191,13 @@ void readOptionsFromConfig(char *section)
 	else
 		PPU_ChangeLayerConf(CFG.LayersConf);
 
-	CFG.Transparency
-			= get_config_int(section, "Transparency", CFG.Transparency);
-	CFG.WaitVBlank = get_config_int(section, "Vblank", CFG.WaitVBlank);
+	CFG.Transparency = get_config_int(section, "Transparency", CFG.Transparency);
+	CFG.WaitVBlank = get_config_int(section, "Vblank", 0);	// CFG.WaitVBlank == 0 = vblank disabled / CFG.WaitVBlank == 1 = vblank fast / CFG.WaitVBlank == 2 = vblank full
+	
+	if((CFG.WaitVBlank < 0 ) || (CFG.WaitVBlank > 2)){
+		CFG.WaitVBlank = 0; //vblank disabled
+	}
+
 	CFG.FastDMA = get_config_int(section, "FastDMA", CFG.FastDMA);
 
 	CFG.MouseXAddr = get_config_hex(section, "MouseXAddr", 0);
