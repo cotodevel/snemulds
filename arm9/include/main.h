@@ -37,9 +37,6 @@ extern struct fd * _FileHandleVideo;
 extern struct fd * _FileHandleAudio;
 extern bool stopSoundStreamUser();
 extern void closeSoundUser();
-
-extern int argc;
-extern sint8 **argv;
 extern int main(int argc, char **argv);
 extern bool loadROM(struct sGUISelectorItem *name);
 extern bool handleROMSelect;

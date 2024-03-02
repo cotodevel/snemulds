@@ -40,12 +40,11 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7MallocStartAddress, int ARM7MallocSize, bool isCustomTGDSMalloc, u32 TargetARM7DLDIAddress) {
+struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(bool isCustomTGDSMalloc) {
 	struct AllocatorInstance * customMemoryAllocator = &CustomAllocatorInstance;
 	memset((u8*)customMemoryAllocator, 0, sizeof(CustomAllocatorInstance));
 	customMemoryAllocator->customMalloc = isCustomTGDSMalloc;
-	customMemoryAllocator->ARM7MallocStartAddress = ARM7MallocStartAddress;
-	customMemoryAllocator->ARM7MallocSize = ARM7MallocSize;
+	
 	extern u32 __vma_stub_end__;
 	customMemoryAllocator->ARM9MallocStartaddress = (u32)(&__vma_stub_end__);
 	customMemoryAllocator->memoryToAllocate = (480*1024);
@@ -60,20 +59,6 @@ struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7Malloc
 	xmemsize = xmemsize - (xmemsize%1024);
 	XmemSetup(xmemsize, XMEM_BS);
 	XmemInit(customMemoryAllocator->ARM9MallocStartaddress, (u32)customMemoryAllocator->memoryToAllocate);
-	
-	//DLDI
-	customMemoryAllocator->DLDI9StartAddress = (u32)&_io_dldi_stub;
-	customMemoryAllocator->TargetARM7DLDIAddress = TargetARM7DLDIAddress;
-	
-	//Are we trying a NTR TGDS Project through DLDI + TWL SD?
-	customMemoryAllocator->useTWLSDThroughDLDI = false;
-	if(
-		(strncmp((char*)&dldiGet()->friendlyName[0], "TGDS DLDI for TWL SD", 20) == 0)
-		&&
-		(strncmp((char*)(0x020001A8), "SRAM_V110", 9) == 0)
-	){
-		customMemoryAllocator->useTWLSDThroughDLDI = true;
-	}
 	
 	//Memory Setup: ARM7 TGDS 64K = 0x03800000 ~ 0x03810000. TGDS Sound Streaming code: Custom ARM7 Sound
 	WRAM_CR = WRAM_32KARM9_0KARM7;

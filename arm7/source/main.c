@@ -5,10 +5,12 @@
 #include "main.h"
 #include "InterruptsARMCores_h.h"
 #include "interrupts.h"
-#include "ipcfifoTGDSUser.h"
 #include "usrsettingsTGDS.h"
 #include "timerTGDS.h"
 #include "powerTGDS.h"
+
+#include "dldi.h"
+#include "ipcfifoTGDSUser.h"
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
 uint16 *playBuffer;
@@ -114,8 +116,18 @@ void SaveSpc(uint8 *spc) {
 }
 
 //---------------------------------------------------------------------------------
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int main(int _argc, char **_argv) {
 //---------------------------------------------------------------------------------
+	/*			TGDS 1.6 Standard ARM7 Init code start	*/
+	while(!(*(u8*)0x04000240 & 2) ){} //wait for VRAM_D block
+	ARM7InitDLDI(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, TGDSDLDI_ARM7_ADDRESS);
+	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 	
 	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
 	REG_DISPSTAT = (DISP_HBLANK_IRQ | DISP_VBLANK_IRQ | DISP_YTRIGGER_IRQ);
