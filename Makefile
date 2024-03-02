@@ -144,7 +144,8 @@ $(EXECUTABLE_FNAME)	:	compile
 	-z 80040000 -u 00030004 -a 00000138 \
 	-b icon.bmp "$(TGDSPROJECTNAME);$(TGDSPROJECTNAME) TWL Binary;" \
 	-h "twlheader.bin"
-	-mv ${@:.nds=.srl}	/E
+	-mv $(TGDSPROJECTNAME).nds	$(CURDIR)/release/arm7dldi-ntr
+	-mv $(TGDSPROJECTNAME).srl	$(CURDIR)/release/arm7dldi-twl
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------
