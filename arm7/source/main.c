@@ -12,6 +12,10 @@
 #include "dldi.h"
 #include "ipcfifoTGDSUser.h"
 
+//TGDS-MB v3 bootloader
+void bootfile(){
+}
+
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
 uint16 *playBuffer;
 volatile int soundCursor;
