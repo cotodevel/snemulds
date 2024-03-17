@@ -50,7 +50,7 @@ DIR_SRC			=	$(DIRS_ARM9_SRC)	$(DIRS_ARM9_HEADER)
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
 LDFLAGS	:=	-specs=nds_arm9_ld.specs	-Wl,--gc-sections,-Map,$(MAPFILE),-z,defs
-LDFLAGS_DSI	:=	-specs=dsi_arm9_ld.specs	-Wl,--gc-sections,-Map,arm9-nonstripped_dsi.map,-z,defs
+LDFLAGS_DSI	:=	-specs=nds_arm9_ld.specs	-Wl,--gc-sections,-Map,arm9-nonstripped_dsi.map,-z,defs
 LIBRARIES_NTR =	-ltgdsfilesystem9	-lutils9	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lhardware9		-lwoopsi	-lstdc++	-lcnano9	-lgcc
 LIBRARIES_TWL =	-ltgdsfilesystem9i	-lutils9i	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lhardware9i	-lwoopsi	-lstdc++	-lcnano9	-lgcc
 
