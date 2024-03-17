@@ -138,12 +138,11 @@ endif
 
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
-	$(NDSTOOL)	-c 	${@:.nds=.srl} -7  $(CURDIR)/arm7/arm7_twl.bin	-e7  0x02380000	-9 $(CURDIR)/arm9/arm9_twl.bin -e9  0x02000800	\
+	$(NDSTOOL)	-c 	${@:.nds=.srl} -7  $(CURDIR)/arm7/arm7_twl.bin	-e7  0x02380000	-9 $(CURDIR)/arm9/arm9_twl.bin -e9  0x02000800	-r9 0x02000000	\
 	-g "TGDS" "NN" "NDS.TinyFB"	\
 	-z 80040000 -u 00030004 -a 00000138 \
 	-b icon.bmp "$(TGDSPROJECTNAME);$(TGDSPROJECTNAME) TWL Binary;" \
 	-h "twlheader.bin"
-	-mv $(TGDSPROJECTNAME).nds	$(CURDIR)/release/arm7dldi-ntr
 	-mv $(TGDSPROJECTNAME).srl	$(CURDIR)/release/arm7dldi-twl
 	-@echo 'ndstool end: built: $@'
 	

@@ -23,7 +23,7 @@ USA
 */
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
-_ewram_start =	0x02000000;
+_ewram_start =	0x02000800;
 _ewram_end = _ewram_start + 4M;
 __text_start = _ewram_start + 0x1000;  
 _itcm_start = 0x01FF8000;
