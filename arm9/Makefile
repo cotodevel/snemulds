@@ -50,7 +50,7 @@ DIR_SRC			=	$(DIRS_ARM9_SRC)	$(DIRS_ARM9_HEADER)
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
 LDFLAGS	:=	-specs=nds_arm9_ld.specs	-Wl,--gc-sections,-Map,$(MAPFILE),-z,defs
-LDFLAGS_DSI	:=	-specs=dsi_arm9_ld.specs	-Wl,--gc-sections,-Map,arm9-nonstripped_dsi.map,-z,defs
+LDFLAGS_DSI	:=	-specs=nds_arm9_ld.specs	-Wl,--gc-sections,-Map,arm9-nonstripped_dsi.map,-z,defs
 LIBRARIES_NTR =	-ltgdsfilesystem9	-lutils9	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lhardware9		-lwoopsi	-lstdc++	-lcnano9	-lgcc
 LIBRARIES_TWL =	-ltgdsfilesystem9i	-lutils9i	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lhardware9i	-lwoopsi	-lstdc++	-lcnano9	-lgcc
 
@@ -126,8 +126,6 @@ $(TARGET_LIBRARY_CRT0_FILE_9).o:	$(TARGET_LIBRARY_LINKER_FILE_9)
 	-@echo 'S Compile start: crt0s'
 	rm -fr $(BUILD)/$(TARGET_LIBRARY_CRT0_FILE_9).o
 	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o	$(OBJDIR)/$@	-c	$<
-	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)dsi_arm9.ld $(CURDIR)
-	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)dsi_arm9_ld.specs $(CURDIR)
 	-@echo 'S Compile end: crt0s'
 
 #Linkage. 
@@ -154,4 +152,4 @@ $(BINSTRIP_RULE_9): $(ELF_ARM9)
 
 clean:
 	-@echo 'cleanup $(DIR_ARM9)'
-	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE)	${BINSTRIP_RULE_9:.bin=_twl.bin}	$(CURDIR)/dsi_arm9_ld.specs	$(CURDIR)/dsi_arm9.ld	$(CURDIR)/arm9-nonstripped_dsi.elf $(CURDIR)/arm9-nonstripped_dsi.map	$(CURDIR)/data/tgds_multiboot_payload.bin	$(CURDIR)/data/tgds_multiboot_payload_twl.bin
+	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE)	${BINSTRIP_RULE_9:.bin=_twl.bin}	$(CURDIR)/arm9-nonstripped_dsi.elf $(CURDIR)/arm9-nonstripped_dsi.map	$(CURDIR)/data/tgds_multiboot_payload.bin	$(CURDIR)/data/tgds_multiboot_payload_twl.bin
