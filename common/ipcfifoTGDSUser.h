@@ -89,8 +89,6 @@ struct sIPCSharedTGDSSpecific{
 
 #define SNEMULDS_IPC ((struct sIPCSharedTGDSSpecific*)( ((int)0x27FF000) + (80*4)))
 
-//#define EMULATOR_ENVIRONMENT 1 //if defined, we're running TGDS Project on emulators. If commented out, we're running TGDS Project on NTR/TWL hardware
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -554,8 +554,9 @@ int main(int argc, char ** argv){
 	flush_dcache_all();
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
+	//doesn't work on TGDS-MB v3 because VRAM D ARM7 is already used by SnemulDS
 	/////////////////////////////////////////////////////////Reload TGDS Proj///////////////////////////////////////////////////////////
-	#if !defined(EMULATOR_ENVIRONMENT) 
+	/*
 	char tmpName[256];
 	char ext[256];
 	if(__dsimode == true){
@@ -619,7 +620,7 @@ int main(int argc, char ** argv){
 			}
 		}
 	}
-	#endif
+	*/
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	int i = 0;
