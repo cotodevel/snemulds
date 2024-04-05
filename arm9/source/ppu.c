@@ -370,13 +370,7 @@ void     add_tile_2(int tile_addr_base, uint16 *vram_addr, int tilenb)
   //VRAM_ptr = ((uint16 *)0x06010000)+tile_addr_base+tilenb*16;
   VRAM_ptr = (u32*)(vram_addr+(tilenb*16));
   tile_ptr = (u8*)(SNESC.VRAM+tile_addr);    
-
-  if( 
-		(VRAM_ptr < ((u32*)0x06000000)) || (VRAM_ptr >= ((u32*)0x06020000))	//Sanitize VRAM Writes: Prevents NDS Data Aborts due to writing to NULL pointer
-	){
-		return;
-	}
-  
+	
   for (k=0;k<8;k++,tile_ptr+=2)
     {
 	  uint32	c;

@@ -638,6 +638,8 @@ int main(int argc, char ** argv){
 	irqDisable(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	REG_IME = 1;
 	
+	setupDisabledExceptionHandler(); //Todo: Super Mario Kart Data Abort exception when choosing character
+	
 	if(__dsimode == true){
 		TWLSetTouchscreenTWLMode();
 	}
