@@ -74,7 +74,7 @@
 *******************************************************************************/
 #include <stdbool.h>
 #include "dsp1.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include <math.h>
 
 void (*SetDSP)(uint8, uint16)=&DSP1SetByte;

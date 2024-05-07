@@ -22,7 +22,7 @@ RELATIVE_PATH =
 
 #Prepare ARM7 dirs
 DIRLIBS_HDR = $(foreach dirres,$(DIRS_ARM7_HEADER),-I "$(RELATIVE_PATH)$(dirres)" )	$(DIRLIBS_ALLOWED)	$(TARGET_LIBRARY_HEADERS_7_INC)
-DIRLIBS_SRC = $(foreach dirres,$(DIRS_ARM7_SRC),-I "$(CURDIR)/$(RELATIVE_PATH)$(dirres)" )
+DIRLIBS_SRC = $(foreach dirres,$(DIRS_ARM7_SRC),-I "$(RELATIVE_PATH)$(dirres)" )
 
 file_arm7_src_c=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.c))  )
 file_arm7_src_o=  $(foreach dir,$(BUILD), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.o))  )
@@ -31,34 +31,33 @@ file_arm7_src_s=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_P
 file_arm7_src_SUPP=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.S))  )
 file_arm7_src_cpp=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.cpp))  )
 file_arm7_src_bin=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.bin))  )
-file_arm7_src_tga=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.tga))  )
 
 # Object Target
-objs_arm7:=		${file_arm7_src_tga:.tga=.o}	${file_arm7_src_bin:.bin=.o}	${file_arm7_src_c:.c=.o}	${file_arm7_src_s:.s=.o}	${file_arm7_src_SUPP:.S=.o}		${file_arm7_src_cpp:.cpp=.o}
+objs_arm7:=		${file_arm7_src_bin:.bin=.o}	${file_arm7_src_c:.c=.o}	${file_arm7_src_s:.s=.o}	${file_arm7_src_SUPP:.S=.o}		${file_arm7_src_cpp:.cpp=.o}
 d_objs_arm7:=	${file_arm7_src_c:.c=.d}	${file_arm7_src_s:.s=.d}	${file_arm7_src_SUPP:.S=.d}	${file_arm7_src_cpp:.cpp=.d}
 
-#ARM7 specific definitions.	-fno-common so we force initialized data to rodata
+#ARM7 specific definitions. -fno-common so we force initialized data to rodata
 MAPFILE = $(DIR_ARM7).map
 AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_7)	$(SPECIFIC_AS_COMPILER_FLAGS_7)		$(GLOBAL_AS_COMPILER_FLAGS)
-CC_ASFLAGS		=	-march=armv4t	-mthumb-interwork	-marm	-mfloat-abi=soft	-Os	-DARM7	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-tree-loop-distribute-patterns -fno-common	-Dappver='$(EXECUTABLE_VERSION)'
-CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	-fno-rtti	
+CC_ASFLAGS		=	-march=armv4t	-mthumb-interwork	-mfloat-abi=soft	-mcpu=arm7tdmi	-marm	-ffunction-sections -fdata-sections	-Wall -Os -fno-common	-DARM7	-fno-exceptions	-DNDS	-shared
+CPP_FLAGS		=	$(CC_ASFLAGS) -shared
 BUILD			= 	$(BUILD_ARM7)
-DIR_SRC			=	$(DIRS_ARM7_SRC)	$(DIRS_ARM7_HEADER)
+DIR_SRC			= 	$(DIRS_ARM7_SRC)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
-#check arm7.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	:=	-specs=dsi_arm7_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),--fix-v4bx,-z,defs
-LDFLAGS_DSI	:=	-specs=dsi_arm7_ld.specs	-Wl,--gc-sections,-Map,arm7-nonstripped_dsi.map,--fix-v4bx,-z,defs
-LIBRARIES_NTR =	-lutils7	-l$(TARGET_LIBRARY_TGDS_NTR_7)	-lhardware7		-lstdc++	-lcnano7	-lgcc
-LIBRARIES_TWL =	-lutils7i	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lhardware7i	-lstdc++	-lcnano7	-lgcc
+#check arm9.map "Discarded input sections" to see --gc-sections in action.
+LDFLAGS	=	-specs=nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),--fix-v4bx,-z,defs
+LDFLAGS_DSI	:=	-specs=nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,arm7-nonstripped_dsi.map,--fix-v4bx,-z,defs
+LIBRARIES_NTR =	-l$(TARGET_LIBRARY_TGDS_NTR_7)	-lhardware7		-lstdc++	-lcnano7	-lgcc
+LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lhardware7i	-lstdc++	-lcnano7	-lgcc
 
 ################################################################################################
 
 #Dont modify anything else if not necessary ..
-OBJECTS:= 	$(objs_arm7)	$(file_arm7_src_o_out)
+OBJECTS:=	$(objs_arm7)	$(file_arm7_src_o_out)
 OBJDIR 	=	./$(BUILD)
 VPATH 	=	$(DIR_SRC)
-OBJPROG = 	$(addprefix $(OBJDIR)/, $(NONSTRIPELF_ARM7))
+OBJPROG =	$(addprefix $(OBJDIR)/, $(NONSTRIPELF_ARM7))
 
 
 all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_7).o	$(BINSTRIP_RULE_7)
@@ -67,11 +66,6 @@ all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_7).o	$(BINSTRIP_RULE_7)
 makebuild:
 	-mkdir -p $(OBJDIR)
 
-#convert a TGA BMP16 into a native 3D texture unit format (GL_COLOR 16bpp)
-$(OBJDIR)/%.o : %.tga
-	-$(GRITTOOL) ${<:.o=.c} -ftc -o $@ -gu32 -gb -gB16
-	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o $@ -c ${@:.o=.c}
-	
 #rule for reading *.bin in /data folder, converts to .C source code, which then gets compiled as object so it can be linked later
 $(OBJDIR)/%.o : %.bin
 	-@echo 'trying to convert .BIN ($<) -> .C output: ${@:.o=.c} : arrayName: $(subst build/,,${@:.o=})'
@@ -81,13 +75,13 @@ $(OBJDIR)/%.o : %.bin
 #Do C Compile now!
 $(OBJDIR)/%.o : %.c
 	-@echo 'C Compile start: $@'
-	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o $@ -c $<
+	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_PROHIBITED)	-o $@ -c $<
 	-@echo 'C Compile End: $@'
 
 #Do C++ (CXX) Compile now!
 $(OBJDIR)/%.o : %.cpp
 	-@echo 'C++ Compile start: $@'
-	$(CPP)	$(CPP_FLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o	$@	-c	$<
+	$(CPP)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o	$@	-c	$<
 	-@echo 'C Compile End: $@'
 
 #Coto: Special "exception" rule. Fixes tricky projects such as SnemulDS's opcodes2.s where GCC AS is used, while compatibility with .S is required for newer projects.
@@ -110,10 +104,10 @@ $(OBJDIR)/%.o : %.S
 $(TARGET_LIBRARY_CRT0_FILE_7).o:	$(TARGET_LIBRARY_LINKER_FILE_7)
 	-@echo 'S Compile start: crt0s'
 	rm -fr $(BUILD)/$(TARGET_LIBRARY_CRT0_FILE_7).o
-	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o	$(OBJDIR)/$@	-c	$<
+	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $(OBJDIR)/$@ -c $<
 	-@echo 'S Compile end: crt0s'
 
-#Linkage. 
+#Linkage.
 $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	-@echo 'Entering Linking phase'
 	-$(CC) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
@@ -125,16 +119,15 @@ $(ELF_ARM7): $(OBJPROG)
 	-@echo '$@ Unstripped. STRIP Start!'
 	-mv build/${@:.elf=-nonstripped_dsi.elf}	$(CURDIR)
 	$(OBJSTRIP)	-s -R .comment -R .gnu.version	$<
-	$(OBJSTRIP)	-s -R .comment -R .gnu.version	${@:.elf=-nonstripped_dsi.elf}
 	-mv	$<	$@
 	
 $(BINSTRIP_RULE_7): $(ELF_ARM7)
 	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
 	$(OBJCOPY) 	-S -O binary	$<	$@
-	$(OBJCOPY) 	-S -O binary	${<:.elf=-nonstripped_dsi.elf}	${@:.bin=_twl.bin}
+	$(OBJCOPY) 	-S -O binary	${<:.elf=-nonstripped_dsi.elf}	${@:.bin=_dsi.bin}
 	-rm	$<
 ################################################################################################
 	
 clean:
 	-@echo 'cleanup $(DIR_ARM7)'
-	-@rm -fr $(BINSTRIP_RULE_7)	$(MAPFILE)	${BINSTRIP_RULE_7:.bin=_twl.bin}	$(MAPFILE)	$(CURDIR)/arm7-nonstripped_dsi.elf $(CURDIR)/arm7-nonstripped_dsi.map
+	-@rm -fr $(BINSTRIP_RULE_7)	$(MAPFILE)	$(CURDIR)/arm7-nonstripped_dsi.elf $(CURDIR)/arm7-nonstripped_dsi.map	$(CURDIR)/arm7_dsi.bin

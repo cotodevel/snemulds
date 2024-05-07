@@ -411,11 +411,6 @@ void     add_tile_4(int tile_addr_base, uint16 *vram_addr, int tilenb)
 	  *VRAM_ptr++ = c;            
     }
   //GFX.tiles4b_def[tile_addr/32] = (tile_addr_base>>13)+1;
-/*	if (tile_addr_base == 8192 && tilenb*32 >= 3*8192)
-	{
-		return;
-	}*/
-  
   GFX.tiles4b_def[tile_addr/32] = 4;     
 }
 
@@ -543,8 +538,9 @@ int		PPU_AddTile4InCache(t_TileZone *tilezone, int addr)
 
 
 __attribute__((section(".itcm")))
-void check_tile(int addr)
+void check_tile()
 {
+  int		addr = (PPU_PORT[0x16]<<1)&0xFFFF;
   GFX.map_def[addr/2048] = 0;
   // Check tile zone
 /*  if (GFX.tiles2b_def[addr/16])
@@ -2418,3 +2414,4 @@ void PPU_update(){
 	  PPU_setPalette(i, GFX.SNESPal[i]);
 	}
 }
+

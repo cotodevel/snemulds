@@ -371,13 +371,13 @@ t_GUIScreen	*GUI_newList(int nb_items, int max_size, int title, t_GUIFont *font)
 	for (i = 0; i < 5; i++)
 		scr_select->zones[i].font = font;
 	  
-	sint8 **items = TGDSARM9Malloc(nb_items*sizeof(sint8 *) + nb_items*max_size);
+	sint8 **items = (sint8 **)TGDSARM9Malloc(nb_items*sizeof(sint8 *) + nb_items*max_size);
 	
 	for (i = 0; i < nb_items; i++)
 		items[i] = (sint8 *)items + nb_items*sizeof(sint8 *) + i*max_size;
 	
 	// List
-    t_GUIList *list = TGDSARM9Malloc(sizeof(t_GUIList));
+    t_GUIList *list = (t_GUIList *)TGDSARM9Malloc(sizeof(t_GUIList));
     memset(list, 0, sizeof(t_GUIList));
 	list->nb_items = nb_items;
 	list->items = items;

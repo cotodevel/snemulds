@@ -68,8 +68,6 @@ extern void ApuWriteControlByte(uint8 byte);
 extern uint32 ApuReadCounter(uint32 address);
 extern void ApuWriteUpperByte(uint8 byte, uint32 address);
 
-extern bool APUSYNC;
-
 #ifdef __cplusplus
 }
 #endif

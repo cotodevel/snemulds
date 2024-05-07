@@ -25,7 +25,7 @@ GNU General Public License for more details.
 #include "dsregs.h"
 #include "ipcfifoTGDSUser.h"
 #include "apu_shared.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "ppu.h"
 
 #ifdef WIN32
@@ -104,12 +104,6 @@ uint32 SNES_LEFT = 0;
 __attribute__((section(".dtcm")))
 uint32 SNES_RIGHT = 0;
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 int get_joypad()
 {
 	int res = 0;
@@ -350,19 +344,14 @@ void write_joypad2(uint16 bits){
 }
 
 // A OPTIMISER
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 int PPU_fastDMA_2118_1(int offs, int bank, int len)
 {
 	int i;
 	uint8	*ptr;
-
+	if(len <= 0){
+		return offs;
+	}
 	ptr = (uint8*)map_memory(offs, bank);
-
 	if (PPU_PORT[0x15]&0x80) {
 		if (!GFX.FS_incr && GFX.SC_incr == 1)
 		{
@@ -372,7 +361,7 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 			for (i = 0; i < len; i += 2)
 			{
 				if ((i & 15) == 0) 
-					check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));
+					check_tile();
 				PPU_PORT[0x16]++;
 			}
 			return offs+len;
@@ -380,7 +369,7 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 		for (i = 0; i < len; i+=2)
 		{
 //			if ((i & 15) == 0) 
-				check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));			
+				check_tile();			
 			SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] = ptr[i];   
 			SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] = ptr[i+1];
 			if (!GFX.FS_incr) {
@@ -403,7 +392,7 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 		for (i = 0; i < len; i+=2)
 		{
 //			if ((i & 15) == 0) 
-				check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));
+				check_tile();
 			SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] = ptr[i];
 			PPU_PORT[0x16] += GFX.SC_incr;
 			if (GFX.FS_incr) {
@@ -423,7 +412,7 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("Os")))
 #endif
 
 #if (!defined(__GNUC__) && defined(__clang__))
@@ -455,7 +444,7 @@ void DMA_transfert(uchar port)
   	  if (SNES.V_Count < GFX.ScreenHeight && 
   	  	  SNES.V_Count+(DMA_len / NB_CYCLES) >= GFX.ScreenHeight)
   	  	SNES.DelayedNMI = 1;
-	  SNES.V_Count += (DMA_len / (NB_CYCLES));
+	  SNES.V_Count += (DMA_len / NB_CYCLES);
 	   
   }  
 
@@ -1322,11 +1311,11 @@ void	W2118(uint32 addr, uint32 value)
 {
    	 if (PPU_PORT[0x15]&0x80) {
            if (SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] != value)
-			 check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));
+			 check_tile();
            SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] = value;
          } else {
            if (SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] != value)
-			 check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));
+			 check_tile();
            SNESC.VRAM[(PPU_PORT[0x16]<<1)&0xFFFF] = value;
            PPU_PORT[0x16] += GFX.SC_incr;
            if (GFX.FS_incr) {
@@ -1347,11 +1336,11 @@ void	W2119(uint32 addr, uint32 value)
 {
    	 if ((PPU_PORT[0x15]&0x80) == 0) {
            if (SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] != value)
-				check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));
+				check_tile();
            SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] = value;
          } else {
            if (SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] != value)
-			 check_tile(((PPU_PORT[0x16]<<1)&0xFFFF));
+			 check_tile();
            SNESC.VRAM[((PPU_PORT[0x16]<<1)+1)&0xFFFF] = value;
            if (!GFX.FS_incr) {
              PPU_PORT[0x16] += GFX.SC_incr;

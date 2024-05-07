@@ -122,7 +122,7 @@ extern void     add_tile_4(int tile_addr_base, uint16 *vram_addr, int tilenb);
 extern void     add_tile_8(int tile_addr_base, uint16 *vram_addr, int tilenb);
 extern int		PPU_AddTile2InCache(t_TileZone *tilezone, int addr);
 extern int		PPU_AddTile4InCache(t_TileZone *tilezone, int addr);
-extern void check_tile(int addr);
+extern void check_tile();
 extern void	PPU_updateCache();
 extern void	PPU_setMap(int i, int j, int tilenb, int bg, int p, int f);
 extern void update_scroll();
@@ -196,13 +196,4 @@ static inline void draw_tile_sprite(int TILENB, int X, int Y, int SIZEX)
     add_sprite_tile_4(GFX.spr_info[TILENB].fst_tile, (Y*16+X));
 }
 
-#endif
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __cplusplus
-}
 #endif

@@ -60,7 +60,7 @@ t_GUIScreen	*GUI_newScreen(int nb_elems)
 {
 	t_GUIScreen *scr;
 	
-	scr = TGDSARM9Malloc(sizeof(t_GUIScreen)+nb_elems*sizeof(t_GUIZone));
+	scr = (t_GUIScreen *)TGDSARM9Malloc(sizeof(t_GUIScreen)+nb_elems*sizeof(t_GUIZone));
 	memset(scr, 0, sizeof(t_GUIScreen)+nb_elems*sizeof(t_GUIZone));
 	scr->nb_zones = nb_elems;
 	scr->curs = -1;
@@ -119,7 +119,7 @@ t_GUIImage	*GUI_loadImage(sint8 *path, int width, int height, int flags)
 	
 	if (flags == IMG_IN_MEMORY)
 	{
-		ptr = TGDSARM9Malloc(sizeof(t_GUIImage)+size);
+		ptr = (t_GUIImage	*)TGDSARM9Malloc(sizeof(t_GUIImage)+size);
 		if (ptr == NULL)
 			return NULL;
 		
@@ -129,7 +129,7 @@ t_GUIImage	*GUI_loadImage(sint8 *path, int width, int height, int flags)
 	}
 	if (flags == IMG_NOLOAD)
 	{
-		ptr = TGDSARM9Malloc(sizeof(t_GUIImage)+strlen(path)+1);
+		ptr = (t_GUIImage	*)TGDSARM9Malloc(sizeof(t_GUIImage)+strlen(path)+1);
 		if (ptr == NULL)
 			return NULL;
 		
@@ -530,7 +530,7 @@ t_GUIImgList	*GUI_newImageList(int nb)
 {
 	t_GUIImgList	*img_list;
 	
-	img_list = TGDSARM9Malloc(sizeof(t_GUIImgList)+nb*sizeof(t_GUIImage *));
+	img_list = (t_GUIImgList	*)TGDSARM9Malloc(sizeof(t_GUIImgList)+nb*sizeof(t_GUIImage *));
 	img_list->nb = nb;
 	img_list->cnt = 0;
 	return img_list;

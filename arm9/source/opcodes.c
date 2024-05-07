@@ -27,7 +27,7 @@ GNU General Public License for more details.
 #include "core.h"
 #include "cfg.h"
 #include "apu.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 
 #ifdef WIN32
 #define OPCODE _inline

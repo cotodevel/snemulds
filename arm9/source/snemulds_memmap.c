@@ -24,7 +24,7 @@
 #include "common.h"
 #include "snes.h"
 #include "cfg.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "utilsTGDS.h"
 #include "dsp1.h"
 #include "ipcfifoTGDSUser.h"
@@ -361,7 +361,7 @@ void mem_removeCacheBlock(int block)
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("Os")))
 #endif
 
 #if (!defined(__GNUC__) && defined(__clang__))
@@ -369,7 +369,7 @@ __attribute__ ((optnone))
 #endif
 uint8 *mem_checkReload(int block){
 	int i;uchar *ptr;int ret;
-	if (!CFG.LargeROM){
+	if (CFG.LargeROM == false){
 		return NULL;
 	}
 	i = (block & 0x1FF) >> PAGE_OFFSET;
@@ -415,7 +415,7 @@ void InitMap(){
 	for (i = 0; i < 256*8; i++){
 		MAP[i] = (uint8*)MAP_NONE;	
 	}
-	int mode = (!CFG.LargeROM) ? NOT_LARGE : USE_PAGING; 
+	int mode = (CFG.LargeROM == false) ? NOT_LARGE : USE_PAGING; 
 	if (SNES.HiROM){
 		InitHiROMMap(mode);
 	}

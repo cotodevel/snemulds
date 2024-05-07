@@ -42,7 +42,7 @@ GNU General Public License for more details.
 #include "ppu.h"
 #include "main.h"
 #include "conf.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "guiTGDS.h"
 #include "ipcfifoTGDSUser.h"
 #include "nds_cp15_misc.h"
@@ -258,7 +258,7 @@ int initSNESEmpty(bool * firstTime){
 	if(ROM_paging_offs != NULL){
 		TGDSARM9Free(ROM_paging_offs);
 	}
-	ROM_paging_offs = TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
+	ROM_paging_offs = (uint16 *)TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
 	if(ROM_paging_offs == NULL){
 		GUI_printf("Failed RAM alloc: ROM_paging_offs. Halt");
 		while(1==1){}

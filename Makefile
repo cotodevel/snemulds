@@ -65,8 +65,8 @@ export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9 = nds_arm_ld_crt0
 
-export TARGET_LIBRARY_LINKER_FILE_7 = $(TARGET_LIBRARY_CRT0_FILE_7).S
-export TARGET_LIBRARY_LINKER_FILE_9 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_9).S
+export TARGET_LIBRARY_LINKER_FILE_7 = ../$(TARGET_LIBRARY_CRT0_FILE_7).S
+export TARGET_LIBRARY_LINKER_FILE_9 = ../$(TARGET_LIBRARY_CRT0_FILE_9).S
 export TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9 = ../$(DECOMPRESSOR_BOOTCODE_9)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).S
 
 export TARGET_LIBRARY_TGDS_NTR_7 = toolchaingen7
@@ -99,9 +99,7 @@ export DIRS_ARM9_SRC = data/	\
 			source/gui/	\
 			source/gui/gui_draw/	\
 			source/TGDSMemoryAllocator/	\
-			../common/	\
-			../common/templateCode/source/	\
-			../common/templateCode/data/arm9/	
+			../common/	
 			
 export DIRS_ARM9_HEADER = data/	\
 			build/	\
@@ -112,8 +110,6 @@ export DIRS_ARM9_HEADER = data/	\
 			source/gui/gui_draw/	\
 			source/TGDSMemoryAllocator/	\
 			../common/	\
-			../common/templateCode/source/	\
-			../common/templateCode/data/arm9/	\
 			build/	\
 			../$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/include/
 			
@@ -143,7 +139,7 @@ endif
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
 	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/arm7.bin	-e7  0x02380000	-9 $(CURDIR)/arm9/$(BINSTRIP_RULE_9) -e9  0x02000800	-r9 0x02000000 -b icon.bmp "SNEmulDS $(EXECUTABLE_VERSION_HEADER) ; SNES Emulator for DS; by archeide bubble2k gladius" 
-	$(NDSTOOL)	-c 	${@:.nds=.srl} -7  $(CURDIR)/arm7/arm7_twl.bin	-e7  0x02380000	-9 $(CURDIR)/arm9/arm9_twl.bin -e9  0x02000800	-r9 0x02000000	\
+	$(NDSTOOL)	-c 	${@:.nds=.srl} -7  $(CURDIR)/arm7/arm7_dsi.bin -e7  0x02380000	-9 $(CURDIR)/arm9/arm9_twl.bin -e9  0x02000800	-r9 0x02000000	\
 	-g "TGDS" "NN" "NDS.TinyFB"	\
 	-z 80040000 -u 00030004 -a 00000138 \
 	-b icon.bmp "$(TGDSPROJECTNAME);$(TGDSPROJECTNAME) TWL Binary;" \

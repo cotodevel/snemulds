@@ -8,7 +8,6 @@
 #include "usrsettingsTGDS.h"
 #include "timerTGDS.h"
 #include "powerTGDS.h"
-
 #include "dldi.h"
 #include "ipcfifoTGDSUser.h"
 
@@ -141,7 +140,9 @@ int main(int _argc, char **_argv) {
 	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-
+	
+	SendFIFOWords(0xFF, 0xFF); 
+    
     struct sIPCSharedTGDSSpecific* TGDSUSERIPC = SNEMULDS_IPC;
     while (1) {
 		if(SPC_disable == false){

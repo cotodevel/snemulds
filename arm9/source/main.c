@@ -37,7 +37,7 @@
 #include "utilsTGDS.h"
 #include "dmaTGDS.h"
 #include "keypadTGDS.h"
-#include "memmap.h"
+#include "snemulds_memmap.h"
 #include "biosTGDS.h"
 #include "crc32.h"
 #include "engine.h"
@@ -45,10 +45,9 @@
 #include "core.h"
 #include "nds_cp15_misc.h"
 #include "soundTGDS.h"
-#include "spitscTGDS.h"
+#include "special_mpu_settings.h"
 #include "dsp1.h"
 #include "snemul_cfg.h"
-#include "ipcfifoTGDSUser.h"
 
 //TGDS Soundstreaming API
 int internalCodecType = SRC_NONE; //Returns current sound stream format: WAV, ADPCM or NONE
@@ -187,6 +186,12 @@ void readOptionsFromConfig(char *section)
 		CFG.LayerPr[1] = (BGManualPriority>>3) & 3;
 		CFG.LayerPr[2] = (BGManualPriority>>6) & 3;
 		CFG.LayerPr[3] = (BGManualPriority>>9) & 3;
+
+		CFG.LayerPr[0] = get_config_int(section, "BG1Pr", CFG.LayerPr[0]) & 3;
+		CFG.LayerPr[1] = get_config_int(section, "BG2Pr", CFG.LayerPr[1]) & 3;
+		CFG.LayerPr[2] = get_config_int(section, "BG3Pr", CFG.LayerPr[2]) & 3;
+		CFG.LayerPr[3] = get_config_int(section, "BG4Pr", CFG.LayerPr[3]) & 3;
+
 	}
 	else
 		PPU_ChangeLayerConf(CFG.LayersConf);
@@ -337,9 +342,6 @@ void unpackOptions(int version, uint8 *ptr)
 	applyOptions();
 }
 
-bool uninitializedEmu = false;
-static u8 savedUserSettings[1024*4];
-
 bool resetSnemulDSConfig(){
 	struct LZSSContext LZSSCtx = LZS_DecodeFromBuffer((u8 *)&snemul_cfg[0], (unsigned int)snemul_cfg_size);
 	coherent_user_range_by_size((uint32)LZSSCtx.bufferSource, (int)LZSSCtx.bufferSize);
@@ -361,6 +363,9 @@ void parseCFGFile(){
 	GUI_getConfig();	
 	GUI_printf("Load conf4");
 }
+
+bool uninitializedEmu=false;
+u8 savedUserSettings[1024*4];
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -491,7 +496,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			GUI_printf("CRC = %08x ", crc);
 		}
 		coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
-		memcpy((const void*)0x027FF000, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
+		memcpy((void*)0x027FF000, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
 		S9xResetDSP1();
 		return reloadROM(ROM-ROMheader, size, crc, nameItem->filenameFromFS_getDirectoryListMethod);
 	}
@@ -527,6 +532,7 @@ __attribute__((optimize("Ofast")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+__attribute__((section(".itcm")))
 int main(int argc, char ** argv){
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
@@ -574,7 +580,7 @@ int main(int argc, char ** argv){
 		if( 
 			(argc < 2) 
 			&& 
-			(strncmp(argv[1], TGDSProj, strlen(TGDSProj)) != 0) 	
+			(strncmpi(argv[1], TGDSProj, strlen(TGDSProj)) != 0) 	
 		){
 			REG_IME = 0;
 			MPUSet();
@@ -623,10 +629,8 @@ int main(int argc, char ** argv){
 	*/
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	int i = 0;
 	REG_IME = 0;
 	setSnemulDSSpecial0xFFFF0000MPUSettings();
-	//TGDS-Projects -> legacy NTR TSC compatibility
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
@@ -638,12 +642,12 @@ int main(int argc, char ** argv){
 	irqDisable(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	REG_IME = 1;
 	
+	swiDelay(1000);
 	setupDisabledExceptionHandler(); //Todo: Super Mario Kart Data Abort exception when choosing character
 	
 	if(__dsimode == true){
 		TWLSetTouchscreenTWLMode();
 	}
-	swiDelay(1000);
 	
 #ifndef DSEMUL_BUILD	
 	GUI.printfy = 32;
@@ -657,6 +661,7 @@ int main(int argc, char ** argv){
 	uninitializedEmu = true;
 	
 	// Clear "HDMA"
+	int i = 0;
 	for (i = 0; i < 192; i++){
 		GFX.lineInfo[i].mode = -1;
 	}
@@ -681,29 +686,8 @@ int main(int argc, char ** argv){
 	memset(&guiSelItem, 0, sizeof(guiSelItem));
 	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
 	
-	switchToTGDSConsoleColors();
-	
-	//#define TSCDEBUG
-	#ifdef TSCDEBUG
-	clrscr();
-	printf("--");
-	printf("--");
-	printf("--");
-	
-	while(1==1){
-		scanKeys();
-		u32 keys = keysDown();
-		if(keys & KEY_TOUCH){
-			struct touchPosition touch;
-			// Deal with the Stylus.
-			XYReadScrPosUser(&touch);
-			
-			printf("px: %d  py: %d ",touch.px, touch.py);
-		}
-	}
-	#endif
-
 	//ARGV Support: Only supported through TGDS chainloading.
+	switchToTGDSConsoleColors();
 	bool isSnesFile = false;
 	if (argc > 2) {
 		//Arg0:	Chainload caller: TGDS-MB
@@ -729,11 +713,6 @@ int main(int argc, char ** argv){
 	
 	switchToSnemulDSConsoleColors();
 	GUI_createMainMenu();	//Start GUI
-	
-	//Some games require specific hacks to run
-    if(strncmp((char*)&SNES.ROM_info.title[0], "BREATH OF FIRE 2", 16) == 0){
-      APU_command(SNEMULDS_APUCMD_FORCESYNCON);
-    }
 	
 	while (1){
 

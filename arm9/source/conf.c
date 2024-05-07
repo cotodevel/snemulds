@@ -26,7 +26,9 @@
 #include <string.h>
 
 #include "fs.h"
-
+#include "guiTGDS.h"
+#include "ff.h"
+#include "fs.h"
 
 #define TRUE	1
 #define FALSE	0
@@ -112,24 +114,26 @@ static void save_config(CONFIG *cfg)
 		 if (cfg->dirty) {
 			FS_lock();
 		    /* write changed data to disk */
-		    FILE *f = fopen(cfg->filename, "w");
-	
-		    if (f) {
-		       pos = cfg->head;
-	
+			FIL thisFD;
+			f_close(&thisFD);
+			int flags = charPosixToFlagPosix("w");
+			BYTE mode = posixToFatfsAttrib(flags);
+			FRESULT result = f_open(&thisFD, (const TCHAR*)cfg->filename, mode);
+			if(result == FR_OK){
+		        pos = cfg->head;
 		       while (pos) {
 			  	 if (pos->name) {
-			    	 fputs(pos->name, f);
-			     	 if (pos->name[0] != '[')
-					 fputs(" = ", f);
+						f_puts(pos->name, &thisFD);
+						if (pos->name[0] != '[')
+							f_puts(" = ", &thisFD);
 			     }
 			     if (pos->data)
-			       fputs(pos->data, f);
+			       f_puts(pos->data, &thisFD);
 	
-			     fputs("\n", f);
+			     f_puts("\n", &thisFD);
 			     pos = pos->next;
 		       }
-		       fclose(f);
+		       f_close(&thisFD);
 		    }
 		    FS_unlock();
 		  }
@@ -245,7 +249,7 @@ static void init_config(int loaddata)
    }
 
    if (!system_config) {
-      system_config = TGDSARM9Malloc(sizeof(CONFIG));
+      system_config = (CONFIG *)TGDSARM9Malloc(sizeof(CONFIG));
       if (system_config) {
 	 system_config->head = NULL;
 	 system_config->filename = NULL;
@@ -447,7 +451,7 @@ static void set_config(CONFIG **config, char *data, int length, char *filename)
       *config = NULL;
    }
 
-   *config = TGDSARM9Malloc(sizeof(CONFIG));
+   *config = (CONFIG *)TGDSARM9Malloc(sizeof(CONFIG));
    if (!(*config))
       return;
 
@@ -468,7 +472,7 @@ static void set_config(CONFIG **config, char *data, int length, char *filename)
    while (pos < length) {
       pos += get_line(data+pos, length-pos, name, val);
 
-      p = TGDSARM9Malloc(sizeof(CONFIG_ENTRY));
+      p = (CONFIG_ENTRY *)TGDSARM9Malloc(sizeof(CONFIG_ENTRY));
       if (!p)
 	 return;
 
@@ -511,22 +515,34 @@ static void load_config_file(CONFIG **config, char *filename, char *savefile)
 	if (length > 0)
 	{
 		FS_lock();
-		FILE *f = fopen(filename, "rb");
-		if (f)
-		{
+		FIL thisFD;
+		f_close(&thisFD);
+		int flags = charPosixToFlagPosix("r");
+		BYTE mode = posixToFatfsAttrib(flags);
+		FRESULT result = f_open(&thisFD, (const TCHAR*)filename, mode);
+		int readSize=0;
+		if(result == FR_OK){
+			//Prevent Cache problems.
+			f_lseek (
+				&thisFD,   /* Pointer to the file object structure */
+				(DWORD)0       /* File offset in unit of byte */
+			);
+				
 			char *tmp = TGDSARM9Malloc(length);
 			if (tmp)
 			{
-				fread(tmp, 1, length, f);
+				f_read(&thisFD, tmp, (int)length, (UINT*)&readSize);
 				set_config(config, tmp, length, savefile);
 				TGDSARM9Free(tmp);
 			}
-			else
+			else{
 				set_config(config, NULL, 0, savefile);
-			fclose(f);
+			}
+			f_close(&thisFD);
 		}
-		else
+		else{
 			set_config(config, NULL, 0, savefile);
+		}
 		FS_unlock();
 	}
 	else
@@ -675,7 +691,7 @@ void hook_config_section(char *section, int (*intgetter)(char *, int), char *(*s
    }
 
    /* add a new hook */
-   hook = TGDSARM9Malloc(sizeof(CONFIG_HOOK));
+   hook = (CONFIG_HOOK *)TGDSARM9Malloc(sizeof(CONFIG_HOOK));
    if (!hook)
       return;
 
@@ -939,7 +955,7 @@ char **get_config_argv(char *section, char *name, int *argc)
  */
 static CONFIG_ENTRY *insert_variable(CONFIG *the_config, CONFIG_ENTRY *p, char *name, char *data)
 {
-   CONFIG_ENTRY *n = TGDSARM9Malloc(sizeof(CONFIG_ENTRY));
+   CONFIG_ENTRY *n = (CONFIG_ENTRY *)TGDSARM9Malloc(sizeof(CONFIG_ENTRY));
 
    if (!n)
       return NULL;
