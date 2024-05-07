@@ -481,8 +481,10 @@ int		PPU_AddTile4InCache(t_TileZone *tilezone, int addr)
 }
 
 
-void check_tile(int addr)
+__attribute__((section(".itcm")))
+void check_tile()
 {
+  int		addr = (PPU_PORT[0x16]<<1)&0xFFFF;
   GFX.map_def[addr/2048] = 0;
   // Check tile zone
 /*  if (GFX.tiles2b_def[addr/16])
@@ -683,7 +685,7 @@ void update_scroll()
 
 
 
-__attribute__((section(".itcm")))
+//__attribute__((section(".itcm")))
 void	draw_plane(int bg, int bg_mode, int nb_tilex, int nb_tiley, int tile_size)
 {
   int		i, j, map_address;
@@ -1647,6 +1649,7 @@ void PPU_RenderLineMode7(t_GFX_lineInfo *l)
 	l->CY = l->C*(-X0+HOffset)+l->D*(SNES.V_Count-Y0+VOffset)+(Y0<<8);
 }
 
+__attribute__((section(".itcm")))
 void renderMode7(){
 	static int Mode7FrameSkip = 0;
 
