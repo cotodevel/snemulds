@@ -45,7 +45,7 @@
 #include "core.h"
 #include "nds_cp15_misc.h"
 #include "soundTGDS.h"
-#include "spitscTGDS.h"
+#include "special_mpu_settings.h"
 #include "snemul_cfg.h"
 #include "ipcfifoTGDSUser.h"
 
@@ -367,7 +367,7 @@ void parseCFGFile(){
 }
 
 bool uninitializedEmu = false;
-static u8 savedUserSettings[1024*4];
+u8 savedUserSettings[1024*4];
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -571,7 +571,7 @@ __attribute__ ((optnone))
 int main(int argc, char ** argv){
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
-	bool isTGDSCustomConsole = true;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
+	bool isTGDSCustomConsole = false;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
 	GUI_init(isTGDSCustomConsole);
 	
 	bool isCustomTGDSMalloc = true;
@@ -615,7 +615,7 @@ int main(int argc, char ** argv){
 		if( 
 			(argc < 2) 
 			&& 
-			(strncmp(argv[1], TGDSProj, strlen(TGDSProj)) != 0) 	
+			(strncmpi(argv[1], TGDSProj, strlen(TGDSProj)) != 0) 	
 		){
 			REG_IME = 0;
 			MPUSet();
@@ -664,10 +664,8 @@ int main(int argc, char ** argv){
 	*/
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	int i = 0;
 	REG_IME = 0;
 	setSnemulDSSpecial0xFFFF0000MPUSettings();
-	//TGDS-Projects -> legacy NTR TSC compatibility
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
@@ -679,10 +677,12 @@ int main(int argc, char ** argv){
 	irqDisable(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
 	REG_IME = 1;
 	
+	swiDelay(1000);
+	setupDisabledExceptionHandler();
+	
 	if(__dsimode == true){
 		TWLSetTouchscreenTWLMode();
 	}
-	swiDelay(1000);
 	
 #ifndef DSEMUL_BUILD	
 	GUI.printfy = 32;
@@ -696,6 +696,7 @@ int main(int argc, char ** argv){
 	uninitializedEmu = true;
 	
 	// Clear "HDMA"
+	int i = 0;
 	for (i = 0; i < 192; i++){
 		GFX.lineInfo[i].mode = -1;
 	}
@@ -720,29 +721,8 @@ int main(int argc, char ** argv){
 	memset(&guiSelItem, 0, sizeof(guiSelItem));
 	guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
 	
-	switchToTGDSConsoleColors();
-	
-	//#define TSCDEBUG
-	#ifdef TSCDEBUG
-	clrscr();
-	printf("--");
-	printf("--");
-	printf("--");
-	
-	while(1==1){
-		scanKeys();
-		u32 keys = keysDown();
-		if(keys & KEY_TOUCH){
-			struct touchPosition touch;
-			// Deal with the Stylus.
-			XYReadScrPosUser(&touch);
-			
-			printf("px: %d  py: %d ",touch.px, touch.py);
-		}
-	}
-	#endif
-
 	//ARGV Support: Only supported through TGDS chainloading.
+	switchToTGDSConsoleColors();
 	bool isSnesFile = false;
 	if (argc > 2) {
 		//Arg0:	Chainload caller: TGDS-MB
@@ -771,7 +751,7 @@ int main(int argc, char ** argv){
 	
 	//Some games require specific hacks to run
     if(strncmp((char*)&SNES.ROM_info.title[0], "BREATH OF FIRE 2", 16) == 0){
-      APU_command(SNEMULDS_APUCMD_FORCESYNCON);
+      
     }
 	
 	while (1){

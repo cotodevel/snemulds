@@ -79,7 +79,6 @@ struct sIPCSharedTGDSSpecific{
 #define SNEMULDS_APUCMD_CLRMIXERBUF (u32)(0xffff00a5)
 #define SNEMULDS_APUCMD_SAVESPC (u32)(0xffff00a6)
 #define SNEMULDS_APUCMD_LOADSPC (u32)(0xffff00a7)
-#define SNEMULDS_APUCMD_FORCESYNCON (u32)(0xffff00a8)
 
 //NTR mode:
 //SNES_ROM_ADDRESS ((uchar *)(0x20C0000)) + ROM_MAX_SIZE_NTRMODE = 0x023CC000 < 0x27FF000 (NTR: Mirror #1 4MB)
@@ -87,7 +86,7 @@ struct sIPCSharedTGDSSpecific{
 //TWL mode:
 //SNES_ROM_ADDRESS ((uchar *)(0x20C0000)) + ROM_MAX_SIZE_TWLMODE = 0x026CC000 < 0x27FF000 (TWL: 16MB IPC shared)
 
-#define SNEMULDS_IPC ((struct sIPCSharedTGDSSpecific*)( ((int)0x27FF000) + (80*4)))
+#define SNEMULDS_IPC ((struct sIPCSharedTGDSSpecific*)( ((int)0x2FFF000) - (80*16)))
 
 #ifdef __cplusplus
 extern "C" {

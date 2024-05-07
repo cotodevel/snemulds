@@ -61,12 +61,8 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 	switch (cmd1) {
 		//ARM7 command handler
 		#ifdef ARM7
-		case (SNEMULDS_APUCMD_FORCESYNCON):{
-			APUSYNC=true;
-		}break;
-		
 		case (SNEMULDS_SETUP_ARM7):{
-			playBuffer = (uint16*)SNES_PLAYBUFFER_ADDRESS;
+			playBuffer = (uint16*)0x6000000;
 			int i   = 0;
 			for (i = 0; i < MIXBUFSIZE * 4; i++) {
 				playBuffer[i] = 0;

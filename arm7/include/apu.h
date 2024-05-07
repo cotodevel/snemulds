@@ -18,8 +18,9 @@
 #define APU_COUNTER2		0xFF
 
 // Cycles per second
-#define spcCyclesPerSec 4096000
-#define spcUpdatesPerSec 4096
+//#define spcCyclesPerSec 2048000
+#define spcCyclesPerSec 1024000
+#define spcUpdatesPerSec 2048
 #define spcCyclesPerUpdate (spcCyclesPerSec / spcUpdatesPerSec)
 
 // 64Khz timer clock divisor
@@ -66,8 +67,6 @@ extern void ApuUpdateTimers(uint32 cycles);
 extern void ApuWriteControlByte(uint8 byte);
 extern uint32 ApuReadCounter(uint32 address);
 extern void ApuWriteUpperByte(uint8 byte, uint32 address);
-
-extern bool APUSYNC;
 
 #ifdef __cplusplus
 }

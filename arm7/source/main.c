@@ -8,7 +8,6 @@
 #include "usrsettingsTGDS.h"
 #include "timerTGDS.h"
 #include "powerTGDS.h"
-
 #include "dldi.h"
 #include "ipcfifoTGDSUser.h"
 
@@ -141,7 +140,9 @@ int main(int _argc, char **_argv) {
 	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-
+	
+	SendFIFOWords(0xFF, 0xFF); 
+    
     struct sIPCSharedTGDSSpecific* TGDSUSERIPC = SNEMULDS_IPC;
     while (1) {
 		if(SPC_disable == false){
@@ -149,12 +150,12 @@ int main(int _argc, char **_argv) {
 			//if (scanlineCount >= 66) {
 			//	scanlineCount -= 66;
 			//	samplesToMix = 17;
-			//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 3);
+			//	cyclesToExecute = spcCyclesPerSec / (32000 / 3);
 			//} else {
 			//	samplesToMix = 16;
-			//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 2);
+			//	cyclesToExecute = spcCyclesPerSec / (32000 / 2);
 			//}
-			cyclesToExecute = spcCyclesPerUpdate;
+			cyclesToExecute = spcCyclesPerSec / (32000 / 2);
 			ApuExecute(cyclesToExecute);
 			
 			if (scanlineCount >= 16) {
