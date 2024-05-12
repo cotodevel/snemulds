@@ -429,11 +429,22 @@ void DMA_transfert(uchar port)
   PPU_port = 0x2100+DMA_PORT[0x101+port*0x10]; //hack to detect vram writes
   DMA_address = DMA_PORT[0x102+port*0x10]+(DMA_PORT[0x103+port*0x10]<<8);	//4200 -> 437F
   DMA_bank = DMA_PORT[0x104+port*0x10];
-
-  //identify if S-DD1 DMA transfer
-  if (sdd1_IO[1] > 0){
+	
+  //identify if S-DD1 DMA transfer (Channel 1 & Channel 2)
+  /*if (
+		(sdd1_IO[0] > 0)	//4801h  DMA Enable 1 (bit0..7 = DMA 0..7) (automatically cleared after DMA) //used by star ocean?
+	){
+	DMA_info = (((sdd1_IO[0]) & 0x7F) | (DMA_info & 0x80) );
 	isSDD1DMA = true;
   }
+  
+  else  */ if (
+		(sdd1_IO[1] > 0)	//4801h  DMA Enable 2 (bit0..7 = DMA 0..7) (automatically cleared after DMA)
+	){
+	DMA_info = (((sdd1_IO[1]) & 0x7F) | (DMA_info & 0x80) );
+	isSDD1DMA = true;
+  }
+  
   if(isSDD1DMA == true){
 		uint8* in_ptr = mem_getbaseaddress(DMA_address, (uchar)DMA_bank); //SNES IO -> Emulator IO mapper
 		in_ptr += DMA_address;
@@ -469,19 +480,8 @@ void DMA_transfert(uchar port)
 		int p = 0;
 		for (tmp = 0;tmp < DMA_len;tmp++) {
 		  uchar Work = *(base + p);
-		  switch (DMA_info&7) {
-			case 0x00 :
-			  PPU_port_write(PPU_port, Work); break;
-			case 0x01 :
-			  PPU_port_write(PPU_port+(tmp&1), Work); break;
-			case 0x02 :
-			  PPU_port_write(PPU_port, Work); break;
-			case 0x03 :
-			  PPU_port_write(PPU_port+(tmp&2)/2, Work); break;
-			case 0x04 :
-			  PPU_port_write(PPU_port+(tmp&3), Work); break;
-		  }
-			if (DMA_info & 0x10){ 
+		  PPU_port_write(PPU_port+(tmp&DMA_info), Work);
+			if (DMA_info & 0x80){ 
 				p--; 
 			}
 			else {
@@ -535,8 +535,9 @@ void DMA_transfert(uchar port)
   DMA_PORT[0x106+port*0x10] = DMA_PORT[0x105+port*0x10] = 0;
   DMA_PORT[0x102+port*0x10] = DMA_address&0xff;
   DMA_PORT[0x103+port*0x10] = DMA_address>>8;
-  if(isSDD1DMA == true){
-	sdd1_IO[1] = 0; //end S-DD1 dma transfer
+  
+  if(sdd1_IO[1] > 0){
+	sdd1_IO[1] = 0; //4801h  DMA Enable 2 (bit0..7 = DMA 0..7) (automatically cleared after DMA)
   }
 }
 
