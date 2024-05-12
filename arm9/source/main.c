@@ -769,6 +769,7 @@ int main(int argc, char ** argv){
 		if (!SNES.Stopped){
 			go();
 		}
+		HaltUntilIRQ(); //Save power until next irq
 	}
 
 	return 0;

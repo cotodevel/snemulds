@@ -147,17 +147,19 @@ int main(int _argc, char **_argv) {
     while (1) {
 		if(SPC_disable == false){
             int cyclesToExecute, samplesToMix;
-			//if (scanlineCount >= 66) {
-			//	scanlineCount -= 66;
-			//	samplesToMix = 17;
-			//	cyclesToExecute = spcCyclesPerSec / (32000 / 3);
-			//} else {
-			//	samplesToMix = 16;
-			//	cyclesToExecute = spcCyclesPerSec / (32000 / 2);
-			//}
-			cyclesToExecute = spcCyclesPerSec / (32000 / 2);
-			ApuExecute(cyclesToExecute);
 			
+			if (REG_DISPSTAT & DISP_HBLANK_IRQ){
+				//if (scanlineCount >= 66) {
+				//	scanlineCount -= 66;
+				//	samplesToMix = 17;
+				//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 3);
+				//} else {
+				//	samplesToMix = 16;
+				//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 2);
+				//}
+				cyclesToExecute = spcCyclesPerSec / (MIXRATE / 2);
+				ApuExecute(cyclesToExecute);
+			}
 			if (scanlineCount >= 16) {
 				scanlineCount -= 16;		
 				samplesToMix = 32;
@@ -176,6 +178,7 @@ int main(int _argc, char **_argv) {
 		else{
 			TGDSUSERIPC->APU_ADDR_ANS = (uint32)0xFF00FF00;
 		}
+		HaltUntilIRQ(); //Save power until next irq
 	}
    
 	return 0;
