@@ -2,7 +2,7 @@
 	.ARM
 	.ALIGN
 
-#include "mixrate.h"
+#include "spcdefs.h"
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @ Function called with:

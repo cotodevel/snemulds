@@ -5,8 +5,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#include "pocketspc.h"
-#include "apumisc.h"
+#include "spcdefs.h"
 #include "dsp.h"
 #include "apu.h"
 

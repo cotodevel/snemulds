@@ -1,5 +1,5 @@
 #include <string.h>
-#include "pocketspc.h"
+#include "spcdefs.h"
 #include "apu.h"
 #include "dsp.h"
 #include "main.h"

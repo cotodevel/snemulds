@@ -1,5 +1,8 @@
-#ifndef apu_snes
-#define apu_snes
+#ifndef __dsp_h__
+#define __dsp_h__
+
+#include "typedefsTGDS.h"
+
 struct _DspChannel {
     int sampleSpeed;
     int samplePos;

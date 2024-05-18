@@ -25,11 +25,10 @@ USA
 
 #ifdef ARM7
 #include <string.h>
-#include "pocketspc.h"
 #include "apu.h"
 #include "dsp.h"
 #include "main.h"
-#include "mixrate.h"
+#include "spcdefs.h"
 #include "spifwTGDS.h"
 #include "apu_shared.h"
 

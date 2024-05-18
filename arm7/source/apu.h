@@ -2,9 +2,12 @@
 #define __apu_h__
 
 #include "typedefsTGDS.h"
+
 ////////////////////////////////////////////////////////////////////////////
 // Definitions
 ////////////////////////////////////////////////////////////////////////////
+
+#define ALIGNED __attribute__ ((aligned(4)))
 
 #define APU_MEM_IN_VRAM
 #define APU_CONTROL_REG		0xF1
@@ -67,6 +70,13 @@ extern void ApuUpdateTimers(uint32 cycles);
 extern void ApuWriteControlByte(uint8 byte);
 extern uint32 ApuReadCounter(uint32 address);
 extern void ApuWriteUpperByte(uint8 byte, uint32 address);
+
+
+//apumisc.c
+extern int memcpy_imm;
+extern uint8 iplRom[64];
+extern uint8 apuShowRom;
+extern void ApuSetShowRom();
 
 #ifdef __cplusplus
 }

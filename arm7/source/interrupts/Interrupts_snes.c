@@ -3,11 +3,10 @@
 #include "dsregs_asm.h"
 #include "ipcfifoTGDSUser.h"
 #include "InterruptsARMCores_h.h"
-#include "pocketspc.h"
+#include "spcdefs.h"
 #include "apu.h"
 #include "dsp.h"
 #include "main.h"
-#include "mixrate.h"
 #include "apu_shared.h"
 #include "biosTGDS.h"
 
