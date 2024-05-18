@@ -140,22 +140,25 @@ int main(int _argc, char **_argv) {
 	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
-
+	
+	SendFIFOWords(0xFF, 0xFF); 
+    
     struct sIPCSharedTGDSSpecific* TGDSUSERIPC = SNEMULDS_IPC;
     while (1) {
 		if(SPC_disable == false){
             int cyclesToExecute, samplesToMix;
-			//if (scanlineCount >= 66) {
-			//	scanlineCount -= 66;
-			//	samplesToMix = 17;
-			//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 3);
-			//} else {
-			//	samplesToMix = 16;
-			//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 2);
-			//}
-			cyclesToExecute = spcCyclesPerUpdate;
-			ApuExecute(cyclesToExecute);
-			
+            if (REG_DISPSTAT & DISP_HBLANK_IRQ){
+                //if (scanlineCount >= 66) {
+				//	scanlineCount -= 66;
+				//	samplesToMix = 17;
+				//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 3);
+				//} else {
+				//	samplesToMix = 16;
+				//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 2);
+				//}
+				cyclesToExecute = spcCyclesPerSec / (MIXRATE / 2);
+				ApuExecute(cyclesToExecute);
+            }
 			if (scanlineCount >= 16) {
 				scanlineCount -= 16;		
 				samplesToMix = 32;
@@ -174,6 +177,7 @@ int main(int _argc, char **_argv) {
 		else{
 			TGDSUSERIPC->APU_ADDR_ANS = (uint32)0xFF00FF00;
 		}
+        HaltUntilIRQ(); //Save power until next irq
 	}
    
 	return 0;

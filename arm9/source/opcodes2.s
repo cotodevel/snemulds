@@ -521,61 +521,49 @@ STY_m0x1:   STY_m1x1:   OpSTY   X1, 0, 0
 STZ_m0x0:   STZ_m0x1:   OpSTZ   M0, 0, 0
 STZ_m1x0:   STZ_m1x1:   OpSTZ   M1, 0, 0
 
-@Move block positive
-@Moves a block of data, byte by byte, starting from the end and working towards the beginning
+
 MVP_m0x0:   OpMVP   M0X0, 0, 0
 MVP_m0x1:   OpMVP   M0X1, 0, 0
 MVP_m1x0:   OpMVP   M1X0, 0, 0
 MVP_m1x1:   OpMVP   M1X1, 0, 0
 
-@Move block negative
-@Moves a block of data, byte by byte, starting from the beginning and working towards the end
 MVN_m0x0:   OpMVN   M0X0, 0, 0
 MVN_m0x1:   OpMVN   M0X1, 0, 0
 MVN_m1x0:   OpMVN   M1X0, 0, 0
 MVN_m1x1:   OpMVN   M1X1, 0, 0
 
-@Source info: https://ersanio.gitbook.io/assembly-for-the-snes/collection-of-values/moves
-@------------------------------------------------------------------------------------------------------------------------------------------------------------------
-@ MVP & MVP Notes: They practically do a mass amount of LDA and STA to some RAM addresses. You can't move data to ROM, because ROM is read-only.
-@------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 @------------------------------------------------------
-@ MVP
+@ MVP/MVN
 @------------------------------------------------------
-@PHB                ; Preserve data bank
-@REP #$30           ; 16-bit AXY
-@LDA #$0004         ; \
-@LDX #$8908         ;  |
-@LDY #$A000         ;  | Move 5 bytes of data from (ALWAYS src X: $1F8908-$0004) to (ALWAYS dest Y: $7FA000-$0004)
-@MVP $7F, $1F       ; /
-@SEP #$30           ; 8-bit AXY
-@PLB                ; Recover data bank
-@This example will move 5 bytes of data from address $1F8904 to $7F9FFC. Although the transfer happens backwards, the transferred data isn't reversed. It still copies over as you'd expect.
-
 OpMVP_Code:
     stmfd   sp!, {r3, r6, lr}
-    add     SnesA, SnesA, #0x00010000 @copy a whole 64K Page
+    add     SnesA, SnesA, #0x00010000
     mov     r6, #32
 9:
+    @ version 0.27 fix
     ldrb    r0, [SnesPC, #2]        @ source
-    add     r0, SnesX, r0, lsl #16
+    @ version 0.27 fix end
     
-	SetRead
+    add     r0, SnesY, r0, lsl #16
+    SetRead
     TranslateAddress    0
     ReadData8
     mov     r3, r1
     
+    @ version 0.27 fix
     ldrb    r0, [SnesPC, #1]        @ dest
-    add     r0, SnesY, r0, lsl #16
-	
+    @ version 0.27 fix end
+    
+    add     r0, SnesX, r0, lsl #16
     SetWrite
     TranslateAddress    0
     mov     r1, r3
     WriteData8
 
+    @ version 0.27 fix
     sub     SnesX, SnesX, #1
     sub     SnesY, SnesY, #1
+    @ version 0.27 fix end
     
     add     SnesCYCLES, SnesCYCLES, #(7 << CYCLE_SHIFT)
     bic     SnesX, SnesX, r7                @ r7 = #0x00ff0000 or #0x0000ff00 depending on the xBit
@@ -590,26 +578,21 @@ OpMVP_Code_End:
     sub     SnesA, SnesA, #0x00010000       @ make SnesA = 0xffff
 
     ldrb    r0, [SnesPC, #1]
+@    mov		r1, SnesDBR
     bic     SnesDBR, SnesDBR, #0xff
-    orr     SnesDBR, SnesDBR, r0			@MVP case: Data bank is set to the bank of the destination address
+    orr     SnesDBR, SnesDBR, r0
     addeq   SnesPC, SnesPC, #3
+    /*cmp		r1, SnesDBR						@ archeide
+    beq		3f
+
+    CacheMemoryMap
+3:*/
     ldmfd   sp!, {r3, r6, lr}
     bx      lr
 
 @------------------------------------------------------
-@MVN
+@ MVP/MVN
 @------------------------------------------------------
-
-@PHB                ; Preserve data bank
-@REP #$30           ; 16-bit AXY
-@LDA #$0004         ; \
-@LDX #$8908         ;  |
-@LDY #$A000         ;  | Move 5 bytes of data from $1F8908 to $7FA000
-@MVN $7F, $1F       ; /
-@SEP #$30           ; 8-bit AXY
-@PLB                ; Recover data bank
-@This example will move 5 bytes of data from address $1F8098 to $7FA000.
-
 OpMVN_Code:
     stmfd   sp!, {r3, r6, lr}
     add     SnesA, SnesA, #0x00010000
@@ -641,10 +624,17 @@ OpMVN_Code:
 OpMVN_Code_End:
     tst    SnesA, SnesA
     sub     SnesA, SnesA, #0x00010000       @ make SnesA = 0xffff
+
     ldrb    r0, [SnesPC, #1]
-    bic     SnesDBR, SnesDBR, #0xff			@MVN case: Data bank is set to the bank of the destination address
+@    mov		r1, SnesDBR 					@ archeide
+    bic     SnesDBR, SnesDBR, #0xff
     orr     SnesDBR, SnesDBR, r0
     addeq   SnesPC, SnesPC, #3
+    /*cmp		r1, SnesDBR						@ archeide
+    beq		3f
+
+    CacheMemoryMap
+3:*/
     ldmfd   sp!, {r3, r6, lr}
     bx      lr
 

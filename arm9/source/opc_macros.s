@@ -431,6 +431,15 @@ GNU General Public License for more details.
 2:
 .endm
 
+.macro WriteData24 index=0
+    strb    r1,[r0, #(\index)]
+    mov     r1, r1, lsr #8
+    strb    r1,[r0, #(\index+1)]
+    mov     r1, r1, lsr #8
+    strb    r1,[r0, #(\index+2)]
+.endm
+
+
 @=========================================================================
 @ New Addressing Mode Macros:
 @ returns:
@@ -990,9 +999,6 @@ ADCD_m0:    @ r1 = 0000XXxx, SnesA = AAaa0000
     orrcs   SnesCV, SnesCV, #SnesFlagC
     biccc   SnesCV, SnesCV, #SnesFlagC
     
-	orrvc   SnesCV, SnesCV, #SnesFlagV
-    bicvs   SnesCV, SnesCV, #SnesFlagV
-
     ldmfd	sp!, {r3}
     
     AddPC   \pcinc, \cycles
@@ -1033,15 +1039,12 @@ ADCD_m1: @ Took from SnesAdvance
 
     @ elegant ADC from Snes Advance
     @
-    movs    r0, SnesCV, lsr #2      @ get carry flag (SnesCV @ $CCCCWEEF (bit 1=carry, bit 0=overflow)) + 1 to move it to Carry ARM flag 
-	@(ARM PSR CS : Carry Set Set if the C flag is set after an arithmetical operation OR a shift operation, the result of which cannot be represented in 32bits. You can think of the C flag as the 33rd bit of the result.)
-
+    movs    r0, SnesCV, lsr #2      @ get carry flag
     subcs   r1, r1, #(1<<mBit)
     adcs    SnesA, SnesA, r1, ror #mBit
-	orrcs   SnesCV, SnesCV, #SnesFlagC
+    bic     SnesCV, SnesCV, #(SnesFlagC+SnesFlagV)
+    orrcs   SnesCV, SnesCV, #SnesFlagC
     orrvs   SnesCV, SnesCV, #SnesFlagV
-    biccc     SnesCV, SnesCV, #(SnesFlagC)
-    bicvc     SnesCV, SnesCV, #(SnesFlagV)
     mov     SnesNZ, SnesA, lsr #16
     
     AddPC   0, 0
@@ -1414,9 +1417,6 @@ SBCD_m0:
     biccc   SnesCV, SnesCV, #SnesFlagC
     orrcs   SnesCV, SnesCV, #SnesFlagC
     
-	orrvs   SnesCV, SnesCV, #SnesFlagV
-    bicvc   SnesCV, SnesCV, #SnesFlagV
-	
     ldmfd   sp!, {r3}
 	AddPC   0, 0
 
@@ -1440,10 +1440,6 @@ SBCD_m1:
 	mov     SnesNZ, SnesA, lsr #16
     biccc   SnesCV, SnesCV, #SnesFlagC
     orrcs   SnesCV, SnesCV, #SnesFlagC
-	
-	orrvs   SnesCV, SnesCV, #SnesFlagV
-    bicvc   SnesCV, SnesCV, #SnesFlagV
-
 	AddPC   0, 0
 .endm
 
@@ -1466,10 +1462,9 @@ SBCD_m1:
     .else
         and     SnesA, SnesA, #0xff000000
     .endif
+    bic     SnesCV, SnesCV, #(SnesFlagV+SnesFlagC)
     orrcs   SnesCV, SnesCV, #SnesFlagC
     orrvs   SnesCV, SnesCV, #SnesFlagV
-    biccc     SnesCV, SnesCV, #(SnesFlagC)
-    bicvc     SnesCV, SnesCV, #(SnesFlagV)
     mov     SnesNZ, SnesA, lsr #16
     
     AddPC   0, 0
@@ -1742,6 +1737,7 @@ SBCD_m1:
 .endm
 
 .macro OpMVP mode, pcinc, cycles
+				@ FIXME ???
     \mode
     sub     SnesPC, SnesPC, #1
 
@@ -2004,7 +2000,7 @@ SBCD_m1:
 @ Decompose the P register
 @   r1: Snes P register
 @-------------------------------------------------------------------------
-.macro DecomposeP   fast = 0
+.macro DecomposeP   fast = 1
     bic     SnesCV, SnesCV, #0xF
     tst    r1, #SnesP_C
     orrne   SnesCV, SnesCV, #SnesFlagC
@@ -2016,10 +2012,9 @@ SBCD_m1:
     orrne   SnesNZ, SnesNZ, #SnesFlagNH
     tst    r1, #SnesP_Z
     orreq   SnesNZ, SnesNZ, #1
-	stmdb r13!,{r1}				@ r1 = nvmxdizc = means SNES Processor Status Register (default PSR encoding format). Save it because....
-    bic     r1, r1, #0xffffffc3 @ r1 = 00mxdi00 (alt. non standard)
+                                            @ r1 = nvmxdizc
+    bic     r1, r1, #0xffffffc3             @ r1 = 00mxdi00
     SetMXDI \fast
-	ldmia r13!,{r1} 			@Instead of destroying the SNES PSR flag, restore earlier CPU PSR context + keep it for upcoming usage.
 .endm
 
 
@@ -2067,13 +2062,7 @@ SBCD_m1:
     tst    r1, #SnesFlagE
     biceq   SnesCV, SnesCV, #SnesFlagC
     orrne   SnesCV, SnesCV, #SnesFlagC
-    
-	.ifeq   mBit-8 @Emulation mode? XY are 8 bit
-    eoreq     SnesX, SnesX, #0xff00 @SnesMXDI == NVZC Flags
-    eoreq     SnesY, SnesY, #0xff00 
-	.endif
-	
-	AddPC   \pcinc, \cycles
+    AddPC   \pcinc, \cycles
 .endm
 
 .macro OpSEI mode, pcinc, cycles
@@ -2205,10 +2194,9 @@ SBCD_m1:
     AddPC   \pcinc, \cycles
 .endm
 
-@PHP (Push Processor Status Register)
 .macro OpPHP mode, pcinc, cycles
-    ComposeP	@generates -> r1 = 00000000 00000000 00000000 NVMXDIZC(b)
-    Push8		@Save r1 into stack
+    ComposeP
+    Push8
     AddPC   \pcinc, \cycles
 .endm
 
@@ -2236,13 +2224,10 @@ SBCD_m1:
     AddPC   \pcinc, \cycles
 .endm
 
-@PLP (Pull Processor Status Register)
 .macro OpPLP mode, pcinc, cycles
-	Pop8	@grab r1 from stack
-	DecomposeP	@Reload SNES PSR context from r1
-	tst    r1, #SnesP_V	@ r1 = nvmxdizc	(https://ersanio.gitbook.io/assembly-for-the-snes/processor-flags-and-registers/flags)
-	orreq   SnesCV, SnesCV, #SnesFlagV
-	AddPC   \pcinc, \cycles
+    Pop8
+    DecomposeP
+    AddPC   \pcinc, \cycles
 .endm
 
 

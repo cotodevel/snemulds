@@ -92,7 +92,7 @@ void HblankUser(){
 		uint32 T1 = APU_MEM[APU_TIMER1]?APU_MEM[APU_TIMER1]:0x100;
 		uint32 T2 = APU_MEM[APU_TIMER2]?APU_MEM[APU_TIMER2]:0x100;
 		
-		if ((scanlineCount & 1) == 1) {        		      	
+		if ((VCount & 1) == 1) {        		      	
 			if (++APU2->T0Count >= T0) {
 				APU2->T0Count -= T0;
 				APU_MEM[APU_COUNTER0]++;
@@ -110,11 +110,8 @@ void HblankUser(){
 			APU_MEM[APU_COUNTER2]++;
 			APU_MEM[APU_COUNTER2] &= 0xf;
 		}
-		if( (APUSYNC==true) && (REG_VCOUNT > 100) ){
-			scanlineCount=32;
-		}
+		
 	}
-
 }
 
 #ifdef ARM9

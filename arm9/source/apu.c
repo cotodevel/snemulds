@@ -180,5 +180,5 @@ __attribute__ ((optnone))
 #endif
 void APU_command(uint32 command){
 	//prevent APU from desync
-	SendFIFOWords(command, 0xFFFFFFFF);
+	SendFIFOWords(command, 0);
 }
