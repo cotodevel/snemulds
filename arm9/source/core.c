@@ -898,25 +898,7 @@ uint32	R213F(uint32 addr)
 __attribute__((section(".itcm")))      
 uint32	R2140(uint32 addr)
 {
-	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSIPCUSER->APU2);
-	  if (!CFG.Sound_output)
-      { /* APU Skipper */
-        switch ((APU2->skipper_cnt1++)%11) {
-          case 0: return PPU_PORT[0x40];
-          case 1: return REAL_A;                                
-          case 2: return X;
-          case 3: return Y;
-          case 4: return 0xAA;
-          case 5: return 0xCC;
-          case 6: return 0x55;
-          case 7: return 0x01;
-          case 8: return 0x07;
-          case 9: return 0x00;
-          case 10: return 0x09;
-        }
-      }
-      return TGDSIPCUSER->PORT_SPC_TO_SNES[0];      
+	return SNEMULDS_IPC->PORT_SPC_TO_SNES[0];      
 }
 
 static int oldapupc;
@@ -924,87 +906,17 @@ static int oldapupc;
 __attribute__((section(".itcm")))      
 uint32	R2141(uint32 addr)
 {
-	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSIPCUSER->APU2);
-	//int newapupc = ((*(uint32*)(0x27E0000)) & 0xFFFF);
-	
-/*	 if (TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x33 || TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x11 && 
-	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f)
-	 APU_printLog();*/
-#if 0	 
-	 if (TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x33 /*&& 
-	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f*/)
-	 if (/*TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x33 || */TGDSIPCUSER->PORT_SPC_TO_SNES[1] == 0x11 /*&& 
-	 (*(uint32*)(0x27E0000)) & 0xFFFF == 0x111f*/)
-#endif	
-	
-/*	if (newapupc != 0)
-	{
-	
-	oldapupc = newapupc;
-	}*/
-	
-	//*(uint32*)(0x27E0000) = 0;	
-      if (!CFG.Sound_output)
-      { /* APU Skipper */
-        switch ((APU2->skipper_cnt2++)%13) {
-          case 0: return PPU_PORT[0x41];
-          case 1: return REAL_A;
-          case 2: return X;
-          case 3: return Y;
-          case 4: return 0xCD;
-          case 5: return 0xBB;
-          case 6: return 0x33;
-          case 7: return 0x11;
-          case 8: return 0x00;
-          case 9: return 0xFF;
-          case 10: return 0x01;
-          case 11: return 0x02;
-          case 12: return REAL_A >> 8;        
-        }
-      }
-      return TGDSIPCUSER->PORT_SPC_TO_SNES[1];       
+	return SNEMULDS_IPC->PORT_SPC_TO_SNES[1];       
 }
 __attribute__((section(".itcm")))      
 uint32	R2142(uint32 addr)
 {
-	  struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
-      struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSIPCUSER->APU2);
-	  if (!CFG.Sound_output)
-	  {
-        switch ((APU2->skipper_cnt3++)%7) {
-          case 0: return PPU_PORT[0x42];
-          case 1: return REAL_A;
-          case 2: return X;
-          case 3: return Y;
-          case 4: return 0x00;
-          case 5: return 0xAA;
-          case 6: return 0xBB;
-        }
-      }
-      return TGDSIPCUSER->PORT_SPC_TO_SNES[2];      
+    return SNEMULDS_IPC->PORT_SPC_TO_SNES[2];      
 }
 __attribute__((section(".itcm")))
 uint32	R2143(uint32 addr)
 {     
-	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSIPCUSER->APU2);
-
-      if (!CFG.Sound_output)
-	  {
-        switch((APU2->skipper_cnt4++) % 9) {
-          case 0: return PPU_PORT[0x43];
-          case 1: return REAL_A;
-          case 2: return X;
-          case 3: return Y;
-          case 4: return 0x00;
-          case 5: return 0xAA;
-          case 6: return 0xBB;
-          case 7: return 0x01;
-          case 8: return REAL_A>>8;
-        }
-      }
-      return TGDSIPCUSER->PORT_SPC_TO_SNES[3];      
+	return SNEMULDS_IPC->PORT_SPC_TO_SNES[3];      
 }
 __attribute__((section(".itcm")))
 uint32	R2180(uint32 addr)

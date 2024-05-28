@@ -87,11 +87,9 @@ void VblankUser(){
 	GFX.DSFrame++;
 	GFX.v_blank=1;
 	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&TGDSIPCUSER->APU2);
-	// FIX APU cycles	
-	//*APU_ADDR_CNT += 262;
-	if (CFG.Sound_output)
-	TGDSIPCUSER->APU_ADDR_CNT = APU_MAX;
+	if (CFG.Sound_output){
+		TGDSIPCUSER->APU_ADDR_CNT = APU_MAX;
+	}
 	//GUI_printf("vblank! \n");	
 }
 

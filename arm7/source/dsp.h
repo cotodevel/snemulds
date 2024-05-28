@@ -1,6 +1,9 @@
-#ifndef apu_snes
-#define apu_snes
-struct _DspChannel {
+#ifndef __dsp7_h__
+#define __dsp7_h__
+
+#include "ipcfifoTGDSUser.h"
+
+struct DspChannel {
     int sampleSpeed;
     int samplePos;
     int envCount;
@@ -16,14 +19,13 @@ struct _DspChannel {
     sint16 rightCalcVolume;
     uint8 envState;
     uint8 sustainLevel;
-    sint8 leftVolume;
-    sint8 rightVolume;
-    sint8 keyWait;
+    s8 leftVolume;
+    s8 rightVolume;
+    s8 keyWait;
     bool active;
     uint8 brrHeader;
     bool echoEnabled;
 } ALIGNED;
-typedef struct _DspChannel DspChannel;
 
 // DSP Register defintions
 
@@ -71,23 +73,18 @@ typedef struct _DspChannel DspChannel;
 
 #endif
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 extern uint8 DSP_MEM[0x100];
-extern uint16 dspPreamp;
-// externs from dspmixer.S
-extern uint32 DecodeSampleBlockAsm(uint8 *blockPos, sint16 *samplePos, DspChannel *channel);
-extern uint8 channelNum;
-extern void DspMixSamplesStereo(uint32 samples, uint16 *mixBuf);
-extern void DspWriteByte(uint8 val, uint8 address);
-extern void DspSetEndOfSample(uint32 channel);
-extern DspChannel channels[8];
 extern void DspReset();
 extern void DspPrepareStateAfterReload();
-extern uint32 DecodeSampleBlock(DspChannel *channel);
+extern uint16 dspPreamp;
+extern void DspMixSamplesStereo(uint32 samples, uint16 *mixBuf);
+extern void DspWriteByte(uint8 val, uint8 address);
+extern struct DspChannel channels[8];
+extern short gauss[];
 
 #ifdef __cplusplus
 }
