@@ -29,5 +29,3 @@
 #define CYCLE_SHIFT 3           @ Amount to shift cycle amounts before adding/subtracting them
 
 #define ONE_APU_CYCLE 21
-
-#define CheckIntrLoop 0

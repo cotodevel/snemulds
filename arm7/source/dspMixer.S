@@ -1,6 +1,6 @@
 	.TEXT
 	.ARM
-	.ALIGN
+	.ALIGN 4
 
 #include "spcdefs.h"
 
@@ -36,9 +36,17 @@ brrHash:
 DecodeSampleBlockAsm:
     stmfd sp!, {r4-r12,r14}
 
+	@gaussian interpolation, too slow to enable
+/*
+    @ Save the last 4 samples for gaussian interpolation
+    add r4, r1, #12 * 2
+    ldmia r4, {r5,r6}
+    sub r4, r1, #4 * 2
+    stmia r4, {r5,r6}
+*/
     @ Save the channel pointer
     mov r14, r2
-    
+	
 /*    @ Hash the block, and skip the decode if we can
     ldmia r0, {r4-r7}
     ldr r8, =0x050C5D1F @ (2166136261 * 16777619)
@@ -48,36 +56,28 @@ DecodeSampleBlockAsm:
     eor r8, r8, r5
     mul r8, r9, r8
     eor r8, r8, r6
-
     @ r8 is the hashed value
-
     ldr r4, brrHash
-
     @ Compute the actual brr location minus the apu ram base
     ldr r6, =APU_MEM
     ldr r6, [r6]
     sub r6, r0, r6
-
     @ Compute the address of the cached samples in brrHash
     add r3, r4, #0x8000
     mov r6, r6, lsr #3
     add r3, r3, r6, lsl #5
-
     @ Load the previous hash value
     ldr r5, [r4, r6, lsl #2]
     str r8, [r4, r6, lsl #2]
     cmp r5, r8
     bne doDecode
-
     @ Load the cached samples
     ldmia r3, {r4-r11}
     stmia r1!, {r4-r11}
-
     ldrsh PREV0, [r1, #-2]
     ldrsh PREV1, [r1, #-4]
-
     b doneDecodeCached
-
+	
 doDecode:
     stmfd sp!, {r3}
 */
@@ -384,7 +384,7 @@ DspMixSamplesStereo:
 
     @ Clear the left and right mix buffers, saving their initial positions
     ldr r1, =mixBuffer
-@    ldr r2, =echoBuffer
+    ldr r2, =echoBuffer
     mov r3, #0
     mov r4, #0
     mov r5, #0
@@ -392,31 +392,30 @@ DspMixSamplesStereo:
 clearLoop:
     stmia r1!, {r3-r6}
     stmia r1!, {r3-r6}
-/*    stmia r2!, {r3-r6}
-    stmia r2!, {r3-r6}*/
+    stmia r2!, {r3-r6}
+    stmia r2!, {r3-r6}
     subs r0, r0, #4
-    cmp r0, #0
-    bgt clearLoop
+    bne clearLoop
 
     @ Load the initial mix buffer and echo position
     ldr r1, =mixBuffer
-@    ldr r2, =echoBuffer
+    ldr r2, =echoBuffer
 
     ldr r0, =channels
 channelLoopback:
     @ Check if active == 0, then next
     ldrb r3, [r0, #ACTIVE_OFFSET]
-    cmp r3, #0
+    cmps r3, #0
     beq nextChannelNothingDone
 
     @ Save the start position of the mix buffer & echo buffer
     stmfd sp!, {r1,r2}
 
-/*    @ Get echo enabled, then replace the opcode there if it's enabled
+    @ Get echo enabled, then replace the opcode there if it's enabled
     ldrb r14, [r0, #ECHOENABLED_OFFSET]
     cmp r14, #1
     ldr r3, =0x01A00000 @ mov r0, r0
-    streq r3, branchLocation*/
+    streq r3, branchLocation
 
     ldrb r3, numSamples
     @ Load the important variables into registers
@@ -580,7 +579,7 @@ noEnvelopeUpdate:
     @ Decode the sample block, r0 = DspChannel*
     stmfd sp!, {r0-r3, r14}
     bl DecodeSampleBlock
-    cmp r0, #1
+    cmps r0, #1
     ldmfd sp!, {r0-r3, r14}
     beq nextChannel
 
@@ -592,9 +591,42 @@ noSampleUpdate:
     add r12, r0, r12, lsl #1
     ldrsh r8, [r12, #DECODED_OFFSET]
 
+@gaussian interpolation, too slow to enable
 /*
+    @ Store changing values
+    stmfd sp!, {r6,r7,r9-r12,lr}
+
+    @ r6 will be the fractional position
+    ldr r6, =0x1fe
+    and r6, r6, SAMPLE_POS, lsr #3
+    rsb r6, r6, #0x200
+
+    ldr r7, =gauss - 2
+    ldrsh r8, [r7, r6]
+    ldrsh r9, [r12, #DECODED_OFFSET - 6]
+    mul r14, r8, r9
+    ldr r7, =gauss + 510
+    ldrsh r8, [r7, r6]
+    ldrsh r9, [r12, #DECODED_OFFSET - 4]
+    mla r14, r8, r9, r14
+    rsb r6, r6, #0
+    ldr r7, =gauss + 1024
+    ldrsh r8, [r7, r6]
+    ldrsh r9, [r12, #DECODED_OFFSET - 2]
+    mla r14, r8, r9, r14
+    ldr r7, =gauss + 512
+    ldrsh r8, [r7, r6]
+    ldrsh r9, [r12, #DECODED_OFFSET]
+    mla r14, r8, r9, r14
+    @ r8 is the new sample
+    mov r8, r14, asr #11
+
+	@ Store changing values
+    ldmfd sp!, {r6,r7,r9-r12,lr}
+*/
+
 branchLocation:
-    b mixEchoDisabled
+    b mixEchoEnabled
 
 mixEchoEnabled:
     @ Echo mixing
@@ -605,7 +637,6 @@ mixEchoEnabled:
     ldr r9, [r2]
     mla r9, r8, RIGHT_CALC_VOL, r9
     str r9, [r2], #4
-*/    
 
 mixEchoDisabled:
     ldr r9, [r1]
@@ -653,10 +684,113 @@ nextChannelNothingDone:
     ldrb r3, channelNum
     add r3, r3, #1
     strb r3, channelNum
-    cmp r3, #8
+    cmps r3, #8
     blt channelLoopback
 
 @ This is the end of normal mixing
+
+    @ Store the original mix & echo buffers, cause we trash these regs
+    stmfd sp!, {r1, r2}
+
+    @ r0 - 
+    @ r1 - 
+    @ r2 - 
+    @ r3 - 
+    @ r4 - 
+    @ r5 - echo volume (right)
+    @ r6 - numSamples
+    @ r7 - echo in apu ram (r/w)
+    @ r8 - echo mix buffer (r/w)
+    @ r9 - end of echo in apu ram
+    @ r10 - echo volume (left)
+    @ r11 - echo feedback
+    @ r12 - FIR coefficients in DSP ram
+    @ r13 - FIR table base
+    @ r14 - FIR offset
+
+
+@ Process the echo filter stuff
+echoMixSetup:
+    mov r8, r2
+
+    ldr r0, =DSP_MEM
+
+    ldrsb r10, [r0, #0x2C] @ Get left echo volume
+    mov r10, r10, lsl #7
+    ldrsb r5, [r0, #0x3C] @ Get right echo volume
+    mov r5, r5, lsl #7
+
+    @ Get echo feedback
+    ldrsb r11, [r0, #0x0D]
+
+    @ Check if echo is enabled
+    ldrb r1, [r0, #0x6C]
+    strb r1, echoEnabled
+    @ Get echo base (APU_MEM + DSP_ESA << 8)
+    ldr r7, =echoBase
+    ldr r7, [r7]
+    str r7, echoBufferStart
+    @ Set up end of echo delay area in r8
+    ldr r0, =echoDelay
+    ldrh r0, [r0]
+    add r9, r7, r0
+
+    @ Set up current echo cursor location
+    ldr r0, =echoCursor
+    ldrh r0, [r0]
+    add r7, r7, r0
+
+    ldr r14, =firOffset
+    ldrb r14, [r14]
+
+    @ Offset firTable to start at FIR #7
+    ldr r12, =DSP_MEM
+    add r12, r12, #0x7F
+
+    ldr r6, numSamples
+
+echoMixLoopback:
+    @ Load the old echo value (l,r)
+    ldrsh r0, [r7]
+    ldrsh r1, [r7, #2]
+
+    @ r0,r1 contains the filtered samples
+    ldr r2, [r8]
+    @ Left channel = (feedback * filtered) >> 7
+    mla r2, r11, r0, r2
+    mov r2, r2, asr #15
+
+    ldr r3, [r8, #4]
+    @ Right channel = (feedback * filtered) >> 7
+    mla r3, r11, r1, r3
+    mov r3, r3, asr #15
+
+    @ Store (filtered * echoFB) + echobuffer into echobuffer
+    ldrb r5, echoEnabled
+    tst r5, #0x20
+    streqh r2, [r7], #2
+    streqh r3, [r7], #2
+    cmp r7, r9
+    ldrge r7, echoBufferStart
+
+    @ Store (filtered * echoVol) into echomix
+    mul r2, r10, r0
+    str r2, [r8], #4
+    mul r2, r5, r1
+    str r2, [r8], #4
+
+    subs r6, r6, #1
+    bne echoMixLoopback
+    
+doneEchoMix:
+
+    ldr r3, echoBufferStart
+    sub r7, r7, r3
+    ldr r0, =echoCursor
+    strh r7, [r0]
+
+    @ Reload mix buffer & echo positions
+    ldmfd sp!, {r1, r2}
     
 clipAndMix:
     @ Put the original output buffer into r3
@@ -698,8 +832,8 @@ mixClipLoop:
     ldr r5, [r1], #4
     mov r5, r5, asr #15
     mul r5, r4, r5
-/*    ldr r7, [r2], #4
-    add r5, r5, r7, asr #7*/
+    ldr r7, [r2], #4
+    add r5, r5, r7, asr #7
     mov r5, r5, asr #7
 
     @ Clip and store
@@ -707,15 +841,15 @@ mixClipLoop:
     movgt r5, #0x7f00
     cmn r5, #0x7f00
     movlt r5, #0x8100
-    strh r5, [r3]
-    add r3, r3, #MIXBUFSIZE * 4
+	ldr r7, =(MIXBUFSIZE * 4)
+    strh r5, [r3], r7
 
     @ Load and scale by volume (RIGHT)
     ldr r5, [r1], #4
     mov r5, r5, asr #15
     mul r5, r6, r5
-/*    ldr r7, [r2], #4
-    add r5, r5, r7, asr #7*/
+    ldr r7, [r2], #4
+    add r5, r5, r7, asr #7
     mov r5, r5, asr #7
 
     @ Clip and store
@@ -723,8 +857,9 @@ mixClipLoop:
     movgt r5, #0x7f00
     cmn r5, #0x7f00
     movlt r5, #0x8100
-    strh r5, [r3], #2
-    sub r3, r3, #MIXBUFSIZE * 4
+    
+	ldr r7, =( 2 - (MIXBUFSIZE * 4))
+	strh r5, [r3], r7
 
     subs r0, r0, #1
     bne mixClipLoop

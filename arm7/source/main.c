@@ -18,18 +18,10 @@ void bootfile(){
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
 uint16 *playBuffer;
 volatile int soundCursor;
-int apuMixPosition;
-int pseudoCnt;
-int frame = 0;
-int scanlineCount = 0;
-bool paused = true;
+bool paused = false;
 bool SPC_disable = true;
-bool SPC_freedom = false;
-
-void SetupSound() {
+void SetupSoundSPC() {
     soundCursor = 0;
-	apuMixPosition = 0;
-
 	SoundPowerON(127);		//volume
 
     TIMERXDATA(1) = TIMER_FREQ(MIXRATE);
@@ -51,7 +43,7 @@ void SetupSound() {
 	irqEnable(IRQ_TIMER2);
 }
  
-void StopSound() {
+void StopSoundSPC() {
     powerOFF(POWER_SOUND);
     REG_SOUNDCNT = 0;
     TIMERXCNT(1) = 0;
@@ -62,6 +54,10 @@ void StopSound() {
 }
 
 void LoadSpc(const uint8 *spc) {
+    int i=0;
+    ApuReset();
+    DspReset();
+
 // 0 - A, 1 - X, 2 - Y, 3 - RAMBASE, 4 - DP, 5 - PC (Adjusted into rambase)
 // 6 - Cycles (bit 0 - C, bit 1 - v, bit 2 - h, bits 3+ cycles left)
 // 7 - Optable
@@ -73,49 +69,14 @@ void LoadSpc(const uint8 *spc) {
     SetStateFromRawPSW(APU_STATE, spc[0x2A]);
     APU_SP = 0x100 | spc[0x2B]; // SP
     APU_STATE[5] = APU_STATE[3] + (spc[0x25] | (spc[0x26] << 8)); // PC    
-
-#if defined (APU_MEM_IN_VRAM) || defined (APU_MEM_IN_RAM) 
-    //for (int i=0; i<=0xffff; i++) APU_MEM[i] = spc[0x100 + i];
-    memcpy(APU_MEM, spc+0x100, 65536);
-#endif    
-    /*for (int i=0; i<=0x7f; i++) {
+    for (i=0; i<=0xffff; i++) APU_MEM[i] = spc[0x100 + i];
+    for (i=0; i<=0x7f; i++) {
         DSP_MEM[i] = spc[0x10100 + i];
-    }*/
-    //for (int i=0; i<=0x3f; i++) APU_EXTRA_MEM[i] = spc[0x101c0 + i];
-    memcpy(DSP_MEM, spc+0x10100, 0x80);
-    memcpy(APU_EXTRA_MEM, spc+0x101c0, 0x40);   
-
-    ApuPrepareStateAfterReload();    
-    DspPrepareStateAfterReload();    
-}
-
-void SaveSpc(uint8 *spc) {
-// 0 - A, 1 - X, 2 - Y, 3 - RAMBASE, 4 - DP, 5 - PC (Adjusted into rambase)
-// 6 - Cycles (bit 0 - C, bit 1 - v, bit 2 - h, bits 3+ cycles left)
-// 7 - Optable
-// 8 - NZ
-    uint32 savePC;
-
-    savePC =  APU_STATE[5] - APU_STATE[3];
-    spc[0x25] = savePC & 0xFF;    
-    spc[0x26] = (savePC >> 8) & 0xFF;
-    spc[0x27] = APU_STATE[0] >> 24; // A
-    spc[0x28] = APU_STATE[1] >> 24; // X
-    spc[0x29] = APU_STATE[2] >> 24; // Y
-    spc[0x2A] = MakeRawPSWFromState(APU_STATE);
-    spc[0x2B] = APU_SP & 0xFF; // SP
-
-#if defined (APU_MEM_IN_VRAM) || defined (APU_MEM_IN_RAM)
-    //for (int i=0; i<=0xffff; i++) spc[0x100 + i] = APU_MEM[i];
-    memcpy(spc+0x100, APU_MEM, 65536);
-#endif    
-/*    for (int i=0; i<=0x7f; i++) {
-        spc[0x10100 + i] = DSP_MEM[i];
     }
-    for (int i=0; i<=0x3f; i++) 
-    	spc[0x101c0 + i] = APU_EXTRA_MEM[i];*/
-    memcpy(spc+0x10100, DSP_MEM, 0x80);
-    memcpy(spc+0x101c0, APU_EXTRA_MEM, 0x40);       	
+    for (i=0; i<=0x3f; i++) APU_EXTRA_MEM[i] = spc[0x101c0 + i];
+
+    ApuPrepareStateAfterReload();
+    DspPrepareStateAfterReload();
 }
 
 //---------------------------------------------------------------------------------
@@ -141,38 +102,19 @@ int main(int _argc, char **_argv) {
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 	
-	SendFIFOWords(0xFF, 0xFF); 
+	update_spc_ports();
+	int i = 0; 
+    for (i = 0; i < MIXBUFSIZE * 4; i++) {
+        playBuffer[i] = 0;
+    }
+	
+	SendFIFOWords(0xFF, 0xFF);
     
     struct sIPCSharedTGDSSpecific* TGDSUSERIPC = SNEMULDS_IPC;
     while (1) {
 		if(SPC_disable == false){
-            int cyclesToExecute, samplesToMix;
-            if (REG_DISPSTAT & DISP_HBLANK_IRQ){
-                //if (scanlineCount >= 66) {
-				//	scanlineCount -= 66;
-				//	samplesToMix = 17;
-				//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 3);
-				//} else {
-				//	samplesToMix = 16;
-				//	cyclesToExecute = spcCyclesPerSec / (MIXRATE / 2);
-				//}
-				cyclesToExecute = spcCyclesPerSec / (MIXRATE / 2);
-				ApuExecute(cyclesToExecute);
-            }
-			if (scanlineCount >= 16) {
-				scanlineCount -= 16;		
-				samplesToMix = 32;
-				if (apuMixPosition + samplesToMix > MIXBUFSIZE * 2) {
-					int tmp = (apuMixPosition + samplesToMix) - (MIXBUFSIZE * 2);
-					if (tmp != samplesToMix) {
-						DspMixSamplesStereo(samplesToMix - tmp, &playBuffer[apuMixPosition]);
-					}
-					samplesToMix = tmp;
-					apuMixPosition = 0;
-				}
-				DspMixSamplesStereo(samplesToMix, &playBuffer[apuMixPosition]);
-				apuMixPosition += samplesToMix;								
-			}			
+            int cyclesToExecute = spcCyclesPerSec / (MIXRATE / 8); 
+			ApuExecute(cyclesToExecute);
         }
 		else{
 			TGDSUSERIPC->APU_ADDR_ANS = (uint32)0xFF00FF00;
@@ -182,6 +124,8 @@ int main(int _argc, char **_argv) {
    
 	return 0;
 }
+
+//////////////////////////////////////////////////////////////////////
 
 //Custom Button Mapping Handler implementation: IRQ Driven
 void CustomInputMappingHandler(uint32 readKeys){

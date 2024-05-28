@@ -10,11 +10,18 @@
 #include "ipcfifoTGDSUser.h"
 #include "apu_shared.h"
 
+void unimpl(uint8 opcode, uint16 startPC) {
+//    SendArm9Command(0x80000000 + opcode);
+    while(1){}
+}
+void debugTmp(uint32 b1, uint32 b2, uint32 b3) {
+//    SendArm9Command(0x80000000 + b1 + b2);
+    while(1){}
+}
+
 ////////////////////////////////////////////////////////////////////////////
 // Definitions
 ////////////////////////////////////////////////////////////////////////////
-
-
 
 uint8 iplRom[64] ALIGNED =
 {
@@ -61,67 +68,73 @@ void SetStateFromRawPSW(uint32 state[16], uint8 psw) {
 	APU_STATE[4] = ((psw >> 5) & 1) << 8;
 }
 
-void  ApuReset() {
-    apuSleeping = 0;
+// Memory post read/write functions
+extern uint32 MemWriteDoNothing;
+extern uint32 MemWriteApuControl;
+extern uint32 MemWriteDspAddress;
+extern uint32 MemWriteDspData;
+extern uint32 MemWriteUpperByte;
+extern uint32 MemWriteApuPort;
+extern uint32 MemReadDoNothing;
+extern uint32 MemReadCounter;
+extern uint32 MemReadApuPort;
+extern uint32 MemReadDspData;
 
-    APU_MEM = (uint8*)APU_RAM_ADDRESS;
-	
-	APU_MEM_ZEROPAGEREAD = (uint8*)&MemZeroPageReadTable;
+extern uint32 MemZeroPageReadTable;
+extern uint32 MemZeroPageWriteTable;
+
+void ApuReset() {
+    int i = 0;
+	apuSleeping = 0;
+		
+    // 64k of arm7 iwram
+    APU_MEM = APU_RAM_ADDRESS;
+    APU_MEM_ZEROPAGEREAD = (uint8*)&MemZeroPageReadTable;
     APU_MEM_ZEROPAGEWRITE = (uint8*)&MemZeroPageWriteTable;
 	
-	int i=0;
     for (i = 0; i < 65472; i += 0x40) { 
         memset(APU_MEM+i, 0, 0x20);
         memset(APU_MEM+i+0x20, 0xFF, 0x20);
     }
-	
-	memset(APU_MEM + 0xF0, 0, 0x10);
-	
-    ApuSetShowRom();
-	
-	for (i=0; i<=0x3F; i++) {
+
+	// Init the ROM
+    for (i=0; i<=0x3F; i++) {
         APU_MEM[0xFFC0 + i] = iplRom[i];
         APU_EXTRA_MEM[i] = iplRom[i];
     }
-	
-	for (i=0; i<=0x3F; i++) {
-        APU_MEM[0xFFC0 + i] = iplRom[i];
-        APU_EXTRA_MEM[i] = iplRom[i];
+
+    for (i = 0; i < 0x100; i++) {
+        ((uint32*)APU_MEM_ZEROPAGEREAD)[i] = (uint32)(&MemReadDoNothing);
+        ((uint32*)APU_MEM_ZEROPAGEWRITE)[i + 0x40] = (uint32)(&MemWriteDoNothing);;
     }
-	
-	for (i = 0; i < 0x100; i++) {
-        ((uint32*)APU_MEM_ZEROPAGEREAD)[i] = (uint32)(&MemReadDoNothing);	//byte
-        ((uint32*)APU_MEM_ZEROPAGEWRITE)[i + 0x40] = (uint32)(&MemWriteDoNothing); //byte
-    }
-	
+
     // Set up special read/write zones
     ((uint32*)APU_MEM_ZEROPAGEREAD)[0xf3] = (uint32)(&MemReadDspData);
     ((uint32*)APU_MEM_ZEROPAGEREAD)[0xfd] = (uint32)(&MemReadCounter);
     ((uint32*)APU_MEM_ZEROPAGEREAD)[0xfe] = (uint32)(&MemReadCounter);
-    ((uint32*)APU_MEM_ZEROPAGEREAD)[0xff] = (uint32)(&MemReadCounter);    
+    ((uint32*)APU_MEM_ZEROPAGEREAD)[0xff] = (uint32)(&MemReadCounter);
 
     ((uint32*)APU_MEM_ZEROPAGEWRITE)[0xf1 + 0x40] = (uint32)(&MemWriteApuControl);
     ((uint32*)APU_MEM_ZEROPAGEWRITE)[0xf3 + 0x40] = (uint32)(&MemWriteDspData);
     ((uint32*)APU_MEM_ZEROPAGEWRITE)[0xfa + 0x40] = (uint32)(&MemWriteCounter);
     ((uint32*)APU_MEM_ZEROPAGEWRITE)[0xfb + 0x40] = (uint32)(&MemWriteCounter);
     ((uint32*)APU_MEM_ZEROPAGEWRITE)[0xfc + 0x40] = (uint32)(&MemWriteCounter);
-	
     for (i = 0; i < 4; i++) {
         ((uint32*)APU_MEM_ZEROPAGEREAD)[0xF4 + i] = (uint32)(&MemReadApuPort);
         ((uint32*)APU_MEM_ZEROPAGEWRITE)[0xF4 + i + 0x40]= (uint32)(&MemWriteApuPort);
-        SNEMULDS_IPC->PORT_SNES_TO_SPC[i] = 0;
-        SNEMULDS_IPC->PORT_SPC_TO_SNES[i] = 0;
+        ((volatile u8*)ADDRPORT_SNES_TO_SPC)[i] = 0;
+        ((volatile u8*)ADDRPORT_SPC_TO_SNES)[i] = 0;
     }
-	
+
     for (i = 0; i < 0x40; i++) {
         ((uint32*)APU_MEM_ZEROPAGEWRITE)[i] = (uint32)(&MemWriteUpperByte);
     }
-	
+
 // 0 - A, 1 - X, 2 - Y, 3 - RAMBASE, 4 - DP, 5 - PC (Adjusted into rambase)
 // 6 - Cycles (bit 0 - C, bit 1 - v, bit 2 - h, bits 3+ cycles left)
 // 7 - Optable
 // 8 - NZ
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&SNEMULDS_IPC->APU2);
+
 	// Set up the initial APU state
 	APU_STATE[0] = APU_STATE[1] = APU_STATE[2] = 0;
     APU_STATE[3] = ((uint32)&(APU_MEM[0]));
@@ -132,7 +145,5 @@ void  ApuReset() {
     APU_STATE[8] = 0;
     APU_SP = 0x1FF;
 
-	SNEMULDS_IPC->APU2.T0Count = 0;
-	SNEMULDS_IPC->APU2.T1Count = 0;
-	SNEMULDS_IPC->APU2.T2Count = 0;
+	ApuPrepareStateAfterReload();
 }

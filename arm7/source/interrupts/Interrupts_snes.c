@@ -42,32 +42,28 @@ void Timer1handlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void Timer2handlerUser(){
-	#if PROFILING_ON
-		long long begin = TIMER2_DATA + ((long long)TIMER3_DATA << 19);
-	#endif
-    soundCursor = MIXBUFSIZE - soundCursor;
+	if(SPC_disable == false){
+		soundCursor = MIXBUFSIZE - soundCursor;
+		// Left channel
+		int channel = soundCursor == 0 ? 0 : 1;
+		SCHANNEL_TIMER(channel) = SOUND_FREQ(MIXRATE);
+		SCHANNEL_SOURCE(channel) = (uint32)&(playBuffer[MIXBUFSIZE - soundCursor]);
+		SCHANNEL_LENGTH(channel) = (MIXBUFSIZE * 2) >> 2;
+		SCHANNEL_REPEAT_POINT(channel) = 0;
+		SCHANNEL_CR(channel) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_16BIT;
 
-    // Left channel
-    int channel = soundCursor == 0 ? 0 : 1;
-    SCHANNEL_TIMER(channel) = SOUND_FREQ(MIXRATE);
-    SCHANNEL_SOURCE(channel) = (uint32)&(playBuffer[MIXBUFSIZE - soundCursor]);
-    SCHANNEL_LENGTH(channel) = (MIXBUFSIZE * 2) >> 2;
-    SCHANNEL_REPEAT_POINT(channel) = 0;
-    SCHANNEL_CR(channel) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_FORMAT_16BIT;
+		// Right channel
+		channel = soundCursor == 0 ? 2 : 3;
+		SCHANNEL_TIMER(channel) = SOUND_FREQ(MIXRATE);
+		SCHANNEL_SOURCE(channel) = (uint32)&(playBuffer[(MIXBUFSIZE - soundCursor) + (MIXBUFSIZE * 2)]);
+		SCHANNEL_LENGTH(channel) = (MIXBUFSIZE * 2) >> 2;
+		SCHANNEL_REPEAT_POINT(channel) = 0;
+		SCHANNEL_CR(channel) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x7F) | SOUND_16BIT;
 
-    // Right channel
-    channel = soundCursor == 0 ? 2 : 3;
-    SCHANNEL_TIMER(channel) = SOUND_FREQ(MIXRATE);
-    SCHANNEL_SOURCE(channel) = (uint32)&(playBuffer[(MIXBUFSIZE - soundCursor) + (MIXBUFSIZE * 2)]);
-    SCHANNEL_LENGTH(channel) = (MIXBUFSIZE * 2) >> 2;
-    SCHANNEL_REPEAT_POINT(channel) = 0;
-    SCHANNEL_CR(channel) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x7F) | SOUND_FORMAT_16BIT;
-
-	#if PROFILING_ON
-		long long end = TIMER2_DATA + ((long long)TIMER3_DATA << 19);
-		SPC_IPC->cpuTime += end - begin;
-	//    SPC_IPC->dspTime += (TIMER2_DATA + ((long long)TIMER3_DATA << 19)) - end;
-	#endif
+		DspMixSamplesStereo(MIXBUFSIZE, &playBuffer[soundCursor]);
+		const int cyclesToExecute = spcCyclesPerSec / (MIXRATE / 18); //Coto: New timer code will synchronize to NDS timer ticks. Will require several patches per game to adjust the correct samplerate for each one.
+		ApuUpdateTimers(cyclesToExecute);
+	}	
 }
 
 #ifdef ARM9
@@ -81,36 +77,6 @@ __attribute__((section(".itcm")))
 #endif
 void HblankUser(){
 	
-	// Block execution until the hblank processing on ARM9
-	if (!SPC_disable)
-	{
-		struct s_apu2 *APU2 = (struct s_apu2 *)(&SNEMULDS_IPC->APU2);
-		int VCount = REG_VCOUNT;        
-		scanlineCount++;
-		uint32 T0 = APU_MEM[APU_TIMER0]?APU_MEM[APU_TIMER0]:0x100;
-		uint32 T1 = APU_MEM[APU_TIMER1]?APU_MEM[APU_TIMER1]:0x100;
-		uint32 T2 = APU_MEM[APU_TIMER2]?APU_MEM[APU_TIMER2]:0x100;
-		
-		if ((VCount & 1) == 1) {        		      	
-			if (++APU2->T0Count >= T0) {
-				APU2->T0Count -= T0;
-				APU_MEM[APU_COUNTER0]++;
-				APU_MEM[APU_COUNTER0] &= 0xf;
-			}
-			if (++APU2->T1Count >= T1) {
-				APU2->T1Count -= T1;
-				APU_MEM[APU_COUNTER1]++;
-				APU_MEM[APU_COUNTER1] &= 0xf;
-			}
-		}
-		APU2->T2Count += 4;
-		if (APU2->T2Count >= T2) {
-			APU2->T2Count -= T2;
-			APU_MEM[APU_COUNTER2]++;
-			APU_MEM[APU_COUNTER2] &= 0xf;
-		}
-		
-	}
 }
 
 #ifdef ARM9
