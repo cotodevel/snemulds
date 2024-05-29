@@ -61,7 +61,6 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		//ARM7 command handler
 		#ifdef ARM7
 		case (SNEMULDS_SETUP_ARM7):{
-			playBuffer = (uint16*)0x6000000;
 			int i   = 0;
 			for (i = 0; i < MIXBUFSIZE; i++) {
 				playBuffer[i] = 0;

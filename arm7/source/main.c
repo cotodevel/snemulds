@@ -16,7 +16,7 @@ void bootfile(){
 }
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
-uint16 *playBuffer;
+uint16 playBuffer[MIXBUFSIZE * 2 * 2];
 volatile int soundCursor;
 bool paused = false;
 bool SPC_disable = true;
