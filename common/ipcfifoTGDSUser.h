@@ -28,38 +28,7 @@ USA
 #include "ipcfifoTGDS.h"
 #include "apu_shared.h"
 
-//Coto: If your snemulDS build has no sound, the culprit is a mis-aligned struct s_apu2 + struct sIPCSharedTGDSSpecific, so fill in there int stubX (X = number) until it works.
-struct s_apu2
-{
-	//skipper is a hack depending on port access, will redirect to other hardware
-	int	    skipper_cnt1;
-	int	    skipper_cnt2;
-	int	    skipper_cnt3;
-	int	    skipper_cnt4;
-	
-	/* Timers */
-	u32 T0Count;
-	u32 T1Count;
-	u32 T2Count;
-	
-	u32 T0Target;
-    u32 T1Target;
-    u32 T2Target;
-    
-	u32 T0Cycles;
-    u32 T1Cycles;
-	u32 T2Cycles;
-    
-	u8 T0Enabled;
-    u8 T1Enabled;
-    u8 T2Enabled;
-}__attribute__((packed));
-
 struct sIPCSharedTGDSSpecific{
-	uint32 * IPC_ADDR;
-    uint8 * ROM;   		//pointer to ROM page
-    int rom_size;   	//rom total size
-	struct s_apu2 APU2;
 	uint8	PORT_SNES_TO_SPC[4];
 	uint8	PORT_SPC_TO_SNES[4];
 	uint32	APU_PROGRAM_COUNTER;	//0x27E0000	@APU PC
@@ -87,6 +56,8 @@ struct sIPCSharedTGDSSpecific{
 //SNES_ROM_ADDRESS ((uchar *)(0x20C0000)) + ROM_MAX_SIZE_TWLMODE = 0x026CC000 < 0x27FF000 (TWL: 16MB IPC shared)
 
 #define SNEMULDS_IPC ((struct sIPCSharedTGDSSpecific*)( ((int)0x2FFF000) - (80*16)))
+
+#define ALIGNED __attribute__ ((aligned(4)))
 
 #ifdef __cplusplus
 extern "C" {

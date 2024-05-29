@@ -4,43 +4,6 @@
 
 #include "apudef.h"
 
-/*
-.GLOBAL BreakR11
-BreakR11:
-	mov r11, r11
-	mov pc, lr
-*/	
-
-/*
-.GLOBAL IntrHandlerAsm
-IntrHandlerAsm:
-    mov r0, #0x4000000
-    ldr r1, [r0,#0x214] @ IF
-
-    tst r1, #1 << 18 @ tst for FIFO_NOT_EMPTY
-    beq notFifo
-
-	@ Read once from the FIFO
-    mov r1, #0x4100000
-    ldr r0, [r1]
-
-    stmfd sp!,{lr}
-    bl HandleFifo
-    
-finished:  
-    mov r0, #0x4000000
-
-    @ Clear IF
-    mov r1, #1 << 18
-    str r1, [r0,#0x214]
-
-    ldmfd sp!,{lr}
-    bx lr
-
-notFifo:
-    ldr r0, =InterruptHandler
-    bx r0
-*/
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @ Special memory write functions
@@ -99,156 +62,58 @@ MemWriteUpperByte:
 	bx r2
 	ldmfd sp!, {r0-r3,r12,lr}
 	bx lr
-
+	
 .GLOBAL     MemWriteApuPort
 MemWriteApuPort:
-	stmfd sp!, {r0-r2}	
-	
-    @ldr r1, =0x027FFFFC	@PORT_SPC_TO_SNES
+	stmfd sp!, {r0-r2}
     ldr r1,=ADDRPORT_SPC_TO_SNES
 	ldr r1,[r1]
-	sub r2, r12, #0xF4
+    sub r2, r12, #0xF4
     strb r0, [r1, r2]
-    
-    @ldr	r0, =0x27E0000				@APU_PROGRAM_COUNTER
-    ldr r0,=ADDR_APU_PROGRAM_COUNTER
-	ldr r0,[r0]
-	str	APU_PC, [r0]    
 	ldmfd sp!, {r0-r2}
     bx lr
 
 .GLOBAL MemWriteCounter
 MemWriteCounter:
 	stmfd sp!, {r1-r2, lr}
-	
 	strb r0, [APU_RAMBASE, r12]
-	
-/*	@ archeide: update T0 T1 T2 from CPU's APU2
-	ldr r1, =0x27ED000		@APU.T0
-	sub r2, r12, #0xFA
-	add r1, r1, r2, lsl #2
-	@ Update the target
-	mov r2, r0
-	cmp r2, #0
-	moveq r2, #0x100
-	str r2, [r1]*/
 	ldmfd sp!, {r1-r2, lr}
     bx lr
-
 .EXTERN		ApuReadCounter
 
 .GLOBAL		MemReadDoNothing
 MemReadDoNothing:
     bx lr
 
-/*.GLOBAL		MemReadCounter
-MemReadCounter:
-	stmfd sp!, {r1-r2} @ is it useful ?
-
-	@ archeide: get APU2->CNT0
-	@ldr		r1, =0x27ED018	
-	ldr r1,=APU_CNT0_ASM_ADDR
-	ldr r1,[r1]
-	sub		r2, r12, #0xFD
-	add 	r1, r1, r2, lsl #4	
-
-	ldr		r0, [r1]
-	
-	@ APU2->CNT0 = 0
-	mov		r2, #0 
-	str		r2, [r1]
-	
-	ldmfd sp!, {r1-r2}
-	bx lr
-*/
-
 .GLOBAL		MemReadCounter
 MemReadCounter:
-	stmfd sp!, {r1} @ is it useful ?
+    stmfd sp!, {r0-r3,lr}
 
-.ifeq CheckIntrLoop-1
-	@ Set Loop detection address
-    ldr	r1, =APU_PC_save
-    ldr	r1, [r1]
-    ldr	r0, =APU_WaitAddress
-    str r1, [r0]  
-.endif
+    stmfd sp!, {r12}
 
-	@ archeide: get APU2->CNT0
-	ldrb	r0, [APU_RAMBASE, r12]	
-	
-	@ APU2->CNT0 = 0
-	mov		r1, #0 
-	strb	r1, [APU_RAMBASE, r12]
-	
-	ldmfd sp!, {r1}
-	bx lr
+    @ r0 = the memory value
+    mov r0, r12
+    ldr r1, =ApuReadCounter
+	mov lr, pc
+    bx r1
+    add APU_CYCLES, APU_CYCLES, r0, lsl #CYCLE_SHIFT
 
-/*
-.GLOBAL		MemReadCounterFE
-MemReadCounterFE:
-	stmfd sp!, {r1-r2} @ is it useful ?
+    ldmfd sp!, {r12}
 
-	@ archeide: get APU2->CNT1
-	@ldr		r1, =0x27ED01C					@APU2.CNT1
-	ldr r1,=APU_CNT1_ASM_ADDR
-	ldr r1,[r1]
-	ldrb	r0, [r1]
-	
-	@ APU2->CNT1 = 0
-	mov		r2, #0 
-	str		r2, [r1]
-	
-	ldmfd sp!, {r1-r2}
-	bx lr
+    @ Reset the counter
+    mov r2, #0
+    strb r2, [APU_RAMBASE, r12]
 
-.GLOBAL		MemReadCounterFF
-MemReadCounterFF:
-	stmfd sp!, {r1-r2} @ is it useful ?
-
-	@ archeide: get APU2->CNT2
-	@ldr		r1, =0x27ED020			@APU2.CNT2
-	ldr r1,=APU_CNT2_ASM_ADDR
-	ldr r1,[r1]
-	ldrb	r0, [r1]
-	
-	@ APU2->CNT2 = 0
-	mov		r2, #0 
-	str		r2, [r1]
-	
-	ldmfd sp!, {r1-r2}
-	bx lr
-*/
-
+	ldmfd sp!, {r0-r3,lr}
+    bx lr
 
 .GLOBAL     MemReadApuPort
 MemReadApuPort:
 	stmfd sp!, {r1-r3}
-	
-@Doesn't read APU port while CPU is not running <-- SNES CPU idle == APU Idle goes on its own code
-/*0:
-	@ldr	r1, =0x027FFFE8		@SNEMUL_BLK: spinlock here: if 1
-	ldr r1,=ADDR_SNEMUL_BLK
+    ldr r1,=ADDRPORT_SNES_TO_SPC
 	ldr r1,[r1]
-	
-	ldr	r1, [r1]
-	cmp	r1,	#1
-	beq	0b*/
-	
-
-    @ldr	r0, =0x27E0000    	@APU PC
-    ldr r0,=ADDR_APU_PROGRAM_COUNTER
-	ldr r0,[r0]
-	str APU_PC, [r0]
-
     sub r2, r12, #0xF4
-	
-    @ldr r1, =0x027FFFF8    @PORT_SNES_TO_SPC
-	ldr r1,=ADDRPORT_SNES_TO_SPC
-	ldr r1,[r1]
     ldrb r0, [r1, r2]       @ Modifies the value that was read from RAM
-    
-	
     @ldr r1, =0x027FFFE8		@SNEMUL_BLK
     ldr r1,=ADDR_SNEMUL_BLK
 	ldr r1,[r1]
@@ -268,7 +133,6 @@ MemReadDspData:
 	ldrb r1, [APU_RAMBASE, r12]
 
 	ldr	r2, =DSP_MEM
-	and r1, r1, #0x7f
 	ldrb r0, [r2, r1]       @ Modifies the value that was read from RAM
 
 	ldmfd sp!, {r1-r2, r12}
