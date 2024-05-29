@@ -120,7 +120,7 @@ void ApuUpdateTimer(int timer, int cyclesRun) {
     bool overflow = false;
     if (timers[timer].count > timers[timer].target) overflow = true;
 
-    while (timers[timer].count > timers[timer].target) {
+    while ( (int)timers[timer].count > (int)timers[timer].target) {
         timers[timer].count -= timers[timer].target;
         APU_MEM[APU_COUNTER0 + timer] = (APU_MEM[APU_COUNTER0 + timer] + 1) & 0xf;
     }

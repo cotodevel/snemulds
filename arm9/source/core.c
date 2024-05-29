@@ -27,6 +27,7 @@ GNU General Public License for more details.
 #include "apu_shared.h"
 #include "snemulds_memmap.h"
 #include "ppu.h"
+#include "nds_cp15_misc.h"
 
 #ifdef WIN32
 #include <allegro.h>
@@ -109,33 +110,6 @@ int get_joypad()
 	int res = 0;
 	scanKeys();
 	u32 keys = keysHeld();
-
-#if 0
-		if( (keys & KEY_L))
-		{
-			if ((keys & KEY_UP))
-			{
-				APU_MAX++;
-			}
-			if ((keys & KEY_DOWN))
-			{
-				APU_MAX--;
-				if (APU_MAX < 100)
-					APU_MAX = 100;
-			}  
-			if ((keys & KEY_LEFT))
-			{
-				APU_printLog();				
-			}
-			if ((keys & KEY_RIGHT))
-			{
-				struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
-				//TGDSIPC->PORT_SNES_TO_SPC[1] = 0x44; 		
-			}
-			
-		}	
-#endif	
-	
 	if ((keys & KEY_L) && ( keys & KEY_R ) && ( keys & KEY_START))
 	{		
 		if (keys & KEY_LEFT)
@@ -898,6 +872,7 @@ uint32	R213F(uint32 addr)
 __attribute__((section(".itcm")))      
 uint32	R2140(uint32 addr)
 {
+	coherent_user_range_by_size((uint32)&SNEMULDS_IPC->PORT_SPC_TO_SNES, (int)4); //make coherent read
 	return SNEMULDS_IPC->PORT_SPC_TO_SNES[0];      
 }
 
@@ -906,16 +881,19 @@ static int oldapupc;
 __attribute__((section(".itcm")))      
 uint32	R2141(uint32 addr)
 {
+	coherent_user_range_by_size((uint32)&SNEMULDS_IPC->PORT_SPC_TO_SNES, (int)4); //make coherent read
 	return SNEMULDS_IPC->PORT_SPC_TO_SNES[1];       
 }
 __attribute__((section(".itcm")))      
 uint32	R2142(uint32 addr)
 {
+	coherent_user_range_by_size((uint32)&SNEMULDS_IPC->PORT_SPC_TO_SNES, (int)4); //make coherent read
     return SNEMULDS_IPC->PORT_SPC_TO_SNES[2];      
 }
 __attribute__((section(".itcm")))
 uint32	R2143(uint32 addr)
-{     
+{
+	coherent_user_range_by_size((uint32)&SNEMULDS_IPC->PORT_SPC_TO_SNES, (int)4); //make coherent read
 	return SNEMULDS_IPC->PORT_SPC_TO_SNES[3];      
 }
 __attribute__((section(".itcm")))
@@ -1411,15 +1389,22 @@ void	W2140(uint32 addr, uint32 value)
     		pseudoSleep(SYNC_TIME);
 		if (CFG.SoundPortSync & 1)
 		{
+			coherent_user_range_by_size((uint32)ADDR_SNEMUL_BLK, (int)4); //make coherent Break with Lock SNES CPU <-> APU Port
 			if (TGDSIPCUSER->APU_ADDR_BLKP[0])
 			{
-				while (TGDSIPCUSER->APU_ADDR_BLKP[0]);
+				while (TGDSIPCUSER->APU_ADDR_BLKP[0]){
+					coherent_user_range_by_size((uint32)ADDR_SNEMUL_BLK, (int)4); //make coherent Break with Lock SNES CPU <-> APU Port
+				}
 			}
-		}    	
+		}
+		
     	TGDSIPCUSER->PORT_SNES_TO_SPC[0] = value;
-    	
-		if ((CFG.SoundPortSync & 1) && value) 
-			TGDSIPCUSER->APU_ADDR_BLKP[0] = 1;    	
+    	coherent_user_range_by_size((uint32)&TGDSIPCUSER->PORT_SNES_TO_SPC, (int)4); //make coherent write
+		
+		if ((CFG.SoundPortSync & 1) && value){
+			TGDSIPCUSER->APU_ADDR_BLKP[0] = 1;
+			coherent_user_range_by_size((uint32)ADDR_SNEMUL_BLK, (int)4); //make coherent Break with Lock SNES CPU <-> APU Port
+		}
     }
     else
         PPU_PORT[0x40] = value; 
@@ -1435,27 +1420,22 @@ void	W2141(uint32 addr, uint32 value)
     		pseudoSleep(SYNC_TIME);
 		if (CFG.SoundPortSync & 2)
 		{
+			coherent_user_range_by_size((uint32)ADDR_SNEMUL_BLK, (int)4); //make coherent Break with Lock SNES CPU <-> APU Port
 			if (TGDSIPCUSER->APU_ADDR_BLKP[1])
 			{
-				while (TGDSIPCUSER->APU_ADDR_BLKP[1]);
+				while (TGDSIPCUSER->APU_ADDR_BLKP[1]){
+					coherent_user_range_by_size((uint32)ADDR_SNEMUL_BLK, (int)4); //make coherent Break with Lock SNES CPU <-> APU Port
+				}
 			}
 		}
-/*				    	
-#ifdef USE_APU_PORT_BLK    	
-		int newapupc = (*(uint32*)(0x27E0000)) & 0xFFFF;
-		if (value == 0x55 && (newapupc & 0xf000) == 0x1000)
-			pseudoSleep(2000);	
-		if (TGDSIPCUSER->APU_ADDR_BLKP[1])
-		{
-			while (TGDSIPCUSER->APU_ADDR_BLKP[1]);
-			pseudoSleep(2000);
-		}
-#endif
-*/
-    	TGDSIPCUSER->PORT_SNES_TO_SPC[1] = value;
     	
-		if ((CFG.SoundPortSync & 2) && value) 
-			TGDSIPCUSER->APU_ADDR_BLKP[1] = 1;			    	
+		TGDSIPCUSER->PORT_SNES_TO_SPC[1] = value;
+    	coherent_user_range_by_size((uint32)&TGDSIPCUSER->PORT_SNES_TO_SPC, (int)4); //make coherent write
+		
+		if ((CFG.SoundPortSync & 2) && value){
+			TGDSIPCUSER->APU_ADDR_BLKP[1] = 1;
+			coherent_user_range_by_size((uint32)ADDR_SNEMUL_BLK, (int)4); //make coherent Break with Lock SNES CPU <-> APU Port
+		}
     }
     else
         PPU_PORT[0x41] = value;
@@ -1471,16 +1451,22 @@ void	W2142(uint32 addr, uint32 value)
     		pseudoSleep(SYNC_TIME);    	
 		if (CFG.SoundPortSync & 4)
 		{
+			coherent_user_range_by_size((uint32)ADDR_SNEMUL_BLK, (int)4); //make coherent Break with Lock SNES CPU <-> APU Port
 			if (TGDSIPCUSER->APU_ADDR_BLKP[2])
 			{
-				while (TGDSIPCUSER->APU_ADDR_BLKP[2]);
+				while (TGDSIPCUSER->APU_ADDR_BLKP[2]){
+					coherent_user_range_by_size((uint32)ADDR_SNEMUL_BLK, (int)4); //make coherent Break with Lock SNES CPU <-> APU Port
+				}
 			}
 		}
 
     	TGDSIPCUSER->PORT_SNES_TO_SPC[2] = value;
-    	
-		if ((CFG.SoundPortSync & 4) && value) 
-			TGDSIPCUSER->APU_ADDR_BLKP[2] = 1;			    	
+    	coherent_user_range_by_size((uint32)&TGDSIPCUSER->PORT_SNES_TO_SPC, (int)4); //make coherent write
+		
+		if ((CFG.SoundPortSync & 4) && value){
+			TGDSIPCUSER->APU_ADDR_BLKP[2] = 1;
+			coherent_user_range_by_size((uint32)ADDR_SNEMUL_BLK, (int)4); //make coherent Break with Lock SNES CPU <-> APU Port
+		}
     }
     else
         PPU_PORT[0x42] = value;    	     
@@ -1495,17 +1481,23 @@ void	W2143(uint32 addr, uint32 value)
     	if (CFG.SoundPortSync & 0x80)
     		pseudoSleep(SYNC_TIME);    	
 		if (CFG.SoundPortSync & 8)
-		{	
+		{
+			coherent_user_range_by_size((uint32)ADDR_SNEMUL_BLK, (int)4); //make coherent Break with Lock SNES CPU <-> APU Port
 			if (TGDSIPCUSER->APU_ADDR_BLKP[3])
 			{
-				while (TGDSIPCUSER->APU_ADDR_BLKP[3]);
+				while (TGDSIPCUSER->APU_ADDR_BLKP[3]){
+					coherent_user_range_by_size((uint32)ADDR_SNEMUL_BLK, (int)4); //make coherent Break with Lock SNES CPU <-> APU Port
+				}
 			}
 		}
 
     	TGDSIPCUSER->PORT_SNES_TO_SPC[3] = value;
-   	
-		if ((CFG.SoundPortSync & 8) && value) 
-			TGDSIPCUSER->APU_ADDR_BLKP[3] = 1;			    	
+		coherent_user_range_by_size((uint32)&TGDSIPCUSER->PORT_SNES_TO_SPC, (int)4); //make coherent write
+		
+		if ((CFG.SoundPortSync & 8) && value){
+			TGDSIPCUSER->APU_ADDR_BLKP[3] = 1;
+			coherent_user_range_by_size((uint32)ADDR_SNEMUL_BLK, (int)4); //make coherent Break with Lock SNES CPU <-> APU Port
+		}
     }
     else
         PPU_PORT[0x43] = value; 

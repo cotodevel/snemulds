@@ -113,8 +113,8 @@ int main(int _argc, char **_argv) {
     struct sIPCSharedTGDSSpecific* TGDSUSERIPC = SNEMULDS_IPC;
     while (1) {
 		if(SPC_disable == false){
-            int cyclesToExecute = spcCyclesPerSec / (MIXRATE / 8); 
-			ApuExecute(cyclesToExecute);
+            int cyclesToExecute = spcCyclesPerSec / (MIXRATE / 4); 
+			ApuExecute(cyclesToExecute * 2);
         }
 		else{
 			TGDSUSERIPC->APU_ADDR_ANS = (uint32)0xFF00FF00;
