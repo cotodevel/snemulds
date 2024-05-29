@@ -18,7 +18,7 @@ a new SNES opcode executes. For example (SnezziDS ARM Core) SNES LDB / STB Snes 
 added page offset, do either a load or store, then proceed to next SNES opcode.
 
 
-//////////////////////////////////////////////////////How CX4 talks to SnemulDS//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////How DSP1 talks to SnemulDS//////////////////////////////////////////////////////
 DSP1 RAM, IO (including file registers) is wired through the following methods: 
 
 (DSP1 <-> SNES IO map) 

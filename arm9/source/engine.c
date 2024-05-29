@@ -287,7 +287,6 @@ int go(){
 			GFX.v_blank = 0;
 			return 0;
 		}
-		struct s_apu2 *APU2 = (struct s_apu2 *)(&SNEMULDS_IPC->APU2);
 		CPU.HCycles = SNES.UsedCycles = 137;	
 		CPU_goto(CPU.HCycles);
 		if(CPU.IsBreak){

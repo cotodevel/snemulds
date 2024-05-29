@@ -25,11 +25,10 @@ USA
 
 #ifdef ARM7
 #include <string.h>
-#include "pocketspc.h"
 #include "apu.h"
 #include "dsp.h"
 #include "main.h"
-#include "mixrate.h"
+#include "spcdefs.h"
 #include "spifwTGDS.h"
 #include "apu_shared.h"
 
@@ -64,16 +63,18 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		case (SNEMULDS_SETUP_ARM7):{
 			playBuffer = (uint16*)0x6000000;
 			int i   = 0;
-			for (i = 0; i < MIXBUFSIZE * 4; i++) {
+			for (i = 0; i < MIXBUFSIZE; i++) {
 				playBuffer[i] = 0;
 			}
-			update_spc_ports(); //ARM7: APU Ports from SnemulDS properly binded with Assembly APU Core
+			update_spc_ports(); //APU Ports from SnemulDS properly binded with Assembly APU Core
 			ApuReset();
 			DspReset();
-			SetupSound();
+			SetupSoundSPC();
 			
 			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
+			u32 apuFix7 = getValueSafe(&fifomsg[11]); //u32 APUFixes 
+			*(u32*)0x038000c0 = apuFix7;
 			setValueSafe(&fifomsg[10], (uint32)0);
 		}
 		break;
@@ -81,26 +82,25 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		case SNEMULDS_APUCMD_RESET: //case 0x00000001:
 		{
 			// Reset
-			StopSound();
+			StopSoundSPC();
 
-			memset(playBuffer, 0, MIXBUFSIZE * 8);
+			memset(playBuffer, 0, MIXBUFSIZE);
 
 			SNEMULDS_IPC->APU_ADDR_CNT = 0; 
 			ApuReset();
 			DspReset();
 
-			SetupSound();
+			SetupSoundSPC();
 			paused = false;
 			SPC_disable = false;
-			SPC_freedom = false;
 		}
 		break;
 		case SNEMULDS_APUCMD_PAUSE:{ //case 0x00000002:{
 			// Pause/unpause
 			if (!paused) {
-				StopSound();
+				StopSoundSPC();
 			} else {
-				SetupSound();
+				SetupSoundSPC();
 			}
 			if (SPC_disable)
 				SPC_disable = false;        
@@ -109,12 +109,12 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		break;
 		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC
 			//Reset APU
-			StopSound();
-			memset(playBuffer, 0, MIXBUFSIZE * 8);
+			StopSoundSPC();
+			memset(playBuffer, 0, MIXBUFSIZE);
 			SNEMULDS_IPC->APU_ADDR_CNT = 0; 
 			ApuReset();
 			DspReset();
-			SetupSound();
+			SetupSoundSPC();
 			
 			//Load APU payload
 			LoadSpc((const u8*)cmd2);
@@ -124,7 +124,6 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			
 			paused = false;
 			SPC_disable = false;
-			SPC_freedom = false;
 		}
 		break;
 			
@@ -135,12 +134,12 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		break;        
 		
 		case SNEMULDS_APUCMD_CLRMIXERBUF:{ //case 0x00000005:{ // CLEAR MIXER BUFFER 
-			memset(playBuffer, 0, MIXBUFSIZE * 8);
+			memset(playBuffer, 0, MIXBUFSIZE);
 		}
 		break;
 
 		case SNEMULDS_APUCMD_SAVESPC:{ //case 0x00000006:{ // //Save APU Memory Snapshot -> u8 * inSPCBuffer @ ARM9 EWRAM
-			SaveSpc((const u8*)cmd2);
+			//SaveSpc((const u8*)cmd2);
 			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 			fifomsg[40] = (uint32)0;	//release ARM9 APU_playSpc()
@@ -180,7 +179,6 @@ int ROM_PAGING_SIZE = 0;
 
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
-	struct s_apu2 *APU2 = (struct s_apu2 *)(&SNEMULDS_IPC->APU2);
 	//must reflect to ipcfifoTGDSUser.h defs
 	ADDRPORT_SPC_TO_SNES	=	(uint32)(uint8*)&SNEMULDS_IPC->PORT_SPC_TO_SNES[0];
 	ADDRPORT_SNES_TO_SPC	=	(uint32)(uint8*)&SNEMULDS_IPC->PORT_SNES_TO_SPC[0]; 

@@ -157,14 +157,6 @@ void	reset_SNES()
       memset(SNESC.SRAM, 0, 0x20000);
     }*/
 
-  /*
-  if (CFG.Sound_output)
-    SPC700_emu = 1;
-  else
-    SPC700_emu = 0;
-  SPC700_reset();
-*/
-  struct s_apu2 *APU2 = (struct s_apu2 *)(&SNEMULDS_IPC->APU2);
 //  if (CFG.Sound_output) 
   	APU_nice_reset();
 
@@ -182,11 +174,6 @@ void	reset_SNES()
   SNES.DelayedNMI = 0;    
 
   CFG.BG_Layer = 0xd7; //FIXME: BG3 is not used (MODE 0 broken)
-
-  APU2->skipper_cnt1 = 0;  
-  APU2->skipper_cnt2 = 0;  
-  APU2->skipper_cnt3 = 0;  
-  APU2->skipper_cnt4 = 0;
   
   SNES.V_Count = 0;
   PPU_reset();  
