@@ -870,6 +870,8 @@ GNU General Public License for more details.
     tsts		r0, #0x80000000						@ reload
     blne		MemReloadPC
     
+    Debug2
+    
     .ifeq   \fast-0
         ldr     r1,=SnesPCOffset                    @ r0 = the translated GBA PC, 
         ldr     r2,[r1]                             @ r2 = actual SNES PC
@@ -890,6 +892,7 @@ GNU General Public License for more details.
 @ Arithmetic Instructions
 @=========================================================================
 
+/*
 .macro OpADCD mode, pcinc, cycles
     
     tsts    SnesMXDI, #SnesFlagM
@@ -942,6 +945,88 @@ ADCD_m1:
 
     AddPC   0, 0
 .endm
+*/
+
+.macro OpADCD mode, pcinc, cycles
+    
+    tsts    SnesMXDI, #SnesFlagM
+    bne     ADCD_m1
+
+ADCD_m0:    @ r1 = 0000XXxx, SnesA = AAaa0000
+    @ 16-bit add
+    
+    @ Took from SnesAdvance    
+    movs    r0, SnesCV, lsr #2      @ get carry flag
+    
+    stmfd	sp!, {r3}
+    
+    mov		r0, r1, lsr #8			@ r0 = high byte
+    and		r1,	r1, #0xFF			@ r1 = low byte
+    
+	eor		r0, r0, #0xFF			
+	eor 	r1,	r1, #0xFF
+
+	mov 	r2, SnesA, lsl#12
+	sbcs 	r3,	r2,	r1,	lsl#28
+	and 	r3,	r3,	#0xf0000000
+	cmncc 	r3,#0x60000000
+	addcs 	r3, r3, #0x60000000
+
+	mov 	r2,	SnesA, lsr#20
+	and 	r2, r2, #0xF
+	sbcs	r1, r2, r1, lsr#4
+	mov 	r1,	r1,	lsl#28
+	cmncc 	r1, #0x60000000
+	addcs	r1,	r1, #0x60000000
+	orr 	r3, r1, r3, lsr#4
+
+	mov 	r2,	SnesA, lsl#4
+	and 	r2, r2, #0xF0000000
+	sbcs 	r1, r2, r0, lsl#28
+	and 	r1, r1, #0xf0000000
+	cmncc  	r1, #0x60000000
+	addcs 	r1, r1, #0x60000000
+	orr 	r3, r1, r3,lsr#4
+
+	mov 	r2, SnesA, lsr#28
+	sbcs 	r1, r2, r0, lsr#4
+	mov 	r1, r1, lsl#28
+	cmncc 	r1, #0x60000000
+	addcs 	r1, r1, #0x60000000
+	orr		SnesA, r1, r3,lsr#4    
+
+    mov     SnesNZ, SnesA, lsr #16
+    orrcs   SnesCV, SnesCV, #SnesFlagC
+    biccc   SnesCV, SnesCV, #SnesFlagC
+    
+    ldmfd	sp!, {r3}
+    
+    AddPC   \pcinc, \cycles
+
+ADCD_m1: @ Took from SnesAdvance
+    @ 8-bit add
+    movs    r0, SnesCV, lsr #2      @ get carry flag
+    
+    and		r0, r1, #0xf			@ r0 = W1 & 0xF
+    subcs	r0, r0, #0x10			@ Pour Propagation de la carry 0xX -> 0xFFFFFFFX 
+    mov		r0, r0, ror #4			@ r0 = W1 (<<24)  0xFFFFFFFX -> 0xXFFFFFFF
+    adcs	r0, r0, SnesA, lsl #4   @ r0 = W1 + A + C (<<24)
+    cmncc	r0, #0x60000000			@ if X >= 10
+    addcs	r0, r0, #0x60000000		@ r0 += 6
+    
+    mov		r2, SnesA, lsr#28
+    adc		r1, r2, r1, lsr #4
+    movs	r1, r1, lsl #28
+    cmncc	r1, #0x60000000
+    addcs	r1, r1, #0x60000000
+    orr		SnesA, r1, r0, lsr#4
+    
+    mov     SnesNZ, SnesA, lsr #16
+    orrcs   SnesCV, SnesCV, #SnesFlagC
+    biccc   SnesCV, SnesCV, #SnesFlagC
+
+    AddPC   0, 0
+.endm
 
 .macro OpADC mode, pcinc, cycles
     \mode
@@ -986,6 +1071,7 @@ ADCD_m1:
 
 .macro OpASL mode, pcinc, cycles
     \mode
+    stmfd	sp!, {r0}
     ReadData
 
     movs    r1, r1, lsl #(32-mBit+1)
@@ -994,6 +1080,7 @@ ADCD_m1:
     mov     r1, r1, lsr #(32-mBit)
     mov     SnesNZ, r1, lsl #(16-mBit)
 
+	ldmfd	sp!, {r0}
     WriteData
 
     AddPC   \pcinc, \cycles
@@ -1065,8 +1152,8 @@ ADCD_m1:
 .endm
 
 .macro OpDEC mode, pcinc, cycles
-	
     \mode
+    stmfd	sp!, {r0}		@ archeide
     ReadData
 
     subs    r1, r1, #1
@@ -1075,13 +1162,13 @@ ADCD_m1:
     @
     mov     SnesNZ, r1, ror #mBit
     mov     SnesNZ, SnesNZ, lsr #16
+    ldmfd	sp!, {r0}		@ archeide
     WriteData
 
     AddPC   \pcinc, \cycles
 .endm
 
 .macro OpDEA mode, pcinc, cycles
-	
     \mode
     subs    SnesA, SnesA, #(1 << (32-mBit))
     mov     SnesNZ, SnesA, lsr #16
@@ -1100,21 +1187,18 @@ ADCD_m1:
 .endm
 
 .macro OpDEX mode, pcinc, cycles
-	
     \mode
     OpDEXY  SnesX
     AddPC   \pcinc, \cycles
 .endm
 
 .macro OpDEY mode, pcinc, cycles
-	
     \mode
     OpDEXY  SnesY
     AddPC   \pcinc, \cycles
 .endm
 
 .macro OpEOR mode, pcinc, cycles
-	
     \mode
     ReadData
 
@@ -1125,8 +1209,8 @@ ADCD_m1:
 .endm
 
 .macro OpINC mode, pcinc, cycles
-	
     \mode
+    stmfd	sp!, {r0}		@ archeide
     ReadData
 
     adds    r1, r1, #1
@@ -1135,13 +1219,13 @@ ADCD_m1:
     mov     SnesNZ, r1, ror #mBit
     mov     SnesNZ, SnesNZ, lsr #16
 
+    ldmfd	sp!, {r0}		@ archeide
     WriteData
 
     AddPC   \pcinc, \cycles
 .endm
 
 .macro OpINA mode, pcinc, cycles
-	
     \mode
     adds    SnesA, SnesA, #(1 << (32-mBit))
     mov     SnesNZ, SnesA, lsr #16
@@ -1161,14 +1245,12 @@ ADCD_m1:
 .endm
 
 .macro OpINX mode, pcinc, cycles
-	
     \mode
     OpINXY  SnesX
     AddPC   \pcinc, \cycles
 .endm
 
 .macro OpINY mode, pcinc, cycles
-	
     \mode
     OpINXY  SnesY
     AddPC   \pcinc, \cycles
@@ -1176,7 +1258,6 @@ ADCD_m1:
 
 
 .macro OpLSRA mode, pcinc, cycles
-	
     \mode
     movs    SnesA, SnesA, lsr #(32-mBit+1)
     biccc   SnesCV, SnesCV, #SnesFlagC
@@ -1188,8 +1269,8 @@ ADCD_m1:
 .endm
 
 .macro OpLSR mode, pcinc, cycles
-	
     \mode
+    stmfd	sp!, {r0}		@ archeide
     ReadData 
 
     movs    r1, r1, lsr #1
@@ -1197,12 +1278,12 @@ ADCD_m1:
     orrcs   SnesCV, SnesCV, #SnesFlagC
     mov     SnesNZ, r1, lsl #(16-mBit)
 
+    ldmfd	sp!, {r0}		@ archeide
     WriteData
     AddPC   \pcinc, \cycles
 .endm
 
 .macro OpORA mode, pcinc, cycles
-	
     \mode
     ReadData
 
@@ -1213,7 +1294,6 @@ ADCD_m1:
 .endm
 
 .macro OpROLA mode, pcinc, cycles
-	
     \mode
 
     mov     r2, SnesCV
@@ -1230,8 +1310,8 @@ ADCD_m1:
 .endm
 
 .macro OpROL mode, pcinc, cycles
-	
     \mode
+    stmfd	sp!, {r0}		@ archeide
     ReadData 
 
     mov     r2, SnesCV
@@ -1244,13 +1324,14 @@ ADCD_m1:
     tsts    r2, #SnesFlagC
     orrne   r1, r1, #1
     mov     SnesNZ, r1, lsl #(16-mBit)
+    
+    ldmfd	sp!, {r0}		@ archeide
     WriteData
 
     AddPC   \pcinc, \cycles
 .endm
 
 .macro OpRORA mode, pcinc, cycles
-	
     \mode
     
     mov     r2, SnesCV
@@ -1268,8 +1349,8 @@ ADCD_m1:
 .endm
 
 .macro OpROR mode, pcinc, cycles
-	
     \mode
+    stmfd	sp!, {r0}		@ archeide
     ReadData 
 
     mov     r2, SnesCV
@@ -1281,13 +1362,14 @@ ADCD_m1:
     tsts    r2, #SnesFlagC
     orrne   r1, r1, #(1<<(mBit-1))
     mov     SnesNZ, r1, lsl #(16-mBit)
+    
+    ldmfd	sp!, {r0}		@ archeide
     WriteData
 
     AddPC   \pcinc, \cycles
 .endm
 
 .macro OpSBCD mode, pcinc, cycles
-    
     tsts    SnesMXDI, #SnesFlagM
     bne     SBCD_m1
 
@@ -1359,11 +1441,9 @@ SBCD_m1:
     biccc   SnesCV, SnesCV, #SnesFlagC
     orrcs   SnesCV, SnesCV, #SnesFlagC
 	AddPC   0, 0
-
 .endm
 
 .macro OpSBC mode, pcinc, cycles
-	
     \mode
     ReadData
 
@@ -1391,8 +1471,8 @@ SBCD_m1:
 .endm
 
 .macro OpTSB mode, pcinc, cycles
-	
     \mode
+    stmfd	sp!, {r0}		@ archeide
     ReadData
 
     orr     SnesNZ, SnesNZ, SnesNZ, lsl #1
@@ -1400,14 +1480,15 @@ SBCD_m1:
     ands    r2, r1, SnesA, lsr #(32-mBit)
     orrne   SnesNZ, SnesNZ, #1
     orr     r1, r1, SnesA, lsr #(32-mBit)
+    ldmfd	sp!, {r0}		@ archeide
     WriteData
 
     AddPC   \pcinc, \cycles
 .endm
 
 .macro OpTRB mode, pcinc, cycles
-	
     \mode
+    stmfd	sp!, {r0}		@ archeide
     ReadData
 
     orr     SnesNZ, SnesNZ, SnesNZ, lsl #1
@@ -1416,6 +1497,7 @@ SBCD_m1:
     orrne   SnesNZ, SnesNZ, #1
     mvn     r2, SnesA
     and     r1, r1, r2, lsr #(32-mBit)
+    ldmfd	sp!, {r0}		@ archeide
     WriteData
 
     AddPC   \pcinc, \cycles
@@ -1452,28 +1534,24 @@ SBCD_m1:
 .endm
 
 .macro OpTAX mode, pcinc, cycles
-	
     \mode
     OpTAXY  SnesX
     AddPC   \pcinc, \cycles
 .endm
 
 .macro OpTAY mode, pcinc, cycles
-	
     \mode
     OpTAXY  SnesY
     AddPC   \pcinc, \cycles
 .endm
 
 .macro OpTXA mode, pcinc, cycles
-	
     \mode
     OpTXYA  SnesX
     AddPC   \pcinc, \cycles
 .endm
 
 .macro OpTYA mode, pcinc, cycles
-	
     \mode
     OpTXYA  SnesY
     AddPC   \pcinc, \cycles
@@ -2200,10 +2278,10 @@ SBCD_m1:
 	str		SnesPC,	CPU_LoopAddress
 
 	@ archeide: Short loop detection, a loop with only 2 instr 
-	sub		r0, r2, SnesPC
+/*	sub		r0, r2, SnesPC
 	cmp		r0, #4
 	bls		4f		@ do addition check there
-@	b		3f
+@	b		3f*/
 
  	@ archeide: Buggy Interrupt Loop Detection
     ldr		r0, CPU_WaitAddress
@@ -2485,7 +2563,7 @@ SBCD_m1:
     bic     SnesMXDI, SnesMXDI, #SnesFlagD
     orr     SnesMXDI, SnesMXDI, #SnesFlagI
 
-    ldr     r0, \address
+    ldr     r0, =\address
     ldrh    r0, [r0]
     TranslateAndSavePC
 1:

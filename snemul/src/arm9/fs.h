@@ -18,18 +18,25 @@ GNU General Public License for more details.
 #ifndef FS_H_
 #define FS_H_
 
-#include "gui.h"
-
-void	FS_init();
-t_list 	*FS_getDirectoryList(char *path, char *mask);
+int		FS_init();
 void	FS_printlog(char *buf);
 void	FS_flog(char *fmt, ...);
-char	*FS_loadROM(char *filename, int *size);
-char	*FS_loadROMForPaging(char *filename, int *size);
+int		FS_getFileSize(char *filename);
+int		FS_loadROM(char *ROM, char *filename);
+int		FS_loadROMForPaging(char *ROM, char *filename, int size);
 int		FS_loadROMPage(char *buf, unsigned int pos, int size);
 int		FS_loadFile(char *filename, char *buf, int size);
 int		FS_loadAllFile(char *filename, char *buf, int *size);
 int		FS_shouldFreeROM();
 int		FS_chdir(const char *path);
+
+int		FS_extram_init(int param);
+
+void	FS_lock();
+void	FS_unlock();
+
+char	**FS_getDirectoryList(char *path, char *mask, int *cnt);
+
+char 	*FS_getFileName(char *filename);
 
 #endif /*FS_H_*/

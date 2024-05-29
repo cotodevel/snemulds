@@ -3,4 +3,4 @@ all:
 	
 clean:
 	make -C src clean
-	-rm -fr 001SNEmulDS.nds
+	-rm -fr smc.SNEmulDS.nds

@@ -44,10 +44,10 @@
 
 ---------------------------------------------------------------------------------*/
 
-//#include <nds.h>
+#include <nds.h>
 
-//#include <nds/ipc.h>
-//#include <nds/arm9/input.h>
+#include <nds/ipc.h>
+#include <nds/arm9/input.h>
 #include <nds/jtypes.h>
 #include <nds/system.h>
 
@@ -63,6 +63,7 @@ typedef struct mytouchPosition {
 	int16	z2;
 } mytouchPosition;
 
+#if 0
 //---------------------------------------------------------------------------------
 typedef struct sMyIPC {
 //---------------------------------------------------------------------------------
@@ -109,6 +110,7 @@ typedef struct sMyIPC {
 
 #define MyIPC ((tMyIPC volatile *)(0x027FF000))
 /************* TO PUT in include ********* */
+#endif
 
 static int32 a, b, c, d;
 
@@ -157,12 +159,11 @@ void ADC_to_SCR(uint16 adc_x, uint16 adc_y, int16 *scr_x, int16 *scr_y){
 	*scr_y = aux8;
 }
 
+#if 1
 //---------------------------------------------------------------------------------
 mytouchPosition mytouchReadXY() {
 //---------------------------------------------------------------------------------
-/*	GUI_printf(0, 10, "enter");
-	while (MyIPC->mailBusy);
-	GUI_printf(0, 10, "ok");*/
+	while (IPC->mailBusy);
 	
 	// LEYENDA
 	//---------
@@ -194,14 +195,14 @@ mytouchPosition mytouchReadXY() {
 	med_x = touchPos.px;
 	med_y = touchPos.py;
 
-	touchPos.error = MyIPC->touchError;
-	touchPos.touched = MyIPC->touched;
+	touchPos.error = IPC->tdiode2;
+	touchPos.touched = IPC->tdiode1;
 
-	touchPos.x = MyIPC->touchX;
-	touchPos.y = MyIPC->touchY;
+	touchPos.x = IPC->touchX;
+	touchPos.y = IPC->touchY;
 
-	touchPos.z1 = MyIPC->touchZ1;
-	touchPos.z2 = MyIPC->touchZ2;
+	touchPos.z1 = IPC->touchZ1;
+	touchPos.z2 = IPC->touchZ2;
 
 	ADC_to_SCR(touchPos.x, touchPos.y, &(touchPos.px), &(touchPos.py));
 
@@ -290,5 +291,30 @@ mytouchPosition mytouchReadXY() {
 
 	return touchPos;
 
+}
+#endif
+
+touchPosition superTouchReadXY()
+{
+#ifdef USE_STDTOUCH 
+	touchPosition touchXY;
+	
+	touchXY = touchReadXY();
+	touchXY = touchReadXY();
+	touchXY = touchReadXY();
+	
+	ADC_to_SCR(touchXY.x, touchXY.y, &(touchXY.px), &(touchXY.py));
+	
+#else
+	touchPosition touchXY;
+	mytouchPosition mtouchXY;
+		
+    mtouchXY = mytouchReadXY();	// It seems first measure is not already updayed
+    mtouchXY = mytouchReadXY();	
+    mtouchXY = mytouchReadXY();	
+	touchXY.px = mtouchXY.px;
+	touchXY.py = mtouchXY.py;
+#endif	
+	return touchXY;
 }
 

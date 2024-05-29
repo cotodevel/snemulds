@@ -1,26 +1,13 @@
 #include "pocketspc.h"
 #include "apu.h"
 
+extern u32 __shwram_start;
 ////////////////////////////////////////////////////////////////////////////
 // Hacks
 ////////////////////////////////////////////////////////////////////////////
 
-//void SendArm9Command(u32 command);
 
-//#include "sprintf.h"
-extern "C" {
-#if 0	
-void unimpl(u8 opcode, u16 startPC) {
-//    SendArm9Command(0x80000000 + opcode);
-    for(;;);
-}
-void debugTmp(u32 b1, u32 b2, u32 b3) {
-//    SendArm9Command(0x80000000 + b1 + b2);
-    for(;;);
-}
-#endif
-}
-
+struct s_apu2 *APU2 = ((struct s_apu2 *)(0x27ED000));
 
 ////////////////////////////////////////////////////////////////////////////
 // Definitions
@@ -34,7 +21,10 @@ u8 iplRom[64] ALIGNED =
 	0xF6,0xDA,0x00,0xBA,0xF4,0xC4,0xF4,0xDD,0x5D,0xD0,0xDB,0x1F,0x00,0x00,0xC0,0xFF
 };
 
+#ifdef APU_MEM_IN_RAM  
+u8 * RAW_APU_MEM = (u8*)&__shwram_start;
 //u8 RAW_APU_MEM[0x10000] ALIGNED;
+#endif
 
 // Asm uses these defines, so don't change them around
 extern "C" {
@@ -46,8 +36,6 @@ u8 apuSleeping ALIGNED;
 
 u32 APU_STATE[16];
 }
-
-void ApuResetTimer(int timer);
 
 u8 MakeRawPSWFromState(u32 state[16]) {
 	u8 psw = 0;
@@ -86,6 +74,9 @@ extern u32 MemWriteApuPort;
 extern u32 MemWriteCounter;
 extern u32 MemReadDoNothing;
 extern u32 MemReadCounter;
+extern u32 MemReadCounterFD;
+extern u32 MemReadCounterFE;
+extern u32 MemReadCounterFF;
 extern u32 MemReadApuPort;
 extern u32 MemReadDspData;
 
@@ -99,12 +90,17 @@ void memset(void *data, int fill, int length) {
     }
 }
 
+extern void ApuSetShowRom(); // FIXME
+
 void ApuReset() {
     apuSleeping = 0;
 
     // 64k of arm7 iwram
+#ifndef APU_MEM_IN_RAM    
     APU_MEM = (u8*)APU_RAM_ADDRESS;
-//    APU_MEM = (u8*)RAW_APU_MEM;
+#else    
+    APU_MEM = (u8*)RAW_APU_MEM;
+#endif    
     APU_MEM_ZEROPAGEREAD = (u8*)&MemZeroPageReadTable;
     APU_MEM_ZEROPAGEWRITE = (u8*)&MemZeroPageWriteTable;
 
@@ -114,6 +110,7 @@ void ApuReset() {
     }
     memset(APU_MEM + 0xF0, 0, 0x10);
 
+    ApuSetShowRom();
 	// Init the ROM
     for (int i=0; i<=0x3F; i++) {
         APU_MEM[0xFFC0 + i] = iplRom[i];
@@ -129,7 +126,10 @@ void ApuReset() {
     ((u32*)APU_MEM_ZEROPAGEREAD)[0xf3] = (u32)(&MemReadDspData);
     ((u32*)APU_MEM_ZEROPAGEREAD)[0xfd] = (u32)(&MemReadCounter);
     ((u32*)APU_MEM_ZEROPAGEREAD)[0xfe] = (u32)(&MemReadCounter);
-    ((u32*)APU_MEM_ZEROPAGEREAD)[0xff] = (u32)(&MemReadCounter);
+    ((u32*)APU_MEM_ZEROPAGEREAD)[0xff] = (u32)(&MemReadCounter);    
+/*    ((u32*)APU_MEM_ZEROPAGEREAD)[0xfd] = (u32)(&MemReadCounterFD);
+    ((u32*)APU_MEM_ZEROPAGEREAD)[0xfe] = (u32)(&MemReadCounterFE);
+    ((u32*)APU_MEM_ZEROPAGEREAD)[0xff] = (u32)(&MemReadCounterFF);*/
 
     ((u32*)APU_MEM_ZEROPAGEWRITE)[0xf1 + 0x40] = (u32)(&MemWriteApuControl);
     ((u32*)APU_MEM_ZEROPAGEWRITE)[0xf3 + 0x40] = (u32)(&MemWriteDspData);
@@ -163,7 +163,7 @@ void ApuReset() {
     APU_STATE[8] = 0;
     APU_SP = 0x1FF;
 
-    ApuResetTimer(0);
-    ApuResetTimer(1);
-    ApuResetTimer(2);
+	APU2->TIM0 = 0;
+	APU2->TIM1 = 0;
+	APU2->TIM2 = 0;
 }

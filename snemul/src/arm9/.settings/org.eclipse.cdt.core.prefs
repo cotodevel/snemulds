@@ -1,3 +1,4 @@
-#Thu Jun 29 14:05:34 CEST 2006
+#Sat Dec 29 02:44:49 CET 2007
 eclipse.preferences.version=1
-indexerId=org.eclipse.cdt.core.domsourceindexer
+environment/project/nds.managedbuilder.config.release.eabi.1592819044=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<environment append\="true">\r\n<variable delimiter\=";" name\="PATH" operation\="append" value\="C\:\\devkitPro\\devkitARM\\bin"/>\r\n</environment>\r\n
+environment/project/nds.managedbuilder.config.release.eabi.1592819044.54189831=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<environment append\="true">\r\n<variable delimiter\=";" name\="PATH" operation\="replace" value\="C\:\\devkitPro\\devkitARM\\bin;${PATH}"/>\r\n</environment>\r\n

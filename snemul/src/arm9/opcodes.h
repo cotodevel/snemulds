@@ -55,11 +55,16 @@ extern	uint32			CPU_LoopSpeedHacks;
 extern	unsigned char	*CPU_WaitAddress;
 extern	unsigned char	*CPU_LoopAddress;
 
+extern	uint32			BRKaddress;
+extern	uint32			COPaddress;
+
+
 #define REAL_A ((SaveR8 & 0x00000080) ? \
 				(A >> 24 | (SnesB&0xFF000000) >> 16) : (A >> 16))
 #define REAL_CYCLES (-((sint32)SaveR8 >> 14))
 #define HCYCLES (CPU.HCycles+CPU.Cycles+((sint32)SaveR8 >> 14))
-#define ADD_CYCLES(x)	(SaveR8 +=((x)<<14)) 
+#define ADD_CYCLES(x)	(SaveR8 +=((x)<<14))
+//#define FIX_VCOUNT		{ if ((sint32)SaveR8 > 0) { SNES.VCount++; (sint32)SaveR8 -= NB_CYCLES; ) }  
 #define SET_WAITCYCLES(c) { CPU_WaitAddress = CPU_LoopAddress; \
 								CPU_NextCycles = 0; }
 #define SET_WAITCYCLESDELAY(delay) { CPU_WaitAddress = CPU_LoopAddress; \

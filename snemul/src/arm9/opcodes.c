@@ -22,6 +22,7 @@ GNU General Public License for more details.
 #include "snes.h"
 #include "cpu.h"
 #include "cfg.h"
+#include "apu.h"
 
 #ifdef WIN32
 #define OPCODE _inline
@@ -2487,12 +2488,15 @@ void CPU_pack()
   CPU.P = 0; 
   if (SaveR8 & 0x00000002) CPU.P |= P_C;
   if (SaveR8 & 0x00000001) CPU.P |= P_V;
+  if (SaveR8 & 0x00000400) CPU.P |= P_E;    
   if (SaveR6 & 0x00018000) CPU.P |= P_N;
   if (!(SaveR6 << 16)) CPU.P |= P_Z;
   CPU.P |= ((SaveR8 << 22) & 0x3c000000) >> 24;
   CPU.D = D >> 16;
   CPU.DB = D & 0xFF;
   
+  CPU.WAI_state = (SaveR8 & 0x00001000)?1:0;  
+
   CPU.packed = 1;
 }
 
@@ -2523,6 +2527,8 @@ void CPU_unpack()
   if (CPU.P & P_C) SaveR8 |= 0x00000002;
   if (CPU.P & P_V) SaveR8 |= 0x00000001;
   if (CPU.P & P_N) SaveR6 |= 0x00018000;
+  if (CPU.P & P_E) SaveR8 |= 0x00000400;   
+  
   if (!(CPU.P & P_Z)) SaveR6 |= 0x00000001;
   SaveR8 |= ((CPU.P << 24) & 0x3c000000) >> 22; 
   
@@ -2571,14 +2577,16 @@ extern void CPU_goto2();
 
 void CPU_goto(int cycles)
 {	
-	if (CFG.CPU_speedhack != 0)
+	if (CFG.CPU_speedhack & 1)
 		cycles -= cycles / 4; // Speed hack: 25 % speed up
-	CPU_LoopSpeedHacks = (CFG.CPU_speedhack == 2);
+	CPU_LoopSpeedHacks = (CFG.CPU_speedhack >= 2);
 	CPU.Cycles = cycles;
 		
 	CPU_unpack();
 	
+//	*APU_ADDR_BLK = 0;
 	CPU_goto2(cycles);
+//	*APU_ADDR_BLK = 1;
 	CPU.packed = 0;
 
 //	CPU_pack();

@@ -18,17 +18,11 @@ GNU General Public License for more details.
 #ifndef MEMMAP_H_
 #define MEMMAP_H_
 
-#define REG_IE	(*(vuint32*)0x04000210)
-#define REG_IF	(*(vuint32*)0x04000214)
-#define REG_IME	(*(vuint16*)0x04000208)
- 
+/*
+uint8	IO_getbyte(int addr, uint32 address);
+void	IO_setbyte(int addr, uint32 address, uint8 byte);
+uint16	IO_getword(int addr, uint32 address);
+void	IO_setword(int addr, uint32 address, uint16 word);
+*/
+
 #endif /*MEMMAP_H_*/
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __cplusplus
-}
-#endif

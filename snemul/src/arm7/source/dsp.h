@@ -1,5 +1,12 @@
-#ifndef __dsp7_h__
-#define __dsp7_h__
+void DspReset();
+void DspPrepareStateAfterReload();
+
+extern "C" {
+extern u8 DSP_MEM[0x100];
+extern u16 dspPreamp;
+
+void DspMixSamplesStereo(u32 samples, u16 *mixBuf);
+void DspWriteByte(u8 val, u8 address);
 
 struct DspChannel {
     int sampleSpeed;
@@ -25,6 +32,8 @@ struct DspChannel {
     bool echoEnabled;
 } ALIGNED;
 
+extern DspChannel channels[8];
+}
 
 // DSP Register defintions
 
@@ -69,20 +78,3 @@ struct DspChannel {
 #define ENVSTATE_BENTLINE	7
 #define ENVSTATE_DECREASE	8
 #define ENVSTATE_DECEXP		9
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern DspChannel channels[8];
-extern u8 DSP_MEM[0x100];
-extern void DspReset();
-extern void DspPrepareStateAfterReload();
-extern u16 dspPreamp;
-extern void DspMixSamplesStereo(u32 samples, u16 *mixBuf);
-extern void DspWriteByte(u8 val, u8 address);
-
-#ifdef __cplusplus
-}
-#endif

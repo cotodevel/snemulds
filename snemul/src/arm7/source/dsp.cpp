@@ -19,14 +19,14 @@ void DspSetEndOfSample(u32 channel);
 DspChannel channels[8];
 u8 DSP_MEM[0x100];
 s32 mixBuffer[DSPMIXBUFSIZE * 2];
-s32 echoBuffer[DSPMIXBUFSIZE * 2];
+//s32 echoBuffer[DSPMIXBUFSIZE * 2];
 s16 brrTab[16 * 16];
-u32 firTable[8 * 2 * 2];
+//u32 firTable[8 * 2 * 2];
 u8 *echoBase;
 u16 dspPreamp ALIGNED = 0x140;
 u16 echoDelay ALIGNED;
 u16 echoCursor ALIGNED;
-u8 firOffset ALIGNED;
+//u8 firOffset ALIGNED;
 
 // externs from dspmixer.S
 u32 DecodeSampleBlockAsm(u8 *blockPos, s16 *samplePos, DspChannel *channel);
@@ -61,65 +61,6 @@ u32 DecodeSampleBlock(DspChannel *channel) {
 
     channel->brrHeader = *cur;
 
-#ifdef SNEESE_BRR
-    int output, last1, last2;
-    unsigned char range, filter, input;
-
-    last1 = channel->prevSamp1;
-    last2 = channel->prevSamp2;
-
-    range = *cur >> 4;
-    filter = (*cur >> 2) & 3;
-
-    cur++;
-    for (int i = 0; i < 16; i++) {
-        if ((i & 1) == 0)
-        {
-            input = *cur >> 4;
-        }
-        else
-        {
-            input = *cur & 0x0F;
-            cur++;
-        }
-
-        output = (input ^ 8) - 8;
-
-        if (range <= 12) output = (output << range) >> 1;
-        else output &= ~0x7FF;
-
-        if (filter)
-        {
-            switch (filter)
-            {
-            case 1:
-                output += (last1 >> 1) + ((-last1) >> 5);
-                break;
-            case 2:
-                output += last1 + ((-(last1 + (last1 >> 1))) >> 5) +
-                    (-last2 >> 1) + (last2 >> 5);
-                break;
-            case 3: default:
-                output += last1 + ((-(last1 + (last1 << 2) + (last1 << 3))) >> 7) +
-                    (-last2 >> 1) + ((last2 + (last2 >> 1)) >> 4);
-                break;
-            }
-
-            // Clip underflow/overflow (saturation)
-            if (output > 0x7FFF)
-                output = 0x7FFF;
-            else if (output < -0x8000)
-                output = -0x8000;
-        }
-
-        last2 = last1;
-        last1 = *sample++ = (short) (output << 1);
-    }
-
-    channel->prevSamp1 = last1;
-    channel->prevSamp2 = last2;
-#endif
-
     DecodeSampleBlockAsm(cur, sample, channel);
 
     channel->blockPos += 9;
@@ -128,25 +69,29 @@ u32 DecodeSampleBlock(DspChannel *channel) {
 }
 }
 
+extern void memset(void *data, int fill, int length); 
+
 void DspReset() {
     // Delay for 1 sample
     echoDelay = 4;
     echoCursor = 0;
     echoBase = APU_MEM;
 
-    firOffset = 0;
+/*    firOffset = 0;
     for (int i = 0; i < 8*2*2; i++) {
         firTable[i] = 0;
-    }
-
+    }*/
+ 
+    memset(DSP_MEM, 0, 0x100);
     // Disable echo emulation
     DSP_MEM[DSP_FLAG] = 0x20;
 
 	for (int i = 0; i < 8; i++) {
-        channels[i].samplePos = 0;
+		memset(&channels[i], 0, sizeof(DspChannel));
+        /*channels[i].samplePos = 0;
         channels[i].envCount = 0;
         channels[i].active = false;
-        channels[i].echoEnabled = false;
+        channels[i].echoEnabled = false;*/
 	}
 
     // Build a lookup table for the range values (thanks to trac)
@@ -384,9 +329,7 @@ void DspPrepareStateAfterReload() {
     DspWriteByte(DSP_MEM[DSP_EDL], DSP_EDL);
 
     echoBase = APU_MEM + (DSP_MEM[DSP_ESA] << 8);
-    for (int i = 0; i < echoDelay; i++) {
-        echoBase[i] = 0;
-    }
+    memset(echoBase, 0, echoDelay);
 
 	for (u32 i = 0; i < 8; i++) {
         channels[i].echoEnabled = (DSP_MEM[DSP_EON] >> i) & 1;

@@ -17,7 +17,8 @@ GNU General Public License for more details.
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <nds/memory.h>
+#include <nds.h>
+//#include <nds/memory.h>
 #include <nds/registers_alt.h>
 #include <string.h>
 #include <time.h>
@@ -36,12 +37,21 @@ GNU General Public License for more details.
 #include "apu.h"
 #include "cfg.h"
 
+#include "gui/gui.h"
+
 extern int CPU_break;
+
+extern uint32 APU_MAX;
 extern uint32 screen_mode;
 //extern volatile uint32 h_blank;
 
-struct s_snes SNES;
-struct s_cfg CFG;
+//struct s_snes SNES;
+//struct s_cfg CFG;
+
+uchar   mem_getbyte(uint32 offset, uchar bank);
+void	mem_setbyte(uint32 offset, uchar bank, uchar byte);
+ushort  mem_getword(uint32 offset, uchar bank);
+void    mem_setword(uint32 offset, uchar bank, ushort word);
 
 
 #define DS_SRAM          ((uint8*)0x0A000000)
@@ -116,91 +126,57 @@ int saveSRAM()
 unsigned char interrupted;
 extern long Cycles;
 
-extern int v_blank;
-
-//END_OF_FUNCTION(V_Blank_timer);
-
-void SetCFG()
-{
-  CFG.GUI_resol        = 0;
-  CFG.FullScreen_resol = 0;
-  CFG.Scanlines        = 0;
-
-  CFG.FullScr          = 1;
-  CFG.FullGUI          = 0;
-
-  CFG.Joy1_Enabled     = 1;
-  CFG.joy_type         = 0;
-//  joy_type = alleg_joy_type[CFG.joy_type];
-
-  CFG.ADSR_GAIN        = 0;
-  CFG.Sound_output     = 1; // SOUND!!!
-  CFG.Stereo           = 0;
-  CFG.FastSound        = 0;
-
-  CFG.auto_skip        = 1;
-  CFG.frame_rate       = 1;
-  CFG.GUI_frame_rate   = 1;
-  CFG.CPU_speedhack    = 1;
-  CFG.SPC_speedhack    = 1;
-  CFG.ShowFPS = 0;
-  CFG.Work_dir         = NULL;
-
-  CFG.buffer_size = 31;
-  CFG.PPU_Clip = 1;
-  CFG.Debug = FALSE;
-  CFG.Debug2 = FALSE;
-  CFG.CPU_log = FALSE;
-
-  CFG.WaitVBlank = 0;
-
-  CFG.DSP1 = 0;
-  CFG.SuperFX = 0;
-}
-
 int	changeROM(char *ROM, int size)
 {
   CFG.frame_rate = 1;
   CFG.DSP1 = CFG.SuperFX = 0;
   CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
+  CFG.MouseXAddr = CFG.MouseYAddr = CFG.MouseMode = 0;
+  CFG.SoundPortSync = 0;
+  
+  CFG.TilePriorityBG = -1; CFG.Debug2 = 0;
+  
+  CFG.SpritePr[0] = 3;
+  CFG.SpritePr[1] = 2;
+  CFG.SpritePr[2] = 1;
+  CFG.SpritePr[3] = 1;
+  
+#ifdef IN_EMULATOR
+  CFG.Sound_output = 0;
+#endif
 
-   if (SNES.ROM_info)
-   {
-   		free(SNES.ROM_info);
-   }
- 
 	// Write SRAM
-    SNES.ROM_info = (ROM_Info *)load_ROM(ROM, size);
-    SNES.ROM_info->title[21] = '\0';
-    iprintf("Title   : %s\n", SNES.ROM_info->title);
-    iprintf("Size    : %d bytes\n", size);
-    if (SNES.HiROM) 
-    iprintf("ROM type: HiROM\n");
-    else 
-    iprintf("ROM type: LoROM\n");
-    iprintf("Country : %s\n", SNES.ROM_info->countrycode < 2 ? "NTSC" : "PAL");
-    iprintf("\n");
-    iprintf("Press START to launch ROM\n");
-    iprintf("Press SELECT to go back\n");    
+    load_ROM(ROM, size);
+    SNES.ROM_info.title[21] = '\0';
+    int i = 20;
+    while (i >= 0 && SNES.ROM_info.title[i] == ' ')
+    	SNES.ROM_info.title[i--] = '\0';
 
-  reset_SNES();	
+    GUI_showROMInfos(size);
+    
+    reset_SNES();	
 	// Clear screen
 	// Read SRAM
-  loadSRAM();	
+    loadSRAM();	
 }
 
 int initSNESEmpty()
 {
-  CFG.BG3Squish = 2;
+  CFG.BG3Squish = 0;
   CFG.WaitVBlank = 0;
   CFG.YScroll = 0;
   CFG.CPU_speedhack = 1;
+  //CFG.TileMode = 1;
+  CFG.Scaled = 0;
+  CFG.LayersConf = 0;
   
   CFG.frame_rate = 1;
   CFG.DSP1 = CFG.SuperFX = 0;
   CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
   CFG.Sound_output = 1;
   //CFG.Sound_output = 0;
+  CFG.FastDMA = 1;
+  CFG.Transparency = 1;
 
   memset(&SNES, 0, sizeof(SNES));
   memset(&SNESC, 0, sizeof(SNESC));
@@ -213,54 +189,55 @@ int initSNESEmpty()
   //SNESC.RAM = (uchar *)malloc(0x020000);
   SNESC.RAM = (uchar *)SNES_RAM_ADDRESS;
   SNESC.VRAM = (uchar *)malloc(0x010000);
-  SNESC.BSRAM = (uchar *)malloc(0x8000);
+  //SNESC.BSRAM = (uchar *)malloc(0x8000);
+  SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
   init_GFX();
 
   GFX.Graph_enabled = 1;
 
-  iprintf("Init OK...\n");
+//  iprintf("Init OK...\n");
   return 0;
 }
 	
 int OldPC;
-extern int frame;
 
 IN_ITCM
 int go()
 {
-	
-  if (CPU.IsBreak) return;
+  if (CPU.IsBreak) return 0;
 	
   while (1)
-  {
-		
-	if (v_blank)
+  {	
+	if (GFX.v_blank)
 	{
-    	if (!CFG.WaitVBlank && GFX.need_update) 	
+    	if (!CFG.WaitVBlank && GFX.need_update)
+    	{
 			draw_screen();
-		GFX.need_update = 0;
-		v_blank = 0;
+			GFX.need_update = 0;
+    	}
+		GFX.v_blank = 0;
+		//update_joypads();
+		return 0;
 	}
-		
-	/* HBLANK */
-	CPU.HCycles = SNES.UsedCycles;	
 	
-    if (SNES.DMA_Port[0x00]&0x10) 
+	
+	CPU.HCycles = SNES.UsedCycles;	
+    if (DMA_PORT[0x00]&0x10) 
     {
-      if (!(SNES.DMA_Port[0x00]&0x20) ||
-           SNES.V_Count == (SNES.DMA_Port[0x09]&0xff)+((SNES.DMA_Port[0x0A]&0xff)<<8)) 
+      if (!(DMA_PORT[0x00]&0x20) ||
+           SNES.V_Count == (DMA_PORT[0x09]&0xff)+((DMA_PORT[0x0A]&0xff)<<8)) 
       {
 	    int H_cycles;
-	    H_cycles = (SNES.DMA_Port[0x07]+(SNES.DMA_Port[0x08]<<8))/2;
+	    H_cycles = (DMA_PORT[0x07]+(DMA_PORT[0x08]<<8))/2;
 		SET_WAITCYCLES(H_cycles);
 		CPU.WaitAddress = -1;
 
 		CPU_goto(H_cycles); 
 		if (CPU.IsBreak) 
-			return;
+			return 0;
 		CPU.HCycles += H_cycles;	
         GoIRQ();
-        SNES.DMA_Port[0x11] = 0x80;
+        DMA_PORT[0x11] = 0x80;
       }
     } 
 
@@ -268,88 +245,45 @@ int go()
 	CPU.WaitAddress = -1; 
     CPU_goto(NB_CYCLES-CPU.HCycles); 
     if (CPU.IsBreak) 
-    	return;
+    	return 0;
     CPU.HCycles = NB_CYCLES;
 
-    CPU.cycles_tot += NB_CYCLES; SNES.UsedCycles = 0;
-
-    SNES.V_Count++;
-
-	if  (CFG.Sound_output)
-	{
-/*		int incr;
-		
-		incr = 100 / GFX.speed;	
-		
-		100 / GFX.speed * 261;
-		
-		APU.counter += incr;
-		*APU_ADDR_CNT += incr;
-		
-		if (APU.counter > GFX.speed*/ 
-		 
-#if 0		
-	 	 if ((SNES.V_Count & 1   ) == 0)
-				(*APU_ADDR_CNT)++; // I'm too slow :(
-#endif				
-		(*APU_ADDR_CNT)++;			
-		APU.counter ++;
-				
-//		SNES.h_blank = 0;		
-	}
+    SNES.UsedCycles = 0;
  
+ 	/* HBLANK Starts here */
+ 
+	SNES.V_Count++;
+	if (SNES.V_Count > (SNES.NTSC ? 261 : 311))
+	{
+      SNES.V_Count = 0;
+      //update_joypads();
+	}
 #if 0
     if (CFG.Sound_output) {
       if (SNES.V_Count & 63) {
         if (SNES.V_Count & 1) {
           if (!SNES.NTSC && ((SNES.V_Count&7) == 1)) {
-            APU.TIM0++; APU.TIM1++; APU.TIM2+=4;
+            APU2->TIM0++; APU2->TIM1++; APU2->TIM2+=4;
           }
-          if (++APU.TIM0 >= APU.T0) {
-            APU.TIM0 -= APU.T0; APU.CNT0++;
-            if (APU.CONTROL&1) { SPC700_emu = 1; APU_WaitCounter++; }
+          if (++APU2->TIM0 >= APU2->T0) {
+            APU2->TIM0 -= APU2->T0; APU2->CNT0++;
+            //if (APU2->CONTROL&1) { SPC700_emu = 1; APU_WaitCounter++; }
           }
-          if (++APU.TIM1 >= APU.T1) {
-            APU.TIM1 -= APU.T1; APU.CNT1++;
-            if (APU.CONTROL&2) { SPC700_emu = 1; APU_WaitCounter++; }
+          if (++APU2->TIM1 >= APU2->T1) {
+            APU2->TIM1 -= APU2->T1; APU2->CNT1++;
+            //if (APU2->CONTROL&2) { SPC700_emu = 1; APU_WaitCounter++; }
           }
         }
-        APU.TIM2 += 4;
-        if (APU.TIM2 >= APU.T2) {
-          APU.TIM2 -= APU.T2; APU.CNT2++;
-          if (APU.CONTROL&4) { SPC700_emu = 1; APU_WaitCounter++; }
+        APU2->TIM2 += 4;
+        if (APU2->TIM2 >= APU2->T2) {
+          APU2->TIM2 -= APU2->T2; APU2->CNT2++;
+          //if (APU.CONTROL&4) { SPC700_emu = 1; APU_WaitCounter++; }
         }
       }
-    } else
-      SPC700_emu = 0;
-#endif
-	if (SNES.V_Count > (SNES.NTSC ? 261 : 311))
-    {
-      SNES.V_Count = 0;
-      return 0;
     }
-
-
+#endif
     if (SNES.V_Count < GFX.ScreenHeight) 
-    {
-    	t_lineRegisters *lr = &SNES.lineRegisters[SNES.V_Count];
-    	lr->Mode = (SNES.PPU_Port[0x05]&7);
-    	if (lr->Mode == 7)
-    	{
-    		lr->A = SNES.PPU_Port[0x1B];
-    		lr->B = SNES.PPU_Port[0x1C];
-    		lr->C = SNES.PPU_Port[0x1D];
-    		lr->D = SNES.PPU_Port[0x1E];
-
-			int X0 = (int)SNES.PPU_Port[0x1F] << 19; X0 >>= 19;
-			int Y0 = (int)SNES.PPU_Port[0x20] << 19; Y0 >>= 19;
-			int HOffset = (int)SNES.PPU_Port[0x0D] << 19; HOffset >>= 19;
-			int VOffset = (int)SNES.PPU_Port[0x0E] << 19; VOffset >>= 19;
-			
-		 	lr->CX = lr->A*(-X0+HOffset)+lr->B*(SNES.V_Count-Y0+VOffset)+(X0<<8);
-  			lr->CY = lr->C*(-X0+HOffset)+lr->D*(SNES.V_Count-Y0+VOffset)+(Y0<<8);
-    	} 
-    	
+    {   	
 #if 0    	
       if (GFX.Sprites_table_dirty) {
 /*        if ((CFG.BG_Layer&0x10))
@@ -359,75 +293,77 @@ int go()
         GFX.Sprites_table_dirty = 0;
       }
 #endif      
-      if (!(SNES.PPU_Port[0x00]&0x80) && SNES.DMA_Port[0x0C] && CFG.BG_Layer&0x80)
-      {
-        int HDMASel = SNES.DMA_Port[0x0C];
-
-        if (HDMASel&0x01 && SNES.HDMA_line < SNES.HDMA_nblines[0]) HDMA_write(0);
-        if (HDMASel&0x02 && SNES.HDMA_line < SNES.HDMA_nblines[1]) HDMA_write(1);
-        if (HDMASel&0x04 && SNES.HDMA_line < SNES.HDMA_nblines[2]) HDMA_write(2);
-        if (HDMASel&0x08 && SNES.HDMA_line < SNES.HDMA_nblines[3]) HDMA_write(3);
-        if (HDMASel&0x10 && SNES.HDMA_line < SNES.HDMA_nblines[4]) HDMA_write(4);
-        if (HDMASel&0x20 && SNES.HDMA_line < SNES.HDMA_nblines[5]) HDMA_write(5);
-        if (HDMASel&0x40 && SNES.HDMA_line < SNES.HDMA_nblines[6]) HDMA_write(6);
-        if (HDMASel&0x80 && SNES.HDMA_line < SNES.HDMA_nblines[7]) HDMA_write(7);
-      }
+      if (!(PPU_PORT[0x00]&0x80) && DMA_PORT[0x0C] && CFG.BG_Layer&0x80)
+        HDMA_write();
       SNES.HDMA_line++;
 
-      if ((!(SNES.PPU_Port[0x00]&0x80)) && (SNES.PPU_Port[0x00]&0x0f)) {
-        GFX.was_not_blanked = 1;
-
-		// draw line
-      }
+      // draw line
+      if (CFG.Scaled)
+    	  PPU_line_render_scaled();
+      else
+    	  PPU_line_render();
     }
-    if ((SNES.DMA_Port[0x00]&0x20) && !(SNES.DMA_Port[0x00]&0x10) &&
-      SNES.V_Count == (SNES.DMA_Port[0x09]&0xff)+((SNES.DMA_Port[0x0A]&0xff)<<8))
+    if ((DMA_PORT[0x00]&0x20) && !(DMA_PORT[0x00]&0x10) &&
+      SNES.V_Count == (DMA_PORT[0x09]&0xff)+((DMA_PORT[0x0A]&0xff)<<8))
       GoIRQ();
     if (SNES.V_Count == (SNES.NTSC ? 261 : 311)) {
     	
       // V_blank
-      SNES.v_blank = 0; SNES.DMA_Port[0x10] = 0;
-      if (SNES.DMA_Port[0x0C] && CFG.BG_Layer&0x80) {
-        if (SNES.DMA_Port[0x0C]&0x01) HDMA_transfert(0);
-        if (SNES.DMA_Port[0x0C]&0x02) HDMA_transfert(1);
-        if (SNES.DMA_Port[0x0C]&0x04) HDMA_transfert(2);
-        if (SNES.DMA_Port[0x0C]&0x08) HDMA_transfert(3);
-        if (SNES.DMA_Port[0x0C]&0x10) HDMA_transfert(4);
-        if (SNES.DMA_Port[0x0C]&0x20) HDMA_transfert(5);
-        if (SNES.DMA_Port[0x0C]&0x40) HDMA_transfert(6);
-        if (SNES.DMA_Port[0x0C]&0x80) HDMA_transfert(7);
+      SNES.v_blank = 0; DMA_PORT[0x10] = 0;
+      if (DMA_PORT[0x0C] && CFG.BG_Layer&0x80) {
+        if (DMA_PORT[0x0C]&0x01) HDMA_transfert(0);
+        if (DMA_PORT[0x0C]&0x02) HDMA_transfert(1);
+        if (DMA_PORT[0x0C]&0x04) HDMA_transfert(2);
+        if (DMA_PORT[0x0C]&0x08) HDMA_transfert(3);
+        if (DMA_PORT[0x0C]&0x10) HDMA_transfert(4);
+        if (DMA_PORT[0x0C]&0x20) HDMA_transfert(5);
+        if (DMA_PORT[0x0C]&0x40) HDMA_transfert(6);
+        if (DMA_PORT[0x0C]&0x80) HDMA_transfert(7);
       }
 //      memset(GFX.tiles_ry,8,4);
 /*      if (GFX.frame_d && (CFG.BG_Layer & 0x10))
         draw_sprites();*/
-//        if (GFX.nb_frames & 1)
-      		draw_screen();
+      draw_screen();
       GFX.BG_scroll_reg = 0;
       SNES.HDMA_line = 0;
-      SNES.PPU_Port[0x02] = GFX.Old_SpriteAddress;
+      PPU_PORT[0x02] = GFX.Old_SpriteAddress;
       GFX.OAM_upper_byte = 0;
 //      patch_memory();
+	  GFX.brightness = PPU_PORT[0x00]&0xF;
     }
-    if (SNES.V_Count == GFX.ScreenHeight) {
-      if (SNES.DMA_Port[0x00]&0x80) GoNMI();
+    if (SNES.V_Count == GFX.ScreenHeight || SNES.DelayedNMI) {
+      if (DMA_PORT[0x00]&0x80) GoNMI();
       SNES.HIRQ_ok = 1;
-      GFX.was_not_blanked = 0; GFX.nb_frames++;
+//      GFX.was_not_blanked = 0; 
+      GFX.nb_frames++;
       
-      if (GFX.nb_frames > 100)
+      if (GFX.nb_frames >= 100 && !GUI.log && !CFG.Debug)
       {
-        GUI_printf(0, 22, "% 3d%% %d %d", GFX.nb_frames * 100 / frame, *APU_ADDR_CNT, *APU_ADDR_DBG1);
+    	  GFX.speed = GFX.nb_frames * 100 / (GFX.DSFrame - GFX.DSLastFrame);
+    	  GFX.DSLastFrame = GFX.DSFrame;  
+    	  GUI_console_printf(0, 23, "% 3d%%             ",  GFX.speed);
+//        GUI_console_printf(20, 23, "DBG=%d", CFG.Debug2),
 
-		GFX.speed = GFX.nb_frames * 100 / frame;
-        GFX.nb_frames = 0;
-        frame = 0;      	
+		  GUI_console_printf(26, 23, "%02d:%02d",
+			  (IPC->time.rtc.hours >= 40 ? IPC->time.rtc.hours - 40 : IPC->time.rtc.hours),
+			  IPC->time.rtc.minutes);		        	
+
+          GFX.nb_frames = 0;
+          
+          if (CFG.AutoSRAM && SNES.SRAMWritten)
+          {
+        	  saveSRAM();
+        	  GUI_console_printf(0, 23, "Auto SRAM written");
+        	  SNES.SRAMWritten = 0;
+          }
       }
       
             
-      if (!CPU.NMIActive) SNES.DMA_Port[0x10] |= 0x80;
+      if (!CPU.NMIActive) DMA_PORT[0x10] |= 0x80;
       SNES.v_blank = 1; CPU.NMIActive = 0;
       update_joypads();
+      SNES.DelayedNMI = 0;
 	}
-	
    }
 
 	return 0;
@@ -667,7 +603,7 @@ if (flags&P_X)  sprintf(buf, "CPX #%02X", mem_getbyte(pc+1,pb));
     case 0x40 : sprintf(buf, "RTI"); break;
     case 0x60 : sprintf(buf, "RTS"); break;
     case 0x6B : sprintf(buf, "RTL"); break;
-    case 0x7B : sprintf(buf, "TCD"); break;
+    case 0x7B : sprintf(buf, "TDC"); break;
     case 0x98 : sprintf(buf, "TYA"); break;
     case 0x9A : sprintf(buf, "TXS"); break;
     case 0xA8 : sprintf(buf, "TAY"); break;
@@ -687,6 +623,7 @@ if (flags&P_X)  sprintf(buf, "CPX #%02X", mem_getbyte(pc+1,pb));
     case 0x1B : sprintf(buf, "TCS"); break;
     case 0x3B : sprintf(buf, "TSC"); break;
     case 0x5B : sprintf(buf, "TCD"); break;
+    case 0xF8 : sprintf(buf, "SED"); break;    
     case 0xF4 : sprintf(buf, "PEA #%04X", mem_getword(pc+1, pb)); break;
     case 0xD4 : sprintf(buf, "PEI $%02X", mem_getbyte(pc+1, pb)); break;
     case 0x4C : sprintf(buf, "JMP $%04X", mem_getword(pc+1, pb)); break;
@@ -699,25 +636,26 @@ if (flags&P_X)  sprintf(buf, "CPX #%02X", mem_getbyte(pc+1,pb));
                           CPU.X, mem_getbyte(pc+1, pb), CPU.Y, CPU.A); break;
     case 0x44 : sprintf(buf, "MVP %X:%X->%X:%X %x", mem_getbyte(pc+1+1, pb),
                           CPU.X, mem_getbyte(pc+1, pb), CPU.Y, CPU.A); break;
-    case 0x00 : sprintf(buf, "BRK $%02X", mem_getbyte(pc+1, pb)); break;
+    case 0x00 : sprintf(buf, "BRK $%04X", CPU.BRK); break;
+    case 0x02 : sprintf(buf, "COP $%04X", CPU.COP); break;
 	case 0x50 : sprintf(buf, "BVC %04X", pc+1+(char)mem_getbyte(pc+1, pb)+1); break;
     case 0xCB : sprintf(buf, "WAI"); break;
     default :   sprintf(buf, "\?\?(%02X)",opcode);
   }
 }
 
+#if 0
 uint32	addrbuf[100025];
 uint32	addri = 0;
-
+#endif
 
 int trace_CPU()
 {
-//  unsigned char opcode;
   char	buf[64];
   char	buf2[256];
 
-//  opcode = mem_getbyte(OldPC, PB);
 
+#if 0
 	if (addri != 0)
 	{
 		addrbuf[addri++] = 0xFFFFFFFF;
@@ -726,6 +664,7 @@ int trace_CPU()
 		fclose(f);
 		addri = 0;
 	}
+#endif
 
 #ifdef ASM_OPCODES
   Cycles = -((sint32)SaveR8 >> 14);
@@ -752,14 +691,15 @@ int trace_CPU()
 #if 1
   show_opcode(buf, mem_getbyte(CPU.PC, CPU.PB), CPU.PC, CPU.PB, P);
   sprintf(buf2,
-          "A:%04X X:%04X Y:%04X S:%04X D:%02X/%04X VC:%03d ?:-%03d/%03d/%03d/%02x %d%d%d%d%d%d%d%d %02X:%04X %s\n",
+          "A:%04X X:%04X Y:%04X S:%04X D:%02X/%04X VC:%03d ?:%08x/%04x/%04x %d%d%d%d%d%d%d%d %02X:%04X %s\n",
           CPU.A, CPU.X, CPU.Y, CPU.S, CPU.DB, CPU.D, SNES.V_Count, 
-          Cycles, HCYCLES, CPU_NextCycles, 0,
+          Cycles, HCYCLES, CPU.HCycles, 
+//          &BRKaddress, BRKaddress, CPU.BRK,
           (P>>7)&1,(P>>6)&1,(P>>5)&1,(P>>4)&1,(P/8)&1,(P/4)&1,(P/2)&1,P&1,
           CPU.PB, CPU.PC, buf);
   FS_printlog(buf2);
   
- /* sprintf(buf2,
+/*  sprintf(buf2,
           "r0=%08x r1=%08x r2=%08x r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x r8=%08x r9=%08x r10=%08x r11=%08x\n",
           AsmDebug[0],AsmDebug[1],AsmDebug[2],AsmDebug[3],
           AsmDebug[4],AsmDebug[5],AsmDebug[6],AsmDebug[7],
@@ -769,14 +709,17 @@ int trace_CPU()
           AsmDebug[0],AsmDebug[1],AsmDebug[2],AsmDebug[3],
           AsmDebug[4],AsmDebug[5],AsmDebug[6],AsmDebug[7],
           AsmDebug[8],AsmDebug[9],AsmDebug[10],AsmDebug[11] );
-           
-  FS_printlog(buf2);  */
+        
+  FS_printlog(buf2);*/  
   
 //#else
   sprintf(buf2,"%02X:%04X ; ", CPU.PB, CPU.PC);
   iprintf("%s", buf2);
   //swiDelay(10000000);
 #endif          
+
+	if (CPU.PB == 0 && CPU.PC == 0x8F15)
+		CPU_log = 0;
   
   return 0; 
 }
@@ -786,12 +729,21 @@ void trace_CPUFast()
 {
 	uint32 PC = ((S&0xFFFF) << 16)|
 				(uint32)((sint32)PCptr+(sint32)SnesPCOffset);
-	if (PC == 0x808077)
-		CPU_log = 1; 
-	
+	/*if (PC == 0xCD3B92)
+		CPU_log = 1; */
+	/*if (mem_getbyte(0xA234, 0xB5) == 0)
+		CPU_log = 1;*/
+
+	if (PC == 0x008ECE)
+		CPU_log = 1;
+	if (PC == 0x008F15)
+		CPU_log = 0;
+
+#if 0
 	addrbuf[addri++] = PC;
 	if (addri == 100024)
 		addri = 1;
+#endif		
   /*char	buf2[256];	
 	sprintf(buf2,"%02X:%04X ",
 		S&0xFFFF, 

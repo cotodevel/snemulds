@@ -90,10 +90,12 @@
 
 ---------------------------------------------------------------------------------*/
 
+#include <nds.h>
 #include <nds/jtypes.h>
 #include <nds/system.h>
 #include <nds/arm7/touch.h>
 #include <nds/interrupts.h>
+
 
 #include <stdlib.h>
 
@@ -106,82 +108,6 @@
 #define TSC_MEASURE_AUX      0xE4
 #define TSC_MEASURE_TEMP2    0xF4
 
-//---------------------------------------------------------------------------------
-typedef struct sMyIPC {
-//---------------------------------------------------------------------------------
-#if 0
-  uint32 heartbeat;          // counts frames
-#endif  
-
-	int16 touchX,   touchY;   // TSC X, Y
-#if 0	
-	u8 touchXpx, touchYpx; // TSC X, Y pixel values
-#else	
-	int16 touchXpx, touchYpx; // TSC X, Y pixel values
-#endif	
-	int16 touchZ1,  touchZ2;  // TSC x-panel measurements
-	uint16 tdiode1,  tdiode2;  // TSC temperature diodes
-	uint32 temperature;        // TSC computed temperature
-
-	uint16 buttons;            // X, Y, /PENIRQ buttons
-
-	union {
-		uint8 curtime[8];        // current time response from RTC
-
-    struct {
-			u8 rtc_command;
-			u8 rtc_year;           //add 2000 to get 4 digit year
-			u8 rtc_month;          //1 to 12
-			u8 rtc_day;            //1 to (days in month)
-
-			u8 rtc_incr;
-			u8 rtc_hours;          //0 to 11 for AM, 52 to 63 for PM
-			u8 rtc_minutes;        //0 to 59
-			u8 rtc_seconds;        //0 to 59
-    };
-  };
-	u8 touched;				  //TSC touched?  
-	u8 touchError;	//TSC error reading data?
-
-	uint16 battery;            // battery life ??  hopefully.  :)
-	uint16 aux;                // i have no idea...
-
-  vuint8 mailBusy;
-} tMyIPC;
-
-
-#define MyIPC ((tMyIPC volatile *)(0x027FF000))
-
-
-#if 0
-u16 readtouch(u32 command) {
-    u16 result;
-
-    REG_SPICNT = SPI_ENABLE | 0xA01;
-    REG_SPIDATA = command;
-    while (REG_SPICNT & SPI_BUSY);
-
-    REG_SPIDATA = 0;
-    while (REG_SPICNT & SPI_BUSY);
-    result = REG_SPIDATA;
-
-    REG_SPICNT  = SPI_ENABLE | 0x201;
-    REG_SPIDATA = 0;
-    while (REG_SPICNT & SPI_BUSY);
-
-    return ((result & 0x7F) << 5) | (REG_SPIDATA >> 3);
-}
-
-void updateMyIPC()
-{
-	MyIPC->buttons = REG_KEYXY;
-    MyIPC->touched = !(REG_KEYXY & 0x40) ? 1 : 0;
-	MyIPC->touchX = readtouch(TSC_MEASURE_X);
-	MyIPC->touchY = readtouch(TSC_MEASURE_Y);	
-}
-
-#else
-
 static u8 last_time_touched = 0;
 
 static u8 range_counter_1 = 0;
@@ -189,63 +115,53 @@ static u8 range_counter_2 = 0;
 static u8 range = 20;
 static u8 min_range = 20;
 
-typedef struct mytouchPosition {
-	u8 error;
-	u8 touched;
-	int16	x;
-	int16	y;
-	int16	px;
-	int16	py;
-	int16	z1;
-	int16	z2;
-} mytouchPosition;
+void memcpy(const void *dst, const void *src, int length) {
+    uint8 *dst8 = (uint8*)dst;
+    uint8 *src8 = (uint8*)src;
+    while (length-- > 0) {
+        *dst8++ = *src8++;
+    }
+}    
+    
+void StylusRead(void)
+{
+	REG_SPICNT = 0x8A01;
+	REG_SPIDATA = 0x84;
 
-
-
-//---------------------------------------------------------------------------------
-uint16 touchRead(uint32 command) {
-//---------------------------------------------------------------------------------
-	uint16 result, result2;
-
-	uint32 oldIME = REG_IME;
-
-	REG_IME = 0;
-	
 	SerialWaitBusy();
 
-	// Write the command and wait for it to complete
-	REG_SPICNT = SPI_ENABLE | SPI_BAUD_2MHz | SPI_DEVICE_TOUCH | SPI_CONTINUOUS; //0x0A01;
-	REG_SPIDATA = command;
-	SerialWaitBusy();
-
-	// Write the second command and clock in part of the data
 	REG_SPIDATA = 0;
-	SerialWaitBusy();
-	result = REG_SPIDATA;
 
-	// Clock in the rest of the data (last transfer)
-	REG_SPICNT = SPI_ENABLE | 0x201;
+	SerialWaitBusy();
+
+	REG_SPICNT = 0x8201;
 	REG_SPIDATA = 0;
-	SerialWaitBusy();
 
-	result2 = REG_SPIDATA >>3;
+	SerialWaitBusy();	
+}
 
-	REG_IME = oldIME;
-
-	// Return the result
-	return ((result & 0x7F) << 5) | result2;
+u8 CheckStylus(void)
+{
+	StylusRead();
+	if(last_time_touched == 1)
+	{
+		if( !(REG_KEYXY & 0x40) )
+			return 1;
+		else
+		{
+			StylusRead();
+			return !(REG_KEYXY & 0x40) ? 2 : 0;
+		}
+	}
+	else
+	{
+		return !(REG_KEYXY & 0x40) ? 1 : 0;
+	}
 }
 
 
-//---------------------------------------------------------------------------------
-uint32 touchReadTemperature(int * t1, int * t2) {
-//---------------------------------------------------------------------------------
-	*t1 = touchRead(TSC_MEASURE_TEMP1);
-	*t2 = touchRead(TSC_MEASURE_TEMP2);
-	return 8490 * (*t2 - *t1) - 273*4096;
-}
-
-int16 readTouchValue(uint32 command, int16 *dist_max, u8 *err){
+int16 readTouchValue(uint32 command, int16 *dist_max, u8 *err)
+{
 	int16 values[5];
 	int32 aux1, aux2, aux3, dist, dist2, result;
 	u8 i, j, k;
@@ -378,55 +294,9 @@ void UpdateRange(uint8 *this_range, int16 dist_max_in_last_reading, u8 error_rea
 	}
 }
 
-
-u8 CheckStylus(void){
-
-	SerialWaitBusy();
-
-	REG_SPICNT = 0x8A01;
-	REG_SPIDATA = 0x84;
-
-	SerialWaitBusy();
-
-	REG_SPIDATA = 0;
-
-	SerialWaitBusy();
-
-	REG_SPICNT = 0x8201;
-	REG_SPIDATA = 0;
-
-	SerialWaitBusy();
-
-	if(last_time_touched == 1){
-		if( !(REG_KEYXY & 0x40) )
-			return 1;
-		else{
-			REG_SPICNT = 0x8A01;
-			REG_SPIDATA = 0x84;
-
-			SerialWaitBusy();
-
-			REG_SPIDATA = 0;
-
-			SerialWaitBusy();
-
-			REG_SPICNT = 0x8201;
-			REG_SPIDATA = 0;
-
-			SerialWaitBusy();
-
-			return !(REG_KEYXY & 0x40) ? 2 : 0;
-		}
-	}else{
-		return !(REG_KEYXY & 0x40) ? 1 : 0;
-	}
-}
-
-mytouchPosition ReadTouchScreen(void){
+void mytouchReadXY(uint16 *x, uint16 *y, uint8 *touched, uint8 *rerror) {
 	int16 dist_max_y, dist_max_x, dist_max;
 	u8 error, error_where, first_check, i;
-
-	mytouchPosition touchPos;
 
 	uint32 oldIME = REG_IME;
 
@@ -436,13 +306,10 @@ mytouchPosition ReadTouchScreen(void){
 	if(first_check != 0){
 		error_where = 0;
 
-		touchPos.z1 =  readTouchValue(TSC_MEASURE_Z1, &dist_max, &error);
-		touchPos.z2 =  readTouchValue(TSC_MEASURE_Z2, &dist_max, &error);
-
-		touchPos.x = readTouchValue(TSC_MEASURE_X, &dist_max_x, &error);
+		*x = readTouchValue(TSC_MEASURE_X, &dist_max_x, &error);
 		if(error==1) error_where += 1;
 
-		touchPos.y = readTouchValue(TSC_MEASURE_Y, &dist_max_y, &error);
+		*y = readTouchValue(TSC_MEASURE_Y, &dist_max_y, &error);
 		if(error==1) error_where += 2;
 
 		REG_SPICNT = 0x8A01;
@@ -461,11 +328,11 @@ mytouchPosition ReadTouchScreen(void){
 
 		switch( CheckStylus() ){
 		case 0:
-			touchPos.touched = 0;
+			*touched = 0;
 			last_time_touched = 0;
 			break;
 		case 1:
-			touchPos.touched = 1;
+			*touched = 1;
 			last_time_touched = 1;
 
 			if(dist_max_x > dist_max_y)
@@ -475,7 +342,7 @@ mytouchPosition ReadTouchScreen(void){
 
 			break;
 		case 2:
-			touchPos.touched = 1;
+			*touched = 1;
 			last_time_touched = 0;
 			error_where = 3;
 
@@ -483,80 +350,64 @@ mytouchPosition ReadTouchScreen(void){
 		}
 	}else{
 		error_where = 3;
-		//touchPos.x = 0;
-		//touchPos.y = 0;
-		touchPos.touched = 0;
+		*touched = 0;
 		last_time_touched = 0;
 	}
 
-	touchPos.error = error_where;
+	*rerror = error_where;
 
-	UpdateRange(&range, dist_max, touchPos.error, touchPos.touched);
+	UpdateRange(&range, dist_max, *rerror, *touched);
 
 	REG_IME = oldIME;
 
-	return touchPos;
+	return;
 }
 
+static int clock_upd_cnt = 0;
 
 void updateMyIPC()
 {
-	static int heartbeat = 0;
- 
-	uint16 but=0, batt=0;
-	int t1=0, t2=0;
-	uint32 temp=0;
-	uint8 ct[sizeof(MyIPC->curtime)];
-	u32 i;
-	mytouchPosition tempPos;
- 
-	// Update the heartbeat
-	heartbeat++;
- 
-	// Read the touch screen
- 
+	static int lastbut = -1;
+	
+	uint16 but=0, x=0, y=0;
+	uint8	touched, error;
+
 	but = REG_KEYXY;
 
-
-	//MODIFIED BY PADRINATOR (padrinator at gmail dot com) 
-	tempPos = ReadTouchScreen();	
-	//MODIFIED BY PADRINATOR (padrinator at gmail dot com)
-
-
-	batt = touchRead(TSC_MEASURE_BATTERY);
+	if (!( (but ^ lastbut) & (1<<6))) {
  
-	// Read the time
-	rtcGetTime((uint8 *)ct);
-	BCDToInteger((uint8 *)&(ct[1]), 7);
- 
-	// Read the temperature
-	temp = touchReadTemperature(&t1, &t2);
- 
-	MyIPC->mailBusy = 1;
-	// Update the MyIPC struct
-#if 0	
-	MyIPC->heartbeat	= heartbeat;
-#endif	
-	MyIPC->buttons		= but;
-	//MODIFIED BY PADRINATOR (padrinator at gmail dot com) 
-	MyIPC->touchError = tempPos.error;
+		mytouchReadXY(&x, &y, &touched, &error);
 
-	MyIPC->touched   = tempPos.touched;
-	MyIPC->touchX    = tempPos.x;
-    MyIPC->touchY    = tempPos.y;
-
-	MyIPC->touchZ1 = tempPos.z1;
-	MyIPC->touchZ2 = tempPos.z2;
-	//MODIFIED BY PADRINATOR (padrinator at gmail dot com) 
-	MyIPC->battery		= batt;
-	MyIPC->mailBusy = 0;
- 
-	for(i=0; i<sizeof(ct); i++) {
-		MyIPC->curtime[i] = ct[i];
+		if ( x == 0 || y == 0 ) {
+			but |= (1 <<6);
+			lastbut = but;
+		}
+		
+	} else {
+		lastbut = but;
+		but |= (1 <<6);
 	}
- 
-	MyIPC->temperature = temp;
-	MyIPC->tdiode1 = t1;
-	MyIPC->tdiode2 = t2;	
+
+	IPC->mailBusy		= 1;
+	IPC->touchX			= x;
+	IPC->touchY			= y;
+	IPC->buttons		= but;	
+	IPC->tdiode1		= touched;
+	IPC->tdiode2		= error;
+	IPC->mailBusy		= 0;
+	
+	/* ? */
+		
+	if (clock_upd_cnt == 0)
+	{
+	uint8 ct[8];
+	// update one time by minute (rtcGetTime is a bit slow)
+	rtcGetTime((uint8 *)ct);
+	BCDToInteger((uint8 *)&(ct[1]), 7);	
+		
+	memcpy(IPC->time.curtime, ct, 8);
+	}
+	if (clock_upd_cnt++ == 3600)
+		clock_upd_cnt = 0;		
+	/* ? */
 }
-#endif

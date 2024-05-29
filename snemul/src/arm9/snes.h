@@ -65,7 +65,7 @@ struct s_snescore
 };
 
 /* DS Memory */
-#define SNES_RAM_ADDRESS	((uint8 *)(0x27C0000))
+#define SNES_RAM_ADDRESS	((uint8 *)(0x23C0000))
 
 #define MAP  ((uchar **)(0x06898000))
 #define WMAP ((uchar **)(0x0689A000))
@@ -73,26 +73,7 @@ struct s_snescore
 //#define MAP ((uchar **)(0xB000014))
 //#define MAP SNES.Map
 
-/*
-  A = SNES.PPU_Port[0x1B]; B = SNES.PPU_Port[0x1C];
-  C = SNES.PPU_Port[0x1D]; D = SNES.PPU_Port[0x1E];
-
-  X0 = (int)SNES.PPU_Port[0x1F] << 19; X0 >>= 19;
-  Y0 = (int)SNES.PPU_Port[0x20] << 19; Y0 >>= 19;
-  Y1 = y;
-
-  HOffset = (int)SNES.PPU_Port[0x0D] << 19; HOffset >>= 19;
-  VOffset = (int)SNES.PPU_Port[0x0E] << 19; VOffset >>= 19;
-*/  
-
-typedef struct s_lineRegisters
-{
-	short	A, B, C, D;
-	/*int		X0, Y0;
-	int		HOffset, VOffset;*/
-	int		CX, CY;
-	int	    Mode;			
-} t_lineRegisters;
+extern struct s_snescore	SNESC;
 
 struct s_snes
 {
@@ -103,14 +84,10 @@ struct s_snes
   uchar    	*WriteMap[256*8];*/
   int		HiROM;
 
-/* ports */
-  ushort	PPU_Port[0x2000]; // FIXME: too big
-  ushort	DMA_Port[0x2000]; // FIXME: too big
-
-  ROM_Info	*ROM_info;
+  ROM_Info	ROM_info;
 
 /* HDMA */
-  uchar		*HDMA_values[8][256];
+  uchar		*HDMA_values[256][8];
   uchar		HDMA_nblines[8], HDMA_port[8], HDMA_info[8];
   uchar		HDMA_line;
   int		UsedCycles;
@@ -119,29 +96,30 @@ struct s_snes
   int		NTSC;
   uchar		HIRQ_ok;
   uchar		HIRQ_value;
-  uchar        PPU_NeedMultiply;
+  uchar     PPU_NeedMultiply;
+  uint32	JOY_PORT16;
   uchar		Joy1_cnt, Joy1_rdst;
   uchar		Joy2_cnt, Joy2_rdst;
   int		V_Count;
   int		Mode7Repeat;
   int		v_blank; /* screen ray outside of the draw area */
   int		h_blank;
+  uint32	DelayedNMI;
 
-/* debug */
-  FILE		*flog;
   int		ROMSize;
   int		ROMHeader;
 
   int		mouse_x;
   int		mouse_y;
   int		mouse_b;
+  int		mouse_speed;
   int		prev_mouse_x;
   int		prev_mouse_y;
   int		joypads[4];
   
-  t_lineRegisters	lineRegisters[256];
-
-
+  int		Stopped;
+  int		SRAMWritten;  
+  
   int		stat_before;
   int		stat_before2;
   int		stat_before3;
@@ -154,34 +132,48 @@ struct s_snes
   int		stat_OPC_cnt[256];*/
 };
 
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern struct s_snescore	SNESC;
 extern struct s_snes	SNES;
-extern void	pushb(uint8 value);
-extern void	pushw(uint16 value);
-extern uchar   mem_getbyte(uint32 offset, uchar bank);
-extern void	mem_setbyte(uint32 offset, uchar bank, uchar byte);
-extern ushort  mem_getword(uint32 offset, uchar bank);
-extern void    mem_setword(uint32 offset, uchar bank, ushort word);
-extern void	*map_memory(uint16 offset, uchar bank);
-extern void	*mem_getbaseaddress(uint16 offset, uchar bank);
-extern void	GoNMI();
-extern void	GoIRQ();
-extern void	reset_SNES();
-extern int		get_joypad();
-extern void	HDMA_write(uchar port);
-extern void	HDMA_transfert(uchar port);
-extern ROM_Info	*load_ROM(char *ROM, int ROM_size);
 
-//core.c
-extern uchar	PPU_port_read(uint32 address);
-extern void	PPU_port_write(uint32 address, uchar value);
+//#define SNES	((struct s_snes *)(0x23E0000))
 
-#ifdef __cplusplus
-}
+extern uint16	PPU_PORT[0x90]; // 2100 -> 2183
+extern uint16	DMA_PORT[0x180]; // 4200 -> 437F
+
+#define EMPTYMEM		(ushort *)(0x23E0000)
+//#define PPU_PORT	((ushort *)(0x23E0000))
+//#define DMA_PORT	((ushort *)(0x23E4000))
+
+#define SNES_SRAM_ADDRESS ((uchar *)(0x23E6000))
+
+#define SNES_ROM_ADDRESS ((uchar *)(0x20C0000))
+
+#define ROM_MAX_SIZE	(3*1024*1024)
+//#define ROM_STATIC_SIZE	(1*1024*1024)
+//#define ROM_PAGING_SIZE	(2*1024*1024)
+#define ROM_STATIC_SIZE	(64*1024)
+#define ROM_PAGING_SIZE	(ROM_MAX_SIZE-ROM_STATIC_SIZE)
+#define SNES_ROM_PAGING_ADDRESS (SNES_ROM_ADDRESS+ROM_STATIC_SIZE)
+
+void	pushb(uint8 value);
+void	pushw(uint16 value);
+
+uchar   mem_getbyte(uint32 offset, uchar bank);
+void	mem_setbyte(uint32 offset, uchar bank, uchar byte);
+ushort  mem_getword(uint32 offset, uchar bank);
+void    mem_setword(uint32 offset, uchar bank, ushort word);
+void	*map_memory(uint16 offset, uchar bank);
+void	*mem_getbaseaddress(uint16 offset, uchar bank);
+
+void	GoNMI();
+void	GoIRQ();
+
+
+void	reset_SNES();
+int		get_joypad();
+void	HDMA_write();
+void	HDMA_transfert(uchar port);
+void	load_ROM(char *ROM, int ROM_size);
+
+
+
 #endif

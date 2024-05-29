@@ -17,11 +17,12 @@ GNU General Public License for more details.
 */
 
     .equ    memoryMapBase,      0x06898000              @ 8k in VRAM Bank H
-@  	.equ    memoryMapBase,      0x027E0000
+@  	.equ    memoryMapBase,      0x023E0000
     .equ    MemoryMap,          memoryMapBase           @ for code compatibility
     .equ	MemoryWriteMap,		0x0689A000
     
-    .equ    snesWramBase,       0x027C0000              
+/*    .equ    snesWramBase,       0x027C0000*/
+	.equ    snesWramBase,       0x023C0000              
 /*    .equ    snesWramBase,       0x02200000              @ either 0x2100000 or 0x6800000*/
 /*    .equ    snesVramBase,       0x02220000*/
 
@@ -182,8 +183,8 @@ m1x1Decoder:
     .section    .itcm, "awx", %progbits
 
     .align 4
-    .ascii  ".IWRAMSTART"
-    .align 4
+/*    .ascii  ".IWRAMSTART"
+    .align 4*/
     
 @-------------------------------------------------------------------
 @ First bank for DP addressing
@@ -220,11 +221,12 @@ MemFunctions:
 @ Addressing Modes 
 @-------------------------------------------------------------------
 SetRead
+A_34W	:
 A_34      :  Translate Absolute,3,4
 A_36      :  Translate Absolute,3,6
 
-SetWrite
-A_34W	  :	 Translate Absolute,3,4
+@SetWrite
+@A_34W	  :	 Translate Absolute,3,4
 
 SetRead
 A_J33     :  Translate AbsolutePC,0,3
@@ -818,13 +820,6 @@ MemReload:
 	movs	r2, #0	@ clear ne flag, can we avoid this ?
 	bx		lr
 	
-/* archeide: we are here if the program wrote to the ROM */	
-WriteProtection:
-	ldr		r2, =SNEmulRegisters
-	ldmia	r2,	{r3-r12,lr}	@ Load Registers
-	
-	movs	r2, #1 		@ set ne flag, can we avoid this ?	
-	bx		lr	
 
 IORead8:
 	ldr		r2, =SNEmulRegisters
@@ -864,14 +859,34 @@ IOWrite8:
 	bic		r1, r0,  #0xFF000000 @ real address
 	and		r0, r0,  #0xFF000000 @ memory type
 
+/*
+	cmp		r0, #0x82000000 @ Is CPU/DMA I/O ?
+	bne		1f
+	
+	ldr		r3, =IOWrite_DMA
+	ldr		r3, [r3, r1]
+	blx		r3
+
+	b		2f
+1:
+	cmp		r0, #0x81000000	@ Is PPU I/O ?
+	bne		1f
+	
+	ldr		r3, =IOWrite_PPU
+	sub		r0, r1, #0x2100	
+	mov		r1, r2
+	ldr		r3, [r3, r0, lsl #2]
+	
+	b		2f	
+1:
+*/	
 	cmp		r0, #0x80000000
 	beq		MemReload
-	cmp		r0, #0x86000000
-	beq		WriteProtection
-	
-	ldr		r3, =IO_setbyte 
-	blx		r3 				@ SNEmul entry point
 
+
+	
+	bl		IO_setbyte 				@ SNEmul entry point
+2:
 	ldr		r2, =SNEmulRegisters
 	ldmia	r2,	{r3-r12,lr}	@ Load Registers
 	movs	r2, #1 		@ set ne flag, can we avoid this ?
@@ -888,8 +903,7 @@ IORead16:
 	cmp		r0, #0x80000000
 	beq		MemReload
 
-	ldr		r2, =IO_getword 
-	blx		r2 				@ SNEmul entry point
+	bl		IO_getword 				@ SNEmul entry point
 	
 	ldr		r2, =SNEmulRegisters
 	ldmia	r2,	{r3-r12,lr}	@ Load Registers
@@ -908,11 +922,8 @@ IOWrite16:
 
 	cmp		r0, #0x80000000
 	beq		MemReload
-	cmp		r0, #0x86000000
-	beq		WriteProtection	
 
-	ldr		r3, =IO_setword 
-	blx		r3 				@ SNEmul entry point
+	bl		IO_setword 				@ SNEmul entry point
 	
 	ldr		r2, =SNEmulRegisters
 	ldmia	r2,	{r3-r12,lr}	@ Load Registers
@@ -1104,17 +1115,10 @@ A:				.word	0	@ r12
 savelr:			.word 	0	@ r14	
 
 
-/*TimeOutHandlerAddress:
-					.word	0*/
-
-/*
-NMIaddress:         .word   0
-*/
+.GLOBAL COPaddress
 COPaddress:         .word   0
+.GLOBAL BRKaddress
 BRKaddress:         .word   0
-/*
-IRQaddress:         .word   0
-*/
 
 .GLOBAL CPU_log
 CPU_log:		.word	0
@@ -1154,4 +1158,4 @@ AsmDebug4:
 		.word	0
 	
 
-	.include	"../opc_misc.s"
+@	.include	"../opc_misc.s"

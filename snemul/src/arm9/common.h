@@ -25,13 +25,32 @@ GNU General Public License for more details.
 #define USE_LIBFAT
 //#define FAKE_FS
 
-#define SNEMULDS_TITLE "-= SNEmulDS 0.4 by archeide =-\n"
+#define USE_EXTRAM
+
+//#define DSEMUL_BUILD
+
+#ifndef DSEMUL_BUILD
+#define SNEMULDS_TITLE "-= SNEmulDS 0.6 by archeide =-\n"
+#else
+#define SNEMULDS_TITLE "DSEmul - SNES on DS\n"
+#endif
 #define SNEMULDS_SUBTITLE "CPU: bubble2k Sound: gladius\n"
 
+#ifndef IN_EMULATOR
 #define GAMES_DIR "/SNES/"
-//#define GAMES_DIR "/"
+#else
+#define GAMES_DIR "/"
+#endif
 
 #define TIMER_Y
+
+#ifdef IN_EMULATOR
+#define IN_DTCM
+#define IN_ITCM
+#define IN_ITCM2
+#define IN_ITCM3
+
+#else
 
 #define IN_DTCM __attribute__((section(".dtcm")))
 #define IN_ITCM __attribute__((section(".itcm")))
@@ -43,6 +62,8 @@ GNU General Public License for more details.
 #else
 #define IN_ITCM3
 #define IN_ITCM2 
+#endif
+
 #endif
 
 #include <nds/timers.h>
@@ -72,6 +93,10 @@ GNU General Public License for more details.
 #undef SRAM
 #endif
 
+
+#define PM_BACKLIGHT_BOTTOM  BIT(2)    // Enable the top backlight if set
+#define PM_BACKLIGHT_TOP     BIT(3)    // Enable the bottom backlight if set
+int	setBacklight(int flags);
 
 //#include <>
 

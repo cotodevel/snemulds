@@ -41,8 +41,13 @@ void	APU_reset()
 
 void	APU_nice_reset()
 {
+#ifndef IN_EMULATOR	
 	APU_stop();
 	APU_reset();	
+#endif
+	
+	swiWaitForVBlank();
+	swiWaitForVBlank();
 }
 
 void	APU_pause()
@@ -52,10 +57,12 @@ void	APU_pause()
 
 void	APU_stop()
 {
+#ifndef IN_EMULATOR	
 	*APU_ADDR_ANS = 0;
 	SendArm7Command(4);
 	// Wait the APU disabling
-	while (*APU_ADDR_ANS != 0xFF00FF00);	
+	while (*APU_ADDR_ANS != 0xFF00FF00);
+#endif	
 }
 
 void	APU_playSpc()
@@ -66,11 +73,37 @@ void	APU_playSpc()
 void	APU_saveSpc()
 {
 	SendArm7Command(6);
+	
+	// Wait the ARM7 to save the SPC
+	// FIXME : replace this with a variable check
+	swiWaitForVBlank();
+	swiWaitForVBlank();
+	swiWaitForVBlank();	
+	swiWaitForVBlank();
+	swiWaitForVBlank();
+	swiWaitForVBlank();
+	swiWaitForVBlank();
+	swiWaitForVBlank();	
+	swiWaitForVBlank();
+	swiWaitForVBlank();		
 }
 
 void	APU_loadSpc()
 {
 	SendArm7Command(7);
+
+	// Wait the ARM7 to load the SPC
+	// FIXME : replace this with a variable check
+	swiWaitForVBlank();
+	swiWaitForVBlank();
+	swiWaitForVBlank();	
+	swiWaitForVBlank();
+	swiWaitForVBlank();
+	swiWaitForVBlank();
+	swiWaitForVBlank();
+	swiWaitForVBlank();	
+	swiWaitForVBlank();
+	swiWaitForVBlank();		
 }
 
 

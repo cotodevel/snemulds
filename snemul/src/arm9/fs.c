@@ -23,7 +23,10 @@ GNU General Public License for more details.
 #include "common.h"
 
 #include "fs.h"
-#include "gui.h"
+
+#include "gui/gui.h"
+
+#include "ram.h"
 
 #ifdef USE_GBFS
 #include <gbfs.h>  
@@ -33,9 +36,36 @@ GNU General Public License for more details.
 #include <fat.h>
 #include <unistd.h>
 #include <sys/dir.h>
+#include <fcntl.h>
 #endif
 
-char *getFileExtension(char *filename)
+uint16	*g_extRAM = NULL;
+int		g_UseExtRAM = 0;
+
+int		FS_extram_init(int param)
+{
+	int ret = ram_init(param);
+	if (ret)
+	{
+		g_extRAM = (uint16 *)ram_unlock();
+		return ram_size();
+	}
+	return -1;
+}
+
+void	FS_lock()
+{
+	if (g_extRAM)
+		ram_lock();
+}
+
+void	FS_unlock()
+{
+	if (g_extRAM)
+		ram_unlock();
+}
+
+char *_FS_getFileExtension(char *filename)
 {
 	static char ext[4];
 	char	*ptr;
@@ -55,6 +85,21 @@ char *getFileExtension(char *filename)
 		ext[i] = toupper(ptr[i]); 
 	ext[i] = 0;
 	return ext;
+}
+
+char *FS_getFileName(char *filename)
+{
+	static char name[100];
+	char	*ptr;
+	int		i;
+	
+	ptr = filename;
+	ptr = strrchr(ptr, '.');
+		
+	for (i = 0; i < ptr-filename; i++)
+		name[i] = filename[i]; 
+	name[i] = 0;
+	return name;
 }
 
 #ifdef USE_GBFS
@@ -108,7 +153,7 @@ t_list 	*FS_getDirectoryList(char *mask)
 				 				
   	   	if (mask)
 		{
-	        char *ext = getFileExtension(filename);
+	        char *ext = _FS_getFileExtension(filename);
 	        if (ext && strstr(mask, ext))
 	        {
 	        	list->items[cnt].info = type;
@@ -240,7 +285,7 @@ t_list 	*FS_getDirectoryList(char *mask)
 						
 		if (mask)
 		{
-			char *ext = getFileExtension(filename);
+			char *ext = _FS_getFileExtension(filename);
 			if (ext && strstr(mask, ext))
 				cnt++;						
 		} else
@@ -426,45 +471,39 @@ int	FS_shouldFreeROM()
 }
 #elif defined(USE_LIBFAT)
 
-
 /* *********************** LIBFAT ************************ */
 
-static FILE *currentFile;
+static int	currentfd = -1;
 static char *currentFileName[100];
 
-void	FS_init()
+int		FS_init()
 {
-	iprintf("Initialize FS...\n");
-	iprintf("Please restart if stuck...\n");
-	if (fatInitDefault())
-//	if (fatInitialise(4, true)) 
-	{
-		iprintf("FS OK!\n");
-    	// Success
-	} else {
-    	// Failure
-    	iprintf("FS Failure, continue anyway...\n");
-	} 
+	//return fatInit(8, true);
+	return (fatInitDefault());
 }
 
 int		FS_chdir(const char *path)
 {
-	return chdir(path);
+	FS_lock();
+	int ret = chdir(path);
+	FS_unlock();
+	return ret;
 }
 
-t_list 	*FS_getDirectoryList(char *path, char *mask)
+
+
+char	**FS_getDirectoryList(char *path, char *mask, int *cnt)
 {
-	char	filename[250];
-	int		cnt;
-	t_list	*list;
-	int		ret;	
-	DIR_ITER	*dir;
-	struct stat	st;
+	char		filename[260];	
+	struct stat	st;	
+	int			ret;
+	int			size;
 		
-	dir = diropen(path);
-	cnt = 0;
+	FS_lock();	
+	DIR_ITER *dir = diropen(path);
+	*cnt = size = 0;
     while (1)
-	 {
+	{
 	 	ret = dirnext(dir, filename, &st);
 		if (ret < 0)
 			break;	 
@@ -472,20 +511,28 @@ t_list 	*FS_getDirectoryList(char *path, char *mask)
 			continue;
 		if (!strcmp(filename, "."))
 			continue;		
-iprintf("%s %o\n", filename, st.st_mode);			
 						
 		if (mask)
 		{
-			char *ext = getFileExtension(filename);
+			char *ext = _FS_getFileExtension(filename);
 			if (ext && strstr(mask, ext))
-				cnt++;						
+			{
+				(*cnt)++;
+				size += strlen(filename)+1;
+			}
 		} else
-		  cnt++;
+		{
+		  (*cnt)++;
+		  size += strlen(filename)+1;
+		}
 	}
 	 
 	dirreset(dir);
-	list = GUI_createList(cnt);
-	cnt =  0; 
+
+	char	**list = malloc((*cnt)*sizeof(char *)+size);
+	char	*ptr = ((char *)list) + (*cnt)*sizeof(char *);
+	
+	int i = 0; 
 	while (1)
 	{
 		ret = dirnext(dir, filename, &st);
@@ -499,21 +546,22 @@ iprintf("%s %o\n", filename, st.st_mode);
 				 				
   	   	if (mask)
 		{
-	        char *ext = getFileExtension(filename);
+	        char *ext = _FS_getFileExtension(filename);
 	        if (ext && strstr(mask, ext))
 	        {
-	        	list->items[cnt].info = 1;
-	        	strncpy(list->items[cnt].str, filename, 95);
-	        	cnt++;
+	        	strcpy(ptr, filename);
+	        	list[i++] = ptr;
+	        	ptr += strlen(filename)+1;  
 	        }
 		} else
 		{
-	       	list->items[cnt].info = 1;
-	       	strncpy(list->items[cnt].str, filename, 95);		
-			cnt++;
+	       	strcpy(ptr, filename);
+	       	list[i++] = ptr;
+	       	ptr += strlen(filename)+1;
 		}
 	}
 	dirclose(dir);
+	FS_unlock();
 	return list;
 }
 
@@ -566,9 +614,12 @@ void	FS_printlog(char *buf)
 		// Flush buffer
 		char name[30];
 		sprintf(name,"snemul%d.log", logcnt%100);
+		
+		FS_lock();
 		f_log = fopen(name, "w");	
 		fwrite(logbuf, 1, strlen(logbuf), f_log);
 		fclose(f_log);
+		FS_unlock();
 		
 		strcpy(logbuf, buf);
 		logcnt++;
@@ -578,7 +629,7 @@ void	FS_printlog(char *buf)
 #endif	
 }
 
-static char flog_buf[255];
+extern char g_printfbuf[100];
 
 void	FS_flog(char *fmt, ...)
 {
@@ -586,107 +637,193 @@ void	FS_flog(char *fmt, ...)
 	va_list ap;	
 
     va_start(ap, fmt);
-    vsnprintf(flog_buf, 255, fmt, ap);
+    vsnprintf(g_printfbuf, 100, fmt, ap);
     va_end(ap);
 
-	FS_printlog(flog_buf);
+	FS_printlog(g_printfbuf);
 }
 
-char	*FS_loadROM(char *filename, int *size)
+int	FS_loadROM(char *ROM, char *filename)
 {
 	FILE	*f;
-	char	*ROM;
-	struct stat	st;
+//	struct stat	st;
 	
-	stat(filename, &st);
-	*size = st.st_size;
-//	*size = 524800;
-		
-	f = fopen(filename, "r");
+	FS_lock();
+//	stat(filename, &st);
+	
+	f = fopen(filename, "rb");
+	fseek(f, 0, SEEK_END);
+	int size = ftell(f);
+	fseek(f, 0, SEEK_SET);
 
-	iprintf("%s %d\n", filename, *size);
-	if (!(ROM = malloc(*size)))
-	{
-		iprintf("Couldn't allocate memory\n");
-		fclose(f);		
-		return NULL;
-	}
-	fread(ROM, 1, *size, f);
-	iprintf("Read done\n");	
+	fread(ROM, 1, size, f);
+	GUI_printf("Read done\n");
 	fclose(f);
-	
-		
-	return ROM; 
+	FS_unlock();
+
+	return 1;
+}
+
+/*
+int	FS_getFileSize(char *filename)
+{
+	struct stat	st;	
+	FS_lock();	
+	stat(filename, &st);
+	FS_unlock();
+	return st.st_size;
+}
+*/
+
+int FS_getFileSize(char *filename)
+{
+	FS_lock();
+	FILE *f = fopen(filename, "rb");
+	fseek(f, 0, SEEK_END);
+	long l = ftell(f);
+	fclose(f);
+	FS_unlock();
+	return (int)l;
 }
 
 int	FS_loadFile(char *filename, char *buf, int size)
 {
 	FILE *f;
-	struct stat	st;
+	int file_size;
 	
-	stat(filename, &st);
-	f = fopen(filename, "r");
+	FS_lock();	
+	f = fopen(filename, "rb");
 	if (f == NULL)
-		return -1;
-	if (st.st_size < size)
 	{
-		fclose(f);		
+		FS_unlock();
 		return -1;
 	}
+	fseek(f, 0, SEEK_END);
+	file_size = ftell(f);
+	if (file_size < size)
+	{
+		fclose(f);
+		FS_unlock();
+		return -1;
+	}
+	fseek(f, 0, SEEK_SET);	
 	fread(buf, 1, size, f);
 	fclose(f);	
+	FS_unlock();
 	return 0;
 }
 
 int	FS_saveFile(char *filename, char *buf, int size)
 {
 	FILE *f;
- 	// 3 retries for my buggy M3 slim  
-  	if ((f = fopen(filename, "w")) == NULL)
-/*	  if ((f = fopen(filename, "w")) == NULL)
-	  	if ((f = fopen(filename, "w")) == NULL)*/	  
-  			return 0;
+	FS_lock();
+  	if ((f = fopen(filename, "wb")) == NULL)
+  	{
+  		FS_unlock();
+  		return 0;
+  	}
 	fwrite(buf, 1, size, f);
 	fclose(f);	
+	FS_unlock();
 	return 0;
 }
 
-char *FS_loadROMForPaging(char *filename, int *size)
+int	FS_loadROMForPaging(char *ROM, char *filename, int size)
 {
-	char	*ROM;
-	struct stat	st;
+	g_UseExtRAM = 0;
 	
-	stat(filename, &st);
-	currentFile = fopen(filename, "r");
-	strcpy(currentFileName, filename);
-	*size = st.st_size;
-	iprintf("%s %d\n", filename, *size);
-	// Read first 1024 Kbytes
-	if (!(ROM = malloc(1*1024*1024)))
+	FS_lock();
+	if (currentfd != -1)
+		close(currentfd);
+	
+	currentfd = open(filename, O_RDONLY);
+	if (currentfd < 0)
 	{
-		iprintf("Couldn't allocate memory\n");
-		fclose(currentFile);		
-		return NULL;
+		FS_unlock();
+		return -1;
 	}
-	fread(ROM, 1, 1*1024*1024, currentFile);
-	fclose(currentFile);
+	strcpy(currentFileName, filename);
 
-	return ROM;
+	read(currentfd, ROM, size);
+
+	FS_unlock();
+	
+	return 0;
+}
+
+int	FS_loadROMInExtRAM(char *ROM, char *filename, int size, int total_size)
+{
+#ifdef USE_EXTRAM
+	if (g_extRAM == NULL)
+		return -1;
+	
+	g_UseExtRAM = 0;
+	FS_lock();
+	if (currentfd != -1)
+		close(currentfd);
+	currentfd = open(filename, O_RDONLY);
+	if (currentfd < 0)
+	{
+		FS_unlock();
+		return -1;
+	}
+	strcpy(currentFileName, filename);
+
+	// Load all ROM by block of size, starting from the end
+	
+	// First read the last part
+	int i = total_size - (total_size % size);
+	GUI_printf("Load at %d, %d\n", i, total_size % size);
+	FS_loadROMPage(ROM, i, total_size % size);
+	// copy it in the external ram
+	swiFastCopy(ROM, (uint8 *)g_extRAM+i, (total_size % size) / 4);
+
+	i -= size;
+	
+	while (i >= 0)
+	{
+		// Read one piece of ROM into DS RAM
+		GUI_printf("Load at %d, %d\n", i, size);
+		FS_loadROMPage(ROM, i, size);
+		
+		// Than copy it in Ext RAM
+		swiFastCopy(ROM, (uint8 *)g_extRAM+i, size / 4);
+		
+		i -= size;
+	}
+	g_UseExtRAM = 1;
+	close(currentfd);
+#endif	
+	return -1;
 }
 
 int	FS_loadROMPage(char *buf, unsigned int pos, int size)
-{
-	int ret;
-	currentFile = fopen(currentFileName, "r");
-	if (currentFile == NULL)
-		LOG("currentFile is NULL\n");
+{	
+#ifdef USE_EXTRAM
+	if (g_UseExtRAM)
+	{
+		//swiFastCopy((uint8 *)extRAM+pos, buf, size / 4);
+		memcpy(buf, (uint8 *)g_extRAM+pos, size);				
+		return 0;
+	}
+#endif	
+
+	int ret;	
+	FS_lock();
+
+	//REG_IE &= ~(IRQ_VBLANK);
 	
-	ret = fseek(currentFile, pos, SEEK_SET);
+	ret = lseek(currentfd, pos, SEEK_SET);
 	if (ret < 0)
-		LOG("first fseek is NULL\n");
-			
-	ret = fread(buf, 1, size, currentFile);
-	fclose(currentFile);
+	{
+		FS_unlock();
+		return -1;
+	}
+		
+	read(currentfd, buf, size);
+	
+	//REG_IE |= (IRQ_VBLANK);	
+	FS_unlock();	
 	return ret;	
 }
 
@@ -696,7 +833,6 @@ int	FS_shouldFreeROM()
 }
 
 #endif
-
 
 #ifdef FAKE_FS
 

@@ -23,46 +23,29 @@ GNU General Public License for more details.
 struct s_cfg
 {
   int	frame_rate;
-  int	GUI_frame_rate;
-  int	log_file;
   int	CPU_log;
-  int	SPC_log;
   int	BG_Layer;
   int	BG_priority;
-  int	PPU_Clip;
 
   int	DSP1;
   int	SuperFX;
   int	Sound_output;
-  int	ADSR_GAIN;
-  int	Stereo;
-  int	FastSound;
-  int	song_log;
-  int	buffer_size;
 
   int	joypad_disabled; /* used to disable the joypad in the GUI */
-  int	Joy1_Enabled;
-  int	joy_type;
   int	mouse;
   int	scope;
-  uchar	joypad_def[13], joypad_def2[13];
-
-/* GUI */
-  int	FullScr;
-  int	FullGUI;
-  int	FullScreen_resol;
-  int	GUI_resol;
-  int	Scanlines;
-  int   auto_skip;
-  int	ShowFPS;
-  int	Timing;
+  //uchar	joypad_def[13], joypad_def2[13];
 
   int	CPU_speedhack;
-  int	SPC_speedhack;
+//  int	SPC_speedhack;
+  int	Timing;
 
   int	Debug, Debug2;
 
-  char	*Work_dir;
+  int	ExtRAMSize;
+  int	MapExtMem;
+  
+  int	AutoSRAM;
 
   int	InterleavedROM;
   int	InterleavedROM2;
@@ -72,13 +55,43 @@ struct s_cfg
   int	WaitVBlank;
   
   int	LargeROM;
-  char	ROMFile[100];
   
-  int	Jukebox;
+  uint32	LayersConf;  
+  uint8		LayerPr[4];
+  uint8		SpritePr[4];
   
-  char	Playlist[100];
+  uint32	Scaled;
+  
+  uint32	Transparency;
+  uint32	FastDMA;
+  
+  uint16	MouseXAddr;
+  uint16	MouseYAddr;
+  sint16	MouseXOffset;
+  sint16	MouseYOffset;  
+  uint32	MouseMode;
+  
+  uint32	SoundPortSync;
+  
+  int		TilePriorityBG;
+  int		BG3TilePriority;
+  int		BG3PaletteFix;
+
+  char		ROMFile[100];
+  
+  char		*ROMPath;
+  
+  int		Jukebox;  
+  char		Playlist[100];
+
+// GUI  
+  sint8		GUISort;
+  sint16	Language;
 };
 
 extern struct s_cfg	CFG;
+
+void	packOptions(uint8 *ptr);
+void	unpackOptions(int version, uint8 *ptr);
 
 #endif

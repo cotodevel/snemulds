@@ -21,7 +21,7 @@ INCLUDES	:=
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb-interwork
 
-CFLAGS	:=	-g -Wall -Os\
+CFLAGS	:=	-Wall -Os\
 			-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer\
 			-ffast-math \
 			$(ARCH)
@@ -112,12 +112,12 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 
 ../bin/pocketspc.arm7	:	../bin/pocketspc.elf
-	@$(OBJCOPY) -O binary pocketspc.elf pocketspc.arm7
+	$(OBJCOPY) -O binary pocketspc.elf pocketspc.arm7
 	@echo succesfully built pocketspc arm7 core, enjoy!
 
 ../bin/pocketspc.elf	:	$(OFILES)
 	@echo linking pocketspc
-	@$(CC)  $(ASFLAGS) -c ../pocketspc_arm7_crt0.s -o../bin/pocketspc_arm7_crt0.o
+	$(CC)  $(ASFLAGS) -c ../pocketspc_arm7_crt0.s -o../bin/pocketspc_arm7_crt0.o
 	$(LD)  $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o ../bin/pocketspc.elf
 
 #---------------------------------------------------------------------------------
@@ -125,9 +125,9 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
  
 %.o : %.S
-	@echo $(notdir $<)
-	@$(CC) -MM $(CFLAGS) -o $*.d $<
-	@$(CC)  $(ASFLAGS) -c $< -o$@
+	echo $(notdir $<)
+	$(CC) -MM $(CFLAGS) -o $*.d $<
+	$(CC)  $(ASFLAGS) -c $< -o$@
 
 -include $(DEPENDS)
  

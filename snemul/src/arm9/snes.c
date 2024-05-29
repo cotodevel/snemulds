@@ -55,13 +55,10 @@ void	reset_SuperFX()
 
 void	init_GFX()
 {
-  /*GFX.tiles_def[0] = malloc(4096);
-  GFX.tiles_def[1] = malloc(2048);
-  GFX.tiles_def[2] = malloc(1024);*/
   init_render();  
 }
 
-static int _offsetY_tab[3] = { 16, 0, 32 };
+extern int _offsetY_tab[4];
 
 void	reset_GFX()
 {
@@ -73,17 +70,24 @@ void	reset_GFX()
 
   bzero(GFX.spr_info, 128*(sizeof(sprite_Info)));
   bzero(GFX.spr_info_ext, 32);
-  bzero(GFX.SNESPal, 256*4);
+  bzero(GFX.SNESPal, 256*2);
   //bzero(GFX.buf_screen.line[0], 256*240);
   GFX.BG_scroll_reg = 0;
   GFX.FS_incr = GFX.OAM_upper_byte = 0;
   GFX.ScreenHeight = 224;
-  bzero(GFX.spr_cnt,240);
+  //bzero(GFX.spr_cnt,240);
   GFX.Sprites_table_dirty = 0;
   GFX.SC_incr = 1;
 //  memset(GFX.tiles_ry, 8, 4);
   GFX.nb_frames = 0;
   GFX.YScroll = _offsetY_tab[CFG.YScroll];
+  GFX.BG3YScroll = 16;
+  
+  GFX.tile_slot[0] = 4;          	
+  GFX.tile_slot[1] = 4;
+  GFX.tile_slot[2] = 4;          	
+  GFX.tile_slot[3] = 4;  
+    
 //  update_palette(0);
 }
 
@@ -92,7 +96,9 @@ void	reset_CPU()
   CPU.IRQ = mem_getword(0xffee, 0);
   CPU.NMI = mem_getword(0xffea, 0);
   CPU.BRK = mem_getword(0xffe6, 0);
+  BRKaddress = CPU.BRK; 
   CPU.COP = mem_getword(0xffe4, 0);
+  COPaddress = CPU.COP;
 #ifndef ASM_OPCODES  
   PC  = mem_getword(0xfffc, 0);
   D = PB = DB = 0;
@@ -109,7 +115,7 @@ void	reset_CPU()
   CPU_init();	
   PCptr = map_memory(CPU.PC, CPU.PB);
   SnesPCOffset = -((sint32)mem_getbaseaddress(CPU.PC, CPU.PB));
-  iprintf("PCptr = %08x\n", PCptr);
+  //iprintf("PCptr = %08x\n", PCptr);
 #endif  
   CPU.IsBreak = 0;
   CPU.packed = CPU.unpacked = 0;
@@ -125,7 +131,6 @@ void	reset_SNES()
   if (CFG.DSP1)
     reset_DSP1();
 #endif
-
   reset_GFX();
 
   bzero(SNES.HDMA_values, 8*256*4);
@@ -135,14 +140,18 @@ void	reset_SNES()
 
   memset(SNESC.RAM, 0xFF, 0x20000);
   bzero(SNESC.VRAM, 0x10000);
-  bzero(SNES.PPU_Port, 0x2000*2);
-  bzero(SNES.DMA_Port, 0x2000*2);
-  memset(SNES.DMA_Port+0x100, 0xFF, 0x0100);
+/*  bzero(PPU_PORT, 0x2000*2);
+  bzero(DMA_PORT, 0x2000*2);*/
+  
+  memset(PPU_PORT, 0, 0x90*2);
+  memset(DMA_PORT, 0, 0x100*2);
+  memset(DMA_PORT+0x100, 0xFF, 0x80*2);
+  SNES.JOY_PORT16 = 0;
 
 //  if (!CFG.SuperFX)
     {
-      SNESC.SRAMMask = SNES.ROM_info->SRAMsize ?
-        ((1 << (SNES.ROM_info->SRAMsize + 3)) * 128) - 1 : 0;
+      SNESC.SRAMMask = SNES.ROM_info.SRAMsize ?
+        ((1 << (SNES.ROM_info.SRAMsize + 3)) * 128) - 1 : 0;
       SNESC.SRAM = SNESC.BSRAM;
       memset(SNESC.SRAM, 0xAA, 0x8000);
     }
@@ -161,19 +170,23 @@ void	reset_SNES()
   SPC700_reset();
 */
   APU.counter = 0;
-  if (CFG.Sound_output) 
+//  if (CFG.Sound_output) 
   	APU_nice_reset();
 
   InitMap();
 //  mem_reset_paging(); 
   reset_CPU();
 
+
   if (!CFG.Timing)
-    SNES.NTSC = (SNES.ROM_info->countrycode < 2);
+    SNES.NTSC = (SNES.ROM_info.countrycode < 2);
   else
     SNES.NTSC = CFG.Timing-1;
+    
+  SNES.PPU_NeedMultiply = 0;
+  SNES.DelayedNMI = 0;    
 
-  CFG.BG_Layer = 0xdf;
+  CFG.BG_Layer = 0xd7; //FIXME: BG3 is not used (MODE 0 broken)
 
   APU.skipper_cnt1 = 0;  
   APU.skipper_cnt2 = 0;  
@@ -182,6 +195,14 @@ void	reset_SNES()
   
   SNES.V_Count = 0;
   PPU_reset();  
+  
+  SNES.mouse_x = 128;
+  SNES.mouse_y = 112;
+  SNES.mouse_speed = 0;
+  
+  SNES.Stopped = 0;
+  
+  SNES.SRAMWritten = 0;
 }
 
 int cnt_alphachar(char *str)
@@ -246,12 +267,13 @@ void	UnInterleaveROM()
    free(tmp);
 }
 
-ROM_Info	*load_ROM(char *ROM, int ROM_size)
+void	load_ROM(char *ROM, int ROM_size)
 {
-  ROM_Info	*LoROM_info, *HiROM_info;
-  int           fileheader, filesize;
+  int       fileheader, filesize;
   int		cnt1, cnt2;
   char		jap;
+  ROM_Info	LoROM_info;
+  ROM_Info	HiROM_info;
 
   filesize = ROM_size;
   fileheader = filesize & 8191;
@@ -266,35 +288,41 @@ ROM_Info	*load_ROM(char *ROM, int ROM_size)
   if (CFG.InterleavedROM)
     UnInterleaveROM();
 
-  LoROM_info = (ROM_Info *)malloc(sizeof(ROM_Info));
-  HiROM_info = (ROM_Info *)malloc(sizeof(ROM_Info));
-  memcpy(LoROM_info, SNESC.ROM+0x7FC0, sizeof(ROM_Info));
-  memcpy(HiROM_info, SNESC.ROM+0xFFC0, sizeof(ROM_Info));
+  memcpy(&LoROM_info, SNESC.ROM+0x7FC0, sizeof(ROM_Info));
+  memcpy(&HiROM_info, SNESC.ROM+0xFFC0, sizeof(ROM_Info));
 
 // conditions necessaires
   if (filesize < 0x80000 ||
       *(unsigned short *)&SNESC.ROM[0xfffc] == 0xFFFF ||
       *(unsigned short *)&SNESC.ROM[0xfffc] < 0x8000) {
-    SNES.HiROM = 0; free(HiROM_info); return LoROM_info;
+    SNES.HiROM = 0; 
+    memcpy(&SNES.ROM_info, (void*)&LoROM_info, sizeof(ROM_Info));
+    return;
   }
   if (*(unsigned short *)&SNESC.ROM[0x7ffc] == 0xFFFF ||
       *(unsigned short *)&SNESC.ROM[0x7ffc] < 0x8000) {
-    SNES.HiROM = 1; free(LoROM_info); return HiROM_info;
+    SNES.HiROM = 1; 
+    memcpy(&SNES.ROM_info, (void*)&HiROM_info, sizeof(ROM_Info));
+    return;
   }
 
 // conditions suffisantes
-  if ((LoROM_info->checksum ^ LoROM_info->checksum_c) == 0xFFFF) {
-    SNES.HiROM = 0; free(HiROM_info); return LoROM_info;
+  if ((LoROM_info.checksum ^ LoROM_info.checksum_c) == 0xFFFF) {
+    SNES.HiROM = 0;
+    memcpy(&SNES.ROM_info, (void*)&LoROM_info, sizeof(ROM_Info));
+    return;
   }
-  if ((HiROM_info->checksum ^ HiROM_info->checksum_c) == 0xFFFF) {
-    SNES.HiROM = 1; free(LoROM_info); return HiROM_info;
+  if ((HiROM_info.checksum ^ HiROM_info.checksum_c) == 0xFFFF) {
+    SNES.HiROM = 1; 
+    memcpy(&SNES.ROM_info, (void*)&HiROM_info, sizeof(ROM_Info));
+    return;
   }
 
 // algorithme de ZoOp
   SNES.HiROM = 0;
 
-  cnt1 = cnt_alphachar(LoROM_info->title);
-  cnt2 = cnt_alphachar(HiROM_info->title);
+  cnt1 = cnt_alphachar(LoROM_info.title);
+  cnt2 = cnt_alphachar(HiROM_info.title);
 
   jap = 1;
   if (cnt1 > 0 || cnt2 > 0)
@@ -311,15 +339,14 @@ ROM_Info	*load_ROM(char *ROM, int ROM_size)
         jap = 0;
       if (SNES.HiROM == 0 && cnt2 > cnt1)
         SNES.HiROM = 1;
-      if (SNES.HiROM == 1 && jap && (HiROM_info->banksize != 1))
+      if (SNES.HiROM == 1 && jap && (HiROM_info.banksize != 1))
         SNES.HiROM = 0;
     }
 
   if (SNES.HiROM == 0) {
-    free(HiROM_info); return LoROM_info;
+    memcpy(&SNES.ROM_info, &LoROM_info, sizeof(ROM_Info));
   } else {
-    free(LoROM_info); return HiROM_info;
+    memcpy(&SNES.ROM_info, &HiROM_info, sizeof(ROM_Info));
   }
 }
-
 

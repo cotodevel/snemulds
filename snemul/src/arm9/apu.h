@@ -20,6 +20,8 @@ GNU General Public License for more details.
 
 #include "common.h"
 
+
+
 struct s_apu
 {
 #if 0	
@@ -28,12 +30,7 @@ struct s_apu
   int		Port1, Port2, Port3, Port4;
   uchar		CONTROL, DSP_address;
 
-
-/* timers */
-  int           T0, T1, T2;
-  int		TIM0, TIM1, TIM2;
-  int		T0_LATCH, T1_LATCH, T2_LATCH;
-  uchar		CNT0, CNT1, CNT2;
+  uint32	T0_LATCH, T1_LATCH, T2_LATCH;
 
 /* sound */
   int		MasterVolume, MasterPanning;
@@ -66,17 +63,28 @@ struct s_apu
 
 extern struct s_apu	APU;
 
-/*#define PORT_SNES_TO_SPC ((volatile uint8*)(0x027FFFF8))
-#define PORT_SPC_TO_SNES ((volatile uint8*)(0x027FFFFC))*/
+struct s_apu2
+{
+/* timers */
+  uint32    T0, T1, T2;			// 0x27ED000 
+  uint32 	TIM0, TIM1, TIM2;	/* 0x27ED00C */
+  uint32	CNT0, CNT1, CNT2;	/* 0x27ED018 */
+};
 
-#define PORT_SNES_TO_SPC ((volatile uint8*)(0x027ECFF8))
-#define PORT_SPC_TO_SNES ((volatile uint8*)(0x027ECFFC))
+extern struct s_apu2 *APU2;
+
+
+#define PORT_SNES_TO_SPC ((volatile uint8*)(0x027FFFF8))
+#define PORT_SPC_TO_SNES ((volatile uint8*)(0x027FFFFC))
 
 #define APU_RAM_ADDRESS ((uint8*)(0x27EE000))
 
 #define APU_ADDR_CNT ((volatile uint32*)(0x2800000-60))
 #define APU_ADDR_CMD ((volatile uint32*)(0x2800000-16))
 #define APU_ADDR_ANS ((volatile uint32*)(0x2800000-20))
-#define APU_ADDR_DBG1 ((volatile uint32*)(0x2800000-24))
+#define APU_ADDR_BLK ((volatile uint32*)(0x2800000-24))
+#define APU_ADDR_BLKP ((volatile uint8*)(0x2800000-24))
+
+void SendArm7Command(u32 command);
 
 #endif

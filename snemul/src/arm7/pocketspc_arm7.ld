@@ -6,7 +6,9 @@ MEMORY {
 
 	rom	: ORIGIN = 0x08000000, LENGTH = 32M
 	iwram	: ORIGIN = 0x037f8000, LENGTH = 96K
-	ewram	: ORIGIN = 0x02040000, LENGTH = 4M
+	ewram	: ORIGIN = 0x02000000, LENGTH = 4M - 64k - 4k
+	shared_ewram	: ORIGIN = 0x02000000 + 4M - 64k - 4k, LENGTH = 64k - 4k
+	
 }
 
 __ewram_start	=	ORIGIN(ewram);
@@ -19,6 +21,9 @@ __sp_usr	=	__sp_svc - 0x100;
 
 __irq_flags	=	__iwram_top - 8;
 __irq_vector	=	0x380FFFC;
+
+__shwram_start	=	ORIGIN(shared_ewram);
+__shwram_end	=	ORIGIN(shared_ewram) + LENGTH(shared_ewram);
 
 SECTIONS
 {

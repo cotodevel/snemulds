@@ -58,7 +58,7 @@ C_DEPS += \
 fat/%.o: ../fat/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
-	C:/devkitPro2007/devkitARM/bin/arm-eabi-gcc -DNDS -I"C:\devkitPro\libnds\include" -I"/c/devkitPro2007/libnds/include" -I"/c/devkitPro2007/libfat/include" -I"/c/devkitPro2007/devkitARM/arm-eabi/include" -O2 -Wall -c -fmessage-length=0 -fsigned-char -ffast-math -fomit-frame-pointer -marm -mcpu=arm9tdmi -mtune=arm9tdmi -DARM9 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	C:/devkitPro2007/devkitARM/bin/arm-eabi-gcc -DNDS -I"C:\devkitPro\libnds\include" -I"C:\devkitPro\devkitARM\arm-eabi\include" -O2 -Wall -c -fmessage-length=0 -fsigned-char -ffast-math -fomit-frame-pointer -marm -mcpu=arm9tdmi -mtune=arm9tdmi -DARM9 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

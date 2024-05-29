@@ -4,10 +4,12 @@
 
 #include "apudef.h"
 
+/*
 .GLOBAL BreakR11
 BreakR11:
 	mov r11, r11
 	mov pc, lr
+*/	
 
 .GLOBAL IntrHandlerAsm
 IntrHandlerAsm:
@@ -98,26 +100,32 @@ MemWriteUpperByte:
 
 .GLOBAL     MemWriteApuPort
 MemWriteApuPort:
-	stmfd sp!, {r0-r2}
-	ldr r1, =0x027ECFFC
-    @ldr r1, =0x027FFFFC
+	stmfd sp!, {r0-r2}	
+	
+    ldr r1, =0x027FFFFC
     sub r2, r12, #0xF4
     strb r0, [r1, r2]
+    
+    ldr	r0, =0x27E0000
+    str	APU_PC, [r0]    
 	ldmfd sp!, {r0-r2}
     bx lr
 
 .GLOBAL MemWriteCounter
 MemWriteCounter:
 	stmfd sp!, {r1-r2, lr}
-	bl EmulateTimers
-	ldr r1, =timers
+	
+	strb r0, [APU_RAMBASE, r12]
+	
+/*	@ archeide: update T0 T1 T2 from CPU's APU2
+	ldr r1, =0x27ED000
 	sub r2, r12, #0xFA
-	add r1, r1, r2, lsl #4
+	add r1, r1, r2, lsl #2
 	@ Update the target
 	mov r2, r0
 	cmp r2, #0
 	moveq r2, #0x100
-	str r2, [r1]
+	str r2, [r1]*/
 	ldmfd sp!, {r1-r2, lr}
     bx lr
 
@@ -127,100 +135,106 @@ MemWriteCounter:
 MemReadDoNothing:
     bx lr
 
-.MACRO runTimer timer, shift
-    tst r0, #1 << \timer
-    beq timerDisabled\timer
+/*.GLOBAL		MemReadCounter
+MemReadCounter:
+	stmfd sp!, {r1-r2} @ is it useful ?
 
-    ldmia r1, {r3-r5}
-    @ r3 - target
-    @ r4 - cycles
-    @ r5 - count
-    add r4, r4, r2
-    add r5, r5, r4, lsr #\shift
-    and r4, r4, #(1 << \shift) - 1
-    ldrb r6, [r7, #\timer]
-    cmp r5, r3
-    blt timerDone\timer
-timerLoop\timer :
-    sub r5, r5, r3
-    add r6, r6, #1
-    cmp r5, r3
-    bge timerLoop\timer
-timerDone\timer :
-    and r6, r6, #0xf
-    strb r6, [r7, #\timer]
-    stmia r1, {r3-r5}
-timerDisabled\timer :
-    add r1, r1, #16
-.ENDM
+	@ archeide: get APU2->CNT0
+	ldr		r1, =0x27ED018	
+	sub		r2, r12, #0xFD
+	add 	r1, r1, r2, lsl #4	
 
-@ Returns r2 - number of cycles executed
-EmulateTimers:
-	stmfd sp!, {r0,r1,r3-r7}
-
-    ldr r0, =totalCpuCycles
-    ldr r1, [r0]
-    add r2, r1, APU_CYCLES, asr #CYCLE_SHIFT
-    sub r1, r1, r2
-    str r1, [r0]
-
-    @ r0 - timersEnabled
-    @ r1 - timer base
-    @ r2 - number of cycles to emulate
-    @ r7 - first counter
-
-    add r7, APU_RAMBASE, #0xFD
-
-    ldr r1, =timers
-    ldrb r0, [APU_RAMBASE, #0xF1]
-
-    runTimer 0, 7
-    runTimer 1, 7
-    runTimer 2, 4
-
-	ldmfd sp!, {r0,r1,r3-r7}
+	ldr		r0, [r1]
+	
+	@ APU2->CNT0 = 0
+	mov		r2, #0 
+	str		r2, [r1]
+	
+	ldmfd sp!, {r1-r2}
 	bx lr
+*/
 
 .GLOBAL		MemReadCounter
 MemReadCounter:
-    stmfd sp!, {r1,r2,lr}
-    bl EmulateTimers
+	stmfd sp!, {r1} @ is it useful ?
 
-    @ Is the counter != 0, then no hack needed
-    ldrb r0, [APU_RAMBASE, r12]
-    cmp r0, #0
-    bne noHack
-    @ Make sure at least one timer is enabled
-    ldrb r1, [APU_RAMBASE, #0xF1]
-    tst r1, #7
-    beq noHack
-    cmp r2, #64
-    bgt noHack
+.ifeq CheckIntrLoop-1
+	@ Set Loop detection address
+    ldr	r1, =APU_PC_save
+    ldr	r1, [r1]
+    ldr	r0, =APU_WaitAddress
+    str r1, [r0]  
+.endif
 
-    @ We can do the hack
-	stmfd sp!, {r0,r3,r12,lr}
-	ldr r0, =ApuReadCounterHack
-	mov lr, pc
-	bx r0
-	@ r0 is the number of cpu cycles to skip
-	add APU_CYCLES, APU_CYCLES, r0, lsl #CYCLE_SHIFT
-	ldmfd sp!, {r0,r3,r12,lr}
-noHack:
+	@ archeide: get APU2->CNT0
+	ldrb	r0, [APU_RAMBASE, r12]	
+	
+	@ APU2->CNT0 = 0
+	mov		r1, #0 
+	strb	r1, [APU_RAMBASE, r12]
+	
+	ldmfd sp!, {r1}
+	bx lr
 
-    mov r1, #0
-    strb r1, [APU_RAMBASE, r12]
+/*
+.GLOBAL		MemReadCounterFE
+MemReadCounterFE:
+	stmfd sp!, {r1-r2} @ is it useful ?
 
-    ldmfd sp!, {r1,r2, lr} 
-    bx lr
+	@ archeide: get APU2->CNT1
+	ldr		r1, =0x27ED01C
+	ldrb	r0, [r1]
+	
+	@ APU2->CNT1 = 0
+	mov		r2, #0 
+	str		r2, [r1]
+	
+	ldmfd sp!, {r1-r2}
+	bx lr
+
+.GLOBAL		MemReadCounterFF
+MemReadCounterFF:
+	stmfd sp!, {r1-r2} @ is it useful ?
+
+	@ archeide: get APU2->CNT2
+	ldr		r1, =0x27ED020
+	ldrb	r0, [r1]
+	
+	@ APU2->CNT2 = 0
+	mov		r2, #0 
+	str		r2, [r1]
+	
+	ldmfd sp!, {r1-r2}
+	bx lr
+*/
+
 
 .GLOBAL     MemReadApuPort
 MemReadApuPort:
-	stmfd sp!, {r1-r2}
-	ldr r1, =0x027ECFF8
-    @ldr r1, =0x027FFFF8
+	stmfd sp!, {r1-r3}
+	
+@Doesn't read APU port while CPU is not running
+/*0:
+	ldr	r1, =0x027FFFE8
+	ldr	r1, [r1]
+	cmp	r1,	#1
+	beq	0b*/
+	
+
+    ldr	r0, =0x27E0000    
+    str APU_PC, [r0]
+
     sub r2, r12, #0xF4
+        
+    ldr r1, =0x027FFFF8    
     ldrb r0, [r1, r2]       @ Modifies the value that was read from RAM
-	ldmfd sp!, {r1-r2}
+    
+    ldr r1, =0x027FFFE8
+    mov	r3, #0	
+    strb r3, [r1, r2]		@ unblock
+    
+    
+	ldmfd sp!, {r1-r3}
     bx lr
 
 .GLOBAL		MemReadDspData
