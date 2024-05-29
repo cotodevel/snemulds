@@ -1,0 +1,6 @@
+base referer
+rect $exception_8c.html 238,7 393,34
+rect $scr__printf_8c.html 240,58 392,85
+rect $sceGuDispBuffer_8c.html 228,109 404,135
+rect $sceGuDisplay_8c.html 237,159 394,186
+rect $sceGuSwapBuffers_8c.html 221,210 410,237

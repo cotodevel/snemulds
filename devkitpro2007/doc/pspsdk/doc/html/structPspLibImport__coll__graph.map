@@ -1,0 +1,3 @@
+base referer
+rect $structPspEntry.html 8,8 82,34
+rect $structPspModuleImport.html 106,8 234,34

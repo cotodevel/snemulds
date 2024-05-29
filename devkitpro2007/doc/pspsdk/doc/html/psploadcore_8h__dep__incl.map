@@ -1,0 +1,4 @@
+base referer
+rect $pspkernel_8h.html 250,8 405,34
+rect $modulemgr__patches_8c.html 226,58 429,85
+rect $query__mod_8c.html 254,109 401,136

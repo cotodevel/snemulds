@@ -1,0 +1,7 @@
+base referer
+rect $getopt_8c.html 193,8 297,34
+rect $getopt1_8c.html 190,58 300,85
+rect $psp-build-exports_8c.html 161,109 329,136
+rect $psp-config_8c.html 181,160 309,186
+rect $psp-fixup-imports_8c.html 161,210 329,237
+rect $psp-prxgen_8c.html 178,261 312,288

@@ -1,0 +1,8 @@
+SnemulDS 0.5 = DKC2 boss working
+SnemulDS 0.6 WIP2 = DKC2 boss working
+
+SnemulDS 0.6c TGDS = DKC2 boss broken
+-
+
+todo:
+restore old SnemulDS sources and compiler, move back to TGDS

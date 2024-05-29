@@ -1,0 +1,11 @@
+base referer
+rect $exception_8c.html 223,8 378,34
+rect $gdb-kernellib_8c.html 214,58 387,85
+rect $gdb-stub_8c.html 226,109 375,136
+rect $gdb-userlib_8c.html 219,160 382,186
+rect $kprintf_8c.html 234,210 367,237
+rect $profiler_8c.html 231,261 370,288
+rect $scr__printf_8c.html 225,312 377,338
+rect $sio_8c.html 243,362 358,389
+rect $stacktrace_8c.html 222,413 379,440
+rect $debug_2stdio_8c.html 238,464 363,490

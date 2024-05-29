@@ -1,0 +1,8 @@
+base referer
+rect $pspiofilemgr_8h.html 250,134 410,161
+rect $pspiofilemgr__kernel_8h.html 460,8 673,34
+rect $pspstdio__kernel_8h.html 470,58 662,85
+rect $libcglue_8c.html 502,109 630,136
+rect $libc_2stdio_8c.html 512,160 621,186
+rect $xprintf_8c.html 508,210 625,237
+rect $pspuser_8h.html 500,261 633,288

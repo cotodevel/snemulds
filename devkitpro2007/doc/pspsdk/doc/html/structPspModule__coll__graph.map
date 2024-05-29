@@ -1,0 +1,7 @@
+base referer
+rect $structPspModuleInfo.html 8,117 120,143
+rect $structPspLibImport.html 321,117 422,143
+rect $structPspEntry.html 245,7 320,34
+rect $structPspLibExport.html 144,117 245,143
+rect $structPspModuleImport.html 344,7 472,34
+rect $structPspModuleExport.html 93,7 221,34

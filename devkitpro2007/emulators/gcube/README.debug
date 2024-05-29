@@ -1,0 +1,181 @@
+
+This short document describes how to use the debugger integrated with gcube.
+New functions are added all the time, so not all of them will be documented
+here. If You don't know what a debugger is, then You probably shouldn't be
+looking in here.
+
+
+Basic info:
+===============================================================================
+To run the debugger, start gcube with -d parameter. You can also
+get into the debugger at any point by pressing 'Ctrl + C'.
+It is designed to run on a bright background in a 80x25 terminal
+supporting colors. By default it won't change the color of the
+background. You can pass '-c' parameter with a number to select
+the color mode:
+  0 - black and white
+  1 - default with transparent background
+  2 - white background (prefered on windows)
+
+Pressing F11 will close the debugger and run program. F12 quits gcube.
+
+
+Standard usage:
+===============================================================================
+Whole debugger screen is divided into windows. Use TAB key to switch
+between them. Pressing the tilde key '~' will show/hide current window,
+'-/+' will change its size and 'Page Up/Page Down/Up Arrow/Down Arrow'
+will scroll its contents. Some windows can work in different modes which
+can be switched with 'Right Arrow/Left Arrow', eg. third window can work
+as code view or file/gcm browser and first window can display general
+purpose registers as well as floating point registers.
+
+To run the program in the debugger, press F5 ('Ctrl + C' to stop). To
+execute only the highlighted instruction, press F8. Pressing F9 will
+execute the program until it reaches next line of code. This can be
+used to avoid getting into subroutines. Be aware though the next
+instruction might never be reached. F7 can be used to ignore current
+instruction.
+
+
+Command line:
+==============================================================================
+Type 'help' in the command line for a list of available commands (press
+'Page Up/Page Down' on command line to scroll output window).
+You don't have to type the whole command name, just as few letters
+to distinguish one command from another. If more than one command matches
+the partial command name, the first one on the list will be executed
+(so typing 'b' will set code breakpoint).
+
+Simple expressions are supported and can be used as arguments to commands.
+For example:
+  r r0 r9 >> 16
+will set r0 to the value of r9 shifted right by 16 bits.
+Expressions can contain:
+- operation (+, -, *, /, &, |, ~, ^, %, >>, <<)
+- register names (r0, f19, pc, ...)
+- function names (of course, they have to be defined first)
+- internal variables and constants (code, mem, result, nop, ...)
+
+
+Commands (not including self-explanatory ones):
+===============================================================================
+- x - detach from debugger (close debugger and run program, breakpoints
+  will be ignored)
+
+- mem address [data] - displays memory at given address in the memory view
+  and, if the second argument isn't omitted, writes data to that location.
+
+- code address - displays code at given address in code view.
+
+- r reg [value] - sets the value of a register and displays it.
+
+- print expression - evaluates given expression and assignes it's value to
+  internal variable 'result', which can be used in next commands.
+
+- pf expression - same as above, but works with floating point values.
+
+- set variable [value] - sets the value of a variable and displays it.
+
+- bp* address - sets breakpoint at given address.
+
+- bc breakpoint_number/breakpoint_address - removes breakpoint with
+  given number or located at given address. to remove all breakpoints,
+  use 'bc *'. 'be' and 'bd' commands work similiary.
+
+- codedump filename start end - dumps code from address 'start' to
+  'end' to file.
+
+- outdump [filename] - dumps output contents to file. if filename is not
+  given, 'output.log' will be used.
+
+- logenable mask - enables logs from different modules. as mask use
+  internal constants, eg:
+    logenable log_gx | log_di
+
+- logdisable mask - reverses the effect of 'logenable' command.
+
+- hww address [value] - read / write from / to hardware register (32 bits).
+  hwh is the 16 bit equivalent of this command.
+
+- movieignore 0|1|2 - enables ignoring movies:
+  0 - back to normal state (don't ignore movies)
+  1 - ignore THPVideoDecode function
+  2 - ignore THPVideoDecode and don't load files with 'thp', 'h4m' and 'str'
+      extension.
+
+  This needs to have the following functions defined:
+    THPVideoDecode
+    DVDOpen
+    DVDConvertPathToEntrynum
+	
+  Some programs won't like not being able to load movie files,
+  so don't expect it to work.
+
+- gxtoggle mask - toggle switches affecting the rendering:
+    gxt_wireframe - draws objects in wireframe mode
+    gxt_tex_reload - disable fake texture caching
+    gxt_tex_dump - dump textures loaded after this switch is enabled
+    gxt_force_linear - force linear filtering of all textures
+    gxt_draw - completely disable drawing
+
+Check the source of gcube for a list of variables and constants.
+
+
+
+Function maps:
+===============================================================================
+Function map describes the location, size and name of function in memory.
+It can be saved with the 'mapsave' command, and loaded with 'mapload'.
+To manually add entries to function map, use either 'mapadd' command, or
+press ':' in code window at address, to which the function name should
+be assigned to. The size of the function will be calulated automaticly.
+'map' command will show list of mapped functions.
+
+The command 'mapgen' will try to automagicly create the function map.
+In order to work, it needs a pregenerated database of known functions.
+Map generator works by finding all possible functions, calculating their
+sizes and crcs, and comparing them to entries in the database. (crcs are
+calculated excluding immediate values). It isn't 100% accurate, but it
+gets most of the functions right. The number of functions it finds depends
+heavily on the used database. To use the compiled-in database, use command
+'mdbinternal'. 'mdbsave' will generate and save mdb file from the actual
+function map (generated manually or loaded from map file). mdb files
+loaded with command 'mdbload' will be used by mapgen in function map
+generation.
+
+
+
+High level emulation:
+===============================================================================
+There are a couple of things that can be done with mapped functions. They
+can be emulated on a higher level, or simply ignored. The 'hle' command
+will display a list of functions along with their emulation mode. It is
+also used to change the emulation mode:
+  hle [function_name] [LLE/HLE/IGNORE]
+    LLE - low level emulation
+    HLE - high level emulation
+    IGNORE - ignore the function
+For example:
+  hle memset HLE
+A given function can be HLE'd only if it has been implemented. Check the
+list of implemented functions with command 'hlelist'.
+To use high level emulation of all implemented functions, use commmand
+'hleattach'. 'hledetach' will return to normal state.
+
+Mapped functions can also be emulated using specific implemented hle
+functions:
+  hlewith function_name hled_function
+For example:
+  hlewith THPAudioDecode ignore_false
+Will ignore the function THPAudioDecode and return 0 (false) value.
+
+
+
+Additions:
+===============================================================================
+- Using file/gcm browser:
+  To get into the browser, press 'Right Arrow' in code window. Select entry
+  with 'Up Arrow/Down Arrow'. Pressing 'i' will insert gcm or mount
+  a directory. Pressing 'enter' will execute binary file or browse dvd image.
+  While browsing the dvd, press 'd' to dump file to disk.

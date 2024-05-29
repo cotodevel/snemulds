@@ -1,0 +1,6 @@
+base referer
+rect $types_8h.html 125,84 224,110
+rect $elftypes_8h.html 274,58 386,85
+rect $psp-fixup-imports_8c.html 438,58 606,85
+rect $psp-prxgen_8c.html 456,109 589,136
+rect $prxtypes_8h.html 272,109 389,136

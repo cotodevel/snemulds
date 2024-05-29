@@ -1,0 +1,14 @@
+base referer
+rect $stdio_8h.html 228,210 289,237
+rect $pspkernel_8h.html 354,185 445,212
+rect $psptypes_8h.html 712,109 797,136
+rect $pspdisplay_8h.html 212,362 305,389
+rect $pspge_8h.html 224,413 293,440
+rect $pspdebug_8h.html 524,362 614,389
+rect $pspuser_8h.html 529,160 609,186
+rect $pspiofilemgr__kernel_8h.html 494,58 644,85
+rect $psploadcore_8h.html 517,210 621,237
+rect $pspstdio__kernel_8h.html 506,109 632,136
+rect $pspsysreg_8h.html 522,261 616,288
+rect $pspkdebug_8h.html 520,312 618,338
+rect $pspmoduleinfo_8h.html 694,261 814,288

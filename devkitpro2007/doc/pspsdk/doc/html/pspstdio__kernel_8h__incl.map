@@ -1,0 +1,4 @@
+base referer
+rect $psptypes_8h.html 574,33 659,60
+rect $pspkerneltypes_8h.html 402,58 525,85
+rect $pspiofilemgr_8h.html 249,109 353,136

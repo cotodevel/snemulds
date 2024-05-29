@@ -1,0 +1,5 @@
+base referer
+rect $string_8h.html 170,58 285,85
+rect $psp-build-exports_8c.html 334,21 502,48
+rect $psp-fixup-imports_8c.html 334,97 502,124
+rect $psp-prxgen_8c.html 352,148 485,174

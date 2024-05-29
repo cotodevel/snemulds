@@ -1,0 +1,16 @@
+base referer
+rect $psptypes_8h.html 913,337 998,364
+rect $pspkerneltypes_8h.html 741,337 864,364
+rect $pspiofilemgr_8h.html 198,160 302,186
+rect $psploadexec_8h.html 197,616 304,642
+rect $pspmoduleinfo_8h.html 190,666 310,693
+rect $pspmodulemgr_8h.html 565,261 685,288
+rect $pspsysmem_8h.html 382,312 486,338
+rect $pspthreadman_8h.html 566,514 684,541
+rect $psputils_8h.html 212,565 289,592
+rect $pspkerror_8h.html 206,717 294,744
+rect $pspstdio_8h.html 584,362 666,389
+rect $pspintmanager_8h.html 374,464 494,490
+rect $pspiofilemgr__fcntl_8h.html 365,109 504,136
+rect $pspiofilemgr__stat_8h.html 557,160 693,186
+rect $pspiofilemgr__dirent_8h.html 361,58 508,85

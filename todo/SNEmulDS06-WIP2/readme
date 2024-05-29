@@ -1,0 +1,386 @@
+                            SNEmulDS release 0.6
+                       (c) 1997-1999,2006-2007 by archeide
+                    Includes CPU core from SnezziDS (by bubble2k)
+	              and sound engine from PocketSPC (by gladius)
+                          
+  SNEmulDS is partially based on SNEmul, a SNES emulator for DOS
+  and linux, which was the cooperative work of archeide & v0x.
+  Take a look at the site of the DOS emulator: http://www.snemul.com/ds/
+  SNEmulDS includes PocketSPC, a SPC song player made by gladius.
+  PocketSPC website : http://pocketspc.pocketheaven.com/
+  It also has integrated the fabulous CPU core from the equally 
+  fabulous SnezziDS. SnezziDS website : 
+  http://www.forwardcoding.com/projects/snezzids/snezzids.html
+  
+  GUI artworks have been made tichat! Many thanks...
+  The icon have been made by Lestat! Thanks again
+
+  1. DISCLAIMER
+
+  THE SNEMULDS AUTHORS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
+  SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+  FITNESS FOR A CERTAIN PURPOSE; IN NO EVENT SHALL WE BE LIABLE FOR ANY
+  SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
+  RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
+  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+  CONNECTION WITH THE USE OF THIS SOFTWARE.  
+  Short: use at your own risk.
+
+  2. Introduction
+
+  Nearly ten years after the heroic times of the first SNES emulators 
+  (SNEmul was one of them), the new console made by Nintendo, the Nintendo DS,
+  offer new opportunites to turn alive again all those old games which probaby
+  made the Super NES the best 2D game system of all time.
+  It was clear for me that i had to port my old emulator to the new console,
+  because i wanted so hard to play my favorite SNES games on the tiny DS.
+  There are already good emulators for the DS, but i wanted also to make my old
+  project alive again, and remember those times where i lost
+  nights tracking bugs in MARIO or Secret Of Mana!
+    
+  3. Installation and usage
+
+  Current version of SNEmulDS needs a card reader (like M3, supercard, G6, 
+  R4DS, NinjaDS, etc.)
+  and a passkey/passcard (You should know how to get/use them) for slot-2
+  devices.  
+  
+  <!> Note about DLDI
+  
+  At least the following devices should be supported thanks to the DLDI system 
+  made by chishm:
+
+    * DSLink (microSD Card)
+    * Ewin2 (SD Card)
+    * EZ Flash 4 (SD Card)
+    * EZ Flash 5 (SD Card)
+    * G6 Flash  (version 0.15)
+    * M3 Adapter (Compact Flash)
+    * M3 Adapter (SD card)
+    * Max Media Dock (Compact Flash)
+    * GBA Movie Player (Compact Flash)
+    * GBA Movie Player (SD Card)
+    * NEO Flash MK2 & MK3 (SD Card)
+    * NEO2 (SD Card)
+    * Ninja DS (SD Card)
+    * R4(DS)- Revolution for DS, M3 Simply compatible
+    * SuperCard (Compact Flash)
+    * SuperCard DS (Slot-1)
+    * SuperCard (SD Card)
+
+  Take a look here: http://chishm.drunkencoders.com/DLDI/index.html
+  You can patch SNEmulDS.nds to support others devices as long as those
+  device have been made compatible with the DLDI system. 
+  So you should visit this site regularly for update, if your device is not
+  supported by SNEmulDS yet!
+  
+  <!> SNEMUL.CFG is very important don't forget to put it in the root directory
+  Now you have a snemul.cfg file to put in the root(which means "initial")
+  directory of your card. You can choose the directory where
+  you put your ROMS, instead of SNES as said in the following lines.
+  
+  - Create a SNES directory in the root directory of your card,
+  - Put all your SNES ROMs in this directory,
+  - Optionnaly patch SNEmulDS.nds with a DLDI patcher
+  - Put SNEmulDS.nds or one of the SNEmulDS_<your device name here> in 
+    the _root_ directory of your card,
+
+  
+  - Launch the game,
+  - A list of all the SNES games appears, you can scroll with "up" and "down"
+  - Tap on the desired game and press START to launch the game.
+  
+
+  During the game, a menu is displayed with the following items:
+  # SelectROM: show the content of a directory list to select another ROM
+  # Options: show the option menu. There you can disable background,
+    select the BG3 mode (see below) or the relative scroll height for
+    BG1 and BG2, enable or disable the Vblank waiting, and enable/disable speed
+    hacks.
+  # Load State: restore one of your 8 game states. (see below)
+  # Save State: save your current game state. You can save up to 8 game states
+    for each game. States are saved in files put in the SNES directory along 
+    with your ROM (with extension .SM1 .SM2 ...). 
+  # Reset: reset the game
+  # Save SRAM: save battery-saved cartridge RAM. The SRAM is saved in a file put
+    in the SNES directory along with your ROM (the file has extension '.SRM').
+  # SPC jukebox: play your favorite songs (from SPC files in your SNES directory)
+  # GFX config: show the GFX config menu. (see below)
+  # Debug: show debug informations (not really interesting stuff)
+
+  The BG3 mode selection allows the BG3 (in most games, a later containing only
+  static informations) to be displayed entirely on the DS screen, even if it is
+  bigger with a real SNES. It can be useful in some games. In fact, the middle of
+  the layer is crushed, so you'll lose information in some games.
+ 
+  SNES Mouse Emulation
+  --------------------
+  
+  You can select the mouse emulation mode with START+L+R+LEFT, then the bottom
+  screen and the upper screen switch. You use the stylus to move the mouse
+  cursor.
+  
+  -> You can also switch the screen without selecting mouse emulation mode
+  using START+L+R+RIGHT.
+  
+  Currently there are two methods of emulation:
+
+  # One for all games that uses SNES mouse. It compute the distance between
+  two stylus "click" to emulate the move of the mouse.
+  This is not accurate and some games like Populous II use non linear moving,
+  so the mouse cursor doesn't follow the stylus.
+
+  # Another method modifies directly the variables in RAM where the game stores
+  the X and Y positions of cursor. This way, the mouse cursor moves accurately.
+  But i have to search for each game, where is this information 
+  (that's quite easy with a debugger anyway).
+  The X Y address are stored in snemul.cfg. You need to have this file
+  up-to-date.
+  
+  For both methods, the D-pad is used to select the way the stylus emulate
+  the mouse:
+  - press LEFT(or Y): when the touch screen is pressed, the mouse is moved to this
+    point and the mouse's left button is pressed
+  - press RIGHT(or A): when the touch screen is pressed, the mouse is moved to this
+    point and the mouse's right button is pressed
+  - press DOWN(or B): when the touch screen is pressed, the mouse is moved to this
+    point
+   When the touch screen is not pressed, the buttons are released and the cursor
+   doesn't move.
+   
+  Another option is available with first method: 
+  - press UP (or X) and press the touchscreen at the same time :
+    the stylus calibrates to this point. 
+    Use this if the mouse cursor doesn't follow the stylus correctly.
+    
+  In mouse mode, you can also scroll the entire screen (all backgrounds)
+  with:
+  - L(or R) + UP(or X)  : scroll up the screen
+  - L(or R) + DOWN(or B) : scroll down the screen
+  
+  GFX config
+  ----------
+  
+  This screen contains several options to try:
+  
+  - Priority per tile : in the SNES hardware, each background layer have 
+   two sub layers : high and low priority. The DS 2D hardware doesn't have
+   this feature, but have one more background layer. This option uses
+   tha additional layer to emulatoe the priority per tile for one SNES background.
+   You can choose between none, BG1 or BG2. Warning: This option can corrupt GFX or
+   make some other tiles disappear.
+
+  - BG3 block priority : this option emulate the priority per tile for BG3
+    by guessing, for each line, if the map contains more high or more low
+    priority tiles, and then change the priority of the BG3 for each line.
+    This option is not perfect yet, and some text may disappear.
+    This option only work in automatic mode.
+    
+  - BG1 / BG2 / BG3 / BGX(low) : change the priority of this layer. THe right
+    part of screen, can select between automatic or not.
+    
+  - Sprite1 ... : change the priority of the sprites. SNES has 4 priorities
+    like DS, but it can be useful to change the prioriry bijection.
+    
+  - (Fix) : the number are register 212C 212D 2130 3130, tap on this 
+    part of screen to clear the GFX buffers and fix most GFX garbages on screen.
+    
+  - <Save> : save those parameters in the CFG file    
+
+ 
+  4. What is implemented
+
+  - 65816 CPU (bugs remain, and 6502 emulation is not supported)
+  - LoROM/HiROM support
+  - Tile by tile graphics engine (broken as of 0.5 alpha)
+  - Line by line graphics engine (90% complete)
+  - Graphic Mode 1, 2, 3, 4, 7
+  - Graphics Modes 0,5,6 are implemented but not correct yet
+  - 8x8, 16x16 tiles (16x16 may have problem with large screen modes)
+  - 32x32, 64x32, 32x64, 64x64 screen modes
+  - 8x8, 16x16, 32x32, 64x64 sprites
+  - BG priorities (still buggy)
+  - Full DMA support
+  - HDMA support (uncomplete)
+  - HIRQ/VIRQ/NMI interrupts
+  - PAL/NTSC detection
+  - Subscren Add/sub for BG/sprites/BACK (not 100% correct yet)
+  - Large ROM support (> 3Mbytes), even for slot-1 card users
+  - SRAM support
+  - Snapshots(State save) support
+  - SPC700 CPU (from PocketSPC by gladius)
+  - Sound DSP (from PocketSPC by gladius)
+  - Incomplete Line by line graphics engine (for MODE 7 game)
+  - Mode 7 effects
+  - Correct BACK color support (look like ok)
+  - SNES Mouse Emulation
+  - Incomplete priority per tile (difficult task :-()  
+
+ 
+What is not supported, but will be soon:
+  - Super scope emulation
+  - 512 horizontal resolution with Mode 5 
+  - Window clipping
+  - Mosaic effects 
+  - Correct Sprite priorities
+  - Palette alteration between scanlines (only palette 0 is correct)
+  - Fixed color Add/sub for BG/sprites/BACK
+  - Window color clipping
+  
+ 
+What will *maybe* be supported someday: 
+  - Super FX
+  - DSP1
+  - DSP2...
+
+Other interesting features to be implemented:
+  - Cheats editor, Cheats search
+
+  - Memory, Palette viewer
+  - Debugger
+  - Tiles/Sprites editor(designe your own sprites with the pen ;))
+
+
+  5. Misc
+
+  You can ask me question (not about SNES ROMs of course) at:
+  archeide@yahoo.com
+  I don't have a lot of free time, so don't expect that i will
+  answer to all your questions.
+  
+  A web site exists, you can get the latest version of SNEmulDS at:
+  http://www.snemul.com/ds/
+
+  If you are interested in working on this project, please tell me!
+  I am especially interested in people who would like to work on a GUI for
+  the subscreen! (But beware, you'll just have 48kbytes of VRAM for you :p)
+  And if you have knowledge in ARM assembler and DS low level programming,
+  i'm also interested ;)
+  
+
+  6. FAQ
+
+  - My graphic are all corrupted, flashing, ugly, what can i do ?
+  
+    Go in the GFX config, and try to change options. Tap on "fix" zone
+    to clear the GFX cache.   
+    Try to enable "Wait for Vblank" in the options.
+    You may also need to change the background layers order. 
+    You can do it in the options (instead of "Automatic layers") or by
+    pressing START+L+R+UP (LEFT AND RIGHT side buttons).
+    You can return to automatic layers by pressing START+LEFT+RIGHT+DOWN.
+    Another option allow disabling or enabling background layers.
+  
+  - Why SNEmulDS sound is bad ?
+  
+    SNEmulDS is not correctly synchronized with the SPC700 engine.
+    Some new options in configuration file allow you to improve
+    the sound (see SoundPortSync in CFG file)
+    You can try the SPC jukebox instead, musics should be better.
+
+  - Why SNEmulDS is so slow ?
+
+    Try to play with speed hacks in Option menu (Last item). Some games are slower
+    than other, because of intensive use of CPU and GFX.
+    Expect speed improvement in the future
+  
+  - How can i speed up SNEmulDS ?
+  
+    Make sure you are in "No vblank" mode in Options, and that "Speed hack"
+    is in "Full speed".
+    
+  - Why my game seems slow whereas SNEmulDS says the speed is over 80% ? 
+  
+    Most of the time, it comes from the speed hack. Not enough CPU cycles
+    are given to the game, and it needs to use two frames instead of 
+    one. Set speed hacks "No speed hack" should help.
+
+  - My game is too fast! I can't even play it !
+    Enable "Wait for Vblank" in the options.
+  
+  - My game doesn't even start! Your emu sucks!?
+  
+    Choose "No speed hack" and/or sound emulation in Options menu. 
+    Surprisely, some games need to be in "Full speed hacks" mode to launch
+    (like SUPER BOMBERMAN).
+  
+  - I lost all my game progress !!! I will kill you!
+ 
+    Don't forget that SNEmulDS doesn't save SRAM automatically.
+    You have to tap "Save SRAM" in the main menu to save your game progress.
+    You can also use save states.
+
+  - Save states don't work :(
+
+    I'm sorry but the current FAT librairies doesn't support
+    saving for all cards. Use of DS SRAM is a future feature
+    that may be help you (short: wait for next release).
+    TO BE PEACEFUL: writing to card is not perfect, and your saved state
+    can be corrupted, so you should save your game in several slots!!
+
+  - How i can use my own ZSNES/SNES9X save states ?
+ 
+    I think I will make a ZST->SML translator in the first time...
+    In the future, there will be direct compatibility with ZSNES
+    format. (short: wait!)
+    Anyway, you should be able to use your ".SRM" created by
+    other emus. Be sure it is not compressed. Simply put the
+    SRM file in the SNES directory, along with your ROM.
+
+  - Why do you not support "packing", my card/flasher is not
+    working with SNEmulDS?
+   
+    SNEmul philosophy is "easy to use".
+    That means no pre-script, no packer, no patches, etc. 
+    You put your ROMS, SRAMs, save states directly in your SNES directory and that's all.
+    Moreover, by using a "real" filesytem development of specific features is much easier
+    (especially large save states, SRAM saving, very large ROMs (4Mo) and  multi ROMs support).
+    I will surely work on a "packed" version later, but this is not 
+    my first goal.
+
+  8. Credits
+  
+  Thanks to bubble2k for his advice and help and his incredible SnezziDS  
+  Thanks to gladius for his amazing PocketSPC engine!
+  Thanks to loopy and FluBBa for making the dream come true by making SNESAdvance
+  Thanks to AlekMaul for making the GBFS version!
+  Merci à Lestat pour son joli icône et ses graphismes (que j'ai jamais
+  le temps d'utiliser !!)
+  Thanks to wraggy and dantheman from DCEMU.co.uk for translating my initial
+  message from PlayerAdvance.fr and making this emulator alive again!
+  Thanks to dantheman for his great help for testing and for new users :)
+  Thanks also to Spark for his precious help
+  Thanks to UCON64 for CRC32 and Allegro for COnfiguration file
+  Thanks to Lick for his LibRAM (Extended RAM support)!
+  I took several ideas from DragonMinded and his DSOrganize font library :)
+
+  SNEmulDS has been translated in many languages, thanks to all translators
+  and correctors especially:
+	ApprentiSorcier (japanse), PekePeke (japanse), scognito (Italian),
+	Zeroshcr (Spanish), MsK (Portuguese), Sonucais (Catalan), mog123 (Polish+Japanese),
+	Snake (German), Deng (Korean), akisz001(Greek), Jesper 'IroniC' Olsson (Swedish),
+	Martin Kool (Dutch), Kralle (Danish), Gromov (Russian)
+  If I forget you, send me an email to tell me so ;)
+  
+  Old good SNEmul emulator engine was made with the help of:
+  The Teach        - Thanks for the great help
+  Trepalium        - The TrepSNES sources helped us a lot...
+  Y0shi            - Thanks for all your docs and your support...
+  (and all the other guys who made SNES docs)
+  Pan/ANTHROX      - They made the MODE 7 demo
+  zsKnight         - Thanks for the great help
+  Lestat           - Thanks for your help
+  ZoOp             - Thanks for LoROM/HiROM informations, and beta testing
+  Lord ESNES       - Thanks for your mails
+  Jerremy Koot, Gary Handerson, Lestat, _Demo_... and all the other SNES9X
+  contributors. 
+  The SNES9X sources have helped us a lot!
+
+
+  Greets and good luck for all the other authors of SNES emulator:
+  ZSNES, SNES9X, SNEeSe, NLKE, SnezziDS, SNESDS, SnesDs....
+  
+  SNEmulDS uses the chishm's LIBFAT / DLDI, devkitpro v20 from wintermute,
+  and libnds!
+  Thanks for all their work for the DS developper community.
+  

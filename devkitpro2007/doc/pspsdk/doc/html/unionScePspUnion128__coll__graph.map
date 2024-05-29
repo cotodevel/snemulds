@@ -1,0 +1,7 @@
+base referer
+rect $structScePspFRect.html 8,7 112,34
+rect $structScePspFVector4.html 136,7 256,34
+rect $structScePspIRect.html 280,7 378,34
+rect $structScePspIVector4.html 402,7 520,34
+rect $structScePspFQuaternion.html 544,7 685,34
+rect $structScePspFColor.html 709,7 816,34

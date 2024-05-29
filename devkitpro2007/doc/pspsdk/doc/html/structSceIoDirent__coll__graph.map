@@ -1,0 +1,3 @@
+base referer
+rect $structSceIoStat.html 30,130 110,157
+rect $structScePspDateTime.html 7,8 133,34

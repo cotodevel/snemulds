@@ -1,0 +1,17 @@
+base referer
+rect $pspiofilemgr__kernel_8h.html 697,58 910,85
+rect $pspkdebug_8h.html 248,767 410,794
+rect $psploadcore_8h.html 474,666 645,693
+rect $query__mod_8c.html 730,641 877,667
+rect $pspstdio__kernel_8h.html 708,134 900,161
+rect $pspsysreg_8h.html 250,818 408,845
+rect $pspsdk_8h.html 498,615 621,642
+rect $crt0_8c.html 498,311 621,338
+rect $pspintmanager_8h.html 473,413 646,439
+rect $pspuser_8h.html 737,362 870,389
+rect $pspiofilemgr_8h.html 480,109 640,135
+rect $pspiofilemgr__stat_8h.html 234,109 424,135
+rect $pspmodulemgr_8h.html 241,521 417,547
+rect $pspstdio_8h.html 492,463 628,490
+rect $pspsysmem_8h.html 250,210 408,237
+rect $pspthreadman_8h.html 244,362 414,389

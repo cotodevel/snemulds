@@ -1,0 +1,7 @@
+base referer
+rect $libcglue_8c.html 234,8 362,34
+rect $pspsdk_8h.html 237,58 360,85
+rect $query__mod_8c.html 441,109 588,136
+rect $pspuser_8h.html 232,160 365,186
+rect $modulemgr__patches_8c.html 413,58 616,85
+rect $pspkernel_8h.html 437,160 592,186

@@ -1,0 +1,11 @@
+base referer
+rect $guInternal_8h.html 246,58 339,85
+rect $pspkernel_8h.html 247,160 338,186
+rect $pspdisplay_8h.html 246,210 339,237
+rect $pspgu_8h.html 430,8 499,34
+rect $pspuser_8h.html 425,58 505,85
+rect $pspiofilemgr__kernel_8h.html 390,109 539,136
+rect $psploadcore_8h.html 413,160 517,186
+rect $pspstdio__kernel_8h.html 402,210 527,237
+rect $pspsysreg_8h.html 418,261 511,288
+rect $pspkdebug_8h.html 415,312 514,338

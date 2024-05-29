@@ -1,0 +1,6 @@
+base referer
+rect $gumInternal_8h.html 242,33 346,60
+rect $pspgum_8h.html 405,8 485,34
+rect $pspgu_8h.html 396,58 494,85
+rect $psptypes_8h.html 545,8 630,34
+rect $pspge_8h.html 553,58 622,85

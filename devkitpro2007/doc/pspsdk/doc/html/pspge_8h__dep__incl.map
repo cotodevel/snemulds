@@ -1,0 +1,12 @@
+base referer
+rect $scr__printf_8c.html 169,8 321,34
+rect $pspgu_8h.html 189,236 301,262
+rect $sceGuGetMemory_8c.html 578,65 762,92
+rect $sceGuInit_8c.html 605,141 736,168
+rect $sceGuSendList_8c.html 588,204 753,230
+rect $sceGuStart_8c.html 600,286 741,313
+rect $sceGuSync_8c.html 598,362 742,389
+rect $sceGuTerm_8c.html 598,413 742,440
+rect $sendCommand_8c.html 588,464 753,490
+rect $guInternal_8h.html 382,210 518,237
+rect $gumInternal_8h.html 372,261 529,288

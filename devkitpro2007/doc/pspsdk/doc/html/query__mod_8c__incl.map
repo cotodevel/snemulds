@@ -1,0 +1,8 @@
+base referer
+rect $pspkerneltypes_8h.html 530,94 653,121
+rect $psploadcore_8h.html 206,69 310,95
+rect $pspmodulemgr_8h.html 361,119 481,146
+rect $pspsdk_8h.html 221,170 295,197
+rect $string_8h.html 225,246 291,273
+rect $psptypes_8h.html 702,94 787,121
+rect $ctype_8h.html 389,322 453,349
