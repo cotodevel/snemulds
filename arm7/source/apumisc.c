@@ -24,15 +24,16 @@ void ApuResetTimers() {
 }
 
 void ApuWriteControlByte(uint8 byte) {
-    if ((byte & 0x1) != 0 && !timers[0].enabled) {
+	uint8 orig = APU_MEM[APU_CONTROL_REG];
+    if ((orig & 0x1) == 0 && (byte & 0x1) != 0) {
         ApuResetTimer(0);
 		APU_MEM[APU_COUNTER0] = 0;
 	}
-    if ((byte & 0x2) != 0 && !timers[1].enabled) {
+    if ((orig & 0x2) == 0 && (byte & 0x2) != 0) {
         ApuResetTimer(1);
 		APU_MEM[APU_COUNTER1] = 0;
 	}
-    if ((byte & 0x4) != 0 && !timers[2].enabled) {
+    if ((orig & 0x4) == 0 && (byte & 0x4) != 0) {
         ApuResetTimer(2);
 		APU_MEM[APU_COUNTER2] = 0;
 	}
@@ -47,8 +48,8 @@ void ApuWriteControlByte(uint8 byte) {
 		APU_MEM[0xF5] = 0;
         ((volatile u8*)ADDRPORT_SNES_TO_SPC)[0] = 0;
         ((volatile u8*)ADDRPORT_SNES_TO_SPC)[1] = 0;
-        ((volatile u8*)ADDRPORT_SPC_TO_SNES)[0] = 0;
-        ((volatile u8*)ADDRPORT_SPC_TO_SNES)[1] = 0;
+        //((volatile u8*)ADDRPORT_SPC_TO_SNES)[0] = 0; //enabling this will discard pending commands from SPC to SNES and will cause game blackscreens due to APU looping wait for acknowledge
+        //((volatile u8*)ADDRPORT_SPC_TO_SNES)[1] = 0; //enabling this will discard pending commands from SPC to SNES and will cause game blackscreens due to APU looping wait for acknowledge
 	}
 	if (byte & 0x20) {
 		// Clear port 0 and 1
@@ -56,8 +57,8 @@ void ApuWriteControlByte(uint8 byte) {
 		APU_MEM[0xF7] = 0;
         ((volatile u8*)ADDRPORT_SNES_TO_SPC)[2] = 0;
         ((volatile u8*)ADDRPORT_SNES_TO_SPC)[3] = 0;
-        ((volatile u8*)ADDRPORT_SPC_TO_SNES)[2] = 0;
-        ((volatile u8*)ADDRPORT_SPC_TO_SNES)[3] = 0;
+        //((volatile u8*)ADDRPORT_SPC_TO_SNES)[2] = 0; //enabling this will discard pending commands from SPC to SNES and will cause game blackscreens due to APU looping wait for acknowledge
+        //((volatile u8*)ADDRPORT_SPC_TO_SNES)[3] = 0; //enabling this will discard pending commands from SPC to SNES and will cause game blackscreens due to APU looping wait for acknowledge
 	}
 	
 	int i=0;
@@ -65,12 +66,12 @@ void ApuWriteControlByte(uint8 byte) {
 	if (byte & 0x80) {
 		if (!apuShowRom) {
 			apuShowRom = 1;
-			for (i=0; i<=0x3F; i++) APU_MEM[0xFFC0 + i] = iplRom[i];
+			memcpy(APU_MEM+0xFFC0, iplRom, 0x40);
 		}
 	} else {
 		if (apuShowRom) {
 			apuShowRom = 0;
-			for (i=0; i<=0x3F; i++) APU_MEM[0xFFC0 + i] = APU_EXTRA_MEM[i];
+			memcpy(APU_MEM+0xFFC0, APU_EXTRA_MEM, 0x40);
 		}
 	}
 }
@@ -180,4 +181,9 @@ void ApuWriteUpperByte(uint8 byte, uint32 address) {
 
     if (apuShowRom)
         APU_MEM[address] = iplRom[address - 0xFFC0];
+}
+
+void ApuSetShowRom()
+{
+	apuShowRom = 0;
 }

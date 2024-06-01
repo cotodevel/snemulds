@@ -23,7 +23,7 @@ void debugTmp(uint32 b1, uint32 b2, uint32 b3) {
 // Definitions
 ////////////////////////////////////////////////////////////////////////////
 
-uint8 iplRom[64] ALIGNED =
+uint8 iplRom[64] =
 {
 	0xCD,0xEF,0xBD,0xE8,0x00,0xC6,0x1D,0xD0,0xFC,0x8F,0xAA,0xF4,0x8F,0xBB,0xF5,0x78,
 	0xCC,0xF4,0xD0,0xFB,0x2F,0x19,0xEB,0xF4,0xD0,0xFC,0x7E,0xF4,0xD0,0x0B,0xE4,0xF5,
@@ -40,6 +40,12 @@ uint8 apuSleeping ALIGNED;
 
 uint32 APU_STATE[16];
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 uint8 MakeRawPSWFromState(uint32 state[16]) {
 	uint8 psw = 0;
 
@@ -55,6 +61,12 @@ uint8 MakeRawPSWFromState(uint32 state[16]) {
 	return psw;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void SetStateFromRawPSW(uint32 state[16], uint8 psw) {
 	APU_STATE[8] = 0;
     APU_STATE[6] &= ~0x7;
@@ -83,6 +95,12 @@ extern uint32 MemReadDspData;
 extern uint32 MemZeroPageReadTable;
 extern uint32 MemZeroPageWriteTable;
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void ApuReset() {
     int i = 0;
 	apuSleeping = 0;
@@ -96,7 +114,11 @@ void ApuReset() {
         memset(APU_MEM+i, 0, 0x20);
         memset(APU_MEM+i+0x20, 0xFF, 0x20);
     }
-
+	
+	memset(APU_MEM + 0xF0, 0, 0x10);
+	
+    ApuSetShowRom();
+	
 	// Init the ROM
     for (i=0; i<=0x3F; i++) {
         APU_MEM[0xFFC0 + i] = iplRom[i];
@@ -105,7 +127,7 @@ void ApuReset() {
 
     for (i = 0; i < 0x100; i++) {
         ((uint32*)APU_MEM_ZEROPAGEREAD)[i] = (uint32)(&MemReadDoNothing);
-        ((uint32*)APU_MEM_ZEROPAGEWRITE)[i + 0x40] = (uint32)(&MemWriteDoNothing);;
+        ((uint32*)APU_MEM_ZEROPAGEWRITE)[i + 0x40] = (uint32)(&MemWriteDoNothing);
     }
 
     // Set up special read/write zones
