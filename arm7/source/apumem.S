@@ -70,6 +70,12 @@ MemWriteApuPort:
 	ldr r1,[r1]
     sub r2, r12, #0xF4
     strb r0, [r1, r2]
+	
+	@ldr	r0, =0x27E0000				@APU_PROGRAM_COUNTER
+    ldr r0,=ADDR_APU_PROGRAM_COUNTER
+	ldr r0,[r0]
+	str	APU_PC, [r0]  
+	
 	ldmfd sp!, {r0-r2}
     bx lr
 
@@ -110,9 +116,16 @@ MemReadCounter:
 .GLOBAL     MemReadApuPort
 MemReadApuPort:
 	stmfd sp!, {r1-r3}
-    ldr r1,=ADDRPORT_SNES_TO_SPC
-	ldr r1,[r1]
+    
+	@ldr	r0, =0x27E0000    	@APU PC
+    ldr r0,=ADDR_APU_PROGRAM_COUNTER
+	ldr r0,[r0]
+	str APU_PC, [r0]
+	
     sub r2, r12, #0xF4
+	@ldr r1, =0x027FFFF8    @PORT_SNES_TO_SPC
+	ldr r1,=ADDRPORT_SNES_TO_SPC
+	ldr r1,[r1]
     ldrb r0, [r1, r2]       @ Modifies the value that was read from RAM
     @ldr r1, =0x027FFFE8		@SNEMUL_BLK
     ldr r1,=ADDR_SNEMUL_BLK
@@ -133,6 +146,7 @@ MemReadDspData:
 	ldrb r1, [APU_RAMBASE, r12]
 
 	ldr	r2, =DSP_MEM
+	and r1, r1, #0x7f
 	ldrb r0, [r2, r1]       @ Modifies the value that was read from RAM
 
 	ldmfd sp!, {r1-r2, r12}

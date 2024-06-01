@@ -4,8 +4,8 @@
 #include "apudef.h"
 
 .MACRO notDone opc
-    mov r0, #\opc
-    bl unimpl
+@    mov r0, #\opc
+@    bl unimpl
 .ENDM
 
 .MACRO fetch cycles

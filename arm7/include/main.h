@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
-extern uint16 playBuffer[MIXBUFSIZE * 2 * 2];
+extern uint16 *playBuffer;
 extern volatile int soundCursor;
 extern bool paused;
 extern bool SPC_disable;
