@@ -40,6 +40,27 @@ TWL Mode:
 	-SnemulDS TWL mode has extended memory (16MB), so hacks like Megaman X3 Zero Project are supported and known to work. (TGDS1.65 branch)
 	-Donkey Kong Country 3 is playable until the end using SnemulDS TWL mode, but beware, save often as the game tends to crash sometimes.
 
+
+
+
+Megaman X series FAQ:
+
+You need to get the latest SnemulDS TGDS1.65 from here (https://bitbucket.org/Coto88/SnemulDS/get/TGDS1.65.zip)
+
+and use the following Megaman X 1 on SnemulDS (TWL hardware only, sorry) which is 100% beatable, from start to finish:
+
+Mega Man X (US) (v1.1)
+
+MD5: 8998f2d66a84c1d44ab6387db7314efd
+SHA1: 404f160bbb1a5e9d3e0bfd38edaa448984040899
+SHA256: 152eb370f988b33291d2dddfc48abb42bfa236a08ddc7362e07dd2795e3e37d0
+SHA512: 8b7de3bfa15e192cb1fb5128cba64ef629813a1d3782c7f57dc2f93b0b06a1565aa256f60fa5b550a1241e8e536b18bb27d4e210937d4b4329739e2990136f0b
+
+Also Megaman X2 and Megaman X3 are 100% beatable, from start to finish. (on TWL hardware)
+
+
+
+
 ____Remoteboot____
 Also, it's recommended to use the remoteboot feature. It allows to send the current TGDS Project over wifi removing the necessity
 to take out the SD card repeteadly and thus, causing it to wear out and to break the SD slot of your unit.

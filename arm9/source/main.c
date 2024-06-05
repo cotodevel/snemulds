@@ -464,6 +464,12 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			if(strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0){
 				ROM = (char *)SNES_ROM_ADDRESS_TWL;
 			}
+			
+			else if (strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0){	//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100% (1/2)
+				ROM = (char *)SNES_ROM_ADDRESS_NTR + (4*1024*1024); 
+				setCpuClock(true);
+			}
+			
 			//Otherwise the rest default NTR ROM base, or segfaults occur.
 			else{
 				ROM = (char *)SNES_ROM_ADDRESS_NTR;
@@ -484,6 +490,14 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		}
 		ROM_paging = (uchar *)((int)ROM+PAGE_SIZE); //SNES_ROM_PAGING_ADDRESS;
 		ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
+		
+		if(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0){	//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100%	(2/2)
+			LoROM_Direct_ROM_Mapping = true;
+		}
+		else{
+			LoROM_Direct_ROM_Mapping = false;
+		}
+		
 		
 		//APU Fixes for proper sound speed
 		if(

@@ -56,6 +56,7 @@ extern ushort mem_getword(uint32 offset,uchar bank);
 extern void mem_setword(uint32 offset, uchar bank, ushort word);
 extern void *mem_getbaseaddress(uint16 offset, uchar bank);
 extern void *map_memory(uint16 offset, uchar bank);
+extern bool LoROM_Direct_ROM_Mapping;
 
 #ifdef __cplusplus
 }
