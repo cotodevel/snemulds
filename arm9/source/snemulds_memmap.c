@@ -32,6 +32,7 @@
 uchar *ROM_paging= NULL;
 uint16 *ROM_paging_offs= NULL;
 int ROM_paging_cur = 0;
+bool LoROM_Direct_ROM_Mapping = false;
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -116,7 +117,22 @@ void InitLoROMMap(int mode)
 	int 	i;
 	int		maxRAM = 0;
 	uint8	*largeROM = SNESC.ROM;
-
+	
+	//Given the entire range of 128 Pages of 32K blocks (4MB) of ROM addressing, 2 memory layouts are possible:
+	int LoROMMappedRange = 0;
+	
+		//1) 2MB or less LoROM Size: The bottom (32K x 64) blocks is mirrored, the next upper (32K x 64 pages) is mirrored as well. (Contiguous 2MB LoROM + mirrors)
+		if( SNES.ROMSize <= ((2*1024*1024) + (512*1024)) ){
+			LoROMMappedRange = 0x200000;
+		}
+		
+		//2) 3MB or higher LoROM Size: 
+		//The bottom (32K x 64) blocks is mirrored from the 1MB+ bottom half of the 3M+ LoROM. 
+		//The upper (32K x 64) blocks is mirrored from the 2MB upper half of the 3M+ LoROM.  (Non-contiguous 32K x 2 4MB LoROM)
+		else{
+			LoROMMappedRange = SNES.ROMSize;
+		}
+		
 	if (mode == NOT_LARGE)
 	{
 		// Small ROM, use only SNES ROM size of RAM
@@ -150,7 +166,7 @@ void InitLoROMMap(int mode)
 		{
 			if ( ((c>>1)<<13)-0x8000 < SNES.ROMSize)
 			{
-				MAP[i] = MAP[i+0x400] = &SNESC.ROM[(c>>1)<<13]-0x8000;
+				MAP[i] = MAP[i+0x400] = &SNESC.ROM[(c>>1)<<13]-0x8000;	//bottom 32K ROM addressed
 				if (((c>>1)<<13)-0x8000 >= maxRAM)
 				{
 					if (mode == USE_PAGING)
@@ -182,7 +198,12 @@ void InitLoROMMap(int mode)
 	{
 		for (i = c; i < c+4; i++)
 		{
-			if ( ((c>>1)<<13)+0x200000 < SNES.ROMSize)
+			if(LoROM_Direct_ROM_Mapping == true){
+				if( ((c>>1)<<13) < SNES.ROMSize){
+					MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[((c>>1)<<13)];	 //upper 32K ROM addressed
+				}
+			}
+			else if ( (((c>>1)<<13)+0x200000 < SNES.ROMSize) && (LoROM_Direct_ROM_Mapping == false))
 			{
 				MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[((c>>1)<<13)+0x200000];
 				if (((c>>1)<<13)+0x200000 >= maxRAM)
@@ -196,7 +217,10 @@ void InitLoROMMap(int mode)
 		}
 		for (i = c+4; i < c+8; i++)
 		{
-			if ( ((c>>1)<<13)+0x200000-0x8000 < SNES.ROMSize)
+			if(LoROM_Direct_ROM_Mapping == true){
+				MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[((c>>1)<<13)+LoROMMappedRange-0x200000-0x8000]; //bottom 32K ROM addressed: mirror of first 2MB or second 2MB chip
+			}
+			else if ( ((((c>>1)<<13)+0x200000-0x8000) < SNES.ROMSize) && (LoROM_Direct_ROM_Mapping == false))
 			{
 				MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[((c>>1)<<13)+0x200000-0x8000];
 				if (((c>>1)<<13)+0x200000-0x8000 >= maxRAM)
