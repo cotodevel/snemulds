@@ -32,6 +32,8 @@
 brrHash:
 .word 0
 
+.extern apuCacheSamples
+
 .GLOBAL DecodeSampleBlockAsm
 DecodeSampleBlockAsm:
     stmfd sp!, {r4-r12,r14}
@@ -47,8 +49,13 @@ DecodeSampleBlockAsm:
     @ Save the channel pointer
     mov r14, r2
 	
-/*    @ Hash the block, and skip the decode if we can
-    ldmia r0, {r4-r7}
+    @ Hash the block, and skip the decode if we can
+    ldr r8,=apuCacheSamples
+	ldr r8, [r8]
+ 	cmp r8, #1
+	bne finishDecode1
+	
+	ldmia r0, {r4-r7}
     ldr r8, =0x050C5D1F @ (2166136261 * 16777619)
     ldr r9, =16777619
     eor r8, r8, r4
@@ -80,7 +87,9 @@ DecodeSampleBlockAsm:
 	
 doDecode:
     stmfd sp!, {r3}
-*/
+
+finishDecode1:
+
     @ Load prev0 and prev1
     ldrsh PREV0, [r14, #62]
     ldrsh PREV1, [r14, #64]
@@ -264,11 +273,17 @@ case3:
     bne case3
 
 doneDecode:
-/*    sub r1, r1, #32
+	ldr r4,=apuCacheSamples
+	ldr r4, [r4]
+ 	cmp r4, #1
+	bne finishDecode2
+	
+    sub r1, r1, #32
     ldmia r1, {r4-r11}
     ldmfd sp!, {r1}
-    stmia r1, {r4-r11}*/
+    stmia r1, {r4-r11}
 
+finishDecode2:
 doneDecodeCached:
     @ Store prev0 and prev1
     strh PREV0, [r14, #62]

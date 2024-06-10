@@ -16,7 +16,7 @@ void bootfile(){
 }
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
-uint16 *playBuffer;
+uint16 playBuffer[MIXBUFSIZE * 2 * 2];
 volatile int soundCursor;
 bool paused = false;
 bool SPC_disable = true;
@@ -55,7 +55,12 @@ void StopSoundSPC() {
 
 void LoadSpc(const uint8 *spc) {
     int i=0;
-    ApuReset();
+	
+	//Assume Cached Samples + always NTR mode: There's no ARM9 SNES CPU running
+    apuCacheSamples = 1;
+	apuCacheSamplesTWLMode = false;
+	savedROMForAPUCache = APU_BRR_HASH_BUFFER_NTR;
+	ApuReset(apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
     DspReset();
 
 // 0 - A, 1 - X, 2 - Y, 3 - RAMBASE, 4 - DP, 5 - PC (Adjusted into rambase)
@@ -104,7 +109,7 @@ int main(int _argc, char **_argv) {
 	
 	update_spc_ports();
 	int i = 0; 
-    for (i = 0; i < MIXBUFSIZE * 4; i++) {
+    for (i = 0; i < MIXBUFSIZE; i++) {
         playBuffer[i] = 0;
     }
 	

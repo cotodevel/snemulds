@@ -55,7 +55,7 @@ extern uint32 MemWriteCounter;
 extern uint32 APU_STATE[16];
 extern uint8 MakeRawPSWFromState(uint32 state[16]);
 extern void SetStateFromRawPSW(uint32 state[16], uint8 psw);
-extern void ApuReset();
+extern void ApuReset(u32 inApuCacheSamples, bool inApuCacheSamplesTWLMode, u32 * inSavedROMForAPUCache);
 extern void ApuPrepareStateAfterReload();
 extern void ApuUpdateTimers(uint32 cycles);
 extern void ApuWriteControlByte(uint8 byte);
