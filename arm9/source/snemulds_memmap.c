@@ -411,7 +411,7 @@ uint8 *mem_checkReload(int block){
 		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET;
 		if (ROM_paging_offs[ROM_paging_cur] == PC_blk){
 			ROM_paging_cur++;
-			if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_SIZE) - 1) ){
+			if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_SIZE) - 6) ){
 				ROM_paging_cur = 0;
 			}
 		}
@@ -428,7 +428,7 @@ uint8 *mem_checkReload(int block){
 	mem_setCacheBlock(i, ptr); // Give Read-only memory
 
 	ROM_paging_cur++;
-	if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_SIZE) - 1) ){
+	if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_SIZE) - 6) ){
 		ROM_paging_cur = 0;
 	}
 	return ptr+(block&7)*8192-(block << 13);

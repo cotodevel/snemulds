@@ -80,7 +80,6 @@ void closeSoundUser() {
 
 int _offsetY_tab[4] = { 16, 0, 32, 24 };
 
-static u32 apuFix = 0;
 uint32 screen_mode;
 int APU_MAX = 262;
 
@@ -460,19 +459,14 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
 			*(u32*)0x04004008 = SFGEXT9;
 			ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
-			//DKC3 needs this
-			if(strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0){
-				ROM = (char *)SNES_ROM_ADDRESS_TWL;
-			}
 			
-			else if (strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0){	//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100% (1/2)
+			if (strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0){		//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100% (1/2)	
 				ROM = (char *)SNES_ROM_ADDRESS_NTR + (4*1024*1024); 
 				setCpuClock(true);
 			}
-			
-			//Otherwise the rest default NTR ROM base, or segfaults occur.
-			else{
-				ROM = (char *)SNES_ROM_ADDRESS_NTR;
+			else if (strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0){ //Fix DKC3 on TWL hardware
+				ROM = (char *)SNES_ROM_ADDRESS_TWL + (4*1024*1024); 
+				setCpuClock(true);
 			}
 			printf("Extended TWL Mem.");
 		}
@@ -486,6 +480,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			}
 			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
 			ROM = (char *)SNES_ROM_ADDRESS_NTR;
+			setCpuClock(false);
 			printf("Normal NTR Mem.");
 		}
 		ROM_paging = (uchar *)((int)ROM+PAGE_SIZE); //SNES_ROM_PAGING_ADDRESS;
@@ -499,21 +494,36 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		}
 		
 		
-		//APU Fixes for proper sound speed
+		//APU cached samples feature--
+		//NTR mode:
+		//Since we’ve ran out of memory for NTR mode, if SNES rom is higher than 2.8~ MB, the BRR hashing feature will be disabled. 
+		//Otherwise the feature will be enabled for either 4MB+ paging mode, or SNES rom is 2.8~ MB or less. Both scenarios have 270K free of EWRAM.
+
+		//TWL mode:
+		//Plenty of free memory; Use the BRR hash buffer @ EWRAM offset : (SNES_ROM_ADDRESS_TWL + ROM_MAX_SIZE_TWLMODE)
+		apuCacheSamplesTWLMode = false;
 		if(
-			(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X3", 10) == 0)
+			(ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE)	//TWL mode
 			||
-			(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X2", 10) == 0)
-			||
-			(strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0)
-			){
-			apuFix = 0;
-			GUI_printf("APU Fix");
+			(size != ROM_MAX_SIZE_NTRMODE)	//NTR mode
+		){
+			apuCacheSamples = 1;
+			if (ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE){	//TWL mode
+				apuCacheSamplesTWLMode = true;
+				savedROMForAPUCache = (u32*)((int)ROM + ROM_MAX_SIZE);
+				GUI_printf("APU Cached Samples: Enable [TWL mode]");
+			}
+			else{
+				apuCacheSamplesTWLMode = false;
+				savedROMForAPUCache = (u32*)APU_BRR_HASH_BUFFER_NTR;
+				GUI_printf("APU Cached Samples: Enable [NTR mode]");
+			}
 		}
 		else{
-			apuFix = 1;
+			GUI_printf("APU Cached Sample: Disable ");
+			apuCacheSamples = 0;
 		}
-		initSNESEmpty(&uninitializedEmu, apuFix);
+		initSNESEmpty(&uninitializedEmu, apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
 		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 		clrscr();
 		GUI_printf(" - - ");
@@ -761,7 +771,7 @@ int main(int argc, char ** argv){
 				SNEMULDS_IPC->APU_ADDR_CNT = SNEMULDS_IPC->APU_ADDR_ANS = SNEMULDS_IPC->APU_ADDR_CMD = 0;
 				update_spc_ports();
 				bool firstTime = false;
-				initSNESEmpty(&uninitializedEmu, apuFix);
+				initSNESEmpty(&uninitializedEmu, apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
 
 				// Clear "HDMA"
 				for (i = 0; i < 192; i++){
