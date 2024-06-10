@@ -9,6 +9,8 @@
 #include "apu.h"
 #include "ipcfifoTGDSUser.h"
 #include "apu_shared.h"
+const int brrHashLength = 0x2000 + (0x40000 / 4);
+extern u32 *brrHash;
 
 void unimpl(uint8 opcode, uint16 startPC) {
 //    SendArm9Command(0x80000000 + opcode);
@@ -101,10 +103,15 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-void ApuReset() {
+void ApuReset(u32 inApuCacheSamples, bool inApuCacheSamplesTWLMode, u32 * inSavedROMForAPUCache) {
     int i = 0;
 	apuSleeping = 0;
-		
+	
+	if(inApuCacheSamples == 1){ //APU Cache Samples enabled?
+		brrHash = (u32*)inSavedROMForAPUCache;
+		memset(brrHash, 0, brrHashLength);
+	}
+	
     // 64k of arm7 iwram
     APU_MEM = APU_RAM_ADDRESS;
     APU_MEM_ZEROPAGEREAD = (uint8*)&MemZeroPageReadTable;

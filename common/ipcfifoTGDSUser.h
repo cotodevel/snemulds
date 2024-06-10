@@ -89,4 +89,14 @@ extern int ROM_PAGING_SIZE;
 #define TGDSDLDI_ARM7_ADDRESS (u32)(SNES_PLAYBUFFER_ADDRESS + (32*1024)) 	// 0x06008000 ~ 32K: DLDI
 #define APU_RAM_ADDRESS     ((uint8*)(TGDSDLDI_ARM7_ADDRESS + (32*1024)))	//0x06010000 ~ 64K APU WORK RAM
 
+#define SNES_ROM_ADDRESS ((uchar *)(0x20C0000))
+#define ROM_MAX_SIZE_NTRMODE	(3*1024*1024)
+#define ROM_MAX_SIZE_TWLMODE	((6*1024*1024)+(512*1024)) //Max ROM size: 6.5MB
+
+//334K ~ worth of Hashed Samples from the APU core to remove stuttering
+#define APU_BRR_HASH_BUFFER_NTR	(volatile u32*)(((int)SNES_ROM_ADDRESS) + ROM_MAX_SIZE_NTRMODE - (334*1024) )	//(334*1024) = 342016 bytes / 64K blocks = 5 pages less useable on paging mode //  0x2AC800 (2.8~ MB) free SNES ROM non-paged
+extern u32 apuCacheSamples;
+extern bool apuCacheSamplesTWLMode;
+extern u32 * savedROMForAPUCache;
+
 #endif

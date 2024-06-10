@@ -477,7 +477,38 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		}
 
 		ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
-		initSNESEmpty(&uninitializedEmu);
+		
+		
+		//APU cached samples feature--
+		//NTR mode:
+		//Since we?ve ran out of memory for NTR mode, if SNES rom is higher than 2.8~ MB, the BRR hashing feature will be disabled. 
+		//Otherwise the feature will be enabled for either 4MB+ paging mode, or SNES rom is 2.8~ MB or less. Both scenarios have 270K free of EWRAM.
+		//TWL mode:
+		//Plenty of free memory; Use the BRR hash buffer @ EWRAM offset : (SNES_ROM_ADDRESS_TWL + ROM_MAX_SIZE_TWLMODE)
+		apuCacheSamplesTWLMode = false;
+		if(
+			(ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE)	//TWL mode
+			||
+			(size != ROM_MAX_SIZE_NTRMODE)	//NTR mode
+		){
+			apuCacheSamples = 1;
+			if (ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE){	//TWL mode
+				apuCacheSamplesTWLMode = true;
+				savedROMForAPUCache = (u32*)((int)ROM + ROM_MAX_SIZE);
+				GUI_printf("APU Cached Samples: Enable [TWL mode]");
+			}
+			else{
+				apuCacheSamplesTWLMode = false;
+				savedROMForAPUCache = (u32*)APU_BRR_HASH_BUFFER_NTR;
+				GUI_printf("APU Cached Samples: Enable [NTR mode]");
+			}
+		}
+		else{
+			GUI_printf("APU Cached Sample: Disable ");
+			apuCacheSamples = 0;
+		}
+		
+		initSNESEmpty(&uninitializedEmu, apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
 		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 		clrscr();
 		GUI_printf(" - - ");
@@ -729,7 +760,7 @@ int main(int argc, char ** argv){
 				SNEMULDS_IPC->APU_ADDR_CNT = SNEMULDS_IPC->APU_ADDR_ANS = SNEMULDS_IPC->APU_ADDR_CMD = 0;
 				update_spc_ports();
 				bool firstTime = false;
-				initSNESEmpty(&uninitializedEmu);
+				initSNESEmpty(&uninitializedEmu, apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
 
 				// Clear "HDMA"
 				for (i = 0; i < 192; i++){

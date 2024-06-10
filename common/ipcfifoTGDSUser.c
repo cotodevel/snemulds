@@ -61,20 +61,19 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		//ARM7 command handler
 		#ifdef ARM7
 		case (SNEMULDS_SETUP_ARM7):{
-			playBuffer = (uint16*)0x6000000;
 			int i   = 0;
+			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
+			apuCacheSamples = (u32)getValueSafe(&fifomsg[11]); //ARM9 -> ARM7: u32 inApuCacheSamples
+			apuCacheSamplesTWLMode = (bool)getValueSafe(&fifomsg[12]);	//ARM9 -> ARM7: bool inApuCacheSamplesTWLMode
+			savedROMForAPUCache = (u32*)getValueSafe(&fifomsg[13]);	//ARM9 -> ARM7: u32 * inSavedROMForAPUCache
 			for (i = 0; i < MIXBUFSIZE; i++) {
 				playBuffer[i] = 0;
 			}
 			update_spc_ports(); //APU Ports from SnemulDS properly binded with Assembly APU Core
-			ApuReset();
+			ApuReset(apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
 			DspReset();
 			SetupSoundSPC();
-			
-			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
-			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
-			u32 apuFix7 = getValueSafe(&fifomsg[11]); //u32 APUFixes 
-			*(u32*)0x038000c0 = apuFix7;
 			setValueSafe(&fifomsg[10], (uint32)0);
 		}
 		break;
@@ -87,7 +86,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			memset(playBuffer, 0, MIXBUFSIZE);
 
 			SNEMULDS_IPC->APU_ADDR_CNT = 0; 
-			ApuReset();
+			ApuReset(apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
 			DspReset();
 
 			SetupSoundSPC();
@@ -112,7 +111,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			StopSoundSPC();
 			memset(playBuffer, 0, MIXBUFSIZE);
 			SNEMULDS_IPC->APU_ADDR_CNT = 0; 
-			ApuReset();
+			ApuReset(apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
 			DspReset();
 			SetupSoundSPC();
 			
@@ -194,6 +193,9 @@ void update_spc_ports(){
 
 
 //project specific stuff
+u32 apuCacheSamples = 0;
+bool apuCacheSamplesTWLMode = false;
+u32 * savedROMForAPUCache = NULL;
 
 #ifdef ARM9
 
