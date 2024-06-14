@@ -42,8 +42,10 @@ GNU General Public License for more details.
 #include "ppu.h"
 #include "main.h"
 #include "conf.h"
+#include "fs.h"
 #include "snemulds_memmap.h"
 #include "guiTGDS.h"
+#include "opcodes.h"
 #include "ipcfifoTGDSUser.h"
 #include "nds_cp15_misc.h"
 #include "fatfslayerTGDS.h"
@@ -113,7 +115,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-bool	reloadROM(char *ROM, int size, int crc, char * name){
+bool	changeROM(char *ROM, int size){
   CFG.frame_rate = 1;
   CFG.CX4 = CFG.DSP1 = CFG.SuperFX = 0;
   CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
@@ -165,42 +167,16 @@ bool	reloadROM(char *ROM, int size, int crc, char * name){
     // Clear screen
     // Read SRAM
     loadSRAM();	
-
-    // Load configuration file
-	  readOptionsFromConfig("Global");
-	  char *section= NULL;
-	  if (is_section_exists(SNES.ROM_info.title)){
-	    section = SNES.ROM_info.title;
-	  }
-	  else if (is_section_exists(FS_getFileName(name))){
-		  section = FS_getFileName(name);
-	  }
-	  else if ((section = find_config_section_with_hex("crc", crc))){
-	  }
-	  else if ((section = find_config_section_with_string("title2", SNES.ROM_info.title))){
-	  }
-	  else if ((section = find_config_section_with_hex("crc2", crc))){
-	  }
-	  else if ((section = find_config_section_with_string("title3", SNES.ROM_info.title))){
-	  }
-	  else if ((section = find_config_section_with_hex("crc3", crc))){
-	  }
-	  else if ((section = find_config_section_with_string("title4", SNES.ROM_info.title))){
-	  }
-	  else if ((section = find_config_section_with_hex("crc4", crc))){
-	  }
-	  if (section != NULL){
-		  GUI_printf("Section : %s ", section);
-		  readOptionsFromConfig(section);
-	  }
 	  //Apply topScreen / bottomScreen setting
 	  if(CFG.TopScreenEmu == 0){
-		  SnemulDSLCDSwap();
+		  //SnemulDSLCDSwap();
 	  }
     return validSnesFile;
   }
   return false;
 }
+
+static bool firstTimeInit = true;
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -222,6 +198,7 @@ int initSNESEmpty(bool * firstTime, u32 inApuCacheSamples, bool inApuCacheSample
 	}
 	
 	CFG.BG3Squish = 0;
+	CFG.WaitVBlank = 0;
 	CFG.YScroll = 0;
 	CFG.Scaled = 0;
 	CFG.LayersConf = 0;
@@ -230,42 +207,17 @@ int initSNESEmpty(bool * firstTime, u32 inApuCacheSamples, bool inApuCacheSample
 	CFG.DSP1 = CFG.SuperFX = 0;
 	CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
 	CFG.Sound_output = 1;
-	//CFG.Sound_output = 0;
 	CFG.FastDMA = 1;
 	CFG.Transparency = 1;
-	memset(&SNES, 0, sizeof(SNES));
-	  
-	//  SNES.flog = fopen("snemul.log", "w");
-	//	SNES.flog = stdout;
-	if(*firstTime == true){
+	if(firstTimeInit == true){
+		memset(&SNES, 0, sizeof(SNES));
 		memset(&SNESC, 0, sizeof(SNESC));
 		/* allocate memory */
-		//SNESC.RAM = (uchar *)TGDSARM9Malloc(0x020000);
 		SNESC.RAM = (uchar *)SNES_RAM_ADDRESS;
 		SNESC.VRAM = (uchar *)TGDSARM9Malloc(0x010000);
-		//SNESC.BSRAM = (uchar *)TGDSARM9Malloc(0x8000);
 		SNESC.BSRAM = (uchar *)SNES_SRAM_ADDRESS;
 		SNESC.C4RAM = (uchar *)CX4_RAM_ADDRESS;
-		S9xInitC4(); //must be called after SNES mem allocation takes place
-		if(
-			(SNESC.RAM == NULL)
-			  ||
-			  (SNESC.VRAM == NULL)
-			  ||
-			  (SNESC.BSRAM == NULL)
-		){
-			GUI_printf("Failed RAM alloc. Halt");
-			while(1==1){}
-		}
-		*firstTime = false;
-	}
-	if(ROM_paging_offs != NULL){
-		TGDSARM9Free(ROM_paging_offs);
-	}
-	ROM_paging_offs = (uint16 *)TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
-	if(ROM_paging_offs == NULL){
-		GUI_printf("Failed RAM alloc: ROM_paging_offs. Halt");
-		while(1==1){}
+		firstTimeInit = false;
 	}
 	init_GFX();
 	GFX.Graph_enabled = 1;

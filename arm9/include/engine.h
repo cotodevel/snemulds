@@ -40,7 +40,7 @@ extern int go();
 extern void show_opcode(sint8 *buf, uint8 opcode, int pc, int pb, unsigned short flags);
 extern int trace_CPU();
 extern void trace_CPUFast();
-extern bool reloadROM(sint8 *ROM, int size, int crc, char * name);
+extern bool	changeROM(char *ROM, int size);
 
 #ifdef __cplusplus
 }

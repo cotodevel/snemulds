@@ -334,8 +334,8 @@ void     add_tile_2(int tile_addr_base, uint16 *vram_addr, int tilenb)
 
   tile_addr = tile_addr_base+tilenb*16;
   //VRAM_ptr = ((uint16 *)0x06010000)+tile_addr_base+tilenb*16;
-  VRAM_ptr = (u32*)(vram_addr+(tilenb*16));
-  tile_ptr = (u8*)(SNESC.VRAM+tile_addr);    
+  VRAM_ptr = (uint32*)(vram_addr+tilenb*16);
+  tile_ptr = SNESC.VRAM+tile_addr;    
 
   for (k=0;k<8;k++,tile_ptr+=2)
     {
@@ -356,10 +356,10 @@ void     add_tile_4(int tile_addr_base, uint16 *vram_addr, int tilenb)
   uint32	tile_addr;  
   uint32	*VRAM_ptr;
 
-  tile_addr = (u32)(tile_addr_base+(tilenb*32));
-  tile_ptr = (u8*)(SNESC.VRAM+tile_addr);    
+  tile_addr = tile_addr_base+tilenb*32;
+  tile_ptr = SNESC.VRAM+tile_addr;    
   //VRAM_ptr = ((uint16 *)0x06010000)+tile_addr_base+tilenb*16;
-  VRAM_ptr = (u32*)(vram_addr+(tilenb*16));
+  VRAM_ptr = (uint32*)(vram_addr+(tilenb*16));
   
   for (k=0;k<8;k++,tile_ptr+=2)
     {
@@ -384,10 +384,10 @@ void     add_tile_8(int tile_addr_base, uint16 *vram_addr, int tilenb)
   uint32	tile_addr;  
   uint32	*VRAM_ptr;
 
-  tile_addr = (u32)(tile_addr_base+(tilenb*64));
-  tile_ptr = (u8*)(SNESC.VRAM+tile_addr);    
+  tile_addr = tile_addr_base+tilenb*64;
+  tile_ptr = SNESC.VRAM+tile_addr;    
   //VRAM_ptr = ((uint16 *)0x06010000)+tile_addr_base+tilenb*32;
-  VRAM_ptr = (u32*)(vram_addr+(tilenb*32));
+  VRAM_ptr = (uint32*)(vram_addr+(tilenb*32));    
 
   for (k=0;k<8;k++,tile_ptr+=2)
     {
@@ -938,7 +938,7 @@ void	draw_plane_withpriority(int bg, int bg_mode, int nb_tilex, int nb_tiley, in
   	return;
 	
 	//discard any VRAM writes that aren't handled correctly by the emu
-	if( (((uint32)vram_addr) < 0x06000000) || ((uint32)vram_addr > ((uint32)0x06000000 + (256*1024)) ) ){
+	if(isValidMap((uint32)(uint16 *)vram_addr) == false){
 		return;
 	}
 	
@@ -1225,12 +1225,6 @@ void draw_plane_64_60(unsigned char bg, unsigned char bg_mode)
   
   draw_plane(bg, bg_mode, nb_tilex, nb_tiley, tile_size);  
 }
-
-
-
-
-
-
 
 void PPU_set_sprites_bank(int bank)
 {

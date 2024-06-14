@@ -134,7 +134,6 @@ struct s_snes
 //#define PPU_PORT	((ushort *)(0x23E0000))
 //#define DMA_PORT	((ushort *)(0x23E4000))
 #define SNES_SRAM_ADDRESS ((uchar *)(0x2FE6000))
-#define	PAGE_SIZE		(64*1024)
 #define DS_SRAM          ((uint8*)0x0A000000)
 #define PAGE_OFFSET		3	//page offset in SNES regs
 

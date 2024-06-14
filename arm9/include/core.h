@@ -23,12 +23,7 @@ USA
 
 #include "dsregs.h"
 #include "typedefsTGDS.h"
-#include "snes.h"
-#include "common.h"
-#include "cfg.h"
 #include "opcodes.h"
-#include "keypadTGDS.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -65,53 +60,6 @@ typedef void (*voidfuncptr)();
 typedef void (*IOWriteFunc)(uint32 addr, uint32 byte);
 typedef uint32 (*IOReadFunc)(uint32 addr);
 
-#define NB_CYCLES 180
-
-struct s_cpu
-{
-  uint16	IRQ, NMI, BRK, COP; /* interruption address */
-  int		cycles_tot;
-  int		NMIActive;
-  uchar		WAI_state;
-
-/* debug */
-  int		Trace_flag;
-  int		Trace;
-  int		Cycles2;
-
-/* registers */
-#define P_C  0x01
-#define P_Z  0x02
-#define P_I  0x04
-#define P_D  0x08
-#define P_X  0x10
-#define P_M  0x20
-#define P_V  0x40
-#define P_N  0x80
-#define P_E  0x100
-  uint16        P; /* Flags Register */
-  uint16        PC; /* Program Counter */
-  uint16        PB, DB; /* Bank Registers */
-  uint16        A, X, Y, D, S;
-
-  int           Cycles;
-
-#define IRQ_GSU	1
-  int		IRQState;
-
-/* speed hack */
-  int           LastAddress;
-  int           WaitAddress;
-  int           WaitCycles;
-  uint32		HCycles;
-  
-  int 			IsBreak;
-  
-  int			unpacked;
-  int			packed;
-};
-
-
 //masked bits from a joypad port
 
 //Old Style Joypad Registers	$4016	JOYSER0	single (write)	read/write	any time that is not auto-joypad
@@ -119,6 +67,9 @@ struct s_cpu
 
 //int get_joypad() is the source for these write joypad callbacks. (any DS source)
 //the whole emulator will read always from read_joypad1 and read_joypad2 same for write_joypad1 and write_joypad2
+
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -139,6 +90,13 @@ extern uint32 screen_mode;
 extern int APU_MAX;
 extern uint32 keys;
 extern int	SPC700_emu;
+extern int	PPU_fastDMA_2118_1(int offs, int bank, int len);
+extern void DMA_transfert(uchar port);
+extern void		HDMA_transfert(uint8 port);
+extern uint32	IONOP_DMA_READ(uint32 addr);
+extern uint32	IONOP_PPU_READ(uint32 addr);
+extern void	IONOP_PPU_WRITE(uint32 addr, uint32 byte);
+extern void	IONOP_DMA_WRITE(uint32 addr, uint32 byte);
 extern void	W4016(uint32 addr, uint32 value);
 extern void	W4017(uint32 addr, uint32 value);
 extern void	W4200(uint32 addr, uint32 value);
@@ -235,7 +193,10 @@ extern void HDMA_write_port(uchar port, uint8 *data);
 extern void	HDMA_write();
 extern void	read_mouse();
 extern void read_scope();
+extern void	update_joypads();
 extern void SNES_update();
+extern void GoNMI();
+extern void GoIRQ();
 
 //snes.c
 extern void	init_GFX();
@@ -245,98 +206,15 @@ extern void	reset_SNES();
 extern void	UnInterleaveROM();
 extern void	load_ROM(sint8 *ROM, int ROM_size);
 
+//input.c
+extern int get_joypad();
 
 extern uint16 read_joypad1();
 extern uint16 read_joypad2();
 extern void write_joypad1(uint16 bits);
 extern void write_joypad2(uint16 bits);
 
-extern void CPU_pack();
-extern void CPU_unpack();
-extern int SnemulDSLCDSwap();
-extern void	HDMA_transfert(unsigned char port);
-
-extern uint32 SNES_A;
-extern uint32 SNES_B;
-extern uint32 SNES_X;
-extern uint32 SNES_Y;
-extern uint32 SNES_L;
-extern uint32 SNES_R;
-extern uint32 SNES_SELECT;
-extern uint32 SNES_START;
-extern uint32 SNES_UP;
-extern uint32 SNES_DOWN;
-extern uint32 SNES_LEFT;
-extern uint32 SNES_RIGHT;
-extern uint32	joypad_conf_mode;
-extern uint32	mouse_cur_b;
-extern int get_joypad();
 
 #ifdef __cplusplus
 }
-#endif
-
-static inline void update_joypads(){
-	//  read_joypads();	
-	int joypad = get_joypad();
-	//      read_joypads();
-	SNES.joypads[0] = joypad;
-	SNES.joypads[0] |= 0x80000000;
-	if (CFG.mouse)
-		read_mouse();
-	if (CFG.scope)
-		read_scope();
-
-	if (DMA_PORT[0x00]&1){
-		SNES.Joy1_cnt = 16;    	
-		DMA_PORT[0x18] = SNES.joypads[0];
-		DMA_PORT[0x19] = SNES.joypads[0]>>8;
-		DMA_PORT[0x1A] = SNES.joypads[1];
-		DMA_PORT[0x1B] = SNES.joypads[1]>>8;
-	}
-}
-
-static inline void GoNMI()
-{
-  CPU_pack();
-
-  if (CPU.WAI_state) {
-    CPU.WAI_state = 0; CPU.PC++;
-  };
-
-  pushb(CPU.PB);
-  pushw(CPU.PC);
-  pushb(CPU.P);
-  CPU.PC = CPU.NMI;
-  CPU.PB = 0;
-  CPU.P &= ~P_D;
-  
-  CPU.unpacked = 0; // ASM registers to update
-
-//  if (CFG.CPU_log) fprintf(SNES.flog, "--> NMI\n");
-}
-
-static inline void GoIRQ()
-{
-  CPU_pack();
-
-  if (CPU.WAI_state) {
-    CPU.WAI_state = 0; CPU.PC++;
-  };
-
-  if (!(CPU.P&P_I)) {
-    pushb(CPU.PB);
-    pushw(CPU.PC);
-    pushb(CPU.P);
-    CPU.PC = CPU.IRQ; 
-    CPU.PB = 0;
-    CPU.P |= P_I;
-    CPU.P &= ~P_D;
-  }
-  CPU.unpacked = 0; // ASM registers to update  
-  
-  DMA_PORT[0x11] = 0x80;
-//  if (CFG.CPU_log) fprintf(SNES.flog, "--> IRQ\n");
-}
-
 #endif

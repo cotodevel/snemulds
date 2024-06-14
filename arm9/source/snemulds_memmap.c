@@ -29,9 +29,6 @@
 #include "c4.h"
 #include "ipcfifoTGDSUser.h"
 
-uchar *ROM_paging= NULL;
-uint16 *ROM_paging_offs= NULL;
-int ROM_paging_cur = 0;
 bool LoROM_Direct_ROM_Mapping = false;
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -68,7 +65,7 @@ void FixMap()
 
 	for (c = 0; c < 0x800; c++)
 	{
-		if ( (MAP[c] != (uchar*)MAP_RELOAD) && REGULAR_MAP(MAP[c]))
+		if ( ((u32)MAP[c] != (u32)MAP_RELOAD) && REGULAR_MAP(MAP[c]))
 		{
 			MAP[c] -= ((c << 13)&0xFF0000);
 		}
@@ -116,7 +113,7 @@ void InitLoROMMap(int mode)
 	int 	c;
 	int 	i;
 	int		maxRAM = 0;
-	uint8	*largeROM = SNESC.ROM;
+	uint8	*largeROM = NULL;
 	
 	//Given the entire range of 128 Pages of 32K blocks (4MB) of ROM addressing, 2 memory layouts are possible:
 	int LoROMMappedRange = 0;
@@ -143,6 +140,13 @@ void InitLoROMMap(int mode)
 		// Use Paging system... 
 		// Only a part of RAM is used static
 		maxRAM = PAGE_SIZE;
+	}
+	else if (mode == USE_EXTMEM){
+		// Extended RAM mode...
+		// All RAM available is used static
+		// the remaining of mapping use extended RAM
+		maxRAM = ROM_MAX_SIZE;
+		largeROM = (uint8 *)0x8000000 + SNES.ROMHeader;
 	}
 	else{
 		printf("Unhandled InitLoROMMap(): %d", mode);
@@ -262,7 +266,7 @@ void InitHiROMMap(int mode)
 	int 	c;
 	int 	i;
 	int		maxRAM = 0;
-	uint8	*largeROM = SNESC.ROM;
+	uint8	*largeROM = NULL;
 
 	if (mode == NOT_LARGE)
 	{
@@ -274,6 +278,13 @@ void InitHiROMMap(int mode)
 		// Use Paging system... 
 		// Only a part of RAM is used static
 		maxRAM = PAGE_SIZE;
+	}
+	else if (mode == USE_EXTMEM){
+		// Extended RAM mode...
+		// All RAM available is used static
+		// the remaining of mapping use extended RAM
+		maxRAM = ROM_MAX_SIZE;
+		largeROM = (uint8 *)0x8000000 + SNES.ROMHeader;
 	}
 	else{
 		printf("Unhandled InitHiROMMap(): %d", mode);
@@ -340,6 +351,10 @@ void InitHiROMMap(int mode)
 	WriteProtectROM();
 }
 
+uchar *ROM_paging= NULL;
+uint16 *ROM_paging_offs= NULL;
+int ROM_paging_cur = 0;
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -347,6 +362,29 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
+void mem_clear_paging(){
+	if (ROM_paging)
+	{
+		TGDSARM9Free(ROM_paging_offs);
+		ROM_paging = NULL;
+		ROM_paging_offs = NULL;
+	}
+}
+
+void mem_init_paging(){
+	mem_clear_paging();
+	ROM_paging = SNES_ROM_PAGING_ADDRESS;
+	memset(ROM_paging, 0, ROM_PAGING_SIZE);
+	ROM_paging_offs = (uint16 *)TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
+	if (!ROM_paging_offs)
+	{
+		printf("Not enough memory for ROM paging (2).\n");
+		while (1){}
+	}
+	memset(ROM_paging_offs, 0xFF, (ROM_PAGING_SIZE/PAGE_SIZE)*2);
+	ROM_paging_cur = 0;
+}
+
 void mem_setCacheBlock(int block, uchar *ptr)
 {
 	int i;
@@ -383,12 +421,12 @@ void mem_removeCacheBlock(int block)
 
 		if ((block & 7) >= 4)
 		{
-			MAP[block] = (uchar*)MAP_RELOAD;
-			MAP[block+0x400] = (uchar*)MAP_RELOAD;
+			MAP[block] = (u8*)MAP_RELOAD;
+			MAP[block+0x400] = (u8*)MAP_RELOAD;
 		}
 		if (SNES.BlockIsROM[block+0x200])
-			MAP[block+0x200] = (uchar*)MAP_RELOAD;
-		MAP[block+0x600] = (uchar*)MAP_RELOAD;
+			MAP[block+0x200] = (u8*)MAP_RELOAD;
+		MAP[block+0x600] = (u8*)MAP_RELOAD;
 	}
 }
 
@@ -422,9 +460,8 @@ uint8 *mem_checkReload(int block){
 
 	ROM_paging_offs[ROM_paging_cur] = i;
 	ptr = ROM_paging+(ROM_paging_cur*PAGE_SIZE);
-	coherent_user_range_by_size((uint32)ptr, (int)PAGE_SIZE);	//Make coherent old page before destroy (could be being in cpu cache)
 	ret = FS_loadROMPage(ptr, SNES.ROMHeader+i*PAGE_SIZE, PAGE_SIZE);
-	coherent_user_range_by_size((uint32)ptr, (int)PAGE_SIZE);	//Make coherent new page
+	coherent_user_range_by_size((uint32)ptr, (int)PAGE_SIZE);	//Make coherent old page before destroy (could be being in cpu cache)
 	mem_setCacheBlock(i, ptr); // Give Read-only memory
 
 	ROM_paging_cur++;
@@ -456,12 +493,6 @@ void InitMap(){
 }
 
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 uint8 IO_getbyte(int addr, uint32 address){
 	
 	uint8 result;
@@ -505,13 +536,7 @@ uint8 IO_getbyte(int addr, uint32 address){
 	}
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
 
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 void IO_setbyte(int addr, uint32 address, uint8 byte){
 	
 	switch ((int)addr)
@@ -553,13 +578,7 @@ void IO_setbyte(int addr, uint32 address, uint8 byte){
 	}
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
 
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 uint16 IO_getword(int addr, uint32 address)
 {
 
@@ -605,13 +624,7 @@ uint16 IO_getword(int addr, uint32 address)
 	}
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
 
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 void IO_setword(int addr, uint32 address, uint16 word){
 	
 	switch ((int)addr)
@@ -658,13 +671,6 @@ void IO_setword(int addr, uint32 address, uint16 word){
 	}
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 uchar mem_getbyte(uint32 offset,uchar bank)
 {
 	int address = (bank<<16)+offset;
@@ -674,7 +680,7 @@ uchar mem_getbyte(uint32 offset,uchar bank)
 	block = (address>>13)&0x7FF;
 	addr = MAP[block];
 
-	if (addr == (uchar*)MAP_RELOAD)
+	if ((u32)addr == (u32)MAP_RELOAD)
 	addr = mem_checkReload(block);
 	
 	if (REGULAR_MAP(addr)){ //if address is within indirect mapped memory define (snes.h), a forced (below) IO_xxxx opcode takes place
@@ -685,13 +691,7 @@ uchar mem_getbyte(uint32 offset,uchar bank)
 	}
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
 
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 {
 	int address = (bank<<16)+offset;
@@ -700,7 +700,7 @@ void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 
 	block = (address>>13)&0x7FF;
 	addr = WMAP[block];
-	if (addr == (uchar*)MAP_RELOAD)
+	if ((u32)addr == (u32)MAP_RELOAD)
 	addr = mem_checkReload(block);
 	
 	if (REGULAR_MAP(addr) ){ //if address is within indirect mapped memory define (snes.h), a forced (below) IO_xxxx opcode takes place
@@ -711,13 +711,7 @@ void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 	}
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
 
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 ushort mem_getword(uint32 offset,uchar bank)
 {
 	int address = (bank<<16)+offset;
@@ -727,7 +721,7 @@ ushort mem_getword(uint32 offset,uchar bank)
 	block = (address>>13)&0x7FF;
 	addr = MAP[block];
 
-	if (addr == (uchar*)MAP_RELOAD)
+	if ((u32)addr == (u32)MAP_RELOAD)
 	addr = mem_checkReload(block);
 	
 	if (REGULAR_MAP(addr)){ //if address is within indirect mapped memory define (snes.h), a forced (below) IO_xxxx opcode takes place
@@ -738,13 +732,7 @@ ushort mem_getword(uint32 offset,uchar bank)
 	}
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
 
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 void mem_setword(uint32 offset, uchar bank, ushort word)
 {
 	int address = (bank<<16)+offset;
@@ -754,7 +742,7 @@ void mem_setword(uint32 offset, uchar bank, ushort word)
 	//  CPU.WaitAddress = -1;
 	block = (address>>13)&0x7FF;
 	addr = WMAP[block];
-	if (addr == (uchar*)MAP_RELOAD)
+	if ((u32)addr == (u32)MAP_RELOAD)
 	addr = mem_checkReload(block);
 	
 	if (REGULAR_MAP(addr)){ //if address is within indirect mapped memory define (snes.h), a forced (below) IO_xxxx opcode takes place
@@ -781,7 +769,7 @@ void *mem_getbaseaddress(uint16 offset, uchar bank)
 	block = (address>>13)&0x7FF;
 	ptr = MAP[block];
 
-	if (ptr == (uchar*)MAP_RELOAD)
+	if ((u32)ptr == (u32)MAP_RELOAD)
 		ptr = mem_checkReload(block);
 
 	if (REGULAR_MAP(ptr))
@@ -818,7 +806,7 @@ void *map_memory(uint16 offset, uchar bank)
 	block = (address>>13)&0x7FF;
 	ptr = MAP[block];
 
-	if (ptr == (uchar*)MAP_RELOAD)
+	if ((u32)ptr == (u32)MAP_RELOAD)
 		ptr = mem_checkReload(block);
 
 	if (REGULAR_MAP(ptr))

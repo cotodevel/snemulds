@@ -15,7 +15,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
 
-#include "core.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -25,116 +24,38 @@ GNU General Public License for more details.
 #include "dsregs.h"
 #include "ipcfifoTGDSUser.h"
 #include "apu_shared.h"
-#include "snemulds_memmap.h"
-#include "ppu.h"
-
-#ifdef WIN32
-#include <allegro.h>
-#endif
-
 #include "apu.h"
 #include "snes.h"
 #include "gfx.h"
 #include "cfg.h"
 #include "common.h"
 #include "conf.h"
+#include "core.h"
+#include "main.h"
 
-//#include "superfx.h"
-//#include "sfxinst.h"
+int	SPC700_emu;
 
-//Snes Hardware
-__attribute__((section(".dtcm")))
-__attribute__ ((aligned (4))) struct s_cpu	CPU;
-
+//__attribute__((section(".dtcm")))
+struct s_cpu	CPU;
 __attribute__((section(".arm9sharedwram")))
-__attribute__ ((aligned (4))) struct s_gfx	GFX;
-
+struct s_gfx	GFX;
+struct s_cfg	CFG;
 __attribute__((section(".arm9sharedwram")))
-__attribute__ ((aligned (4))) struct s_snes	SNES;
-
+struct s_snes	SNES;
 __attribute__((section(".dtcm")))
-__attribute__ ((aligned (4))) struct s_snescore	SNESC;
+struct s_snescore	SNESC;
 
-__attribute__ ((aligned (4))) struct s_cfg	CFG;
-
-__attribute__((section(".dtcm")))
-uint16	PPU_PORT[0x90]; // 2100 -> 2183
-
-__attribute__((section(".dtcm")))
-uint16	DMA_PORT[0x180]; // 4200 -> 437F
-
-//Input
 uint32	joypad_conf_mode = 0;
 uint32	mouse_cur_b;
 
-//Keys
-__attribute__((section(".dtcm")))
-uint32 SNES_A = 0;
-
-__attribute__((section(".dtcm")))
-uint32 SNES_B = 0;
-
-__attribute__((section(".dtcm")))
-uint32 SNES_X = 0;
-
-__attribute__((section(".dtcm")))
-uint32 SNES_Y = 0;
-
-__attribute__((section(".dtcm")))
-uint32 SNES_L = 0;
-
-__attribute__((section(".dtcm")))
-uint32 SNES_R = 0;
-
-__attribute__((section(".dtcm")))
-uint32 SNES_SELECT = 0;
-
-__attribute__((section(".dtcm")))
-uint32 SNES_START = 0;
-
-__attribute__((section(".dtcm")))
-uint32 SNES_UP = 0;
-
-__attribute__((section(".dtcm")))
-uint32 SNES_DOWN = 0;
-
-__attribute__((section(".dtcm")))
-uint32 SNES_LEFT = 0;
-
-__attribute__((section(".dtcm")))
-uint32 SNES_RIGHT = 0;
+// Debug
+extern	uint32			CPU_log;
 
 int get_joypad()
 {
 	int res = 0;
 	scanKeys();
-	u32 keys = keysHeld();
-
-#if 0
-		if( (keys & KEY_L))
-		{
-			if ((keys & KEY_UP))
-			{
-				APU_MAX++;
-			}
-			if ((keys & KEY_DOWN))
-			{
-				APU_MAX--;
-				if (APU_MAX < 100)
-					APU_MAX = 100;
-			}  
-			if ((keys & KEY_LEFT))
-			{
-				APU_printLog();				
-			}
-			if ((keys & KEY_RIGHT))
-			{
-				struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
-				//TGDSIPC->PORT_SNES_TO_SPC[1] = 0x44; 		
-			}
-			
-		}	
-#endif	
+	keys = keysHeld();
 	
 	if ((keys & KEY_L) && ( keys & KEY_R ) && ( keys & KEY_START))
 	{		
@@ -144,7 +65,6 @@ int get_joypad()
 				return 0;			
 			CFG.mouse ^= 1;
 			joypad_conf_mode = 1;
-			
 			return 0;			
 		}
 		if (keys & KEY_RIGHT)
@@ -152,7 +72,6 @@ int get_joypad()
 			if (joypad_conf_mode)
 				return 0;			
 			CFG.mouse = 0;
-			SnemulDSLCDSwap();			
 			joypad_conf_mode = 1;
 			return 0;				
 		}		
@@ -175,59 +94,18 @@ int get_joypad()
 		joypad_conf_mode = 0;		
 		return 0;
 	} 
-	 
-#if 0	 
-	if ((keys & KEY_L) && ( keys & KEY_R ) && ( keys & KEY_SELECT))
-	{		
-		if (keys & KEY_LEFT)
-		{
-			if (joypad_conf_mode)
-				return 0;			
-			CFG.BG_priority ^= 1;
-			joypad_conf_mode = 1;
-			return 0;			
-		}
-		if (keys & KEY_RIGHT)
-		{
-			if (joypad_conf_mode)
-				return 0;
-			CFG.Debug ^= 1;
-			if (CFG.Debug)
-				showDebugMenu();
-			joypad_conf_mode = 1;
-			return 0;			
-		}		
-		if (keys & KEY_UP)
-		{
-			if (joypad_conf_mode)
-				return 0;			
-			CFG.Debug2 --;
-			return 0;			
-		}				
-		if (keys & KEY_DOWN)
-		{
-			if (joypad_conf_mode)
-				return 0;			
-			CFG.Debug2 ++;
-			return 0;			
-		}		
-		joypad_conf_mode = 0;		
-		return 0;
-	}
-#endif	 	 
-	
-	if( keys & KEY_B) res |= (SNES_B);	//SNES B Button
-	if( keys & KEY_Y) res |= (SNES_Y);	//SNES Y Button
-	if( keys & KEY_SELECT) res |= (SNES_SELECT);	//SNES Select Button
-	if( keys & KEY_START) res |= (SNES_START);	//SNES Start Button
-	if( keys & KEY_UP) res |= (SNES_UP);		//SNES UP Button
-	if( keys & KEY_DOWN) res |= (SNES_DOWN);		//SNES DOWN Button
-	if( keys & KEY_LEFT) res |= (SNES_LEFT);		//SNES LEFT Button
-	if( keys & KEY_RIGHT) res |= (SNES_RIGHT);	//SNES RIGHT Button
-	if( keys & KEY_A) res |= (SNES_A);		//SNES A Button
-	if( keys & KEY_X) res |= (SNES_X);		//SNES X Button
-	if( keys & KEY_L) res |= (SNES_L);		//SNES L Button
-	if( keys & KEY_R) res |= (SNES_R);		//SNES R Button
+	if( keys & KEY_B ) res |= 0x8000;
+	if( keys & KEY_Y ) res |= 0x4000;
+	if( keys & KEY_SELECT ) res |= 0x2000;
+	if( keys & KEY_START ) res |= 0x1000;
+	if( keys & KEY_UP ) res |= 0x0800;
+	if( keys & KEY_DOWN ) res |= 0x0400;
+	if( keys & KEY_LEFT ) res |= 0x0200;
+	if( keys & KEY_RIGHT ) res |= 0x0100;
+	if( keys & KEY_A ) res |= 0x0080;
+	if( keys & KEY_X ) res |= 0x0040;
+	if( keys & KEY_L ) res |= 0x0020;
+	if( keys & KEY_R ) res |= 0x0010;	
 	
 	if (CFG.mouse)
 	{
@@ -302,24 +180,6 @@ int get_joypad()
 	return res;
 }
 
-int SnemulDSLCDSwap(){
-	bool isDirectFramebuffer = true;
-	bool disableTSCWhenTGDSConsoleTop = true;
-	bool SaveConsoleContext = false;	//no effect because directFB == true
-	u8 * FBSaveContext = NULL;			//no effect because directFB == true
-	TGDSLCDSwap(disableTSCWhenTGDSConsoleTop, isDirectFramebuffer, SaveConsoleContext, FBSaveContext);
-	ToggleOnOffConsoleBacklight();
-	if (GUI.hide)
-	{
-		if ((REG_POWERCNT & POWER_SWAP_LCDS) == POWER_SWAP_LCDS){
-			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
-		}
-		else{
-			setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
-		}
-	}
-	return 0;
-}
 
 __attribute__((section(".itcm")))
 uint16 read_joypad1() {
@@ -343,8 +203,14 @@ void write_joypad2(uint16 bits){
 	DMA_PORT[0x1b] = ((bits>>8)&0xff);
 }
 
-// A OPTIMISER
-int PPU_fastDMA_2118_1(int offs, int bank, int len)
+
+__attribute__((section(".dtcm")))
+uint16	PPU_PORT[0x90]; // 2100 -> 2183
+
+__attribute__((section(".dtcm")))
+uint16	DMA_PORT[0x180]; // 4200 -> 437F// A OPTIMISER
+
+int	PPU_fastDMA_2118_1(int offs, int bank, int len)
 {
 	int i;
 	uint8	*ptr;
@@ -411,13 +277,6 @@ int PPU_fastDMA_2118_1(int offs, int bank, int len)
 	return offs+len;
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("Os")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 void DMA_transfert(uchar port)
 {
   uint		tmp;
@@ -498,12 +357,6 @@ void DMA_transfert(uchar port)
   //END_PROFILE(DMA, 4);
 }
 
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("Os")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 void		HDMA_transfert(unsigned char port){
   uint		len;
   uchar		*ptr, *ptr2, repeat;
@@ -1364,31 +1217,6 @@ void	W2133(uint32 addr, uint32 value)
          PPU_PORT[0x33] = value;
 }
 
-/*
- * #if 0	
-	
-#else
-	if (value == 0x55 && (newapupc & 0xf000) == 0xf000)
-	{
-	int i;
-	for (i = 0; i < 100; i++)
-		dummy++;
-	}
-#endif		          		
-	struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
-	if (TGDSIPCUSER->APU_ADDR_BLKP[1])
-	{
-		while (TGDSIPCUSER->APU_ADDR_BLKP[1]);
-#if 0
-
-#else  		
-	{
-	int i;
-	for (i = 0; i < 200; i++)
-		dummy++;
-	}
-#endif			  		
-  	}*/
 
 volatile uint32 dummy;	
 void	pseudoSleep(int d)
@@ -1406,20 +1234,19 @@ void	W2140(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {    
-		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 		if (CFG.SoundPortSync & 0x10)
     		pseudoSleep(SYNC_TIME);
 		if (CFG.SoundPortSync & 1)
 		{
-			if (TGDSIPCUSER->APU_ADDR_BLKP[0])
+			if (SNEMULDS_IPC->APU_ADDR_BLKP[0])
 			{
-				while (TGDSIPCUSER->APU_ADDR_BLKP[0]);
+				while (SNEMULDS_IPC->APU_ADDR_BLKP[0]);
 			}
 		}    	
-    	TGDSIPCUSER->PORT_SNES_TO_SPC[0] = value;
+    	SNEMULDS_IPC->PORT_SNES_TO_SPC[0] = value;
     	
 		if ((CFG.SoundPortSync & 1) && value) 
-			TGDSIPCUSER->APU_ADDR_BLKP[0] = 1;    	
+			SNEMULDS_IPC->APU_ADDR_BLKP[0] = 1;    	
     }
     else
         PPU_PORT[0x40] = value; 
@@ -1430,14 +1257,13 @@ void	W2141(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {
-		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
 		if (CFG.SoundPortSync & 0x20)
     		pseudoSleep(SYNC_TIME);
 		if (CFG.SoundPortSync & 2)
 		{
-			if (TGDSIPCUSER->APU_ADDR_BLKP[1])
+			if (SNEMULDS_IPC->APU_ADDR_BLKP[1])
 			{
-				while (TGDSIPCUSER->APU_ADDR_BLKP[1]);
+				while (SNEMULDS_IPC->APU_ADDR_BLKP[1]);
 			}
 		}
 /*				    	
@@ -1445,17 +1271,17 @@ void	W2141(uint32 addr, uint32 value)
 		int newapupc = (*(uint32*)(0x27E0000)) & 0xFFFF;
 		if (value == 0x55 && (newapupc & 0xf000) == 0x1000)
 			pseudoSleep(2000);	
-		if (TGDSIPCUSER->APU_ADDR_BLKP[1])
+		if (SNEMULDS_IPC->APU_ADDR_BLKP[1])
 		{
-			while (TGDSIPCUSER->APU_ADDR_BLKP[1]);
+			while (SNEMULDS_IPC->APU_ADDR_BLKP[1]);
 			pseudoSleep(2000);
 		}
 #endif
 */
-    	TGDSIPCUSER->PORT_SNES_TO_SPC[1] = value;
+    	SNEMULDS_IPC->PORT_SNES_TO_SPC[1] = value;
     	
 		if ((CFG.SoundPortSync & 2) && value) 
-			TGDSIPCUSER->APU_ADDR_BLKP[1] = 1;			    	
+			SNEMULDS_IPC->APU_ADDR_BLKP[1] = 1;			    	
     }
     else
         PPU_PORT[0x41] = value;
@@ -1466,21 +1292,20 @@ void	W2142(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {    
-		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
     	if (CFG.SoundPortSync & 0x40)
     		pseudoSleep(SYNC_TIME);    	
 		if (CFG.SoundPortSync & 4)
 		{
-			if (TGDSIPCUSER->APU_ADDR_BLKP[2])
+			if (SNEMULDS_IPC->APU_ADDR_BLKP[2])
 			{
-				while (TGDSIPCUSER->APU_ADDR_BLKP[2]);
+				while (SNEMULDS_IPC->APU_ADDR_BLKP[2]);
 			}
 		}
 
-    	TGDSIPCUSER->PORT_SNES_TO_SPC[2] = value;
+    	SNEMULDS_IPC->PORT_SNES_TO_SPC[2] = value;
     	
 		if ((CFG.SoundPortSync & 4) && value) 
-			TGDSIPCUSER->APU_ADDR_BLKP[2] = 1;			    	
+			SNEMULDS_IPC->APU_ADDR_BLKP[2] = 1;			    	
     }
     else
         PPU_PORT[0x42] = value;    	     
@@ -1491,21 +1316,20 @@ void	W2143(uint32 addr, uint32 value)
 {
     if (CFG.Sound_output)
     {  
-		struct sIPCSharedTGDSSpecific* TGDSIPCUSER = SNEMULDS_IPC;
     	if (CFG.SoundPortSync & 0x80)
     		pseudoSleep(SYNC_TIME);    	
 		if (CFG.SoundPortSync & 8)
 		{	
-			if (TGDSIPCUSER->APU_ADDR_BLKP[3])
+			if (SNEMULDS_IPC->APU_ADDR_BLKP[3])
 			{
-				while (TGDSIPCUSER->APU_ADDR_BLKP[3]);
+				while (SNEMULDS_IPC->APU_ADDR_BLKP[3]);
 			}
 		}
 
-    	TGDSIPCUSER->PORT_SNES_TO_SPC[3] = value;
+    	SNEMULDS_IPC->PORT_SNES_TO_SPC[3] = value;
    	
 		if ((CFG.SoundPortSync & 8) && value) 
-			TGDSIPCUSER->APU_ADDR_BLKP[3] = 1;			    	
+			SNEMULDS_IPC->APU_ADDR_BLKP[3] = 1;			    	
     }
     else
         PPU_PORT[0x43] = value; 
@@ -1721,6 +1545,7 @@ void	DMA_port_write(uint32 address, uint8 byte)
 			W4017(0x17, byte);
 				
 }
+
 __attribute__((section(".itcm")))
 uint8	DMA_port_read(uint32 address)
 {
@@ -1983,6 +1808,27 @@ void read_scope()
     }
 }
 
+__attribute__((section(".itcm")))
+void	update_joypads()
+{
+  int joypad = get_joypad();
+  SNES.joypads[0] = joypad;
+  SNES.joypads[0] |= 0x80000000;
+  if (CFG.mouse)
+    read_mouse();
+  if (CFG.scope)
+  	read_scope();
+
+  if (DMA_PORT[0x00]&1)
+    {
+  	  SNES.Joy1_cnt = 16;    	
+      DMA_PORT[0x18] = SNES.joypads[0];
+      DMA_PORT[0x19] = SNES.joypads[0]>>8;
+      DMA_PORT[0x1A] = SNES.joypads[1];
+      DMA_PORT[0x1B] = SNES.joypads[1]>>8;
+    }
+}
+
 void SNES_update()
 { 
   int value;
@@ -2004,3 +1850,49 @@ void SNES_update()
   GFX.map_slot[2] = (PPU_PORT[0x09]&0x7C)>>2;
   GFX.map_slot[3] = (PPU_PORT[0x0A]&0x7C)>>2;
 }
+
+__attribute__((section(".itcm")))
+void GoNMI()
+{
+  CPU_pack();
+
+  if (CPU.WAI_state) {
+    CPU.WAI_state = 0; CPU.PC++;
+  };
+
+  pushb(CPU.PB);
+  pushw(CPU.PC);
+  pushb(CPU.P);
+  CPU.PC = CPU.NMI;
+  CPU.PB = 0;
+  CPU.P &= ~P_D;
+  
+  CPU.unpacked = 0; // ASM registers to update
+
+//  if (CFG.CPU_log) fprintf(SNES.flog, "--> NMI\n");
+}
+
+__attribute__((section(".itcm")))
+void GoIRQ()
+{
+  CPU_pack();
+
+  if (CPU.WAI_state) {
+    CPU.WAI_state = 0; CPU.PC++;
+  };
+
+  if (!(CPU.P&P_I)) {
+    pushb(CPU.PB);
+    pushw(CPU.PC);
+    pushb(CPU.P);
+    CPU.PC = CPU.IRQ; 
+    CPU.PB = 0;
+    CPU.P |= P_I;
+    CPU.P &= ~P_D;
+  }
+  CPU.unpacked = 0; // ASM registers to update  
+  
+  DMA_PORT[0x11] = 0x80;
+//  if (CFG.CPU_log) fprintf(SNES.flog, "--> IRQ\n");
+}
+

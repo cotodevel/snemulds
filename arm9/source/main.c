@@ -83,12 +83,12 @@ int _offsetY_tab[4] = { 16, 0, 32, 24 };
 uint32 screen_mode;
 int APU_MAX = 262;
 
-__attribute__((section(".dtcm")))
 bool handleROMSelect=false;
-
-__attribute__((section(".dtcm")))
 bool handleSPCSelect=false;
 
+bool uninitializedEmu = false;
+u8 savedUserSettings[1024*4];
+u32 keys;
 void applyOptions()
 {
 	if (!CFG.Sound_output)
@@ -126,27 +126,10 @@ void PPU_ChangeLayerConf(int i)
 
 void readOptionsFromConfig(char *section)
 {
-	//SNES button mapping
-	SNES_A = get_config_hex("KEYS", "SNES_BUTTON_A", 0x00000080);
-	SNES_B = get_config_hex("KEYS", "SNES_BUTTON_B", 0x00008000);
-	SNES_X = get_config_hex("KEYS", "SNES_BUTTON_X", 0x00000040);
-	SNES_Y = get_config_hex("KEYS", "SNES_BUTTON_Y", 0x00004000);
-	SNES_L = get_config_hex("KEYS", "SNES_BUTTON_L", 0x00000020);
-	SNES_R = get_config_hex("KEYS", "SNES_BUTTON_R", 0x00000010);
-	SNES_SELECT = get_config_hex("KEYS", "SNES_BUTTON_SELECT", 0x00002000);
-	SNES_START = get_config_hex("KEYS", "SNES_BUTTON_START", 0x00001000);
-	SNES_UP = get_config_hex("KEYS", "SNES_BUTTON_UP", 0x00000800);
-	SNES_DOWN = get_config_hex("KEYS", "SNES_BUTTON_DOWN", 0x00000400);
-	SNES_LEFT = get_config_hex("KEYS", "SNES_BUTTON_LEFT", 0x00000200);
-	SNES_RIGHT = get_config_hex("KEYS", "SNES_BUTTON_RIGHT", 0x00000100);
-	
 	//Initial Dirs
-	char romPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
-	char spcPath[MAX_TGDSFILENAME_LENGTH+1] = {0};
+	char romPath[MAX_TGDSFILENAME_LENGTH] = {0};
 	strcpy(romPath, get_config_string("Global", "ROMPath", ""));
-	strcpy(spcPath, get_config_string("Global", "SPCPath", ""));
 	strcpy(startFilePath, romPath); 
-	strcpy(startSPCFilePath, spcPath);
 	
 	CFG.BG3Squish = get_config_int(section, "BG3Squish", CFG.BG3Squish) & 3;
 	// FIXME 
@@ -364,8 +347,6 @@ void parseCFGFile(){
 	GUI_printf("Load conf4");
 }
 
-bool uninitializedEmu = false;
-u8 savedUserSettings[1024*4];
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -373,7 +354,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-bool loadROM(struct sGUISelectorItem * nameItem){
+bool loadROM(char *name, int confirm){
 	//wait until release A button
 	scanKeys();
 	u32 keys = keysPressed();
@@ -381,58 +362,25 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		scanKeys();
 		keys = keysPressed();
 	}
+	int size;
+	char romname[100];
+	int ROMheader;
+	char *ROM;
+	int crc;
+	CFG.LargeROM = 0;
+	strcpy(romname, name);
+	strcpy(CFG.ROMFile, romname);
+	clrscr();
 	
-	//file
-	if(nameItem->StructFDFromFS_getDirectoryListMethod == FT_FILE){
-		int size;
-		char romname[MAX_TGDSFILENAME_LENGTH+1] = {0};
-		int ROMheader;
-		char *ROM;
-		int crc;
-		
-		//filename already has correct format
-		if (
-			(nameItem->filenameFromFS_getDirectoryListMethod[0] == '0')
-			&&
-			(nameItem->filenameFromFS_getDirectoryListMethod[1] == ':')
-			&&
-			(nameItem->filenameFromFS_getDirectoryListMethod[2] == '/')
-		){
-			strcpy(romname, nameItem->filenameFromFS_getDirectoryListMethod);
-		}
-		//otherwise build format
-		else{
-			strcpy(romname, getfatfsPath(startFilePath));
-			if (romname[strlen(romname)-1] != '/'){
-				strcat(romname, "/");
-			}
-			strcat(romname, nameItem->filenameFromFS_getDirectoryListMethod);
-		}
-		
-		//There's a bug when rendering certain UI elements, some garbage may appear near the end of the filename, todo
-		char ext[256];
-		char tmp[256];
-		strcpy(tmp,romname);
-		separateExtension(tmp,ext);
-		strlwr(ext);
-		if(strlen(ext) > 4){
-			romname[strlen(romname)-2] = '\0';
-		}
-		
-		clrscr();
-		printf("----");
-		printf("----");
-		printf("----");
-		
-		memset(CFG.ROMFile, 0, sizeof(CFG.ROMFile));
-		strcpy(CFG.ROMFile, romname);
-		
-		//Handle special cases for TWL extended mem games like Megaman X3 Zero Project
+	printf("Loading %s... ", romname);
+
+	
+	//Handle special cases for TWL extended mem games like Megaman X3 Zero Project
 		coherent_user_range_by_size((uint32)0x027FF000, (int)sizeof(savedUserSettings));	
 		memcpy((void*)&savedUserSettings[0], (const void*)0x027FF000, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
 		
 		ROM = (char *)SNES_ROM_ADDRESS_NTR;
-		size = FS_getFileSizeFatFS((char*)&CFG.ROMFile[0]);
+		size = FS_getFileSizeFatFS(romname);
 		ROMheader = size & 8191;
 		if (ROMheader != 0&& ROMheader != 512){
 			ROMheader = 512;
@@ -493,6 +441,20 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			LoROM_Direct_ROM_Mapping = false;
 		}
 		
+		//BOF I & II fix 
+		if(strncmpi((char*)&SNES.ROM_info.title[0], "BREATH OF FIRE", 14) == 0){
+			//Enable 16M EWRAM (TWL)
+			u32 SFGEXT9 = *(u32*)0x04004008;
+			//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
+			*(u32*)0x04004008 = SFGEXT9;
+			ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
+			ROM = (char *)SNES_ROM_ADDRESS_NTR + (1024*256);
+			setCpuClock(true);
+			//printf("bof fix! halting.");
+			//while(1==1){}
+		}
+		
 		
 		//APU cached samples feature--
 		//NTR mode:
@@ -543,9 +505,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		}
 		coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
 		memcpy((void*)0x027FF000, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
-		return reloadROM(ROM-ROMheader, size, crc, nameItem->filenameFromFS_getDirectoryListMethod);
-	}
-	return false;
+		return changeROM(ROM-ROMheader, size);
 }
 
 int selectSong(char *name)
@@ -675,7 +635,14 @@ int main(int argc, char ** argv){
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	REG_IME = 0;
+	
+	//Discard old & enter new MPU context
+	enterMPUConfig();
+	
 	setSnemulDSSpecial0xFFFF0000MPUSettings();
+	
+	//Leave & absorb new MPU context
+	leaveMPUConfig();
 	
 	REG_IPC_FIFO_CR = (REG_IPC_FIFO_CR | IPC_FIFO_SEND_CLEAR);	//bit14 FIFO ERROR ACK + Flush Send FIFO
 	//Set up PPU IRQ: HBLANK/VBLANK/VCOUNT
@@ -688,29 +655,23 @@ int main(int argc, char ** argv){
 	REG_IME = 1;
 	
 	swiDelay(1000);
-	setupDisabledExceptionHandler();
+	//setupDisabledExceptionHandler();
 	
 	if(__dsimode == true){
 		TWLSetTouchscreenTWLMode();
 	}
 	
-#ifndef DSEMUL_BUILD	
-	GUI.printfy = 32;
-    GUI.printfy += 32; // FIXME
-#endif	
-	
-	memset(&startFilePath, 0, sizeof(startFilePath));
-	memset(&startSPCFilePath, 0, sizeof(startSPCFilePath));
 	SNEMULDS_IPC->APU_ADDR_CNT = SNEMULDS_IPC->APU_ADDR_ANS = SNEMULDS_IPC->APU_ADDR_CMD = 0;
+	screen_mode = 0;
 	update_spc_ports();
-	uninitializedEmu = true;
+	uninitializedEmu = false;
 	
 	// Clear "HDMA"
 	int i = 0;
-	for (i = 0; i < 192; i++){
+	for (i = 0; i < 192; i++)
 		GFX.lineInfo[i].mode = -1;
-	}
-	
+
+	strcpy(startFilePath, "");
 	//Parse snemul.cfg
 	parseCFGFile();
 	
@@ -746,7 +707,7 @@ int main(int argc, char ** argv){
 		if (isSnesFile == false) {
 			guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMList(startFilePath);
 		}
-		isSnesFile = loadROM(&guiSelItem);
+		isSnesFile = loadROM(guiSelItem.filenameFromFS_getDirectoryListMethod, 0);
 	}
 	while(isSnesFile == false);
 	///////////////////////////////////////////
@@ -770,9 +731,7 @@ int main(int argc, char ** argv){
 				//snes init
 				SNEMULDS_IPC->APU_ADDR_CNT = SNEMULDS_IPC->APU_ADDR_ANS = SNEMULDS_IPC->APU_ADDR_CMD = 0;
 				update_spc_ports();
-				bool firstTime = false;
-				initSNESEmpty(&uninitializedEmu, apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
-
+				
 				// Clear "HDMA"
 				for (i = 0; i < 192; i++){
 					GFX.lineInfo[i].mode = -1;
@@ -784,7 +743,7 @@ int main(int argc, char ** argv){
 					memset(&guiSelItem, 0, sizeof(guiSelItem));
 					guiSelItem.StructFDFromFS_getDirectoryListMethod = FT_FILE;
 					guiSelItem.filenameFromFS_getDirectoryListMethod = GUI_getROMList(startFilePath);
-					isSnesFile = loadROM(&guiSelItem);
+					isSnesFile = loadROM(guiSelItem.filenameFromFS_getDirectoryListMethod, 0);
 				}
 				while(isSnesFile == false);
 				///////////////////////////////////////////
