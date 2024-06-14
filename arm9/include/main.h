@@ -39,7 +39,7 @@ extern bool stopSoundStreamUser();
 extern void closeSoundUser();
 
 extern int main(int argc, char **argv);
-extern bool loadROM(struct sGUISelectorItem *name);
+extern bool loadROM(char *name, int confirm);
 extern bool handleROMSelect;
 extern bool handleSPCSelect;
 

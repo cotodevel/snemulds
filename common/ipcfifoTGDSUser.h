@@ -49,18 +49,16 @@ struct sIPCSharedTGDSSpecific{
 #define SNEMULDS_APUCMD_SAVESPC (u32)(0xffff00a6)
 #define SNEMULDS_APUCMD_LOADSPC (u32)(0xffff00a7)
 
-//NTR mode:
-//SNES_ROM_ADDRESS ((uchar *)(0x20C0000)) + ROM_MAX_SIZE_NTRMODE = 0x23CC000 < 0x27FF000 (NTR: Mirror #1 4MB)
-#define SNES_ROM_ADDRESS_NTR ((uchar *)(0x20C0000)) 
-#define ROM_MAX_SIZE_NTRMODE	(3*1024*1024)
-
-//TWL mode:
-//SNES_ROM_ADDRESS ((uchar *)(0x20C9F00)) + ROM_MAX_SIZE_TWLMODE = 0x2749F00 < 0x27FF000 (TWL: 16MB IPC shared)
-#define SNES_ROM_ADDRESS_TWL ((uchar *)(0x20C9F00))
-#define ROM_MAX_SIZE_TWLMODE	((6*1024*1024)+(512*1024)) //Max ROM size: 6.5MB
+//Standardized SnemulDS defs + TGDS Memory Layout ARM7/ARM9 Cores
+#define TGDSDLDI_ARM7_ADDRESS	((u32)(0x06000000)) // 0x06000000 ~ 0x06007FFF = 32K: DLDI
+#define APU_RAM_ADDRESS 		(u32)( ((int)TGDSDLDI_ARM7_ADDRESS) + (32*1024)) 	// 0x06008000 ~ 0x06017FFF = 96K APU WORK RAM
+#define TGDS_ARM7_MALLOCSTART (u32)( ((int)APU_RAM_ADDRESS) + (96*1024) )	// 0x06018000 ~ 0x06020000 = 32K ARM7 Malloc
+#define TGDS_ARM7_MALLOCSIZE (int)( (32*1024) )
 
 #define SNEMULDS_IPC ((struct sIPCSharedTGDSSpecific*)( ((int)0x2FFF000) - (80*16)))
 #define ALIGNED __attribute__ ((aligned(4)))
+
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,7 +66,6 @@ extern "C" {
 
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2);
-extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 
 //project specific
 extern uint32 ADDR_PORT_SNES_TO_SPC;
@@ -77,20 +74,16 @@ extern void update_spc_ports();
 
 //ARM7 & ARM9 shared
 extern int ROM_MAX_SIZE;
-
 extern int ROM_PAGING_SIZE;
 
-#ifdef __cplusplus
-}
-#endif
+#define SNES_ROM_ADDRESS_NTR ((uchar *)(0x20C0000)) 
+#define SNES_ROM_ADDRESS_TWL ((uchar *)(0x20C9F00))
 
-//Standardized SnemulDS defs + TGDS Memory Layout ARM7/ARM9 Cores
-#define TGDS_ARM7_MALLOCSTART (u32)(0x03800000) //ARM7 TWL end is : 0x0380d9b4, and ARM7 NTR is 6K behind that
-#define TGDS_ARM7_MALLOCSIZE (int)(512)
+#define ROM_MAX_SIZE_NTRMODE	(3*1024*1024)
+#define ROM_MAX_SIZE_TWLMODE	((6*1024*1024)+(512*1024)) //Max ROM size: 6.5MB
 
-#define SNES_PLAYBUFFER_ADDRESS     ((u32)(0x06000000)) // 0x06000000 ~ 32K: Sound output buffer
-#define TGDSDLDI_ARM7_ADDRESS (u32)(SNES_PLAYBUFFER_ADDRESS + (32*1024)) 	// 0x06008000 ~ 32K: DLDI
-#define APU_RAM_ADDRESS     ((uint8*)(TGDSDLDI_ARM7_ADDRESS + (32*1024)))	//0x06010000 ~ 64K APU WORK RAM
+#define	PAGE_SIZE		(64*1024)
+#define SNES_ROM_PAGING_ADDRESS (SNES_ROM_ADDRESS_NTR+PAGE_SIZE)
 
 //334K ~ worth of Hashed Samples from the APU core to remove stuttering
 #define APU_BRR_HASH_BUFFER_NTR	(volatile u32*)(((int)SNES_ROM_ADDRESS_NTR) + ROM_MAX_SIZE_NTRMODE - (334*1024) )	//(334*1024) = 342016 bytes / 64K blocks = 5 pages less useable on paging mode //  0x2AC800 (2.8~ MB) free SNES ROM non-paged
@@ -99,4 +92,7 @@ extern u32 apuCacheSamples;
 extern bool apuCacheSamplesTWLMode;
 extern u32 * savedROMForAPUCache;
 
+
+#ifdef __cplusplus
+}
 #endif

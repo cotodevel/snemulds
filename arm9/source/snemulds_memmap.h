@@ -22,6 +22,7 @@ GNU General Public License for more details.
 
 #define NOT_LARGE	0
 #define USE_PAGING	1
+#define USE_EXTMEM	2
 
 #define SPECIAL_MAP(p) ((int)(p) & 0x80000000)
 #define REGULAR_MAP(p) (!((int)(p) & 0x80000000))  	
@@ -33,15 +34,18 @@ GNU General Public License for more details.
 extern "C" {
 #endif
 
-extern uchar *ROM_paging;
-extern uint16 *ROM_paging_offs;
-extern int ROM_paging_cur;
-
+extern int OldPC;
+extern char *ROM_Image;
 extern void WriteProtectROM();
 extern void FixMap();
 extern void MapRAM();
 extern void InitLoROMMap(int mode);
 extern void InitHiROMMap(int mode);
+extern uchar *ROM_paging;
+extern uint16 *ROM_paging_offs;
+extern int ROM_paging_cur;
+extern void mem_clear_paging();
+extern void mem_init_paging();
 extern void mem_setCacheBlock(int block, uchar *ptr);
 extern void mem_removeCacheBlock(int block);
 extern uint8 *mem_checkReload(int block);

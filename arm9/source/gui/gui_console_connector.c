@@ -1270,9 +1270,9 @@ void GUI_getConfig(){
 	CFG.GUISort = get_config_int("GUI", "FileChooserSort", 1);
 	CFG.Language = get_config_int("GUI", "Language", -1);
 	CFG.TopScreenEmu = get_config_int("GUI", "TopScreen", 1);
-	
-	if (CFG.Language != -1)
+	if (CFG.Language != -1){
 		GUI_setLanguage(CFG.Language);
+	}
 }
 
 void	GUI_showROMInfos(int size){
@@ -1286,6 +1286,7 @@ void	GUI_showROMInfos(int size){
 
 	//Is CX4 coprocessor?
 	if((u8)SNES.ROM_info.ROMtype == 0xf3){
+		S9xInitC4(); //must be called after SNES mem allocation takes place
 		CFG.CX4 = 1;
 		GUI_printf("CX4 game detected.");
 	}

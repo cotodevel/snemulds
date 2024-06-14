@@ -34,8 +34,7 @@ GNU General Public License for more details.
 
 #define P_E  0x100
 
-#endif
-
+#define NB_CYCLES 180
 
 #define REAL_A ((SaveR8 & 0x00000080) ? \
 			(A >> 24 | (SnesB&0xFF000000) >> 16) : (A >> 16))
@@ -54,14 +53,51 @@ GNU General Public License for more details.
 	else CPU_NextCycles = 0;	\
 }
 
+struct s_cpu
+{
+  uint16	IRQ, NMI, BRK, COP; /* interruption address */
+  int		cycles_tot;
+  int		NMIActive;
+  uchar		WAI_state;
 
-//CPU Hardware
-#ifndef __opcodes_cpu_snemul__
-#define __opcodes_cpu_snemul__
+/* debug */
+  int		Trace_flag;
+  int		Trace;
+  int		Cycles2;
 
-#include "common.h"
+/* registers */
+#define P_C  0x01
+#define P_Z  0x02
+#define P_I  0x04
+#define P_D  0x08
+#define P_X  0x10
+#define P_M  0x20
+#define P_V  0x40
+#define P_N  0x80
+#define P_E  0x100
+  uint16        P; /* Flags Register */
+  uint16        PC; /* Program Counter */
+  uint16        PB, DB; /* Bank Registers */
+  uint16        A, X, Y, D, S;
 
-#define NB_CYCLES 180
+  int           Cycles;
+
+#define IRQ_GSU	1
+  int		IRQState;
+
+/* speed hack */
+  int           LastAddress;
+  int           WaitAddress;
+  int           WaitCycles;
+  uint32		HCycles;
+  
+  int 			IsBreak;
+  
+  int			unpacked;
+  int			packed;
+};
+
+extern struct s_cpu	CPU;
 
 #endif
 

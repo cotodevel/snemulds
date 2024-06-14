@@ -29,6 +29,8 @@ extern "C" {
 #endif
 
 extern void setSnemulDSSpecial0xFFFF0000MPUSettings();
+extern void enterMPUConfig();
+extern void leaveMPUConfig();
 
 #ifdef __cplusplus
 }
