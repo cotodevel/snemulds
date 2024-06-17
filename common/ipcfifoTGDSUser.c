@@ -61,13 +61,24 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		//ARM7 command handler
 		#ifdef ARM7
 		case (SNEMULDS_SETUP_ARM7):{
+			// Reset
+			StopSoundSPC();
+			
 			int i   = 0;
 			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 			apuCacheSamples = (u32)getValueSafe(&fifomsg[11]); //ARM9 -> ARM7: u32 inApuCacheSamples
 			apuCacheSamplesTWLMode = (bool)getValueSafe(&fifomsg[12]);	//ARM9 -> ARM7: bool inApuCacheSamplesTWLMode
 			savedROMForAPUCache = (u32*)getValueSafe(&fifomsg[13]);	//ARM9 -> ARM7: u32 * inSavedROMForAPUCache
-			for (i = 0; i < MIXBUFSIZE; i++) {
+			
+			if (apuCacheSamplesTWLMode == false){
+				sampleRateDivider = spcCyclesPerSec / (MIXRATE / 18); 	//normal samplerate
+			}
+			else{
+				sampleRateDivider = spcCyclesPerSec / (MIXRATE / 17);	//slower samplerate
+			}
+			
+			for (i = 0; i < MIXBUFSIZE * 4; i++) {
 				playBuffer[i] = 0;
 			}
 			update_spc_ports(); //APU Ports from SnemulDS properly binded with Assembly APU Core
@@ -82,8 +93,10 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		{
 			// Reset
 			StopSoundSPC();
-
-			memset(playBuffer, 0, MIXBUFSIZE);
+			int i = 0;
+			for (i = 0; i < MIXBUFSIZE * 4; i++) {
+				playBuffer[i] = 0;
+			}
 
 			SNEMULDS_IPC->APU_ADDR_CNT = 0; 
 			ApuReset(apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
@@ -109,7 +122,12 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC
 			//Reset APU
 			StopSoundSPC();
-			memset(playBuffer, 0, MIXBUFSIZE);
+			
+			int i = 0;
+			for (i = 0; i < MIXBUFSIZE * 4; i++) {
+				playBuffer[i] = 0;
+			}
+			
 			SNEMULDS_IPC->APU_ADDR_CNT = 0; 
 			ApuReset(apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
 			DspReset();
@@ -133,7 +151,10 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		break;        
 		
 		case SNEMULDS_APUCMD_CLRMIXERBUF:{ //case 0x00000005:{ // CLEAR MIXER BUFFER 
-			memset(playBuffer, 0, MIXBUFSIZE);
+			int i = 0;
+			for (i = 0; i < MIXBUFSIZE * 4; i++) {
+				playBuffer[i] = 0;
+			}
 		}
 		break;
 
