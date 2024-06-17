@@ -15,6 +15,8 @@
 void bootfile(){
 }
 
+int sampleRateDivider = 0;
+
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
 uint16 playBuffer[MIXBUFSIZE * 2 * 2];
 volatile int soundCursor;
@@ -39,7 +41,6 @@ void SetupSoundSPC() {
 		TIMERXCNT(4) = TIMER_CASCADE | TIMER_ENABLE;
 	#endif    
 	
-	irqDisable(IRQ_TIMER3);
 	irqEnable(IRQ_TIMER2);
 }
  
@@ -50,7 +51,6 @@ void StopSoundSPC() {
     TIMERXCNT(2) = 0;
 	
 	irqDisable(IRQ_TIMER2);
-	irqEnable(IRQ_TIMER3);
 }
 
 void LoadSpc(const uint8 *spc) {

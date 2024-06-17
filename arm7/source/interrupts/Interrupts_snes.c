@@ -37,7 +37,6 @@ void Timer1handlerUser(){
 	
 }
 
-
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
@@ -61,8 +60,7 @@ void Timer2handlerUser(){
 		SCHANNEL_CR(channel) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x7F) | SOUND_16BIT;
 
 		DspMixSamplesStereo(MIXBUFSIZE, &playBuffer[soundCursor]);
-		const int cyclesToExecute = spcCyclesPerSec / (MIXRATE / 18); //Coto: New timer code will synchronize to NDS timer ticks. Will require several patches per game to adjust the correct samplerate for each one.
-		ApuUpdateTimers(cyclesToExecute);
+		ApuUpdateTimers(sampleRateDivider);	//Coto: New timer code will synchronize to NDS timer ticks. Will require several patches per game to adjust the correct samplerate for each one.
 	}	
 }
 

@@ -371,141 +371,159 @@ bool loadROM(char *name, int confirm){
 	strcpy(romname, name);
 	strcpy(CFG.ROMFile, romname);
 	clrscr();
-	
 	printf("Loading %s... ", romname);
-
 	
 	//Handle special cases for TWL extended mem games like Megaman X3 Zero Project
-		coherent_user_range_by_size((uint32)0x027FF000, (int)sizeof(savedUserSettings));	
-		memcpy((void*)&savedUserSettings[0], (const void*)0x027FF000, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
-		
-		ROM = (char *)SNES_ROM_ADDRESS_NTR;
-		size = FS_getFileSizeFatFS(romname);
-		ROMheader = size & 8191;
-		if (ROMheader != 0&& ROMheader != 512){
-			ROMheader = 512;
-		}
+	coherent_user_range_by_size((uint32)0x027FF000, (int)sizeof(savedUserSettings));	
+	memcpy((void*)&savedUserSettings[0], (const void*)0x027FF000, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
+	
+	ROM = (char *)SNES_ROM_ADDRESS_NTR;
+	size = FS_getFileSizeFatFS(romname);
+	ROMheader = size & 8191;
+	if (ROMheader != 0&& ROMheader != 512){
+		ROMheader = 512;
+	}
 
-		FS_loadFileFatFS(CFG.ROMFile, ROM, PAGE_SIZE+ROMheader);
-		load_ROM(ROM, size);
-		int i = 20;
-		while (i >= 0 && SNES.ROM_info.title[i] == ' '){
-			SNES.ROM_info.title[i--] = '\0';
-		}
-		if(
-			(__dsimode == true)
-			&&
-			(
-			(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0)
-			||
-			(strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0)
-			)
-		){
-			//Enable 16M EWRAM (TWL)
-			u32 SFGEXT9 = *(u32*)0x04004008;
-			//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
-			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
-			*(u32*)0x04004008 = SFGEXT9;
-			ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
-			
-			if (strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0){		//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100% (1/2)	
-				ROM = (char *)SNES_ROM_ADDRESS_NTR + (4*1024*1024); 
-				setCpuClock(true);
-			}
-			else if (strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0){ //Fix DKC3 on TWL hardware
-				ROM = (char *)SNES_ROM_ADDRESS_TWL + (4*1024*1024); 
-				setCpuClock(true);
-			}
-			printf("Extended TWL Mem.");
-		}
-		else{
-			if(__dsimode == true){
-				//Enable 4M EWRAM (TWL)
-				u32 SFGEXT9 = *(u32*)0x04004008;
-				//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
-				SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x0 << 14);
-				*(u32*)0x04004008 = SFGEXT9;	
-			}
-			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
-			ROM = (char *)SNES_ROM_ADDRESS_NTR;
-			setCpuClock(false);
-			printf("Normal NTR Mem.");
-		}
-		ROM_paging = (uchar *)((int)ROM+PAGE_SIZE); //SNES_ROM_PAGING_ADDRESS;
-		ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
+	FS_loadFileFatFS(CFG.ROMFile, ROM, PAGE_SIZE+ROMheader);
+	load_ROM(ROM, size);
+	int i = 20;
+	while (i >= 0 && SNES.ROM_info.title[i] == ' '){
+		SNES.ROM_info.title[i--] = '\0';
+	}
+	if(
+		(__dsimode == true)
+		&&
+		(
+		(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0)
+		||
+		(strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0)
+		||
+		(strncmpi((char*)&SNES.ROM_info.title[0], "EARTH BOUND", 11) == 0) 
+		)
+	){
+		//Enable 16M EWRAM (TWL)
+		u32 SFGEXT9 = *(u32*)0x04004008;
+		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
+		*(u32*)0x04004008 = SFGEXT9;
+		ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
 		
-		if(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0){	//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100%	(2/2)
-			LoROM_Direct_ROM_Mapping = true;
-		}
-		else{
-			LoROM_Direct_ROM_Mapping = false;
-		}
-		
-		//BOF I & II fix 
-		if(strncmpi((char*)&SNES.ROM_info.title[0], "BREATH OF FIRE", 14) == 0){
-			//Enable 16M EWRAM (TWL)
-			u32 SFGEXT9 = *(u32*)0x04004008;
-			//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
-			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
-			*(u32*)0x04004008 = SFGEXT9;
-			ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
-			ROM = (char *)SNES_ROM_ADDRESS_NTR + (1024*256);
+		if (strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0){		//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100% (1/2)	
+			ROM = (char *)SNES_ROM_ADDRESS_NTR + (4*1024*1024); 
 			setCpuClock(true);
-			//printf("bof fix! halting.");
-			//while(1==1){}
 		}
-		
-		
-		//APU cached samples feature--
-		//NTR mode:
-		//Since we’ve ran out of memory for NTR mode, if SNES rom is higher than 2.8~ MB, the BRR hashing feature will be disabled. 
-		//Otherwise the feature will be enabled for either 4MB+ paging mode, or SNES rom is 2.8~ MB or less. Both scenarios have 270K free of EWRAM.
+		else if (strncmpi((char*)&SNES.ROM_info.title[0], "EARTH BOUND", 11) == 0){		//Enable Cached Samples: Earthbound	+ ROM masked as Read-Only
+			ROM = (char *)SNES_ROM_ADDRESS_NTR + (4*1024*1024); 
+			setCpuClock(true);
+		}
+		else if (strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0){ //Fix DKC3 on TWL hardware
+			ROM = (char *)SNES_ROM_ADDRESS_TWL + (4*1024*1024); 
+			setCpuClock(true);
+		}
+		printf("Extended TWL Mem.");
+	}
+	//BOF I & II fix 
+	else if(
+		(__dsimode == true)
+		&&
+		(strncmpi((char*)&SNES.ROM_info.title[0], "BREATH OF FIRE", 14) == 0)
+	){
+		//Enable 16M EWRAM (TWL)
+		u32 SFGEXT9 = *(u32*)0x04004008;
+		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
+		*(u32*)0x04004008 = SFGEXT9;
+		ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
+		ROM = (char *)SNES_ROM_ADDRESS_NTR + (1024*256);
+		setCpuClock(true);
+		printf("Extended TWL Mem.");
+	}
+	else{
+		if(__dsimode == true){
+			//Enable 4M EWRAM (TWL)
+			u32 SFGEXT9 = *(u32*)0x04004008;
+			//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x0 << 14);
+			*(u32*)0x04004008 = SFGEXT9;	
+		}
+		ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
+		ROM = (char *)SNES_ROM_ADDRESS_NTR;
+		setCpuClock(false);
+		printf("Normal NTR Mem.");
+	}
+	ROM_paging = (uchar *)((int)ROM+PAGE_SIZE); //SNES_ROM_PAGING_ADDRESS;
+	ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
+	
+	if(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0){	//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100%	(2/2)
+		LoROM_Direct_ROM_Mapping = true;
+	}
+	else{
+		LoROM_Direct_ROM_Mapping = false;
+	}
+	
+	
+	//APU cached samples feature--
+	//NTR mode:
+	//Since we’ve ran out of memory for NTR mode, if SNES rom is higher than 2.8~ MB, the BRR hashing feature will be disabled. 
+	//Otherwise the feature will be enabled for either 4MB+ paging mode, or SNES rom is 2.8~ MB or less. Both scenarios have 270K free of EWRAM.
 
-		//TWL mode:
-		//Plenty of free memory; Use the BRR hash buffer @ EWRAM offset : (SNES_ROM_ADDRESS_TWL + ROM_MAX_SIZE_TWLMODE)
-		apuCacheSamplesTWLMode = false;
-		if(
-			(ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE)	//TWL mode
-			||
-			(size != ROM_MAX_SIZE_NTRMODE)	//NTR mode
-		){
-			apuCacheSamples = 1;
-			if (ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE){	//TWL mode
-				apuCacheSamplesTWLMode = true;
-				savedROMForAPUCache = (u32*)((int)ROM + ROM_MAX_SIZE);
-				GUI_printf("APU Cached Samples: Enable [TWL mode]");
-			}
-			else{
-				apuCacheSamplesTWLMode = false;
-				savedROMForAPUCache = (u32*)APU_BRR_HASH_BUFFER_NTR;
-				GUI_printf("APU Cached Samples: Enable [NTR mode]");
-			}
+	//TWL mode:
+	//Plenty of free memory; Use the BRR hash buffer @ EWRAM offset : (SNES_ROM_ADDRESS_TWL + ROM_MAX_SIZE_TWLMODE)
+	apuCacheSamplesTWLMode = false; //false = normal sample rate, true = slower sample rate
+	if(
+		(ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE)	//TWL mode
+		||
+		(size != ROM_MAX_SIZE_NTRMODE)	//NTR mode
+	){
+		apuCacheSamples = 1;
+		if (ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE){	//TWL mode
+			savedROMForAPUCache = (u32*)((int)ROM + ROM_MAX_SIZE);
+			GUI_printf("APU Cached Samples: Enable [TWL mode]");
 		}
 		else{
-			GUI_printf("APU Cached Sample: Disable ");
-			apuCacheSamples = 0;
+			savedROMForAPUCache = (u32*)APU_BRR_HASH_BUFFER_NTR;
+			GUI_printf("APU Cached Samples: Enable [NTR mode]");
 		}
-		initSNESEmpty(&uninitializedEmu, apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
-		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
-		clrscr();
-		GUI_printf(" - - ");
-		GUI_printf(" - - ");
-		GUI_printf("File:%s - Size:%d", CFG.ROMFile, size);
-		if (size-ROMheader > ROM_MAX_SIZE){
-			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, PAGE_SIZE+ROMheader);
-			CFG.LargeROM = true;
-			crc = crc32(0, ROM, PAGE_SIZE);
-			GUI_printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
-		}
-		else{
-			FS_loadROM(ROM-ROMheader, CFG.ROMFile);
-			CFG.LargeROM = false;
-			crc = crc32(0, ROM, size-ROMheader);
-			GUI_printf("CRC = %08x ", crc);
-		}
-		coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
-		memcpy((void*)0x027FF000, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
-		return changeROM(ROM-ROMheader, size);
+	}
+	else{
+		GUI_printf("APU Cached Sample: Disable ");
+		apuCacheSamples = 0;
+	}
+	
+	
+	if (
+		(ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE)	//TWL mode
+		&&
+		(strncmpi((char*)&SNES.ROM_info.title[0], "EARTH BOUND", 11) == 0)	//Earthbound slower samplerate
+	){		
+		apuCacheSamplesTWLMode = true;
+		GUI_printf("[Adjusted Samplerate]");
+	}
+	else{
+		GUI_printf("[Normal Samplerate]");
+	}
+	
+	initSNESEmpty(&uninitializedEmu, apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
+	memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
+	clrscr();
+	GUI_printf(" - - ");
+	GUI_printf(" - - ");
+	GUI_printf("File:%s - Size:%d", CFG.ROMFile, size);
+	if (size-ROMheader > ROM_MAX_SIZE){
+		FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, PAGE_SIZE+ROMheader);
+		CFG.LargeROM = true;
+		crc = crc32(0, ROM, PAGE_SIZE);
+		GUI_printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
+	}
+	else{
+		FS_loadROM(ROM-ROMheader, CFG.ROMFile);
+		CFG.LargeROM = false;
+		crc = crc32(0, ROM, size-ROMheader);
+		GUI_printf("CRC = %08x ", crc);
+	}
+	coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
+	memcpy((void*)0x027FF000, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
+	return changeROM(ROM-ROMheader, size);
 }
 
 int selectSong(char *name)
@@ -655,7 +673,7 @@ int main(int argc, char ** argv){
 	REG_IME = 1;
 	
 	swiDelay(1000);
-	//setupDisabledExceptionHandler();
+	setupDisabledExceptionHandler(); //on 0x00000000 (NULL) reference, skip the abort handler 
 	
 	if(__dsimode == true){
 		TWLSetTouchscreenTWLMode();
