@@ -478,16 +478,36 @@ bool loadROM(char *name, int confirm){
 		apuCacheSamples = 1;
 		if (ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE){	//TWL mode
 			savedROMForAPUCache = (u32*)((int)ROM + ROM_MAX_SIZE);
-			GUI_printf("APU Cached Samples: Enable [TWL mode]");
 		}
 		else{
 			savedROMForAPUCache = (u32*)APU_BRR_HASH_BUFFER_NTR;
+		}
+	}
+	else{
+		apuCacheSamples = 0;
+	}
+	
+	//Only MegamanX2 & MegamanX3 has cached samples
+	if(
+		(LoROM_Direct_ROM_Mapping == true)	//MMX1, MMX2 or MMX3?
+		&&
+		(!(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X2", 10) == 0))
+		&&
+		(!(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X3", 10) == 0))
+	){
+		apuCacheSamples = 0;
+	}
+	
+	if(apuCacheSamples == 1){
+		if(__dsimode == true){
+			GUI_printf("APU Cached Samples: Enable [TWL mode]");
+		}
+		else{
 			GUI_printf("APU Cached Samples: Enable [NTR mode]");
 		}
 	}
 	else{
 		GUI_printf("APU Cached Sample: Disable ");
-		apuCacheSamples = 0;
 	}
 	
 	
