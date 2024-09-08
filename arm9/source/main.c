@@ -374,8 +374,8 @@ bool loadROM(char *name, int confirm){
 	printf("Loading %s... ", romname);
 	
 	//Handle special cases for TWL extended mem games like Megaman X3 Zero Project
-	coherent_user_range_by_size((uint32)0x027FF000, (int)sizeof(savedUserSettings));	
-	memcpy((void*)&savedUserSettings[0], (const void*)0x027FF000, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
+	coherent_user_range_by_size((uint32)TGDSIPCStartAddress, (int)sizeof(savedUserSettings));	
+	memcpy((void*)&savedUserSettings[0], (const void*)TGDSIPCStartAddress, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
 	
 	ROM = (char *)SNES_ROM_ADDRESS_NTR;
 	size = FS_getFileSizeFatFS(romname);
@@ -542,7 +542,8 @@ bool loadROM(char *name, int confirm){
 		GUI_printf("CRC = %08x ", crc);
 	}
 	coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
-	memcpy((void*)0x027FF000, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
+	memcpy((void*)TGDSIPCStartAddress, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
+	
 	return changeROM(ROM-ROMheader, size);
 }
 
