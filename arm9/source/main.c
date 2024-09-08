@@ -430,8 +430,8 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		strcpy(CFG.ROMFile, romname);
 		
 		//Handle special cases for TWL extended mem games like Megaman X3 Zero Project
-		coherent_user_range_by_size((uint32)0x027FF000, (int)sizeof(savedUserSettings));	
-		memcpy((void*)&savedUserSettings[0], (const void*)0x027FF000, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
+		coherent_user_range_by_size((uint32)TGDSIPCStartAddress, (int)sizeof(savedUserSettings));	
+		memcpy((void*)&savedUserSettings[0], (const void*)TGDSIPCStartAddress, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
 		
 		ROM = (char *)SNES_ROM_ADDRESS_NTR;
 		size = FS_getFileSizeFatFS((char*)&CFG.ROMFile[0]);
@@ -533,7 +533,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			GUI_printf("CRC = %08x ", crc);
 		}
 		coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
-		memcpy((void*)0x027FF000, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
+		memcpy((void*)TGDSIPCStartAddress, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
 		return reloadROM(ROM-ROMheader, size, crc, nameItem->filenameFromFS_getDirectoryListMethod);
 	}
 	return false;
