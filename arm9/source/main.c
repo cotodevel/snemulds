@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include "posixHandleTGDS.h"
 #include <string.h>
-#include "guiTGDS.h"
 #include "fs.h"
 #include "snes.h"
 #include "gfx.h"
@@ -41,7 +40,7 @@
 #include "biosTGDS.h"
 #include "crc32.h"
 #include "engine.h"
-#include "guiTGDS.h"
+#include "powerTGDS.h"
 #include "core.h"
 #include "nds_cp15_misc.h"
 #include "soundTGDS.h"
@@ -691,6 +690,7 @@ int main(int argc, char ** argv){
 	//Set up PPU IRQ Vertical Line
 	setVCountIRQLine(TGDS_VCOUNT_LINE_INTERRUPT);
 	irqDisable(IRQ_VCOUNT|IRQ_TIMER1);	//SnemulDS abuses HBLANK IRQs, VCOUNT IRQs seem to cause a race condition
+	powerOFF3DEngine(); //Power off ARM9 3D Engine to save power
 	REG_IME = 1;
 	
 	swiDelay(1000);
