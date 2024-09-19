@@ -40,6 +40,7 @@ uint8 firOffset ALIGNED;
 
 // externs from dspmixer.S
 uint32 DecodeSampleBlockAsm(uint8 *blockPos, sint16 *samplePos, struct DspChannel *channel);
+uint32 DecodeSampleBlockAsmUncached(uint8 *blockPos, sint16 *samplePos, struct DspChannel *channel); //required to remove audio cracks!
 extern uint8 channelNum;
 
 uint32 DecodeSampleBlock(struct DspChannel *channel) {
@@ -69,7 +70,12 @@ uint32 DecodeSampleBlock(struct DspChannel *channel) {
         }
     }
     channel->brrHeader = *cur;
-    DecodeSampleBlockAsm(cur, sample, channel);
+    if(apuCacheSamples != 1){
+		DecodeSampleBlockAsmUncached(cur, sample, channel);
+	}
+	else{
+		DecodeSampleBlockAsm(cur, sample, channel);
+    }
     channel->blockPos += 9;
     return 0;
 }
