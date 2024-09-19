@@ -37,6 +37,7 @@ void Timer1handlerUser(){
 	
 }
 
+static int apuMixPosition = 0;
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
@@ -62,7 +63,17 @@ void Timer2handlerUser(){
 
 		DspMixSamplesStereo(MIXBUFSIZE, &playBuffer[soundCursor]);
 		const int cyclesToExecute = spcCyclesPerSec / (MIXRATE / 17); //Coto: New timer code will synchronize to NDS timer ticks. Will require several patches per game to adjust the correct samplerate for each one.
-		ApuUpdateTimers(cyclesToExecute);
+		int samplesToMix = MIXBUFSIZE;
+		if (apuMixPosition + samplesToMix > MIXBUFSIZE * 4) {
+			int tmp = (apuMixPosition + samplesToMix) - (MIXBUFSIZE * 4);
+			if (tmp != samplesToMix) {
+				DspMixSamplesStereo(samplesToMix - tmp, &playBuffer[apuMixPosition]);
+			}
+			samplesToMix = tmp;
+			apuMixPosition = soundCursor;
+		}
+		apuMixPosition += samplesToMix;	
+		ApuUpdateTimers(cyclesToExecute);	//Coto: New timer code will synchronize to NDS timer ticks. Will require several patches per game to adjust the correct samplerate for each one.
 	}	
 }
 

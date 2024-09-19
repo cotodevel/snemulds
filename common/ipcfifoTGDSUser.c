@@ -61,7 +61,6 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		//ARM7 command handler
 		#ifdef ARM7
 		case (SNEMULDS_SETUP_ARM7):{
-			playBuffer = (uint16*)0x6000000;
 			int i   = 0;
 			for (i = 0; i < MIXBUFSIZE; i++) {
 				playBuffer[i] = 0;
@@ -84,7 +83,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			// Reset
 			StopSoundSPC();
 
-			memset(playBuffer, 0, MIXBUFSIZE);
+			memset(playBuffer, 0, sizeof(playBuffer));
 
 			SNEMULDS_IPC->APU_ADDR_CNT = 0; 
 			ApuReset();
@@ -110,7 +109,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		case SNEMULDS_APUCMD_PLAYSPC:{ //case 0x00000003:{ // PLAY SPC
 			//Reset APU
 			StopSoundSPC();
-			memset(playBuffer, 0, MIXBUFSIZE);
+			memset(playBuffer, 0, sizeof(playBuffer));
 			SNEMULDS_IPC->APU_ADDR_CNT = 0; 
 			ApuReset();
 			DspReset();
@@ -134,7 +133,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		break;        
 		
 		case SNEMULDS_APUCMD_CLRMIXERBUF:{ //case 0x00000005:{ // CLEAR MIXER BUFFER 
-			memset(playBuffer, 0, MIXBUFSIZE);
+			memset(playBuffer, 0, sizeof(playBuffer));
 		}
 		break;
 

@@ -32,13 +32,22 @@
 brrHash:
 .word 0
 
+@required to remove audio cracks!
+.GLOBAL DecodeSampleBlockAsmUncached
+DecodeSampleBlockAsmUncached:
+    stmfd sp!, {r4-r12,r14}
+
+    @ Save the channel pointer
+    mov r14, r2
+	
+	b finishDecode1
+
 .GLOBAL DecodeSampleBlockAsm
 DecodeSampleBlockAsm:
     stmfd sp!, {r4-r12,r14}
 
-	@gaussian interpolation, too slow to enable
 /*
-    @ Save the last 4 samples for gaussian interpolation
+    @ Save the last 4 samples for Linear interpolation (too slow to enable)
     add r4, r1, #12 * 2
     ldmia r4, {r5,r6}
     sub r4, r1, #4 * 2
@@ -81,6 +90,7 @@ DecodeSampleBlockAsm:
 doDecode:
     stmfd sp!, {r3}
 */
+finishDecode1:
     @ Load prev0 and prev1
     ldrsh PREV0, [r14, #62]
     ldrsh PREV1, [r14, #64]
@@ -269,6 +279,7 @@ doneDecode:
     ldmfd sp!, {r1}
     stmia r1, {r4-r11}*/
 
+finishDecode2:
 doneDecodeCached:
     @ Store prev0 and prev1
     strh PREV0, [r14, #62]
@@ -591,62 +602,59 @@ noSampleUpdate:
     add r12, r0, r12, lsl #1
     ldrsh r8, [r12, #DECODED_OFFSET]
 
-@gaussian interpolation, too slow to enable
+	@Linear interpolation Formula 
 /*
+	@output = (y0 + f*y1 - f*y0) + (y1 + f*y2 - f*y1) where f is a fraction (0.00196) of the height of the envelope cursor (represented as the sample position)
+	
     @ Store changing values
-    stmfd sp!, {r6,r7,r9-r12,lr}
+    stmfd sp!, {r5-r7, r9-r11,lr}
 
+	mov r5,#0
+	mov r10,r5
+	mov r11,r10
+	
     @ r6 will be the fractional position
-    ldr r6, =0x1fe
+    mov r6, #0xf << 1
     and r6, r6, SAMPLE_POS, lsr #3
     rsb r6, r6, #0x200
 
-    ldr r7, =gauss - 2
-    ldrsh r8, [r7, r6]
-    ldrsh r9, [r12, #DECODED_OFFSET - 6]
-    mul r14, r8, r9
-    ldr r7, =gauss + 510
-    ldrsh r8, [r7, r6]
-    ldrsh r9, [r12, #DECODED_OFFSET - 4]
-    mla r14, r8, r9, r14
-    rsb r6, r6, #0
-    ldr r7, =gauss + 1024
-    ldrsh r8, [r7, r6]
-    ldrsh r9, [r12, #DECODED_OFFSET - 2]
-    mla r14, r8, r9, r14
-    ldr r7, =gauss + 512
-    ldrsh r8, [r7, r6]
-    ldrsh r9, [r12, #DECODED_OFFSET]
-    mla r14, r8, r9, r14
-    @ r8 is the new sample
-    mov r8, r14, asr #11
+    ldrsh r7, [r12, #DECODED_OFFSET - 6]	@y0
+	ldrsh r9, [r12, #DECODED_OFFSET - 4]	@y1
+	mov r8,r7
+	SMLAL r5,r8,r6,r9	@== y0 + f*y1 = lr / r8 got first sample
+	SMLAL r5,r10,r6,r7	@== f*y0 / r10 got second sample
+	subs r8, r8, r10	@ r8 is the new sample out of 2 interleaved samples
+	
+	@+
+	
+	ldrsh r7, [r12, #DECODED_OFFSET - 2]	@y2
+	ldrsh r9, [r12, #DECODED_OFFSET]		@y3
+    mov r8,r7
+	SMLAL r5,r8,r6,r9	@== y0 + f*y1 = lr / r8 got first sample
+	SMLAL r5,r11,r6,r7	@== f*y0 / r10 got second sample
+	subs r11, r8, r11	@ r11 is the new sample out of 2 interleaved samples
+	
+	@ r8 is the new interleaved sample
+	adds r8, r11, r8
+	
+	@ Restore changing values
+    ldmfd sp!, {r5-r7, r9-r11,lr}
 
-	@ Store changing values
-    ldmfd sp!, {r6,r7,r9-r12,lr}
 */
 
 branchLocation:
-    b mixEchoEnabled
-
-mixEchoEnabled:
-    @ Echo mixing
-    ldr r9, [r2]
+    @ DSP Echo Mixing
+	ldmia r2, {r9,r12}
     mla r9, r8, LEFT_CALC_VOL, r9
-    str r9, [r2], #4
-
-    ldr r9, [r2]
-    mla r9, r8, RIGHT_CALC_VOL, r9
-    str r9, [r2], #4
-
-mixEchoDisabled:
-    ldr r9, [r1]
+    mla r12, r8, RIGHT_CALC_VOL, r12
+    stmia r2!, {r9,r12}
+    
+    ldmia r1, {r9,r12}
     mla r9, r8, LEFT_CALC_VOL, r9
-    str r9, [r1], #4
-
-    ldr r9, [r1]
-    mla r9, r8, RIGHT_CALC_VOL, r9
-    str r9, [r1], #4
-
+    mla r12, r8, RIGHT_CALC_VOL, r12
+	stmia r1!, {r9,r12}
+	
+endMixEcho:
     subs r3, r3, #1
     bne mixLoopback
 

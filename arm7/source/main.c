@@ -16,7 +16,7 @@ void bootfile(){
 }
 
 // Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
-uint16 *playBuffer;
+uint16 playBuffer[MIXBUFSIZE * 2 * 2];
 volatile int soundCursor;
 bool paused = false;
 bool SPC_disable = true;
@@ -39,7 +39,6 @@ void SetupSoundSPC() {
 		TIMERXCNT(4) = TIMER_CASCADE | TIMER_ENABLE;
 	#endif    
 	
-	irqDisable(IRQ_TIMER3);
 	irqEnable(IRQ_TIMER2);
 }
  
@@ -50,7 +49,6 @@ void StopSoundSPC() {
     TIMERXCNT(2) = 0;
 	
 	irqDisable(IRQ_TIMER2);
-	irqEnable(IRQ_TIMER3);
 }
 
 void LoadSpc(const uint8 *spc) {
@@ -104,7 +102,7 @@ int main(int _argc, char **_argv) {
 	
 	update_spc_ports();
 	int i = 0; 
-    for (i = 0; i < MIXBUFSIZE * 4; i++) {
+    for (i = 0; i < MIXBUFSIZE; i++) {
         playBuffer[i] = 0;
     }
 	

@@ -40,6 +40,7 @@ uint8 firOffset ALIGNED;
 
 // externs from dspmixer.S
 uint32 DecodeSampleBlockAsm(uint8 *blockPos, sint16 *samplePos, struct DspChannel *channel);
+uint32 DecodeSampleBlockAsmUncached(uint8 *blockPos, sint16 *samplePos, struct DspChannel *channel); //required to remove audio cracks!
 extern uint8 channelNum;
 
 uint32 DecodeSampleBlock(struct DspChannel *channel) {
@@ -69,7 +70,7 @@ uint32 DecodeSampleBlock(struct DspChannel *channel) {
         }
     }
     channel->brrHeader = *cur;
-    DecodeSampleBlockAsm(cur, sample, channel);
+    DecodeSampleBlockAsmUncached(cur, sample, channel); //Coto: sdd-1 branch has always uncached samples because the S-DD1 sound engines are fast 
     channel->blockPos += 9;
     return 0;
 }
