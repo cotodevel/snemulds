@@ -39,7 +39,6 @@ void SetupSoundSPC() {
 		TIMERXCNT(4) = TIMER_CASCADE | TIMER_ENABLE;
 	#endif    
 	
-	irqDisable(IRQ_TIMER3);
 	irqEnable(IRQ_TIMER2);
 }
  
@@ -50,7 +49,6 @@ void StopSoundSPC() {
     TIMERXCNT(2) = 0;
 	
 	irqDisable(IRQ_TIMER2);
-	irqEnable(IRQ_TIMER3);
 }
 
 void LoadSpc(const uint8 *spc) {
