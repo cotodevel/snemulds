@@ -29,10 +29,14 @@ USA
 extern "C" {
 #endif
 
-	////////[Custom Memory implementation is selected]////////
+	////////[Default Memory implementation (newlib's malloc)]////////
 
 //Definition that overrides the weaksymbol expected from toolchain to init ARM9's TGDS memory allocation
 extern struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(bool isCustomTGDSMalloc);
+
+
+	////////[Custom Memory implementation: WoopsiSDK TGDS-multiboot interoperability]////////
+extern struct AllocatorInstance * getWoopsiSDKToolchainGenericDSMultibootMemoryAllocatorSetup(bool isCustomTGDSMalloc);
 
 #ifdef __cplusplus
 }
