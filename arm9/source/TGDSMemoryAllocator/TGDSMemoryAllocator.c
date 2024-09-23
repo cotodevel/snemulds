@@ -20,17 +20,11 @@ USA
 //This file abstracts specific TGDS memory allocator code which allows for either default malloc or custom implementation malloc, by overriding this source code.
 
 #include "posixHandleTGDS.h"
-#include "xmem.h"
 #include "dldi.h"
 #include "dsregs.h"
-#include "utilsTGDS.h"
+#include "xmem.h"
 
-////////[For custom Memory Allocator implementation]:////////
-//You need to override getProjectSpecificMemoryAllocatorSetup():
-//After that, TGDS project initializes the default/custom allocator automatically.
-
-
-	////////[Custom Memory implementation ]////////
+	////////[Default Memory implementation (newlib's malloc)]////////
 
 //Definition that overrides the weaksymbol expected from toolchain to init ARM9's TGDS memory allocation
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -41,6 +35,31 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(bool isCustomTGDSMalloc) {
+	struct AllocatorInstance * customMemoryAllocator = &CustomAllocatorInstance;
+	memset((u8*)customMemoryAllocator, 0, sizeof(CustomAllocatorInstance));
+	customMemoryAllocator->customMalloc = isCustomTGDSMalloc;
+	
+	customMemoryAllocator->ARM9MallocStartaddress = (u32)sbrk(0);
+	customMemoryAllocator->memoryToAllocate = (480*1024); //240K of free memory :(, this means GUI won't segfault now but ROM probably will (3MB or less) and will require a reload everytime GUI is tweaked 
+	customMemoryAllocator->CustomTGDSMalloc9 = (TGDSARM9MallocHandler)&malloc;
+	customMemoryAllocator->CustomTGDSCalloc9 = (TGDSARM9CallocHandler)&calloc;
+	customMemoryAllocator->CustomTGDSFree9 = (TGDSARM9FreeHandler)&free;
+	customMemoryAllocator->CustomTGDSMallocFreeMemory9 = (TGDSARM9MallocFreeMemoryHandler)&mallocGetFreeMemoryInBytes;
+	
+	//Memory Setup: ARM7 TGDS 64K = 0x03800000 ~ 0x03810000. TGDS Sound Streaming code: Custom ARM7 Sound
+	WRAM_CR = WRAM_32KARM9_0KARM7;
+
+	return customMemoryAllocator;
+}
+
+
+//
+
+
+	////////[Custom Memory implementation: WoopsiSDK TGDS-multiboot interoperability]////////
+
+//Definition that overrides the weaksymbol expected from toolchain to init ARM9's TGDS memory allocation
+struct AllocatorInstance * getWoopsiSDKToolchainGenericDSMultibootMemoryAllocatorSetup(bool isCustomTGDSMalloc){
 	struct AllocatorInstance * customMemoryAllocator = &CustomAllocatorInstance;
 	memset((u8*)customMemoryAllocator, 0, sizeof(CustomAllocatorInstance));
 	customMemoryAllocator->customMalloc = isCustomTGDSMalloc;

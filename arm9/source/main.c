@@ -46,6 +46,7 @@
 #include "soundTGDS.h"
 #include "special_mpu_settings.h"
 #include "snemul_cfg.h"
+#include "TGDSMemoryAllocator.h"
 
 //TGDS Soundstreaming API
 int internalCodecType = SRC_NONE; //Returns current sound stream format: WAV, ADPCM or NONE
@@ -582,8 +583,8 @@ int main(int argc, char ** argv){
 	bool isTGDSCustomConsole = false;	//reloading cause issues. Thus this ensures Console to be inited even when reloading
 	GUI_init(isTGDSCustomConsole);
 
-	bool isCustomTGDSMalloc = true;
-	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
+	bool isCustomTGDSMalloc = true; //default newlib-nds's malloc throws segfaults. Use Xmalloc and overwrite memory, at the expense of allocation issues. This because SnemulDS has ran out of memory.
+	setTGDSMemoryAllocator(getWoopsiSDKToolchainGenericDSMultibootMemoryAllocatorSetup(isCustomTGDSMalloc));
 	
 	isTGDSCustomConsole = true;
 	GUI_init(isTGDSCustomConsole);
