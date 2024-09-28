@@ -46,50 +46,10 @@ DecodeSampleBlockAsmUncached:
 DecodeSampleBlockAsm:
     stmfd sp!, {r4-r12,r14}
 
-/*
-    @ Save the last 4 samples for Linear interpolation (too slow to enable)
-    add r4, r1, #12 * 2
-    ldmia r4, {r5,r6}
-    sub r4, r1, #4 * 2
-    stmia r4, {r5,r6}
-*/
     @ Save the channel pointer
     mov r14, r2
 	
-/*    @ Hash the block, and skip the decode if we can
-    ldmia r0, {r4-r7}
-    ldr r8, =0x050C5D1F @ (2166136261 * 16777619)
-    ldr r9, =16777619
-    eor r8, r8, r4
-    mul r8, r9, r8
-    eor r8, r8, r5
-    mul r8, r9, r8
-    eor r8, r8, r6
-    @ r8 is the hashed value
-    ldr r4, brrHash
-    @ Compute the actual brr location minus the apu ram base
-    ldr r6, =APU_MEM
-    ldr r6, [r6]
-    sub r6, r0, r6
-    @ Compute the address of the cached samples in brrHash
-    add r3, r4, #0x8000
-    mov r6, r6, lsr #3
-    add r3, r3, r6, lsl #5
-    @ Load the previous hash value
-    ldr r5, [r4, r6, lsl #2]
-    str r8, [r4, r6, lsl #2]
-    cmp r5, r8
-    bne doDecode
-    @ Load the cached samples
-    ldmia r3, {r4-r11}
-    stmia r1!, {r4-r11}
-    ldrsh PREV0, [r1, #-2]
-    ldrsh PREV1, [r1, #-4]
-    b doneDecodeCached
-	
-doDecode:
-    stmfd sp!, {r3}
-*/
+
 finishDecode1:
     @ Load prev0 and prev1
     ldrsh PREV0, [r14, #62]
@@ -274,11 +234,6 @@ case3:
     bne case3
 
 doneDecode:
-/*    sub r1, r1, #32
-    ldmia r1, {r4-r11}
-    ldmfd sp!, {r1}
-    stmia r1, {r4-r11}*/
-
 finishDecode2:
 doneDecodeCached:
     @ Store prev0 and prev1
@@ -600,48 +555,13 @@ noSampleUpdate:
     @ TODO - The speed up hack doesn't work.  Find out why
     mov r12, SAMPLE_POS, lsr #12
     add r12, r0, r12, lsl #1
-    ldrsh r8, [r12, #DECODED_OFFSET]
-
-	@Linear interpolation Formula 
-/*
-	@output = (y0 + f*y1 - f*y0) + (y1 + f*y2 - f*y1) where f is a fraction (0.00196) of the height of the envelope cursor (represented as the sample position)
-	
-    @ Store changing values
-    stmfd sp!, {r5-r7, r9-r11,lr}
-
-	mov r5,#0
-	mov r10,r5
-	mov r11,r10
-	
-    @ r6 will be the fractional position
-    mov r6, #0xf << 1
-    and r6, r6, SAMPLE_POS, lsr #3
-    rsb r6, r6, #0x200
-
-    ldrsh r7, [r12, #DECODED_OFFSET - 6]	@y0
-	ldrsh r9, [r12, #DECODED_OFFSET - 4]	@y1
-	mov r8,r7
-	SMLAL r5,r8,r6,r9	@== y0 + f*y1 = lr / r8 got first sample
-	SMLAL r5,r10,r6,r7	@== f*y0 / r10 got second sample
-	subs r8, r8, r10	@ r8 is the new sample out of 2 interleaved samples
-	
-	@+
-	
-	ldrsh r7, [r12, #DECODED_OFFSET - 2]	@y2
-	ldrsh r9, [r12, #DECODED_OFFSET]		@y3
-    mov r8,r7
-	SMLAL r5,r8,r6,r9	@== y0 + f*y1 = lr / r8 got first sample
-	SMLAL r5,r11,r6,r7	@== f*y0 / r10 got second sample
-	subs r11, r8, r11	@ r11 is the new sample out of 2 interleaved samples
-	
-	@ r8 is the new interleaved sample
-	adds r8, r11, r8
-	
-	@ Restore changing values
-    ldmfd sp!, {r5-r7, r9-r11,lr}
-
-*/
-
+    
+    @simple interpolation filter
+	ldrsh r8, [r12, #DECODED_OFFSET]
+    ldrsh r9, [r12, #DECODED_OFFSET - 6]	
+	ldrsh r12, [r12, #DECODED_OFFSET - 4]
+    SMLAL r12,r8,r9,r12	@r9 (s16) * r12 (s16) + r8 (s16) = r8 (s16 extended to s64)
+    
 branchLocation:
     @ DSP Echo Mixing
 	ldmia r2, {r9,r12}
