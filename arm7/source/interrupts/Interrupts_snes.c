@@ -38,6 +38,7 @@ void Timer1handlerUser(){
 }
 
 static int apuMixPosition = 0;
+static int cyclesToExecute = spcCyclesPerSec / (MIXRATE / 17);
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
@@ -45,10 +46,13 @@ __attribute__((section(".itcm")))
 void Timer2handlerUser(){
 	if(SPC_disable == false){
 		soundCursor = MIXBUFSIZE - soundCursor;
+		s16 * leftOutputChannel = (s16 *)&(playBuffer[MIXBUFSIZE - soundCursor]);
+		s16 * rightOutputChannel = (s16 *)&(playBuffer[(MIXBUFSIZE - soundCursor) + (MIXBUFSIZE * 2)]);
+		
 		// Left channel
 		int channel = soundCursor == 0 ? 0 : 1;
 		SCHANNEL_TIMER(channel) = SOUND_FREQ(MIXRATE);
-		SCHANNEL_SOURCE(channel) = (uint32)&(playBuffer[MIXBUFSIZE - soundCursor]);
+		SCHANNEL_SOURCE(channel) = (uint32)leftOutputChannel;
 		SCHANNEL_LENGTH(channel) = (MIXBUFSIZE * 2) >> 2;
 		SCHANNEL_REPEAT_POINT(channel) = 0;
 		SCHANNEL_CR(channel) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0) | SOUND_16BIT;
@@ -56,13 +60,12 @@ void Timer2handlerUser(){
 		// Right channel
 		channel = soundCursor == 0 ? 2 : 3;
 		SCHANNEL_TIMER(channel) = SOUND_FREQ(MIXRATE);
-		SCHANNEL_SOURCE(channel) = (uint32)&(playBuffer[(MIXBUFSIZE - soundCursor) + (MIXBUFSIZE * 2)]);
+		SCHANNEL_SOURCE(channel) = (uint32)rightOutputChannel;
 		SCHANNEL_LENGTH(channel) = (MIXBUFSIZE * 2) >> 2;
 		SCHANNEL_REPEAT_POINT(channel) = 0;
 		SCHANNEL_CR(channel) = SCHANNEL_ENABLE | SOUND_ONE_SHOT | SOUND_VOL(0x7F) | SOUND_PAN(0x7F) | SOUND_16BIT;
 
 		DspMixSamplesStereo(MIXBUFSIZE, &playBuffer[soundCursor]);
-		const int cyclesToExecute = spcCyclesPerSec / (MIXRATE / 17); //Coto: New timer code will synchronize to NDS timer ticks. Will require several patches per game to adjust the correct samplerate for each one.
 		int samplesToMix = MIXBUFSIZE;
 		if (apuMixPosition + samplesToMix > MIXBUFSIZE * 4) {
 			int tmp = (apuMixPosition + samplesToMix) - (MIXBUFSIZE * 4);
