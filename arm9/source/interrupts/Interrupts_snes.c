@@ -105,10 +105,7 @@ void VcounterUser(){
 __attribute__((section(".itcm")))
 #endif
 void screenLidHasOpenedhandlerUser(){
-	//if console top screen, shut off console
-	if(GUI.consoleAtTopScreen == true){
-		detectAndTurnOffConsole();
-	}
+	
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware

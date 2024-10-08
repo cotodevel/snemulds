@@ -446,9 +446,18 @@ int GUI_update()
 	if (GUI.hide == 1)
 	{
 		if ((held & KEY_TOUCH) && !(released & KEY_TOUCH)){
-			// Show GUI
+			// ShowGUI
 			GUI.hide = 0;
-			setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT); 
+			
+			if(GUI.GBAMacroMode == true){
+				GUI.GBAMacroMode = false;
+				TGDSLCDSwap();
+				GUI.GBAMacroMode = true;
+				setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+			}
+			else{
+				setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT); 
+			}
 		}
 	}
 	else{

@@ -187,8 +187,8 @@ bool InitProjectSpecificConsole(){
 	GUI.Palette[39] = RGB8(255, 255, 255); // White
 	
 	//InitializeConsole(DefaultSessionConsole); //no, use native SnemulDS console engine, not the modified one by TGDS
-	GUI.consoleAtTopScreen = false;	//GUI console at bottom screen
-	GUI.consoleBacklightOn = true;	//Backlight On for console	
+	GUI.GBAMacroMode = false;	//GUI console at bottom screen
+	TGDSLCDSwap();
 	return true;
 }
 
@@ -995,6 +995,18 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 			return 1;
 		}break;
 		
+		case 8:{ //GBA Macro Mode
+			//GUI_printf("--");
+			GUI.GBAMacroMode = (int)arg >> 24;
+			if (!GUI.GBAMacroMode){
+				//GUI_printf("GBA Macro Mode Disabled");
+			}
+			else{
+				//GUI_printf("GBA Macro Mode Enabled");
+			}
+			return 1;
+		}break;
+
 		case 14: // IDSAVE			
 			saveOptionsToConfig(SNES.ROM_info.title);
 			return 1;						
@@ -1012,13 +1024,12 @@ int OptionsHandler(t_GUIZone *zone, int msg, int param, void *arg){
 
 t_GUIScreen *buildOptionsMenu(){
 	t_GUIScreen *scr = GUI_newScreen(16);
-		
+	
 	GUI_setZone   (scr, 7, 0, 0, 256, 24); // Title zone
 	GUI_linkObject(scr, 7, (void *)IDS_OPTIONS, GUIStatic_handler);
 
 	GUI_setZone   (scr, 0, 0, 28, 124, 28+52); // -> Layers menu
 	GUI_linkObject(scr, 0, GUI_PARAM(IDS_SCREEN), GUIStrButton_handler);
-	
 	
 	//"Options -> Backgrouns & Sprites Options" SEGFAULTS
 	GUI_setZone   (scr, 1, 132, 28, 256, 28+52); // -> Layers menu
@@ -1035,22 +1046,23 @@ t_GUIScreen *buildOptionsMenu(){
 	GUI_linkObject(scr, 3, GUI_CHOICE(IDS_SPEED+1, 3, CFG.WaitVBlank), GUIChoiceButton_handler); // CFG.WaitVBlank == 0 = vblank disabled / CFG.WaitVBlank == 1 = vblank fast / CFG.WaitVBlank == 2 = vblank full
 	
 	
-	GUI_setZone   (scr, 11, 24, 144, 256, 144+16); // Auto order static
+	GUI_setZone   (scr, 11, 24, 130, 256, 130+16); // Auto order static
 	GUI_linkObject(scr, 11, GUI_STATIC_LEFT(IDS_AUTO_SRAM, 0), GUIStaticEx_handler);
-	GUI_setZone   (scr, 5, 0, 144, 16, 144+16); // Automatic SRAM saving
+	GUI_setZone   (scr, 5, 0, 130, 16, 130+16); // Automatic SRAM saving
 	GUI_linkObject(scr, 5, GUI_CHOICE(IDS_CHECK, 2, CFG.EnableSRAM), GUIChoiceButton_handler);
-
-	//GUI_setZone   (scr, 6, 100, 84, 100+16, 84+16); // Memory pak extension
-	//GUI_linkObject(scr, 6, GUI_CHOICE(IDS_CHECK, 2, 0 > 0), GUIChoiceButton_handler);
-	//GUI_setZone   (scr, 12, 100+24, 84, 256, 84+16); 
-	//GUI_linkObject(scr, 12, GUI_STATIC_LEFT(IDS_USE_MEM_PACK, 0), GUIStaticEx_handler);		
-	//scr->zones[6].state |= GUI_ST_DISABLED;
+	
 	//scr instance , scr index, X pixel pos , pixel Y pos , zone Y, zone width
 	GUI_setZone   (scr, 12, 90, 94, 100+16, 84+10); // static
 	GUI_linkObject(scr, 12, GUI_STATIC_LEFT(IDS_RESETCFG, 0), GUIStaticEx_handler);
 	GUI_setZone   (scr, 6, 100+24, 84, 256, 84+10); // reset snemul.cfg
 	GUI_linkObject(scr, 6, GUI_CHOICE(IDS_RESETCFG+1, 1, 0), GUIChoiceButton_handler);
 	
+	int py = 131;
+	int px = 240;
+	GUI_setZone   (scr, 2, py + 28 /*px widget coord*/, py  /*py widget coord*/, 256, py+16); // GBA Macro Mode Auto order 
+	GUI_linkObject(scr, 2, GUI_STATIC_LEFT(IDS_GBA_MACRO_MODE, 0), GUIStaticEx_handler);
+	GUI_setZone   (scr, 8, px, py, px+16, py+16); // GBA Macro Mode button
+	GUI_linkObject(scr, 8, GUI_CHOICE(IDS_CHECK, 2, GUI.GBAMacroMode), GUIChoiceButton_handler);
 	
 	// Three elements
 	GUI_setZone(scr, 13, 0, 192-20, 0+88, 192);
@@ -1160,7 +1172,15 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		if (param == 7) // HideGUI
 		{
 			GUI.hide = 1;
-			setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
+			
+
+			if(GUI.GBAMacroMode == true){
+				TGDSLCDSwap();
+				setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+			}
+			else{
+				setBacklight(POWMAN_BACKLIGHT_TOP_BIT);
+			}
 		}
 		return 1;
 	}
