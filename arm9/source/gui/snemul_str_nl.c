@@ -117,6 +117,6 @@ sint8*  g_snemulds_str_nl[] =
 	"BG%d(low)",				/* 107 */
 	"Sprites %d",				/* 108 */			
 	"Config ",				/* 109 */	
-	"Reset now ",				/* 110 */	
+	"Reset now ",				/* 110 */
+	"GBA Macro Mode",				/* 111 */
 };
-
