@@ -86,6 +86,8 @@ GNU General Public License for more details.
 #define IDS_GC_SPRITES		108
 #define IDS_RESETCFG		109
 
+#define IDS_GBA_MACRO_MODE		111
+
 #ifdef __cplusplus
 extern "C" {
 #endif
