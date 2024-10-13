@@ -464,7 +464,7 @@ bool loadROM(char *name, int confirm){
 	
 	//APU cached samples feature--
 	//NTR mode:
-	//Since we’ve ran out of memory for NTR mode, if SNES rom is higher than 2.8~ MB, the BRR hashing feature will be disabled. 
+	//Since weï¿½ve ran out of memory for NTR mode, if SNES rom is higher than 2.8~ MB, the BRR hashing feature will be disabled. 
 	//Otherwise the feature will be enabled for either 4MB+ paging mode, or SNES rom is 2.8~ MB or less. Both scenarios have 270K free of EWRAM.
 
 	//TWL mode:
@@ -592,7 +592,8 @@ int main(int argc, char ** argv){
 	sint32 fwlanguage = (sint32)getLanguage(); //get language once User Settings have been loaded
 	GUI_setLanguage(fwlanguage);
 
-	int ret=FS_init(); 
+	bool minimumFSInitialization = true;
+	int ret=FS_init(minimumFSInitialization);
 	if (ret != 0)
 	{
 		GUI_printf(_STR(IDS_FS_FAILED));
@@ -792,7 +793,7 @@ int main(int argc, char ** argv){
 			
 			if(handleSPCSelect==true){
 				handleSPCSelect=false;
-				
+				/*
 				if (CFG.Sound_output || CFG.Jukebox)
 					APU_pause();
 				
@@ -803,6 +804,7 @@ int main(int argc, char ** argv){
 				selectSong(fileName);
 				
 				GUI_createMainMenu();	//Start GUI
+				*/
 			}
 			GUI_update();
 		}

@@ -39,9 +39,7 @@ GNU General Public License for more details.
 #include "gfx.h"
 #include "cfg.h"
 #include "apu.h"
-//#include "ram.h"
 #include "conf.h"
-//#include "frontend.h"
 #include "main.h"
 #include "ppu.h"
 #include "InterruptsARMCores_h.h"
@@ -56,6 +54,8 @@ GNU General Public License for more details.
 #include "consoleTGDS.h"
 #include "fileBrowse.h"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 #include "snemulds_memmap.h"
+#include "dirent.h"
+
 /* *********************** FAT ************************ */
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -259,4 +259,123 @@ int	FS_getFileSizeFatFS(sint8 *filename){
 	int size = f_size(&thisFD);
 	f_close(&thisFD);
 	return size;
+}
+
+sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt){
+	int	size = 0;
+	*cnt = size;
+	FS_lock();
+
+	//rebuild filelist
+	FRESULT result;
+	DIR dir;
+	int i = 0;
+	FILINFO fno;
+	result = f_opendir(&dir, (const TCHAR*)path);                       /* Open the directory */
+	if (result == FR_OK) {
+		for(;;){
+			result = f_readdir(&dir, &fno);                   /* Read a directory item */
+			int type = 0;
+			if (fno.fattrib & AM_DIR) {			           /* It is a directory */
+				type = FT_DIR;	
+			}
+			else if (									   /* It is a file */
+			(fno.fattrib & AM_RDO)
+			||
+			(fno.fattrib & AM_HID)
+			||
+			(fno.fattrib & AM_SYS)
+			||
+			(fno.fattrib & AM_ARC)
+			){
+				type = FT_FILE;			
+			}
+			else{	/* It is Invalid. */
+				type = FT_NONE;
+			}
+			
+			if (result != FR_OK || fno.fname[0] == 0){	//Error or end of dir. No need to handle the error here.
+				break;
+			}
+			
+			if(!strcmp(fno.fname, ".")){
+				continue;
+			}
+
+			if((type == FT_FILE) || (type == FT_DIR)){
+				if(mask){
+					sint8 *ext = _FS_getFileExtension(fno.fname);
+					if (ext && strstr(mask, ext)){
+						//filecount Increase
+						(*cnt)++;
+						size += strlen(fno.fname)+1;
+					}
+				}
+				else{
+					//filecount Increase
+					(*cnt)++;
+					size += strlen(fno.fname)+1;
+				}
+			}
+			
+		}
+		f_closedir(&dir);
+	}
+	
+	sint8	**list = (sint8	**)malloc((*cnt)*sizeof(sint8 *)+size);
+	sint8	*ptr = ((sint8 *)list) + (*cnt)*sizeof(sint8 *);
+	
+	i = 0;
+	result = f_opendir(&dir, (const TCHAR*)path);                       /* Open the directory */
+	if (result == FR_OK) {
+		for(;;){
+			result = f_readdir(&dir, &fno);                   /* Read a directory item */
+			int type = 0;
+			if (fno.fattrib & AM_DIR) {			           /* It is a directory */
+				type = FT_DIR;	
+			}
+			else if (									   /* It is a file */
+			(fno.fattrib & AM_RDO)
+			||
+			(fno.fattrib & AM_HID)
+			||
+			(fno.fattrib & AM_SYS)
+			||
+			(fno.fattrib & AM_ARC)
+			){
+				type = FT_FILE;			
+			}
+			else{	/* It is Invalid. */
+				type = FT_NONE;
+			}
+			
+			if (result != FR_OK || fno.fname[0] == 0){	//Error or end of dir. No need to handle the error here.
+				break;
+			}
+			
+			if(!strcmp(fno.fname, ".")){
+				continue;
+			}
+
+			if((type == FT_FILE) || (type == FT_DIR)){
+				if(mask){
+					sint8 *ext = _FS_getFileExtension(fno.fname);
+					if (ext && strstr(mask, ext)){
+						strcpy(ptr, fno.fname);
+						list[i++] = ptr;
+						ptr += strlen(fno.fname)+1;  
+					}
+				}
+				else{
+					strcpy(ptr, fno.fname);
+					list[i++] = ptr;
+					ptr += strlen(fno.fname)+1;
+				}
+			}			
+		}
+		f_closedir(&dir);
+	}
+	
+	FS_unlock();
+	return list;
 }
