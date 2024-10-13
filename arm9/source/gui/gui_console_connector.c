@@ -1107,8 +1107,34 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		    //////////////////////////Halt emu, give control to GUI, and wait for A/B events//////////////////////////
 			SNES.Stopped = 1;
 		    GUI.ScanJoypad = 1;
-				
-			handleROMSelect=true;
+			
+			clrscr();
+			printf("----");
+			printf("----");
+			printf("----");
+			
+			printf("Want to Load Rom?");
+			printf("(X) No.");
+			printf("(Start) Yes.");
+			bool wantToLoadFile = false;
+			while(1 == 1){
+				scanKeys();
+				if(keysDown() & KEY_X){
+					break;
+				}
+				if(keysDown() & KEY_START){
+					wantToLoadFile = true;
+					break;
+				}
+			}
+			if(wantToLoadFile == true){
+				handleROMSelect=true;
+			}
+			else{
+				SNES.Stopped = 0;
+		    	GUI.ScanJoypad = 0;
+			}
+			
 			////////////////////////Halt emu, give control to GUI, and wait for A/B events end////////////////////////
 			return 1;
 		}

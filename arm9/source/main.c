@@ -579,7 +579,8 @@ int main(int argc, char ** argv){
 	sint32 fwlanguage = (sint32)getLanguage(); //get language once User Settings have been loaded
 	GUI_setLanguage(fwlanguage);
 	
-	int ret=FS_init(); 
+	bool minimumFSInitialization = true;
+	int ret=FS_init(minimumFSInitialization); 
 	if (ret != 0)
 	{
 		GUI_printf(_STR(IDS_FS_FAILED));
@@ -784,6 +785,7 @@ int main(int argc, char ** argv){
 			if(handleSPCSelect==true){
 				handleSPCSelect=false;
 				
+				/*
 				if (CFG.Sound_output || CFG.Jukebox)
 					APU_pause();
 				
@@ -794,6 +796,8 @@ int main(int argc, char ** argv){
 				selectSong(fileName);
 				
 				GUI_createMainMenu();	//Start GUI
+				*/
+				
 			}
 			GUI_update();
 		}
