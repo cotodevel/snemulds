@@ -53,6 +53,9 @@ extern int		FS_chdir(const sint8 *path);
 extern sint8 	*FS_getFileName(sint8 *filename);
 extern FIL fPagingFD;
 extern int fPagingFDInternal;
+
+extern sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt);
+
 #ifdef __cplusplus
 }
 #endif
