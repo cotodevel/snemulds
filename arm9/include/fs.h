@@ -43,6 +43,7 @@ GNU General Public License for more details.
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 extern sint8 *_FS_getFileExtension(sint8 *filename);
 extern int		FS_loadROM(sint8 *ROM, sint8 *filename);
 extern int		FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size);
@@ -53,6 +54,8 @@ extern int		FS_chdir(const sint8 *path);
 extern sint8 	*FS_getFileName(sint8 *filename);
 extern FIL fPagingFD;
 extern int fPagingFDInternal;
+extern sint8	**FS_getDirectoryList(sint8 *path, sint8 *mask, int *cnt);
+
 #ifdef __cplusplus
 }
 #endif
