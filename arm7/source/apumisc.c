@@ -2,6 +2,7 @@
 #include "spcdefs.h"
 #include "apu.h"
 #include "ipcfifoTGDSUser.h"
+#include "biosTGDS.h"
 
 struct Timer timers[3];
 uint32 apuTimerSkipCycles;
@@ -24,7 +25,12 @@ void ApuResetTimers() {
 }
 
 void ApuWriteControlByte(uint8 byte) {
-	uint8 orig = APU_MEM[APU_CONTROL_REG];
+    
+    if(APUSlowdownARM7 == 1){
+	    swiDelay(18000 * 12);
+    }
+
+    uint8 orig = APU_MEM[APU_CONTROL_REG];
     if ((orig & 0x1) == 0 && (byte & 0x1) != 0) {
         ApuResetTimer(0);
 		APU_MEM[APU_COUNTER0] = 0;
