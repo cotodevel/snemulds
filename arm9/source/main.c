@@ -390,6 +390,8 @@ bool loadROM(char *name, int confirm){
 	while (i >= 0 && SNES.ROM_info.title[i] == ' '){
 		SNES.ROM_info.title[i--] = '\0';
 	}
+
+	SNEMULDS_IPC->APUSlowdown = (int)0; //No game titles slow down the APU, unless explicitely told.
 	if(
 		(__dsimode == true)
 		&&
@@ -422,21 +424,28 @@ bool loadROM(char *name, int confirm){
 		}
 		printf("Extended TWL Mem.");
 	}
-	//BOF I & II fix 
+	//NTR/TWL hardware fix: Solves BOF I & II freezing issues after battles 
 	else if(
-		(__dsimode == true)
-		&&
-		(strncmpi((char*)&SNES.ROM_info.title[0], "BREATH OF FIRE", 14) == 0)
+		strncmpi((char*)&SNES.ROM_info.title[0], "BREATH OF FIRE", 14) == 0
 	){
-		//Enable 16M EWRAM (TWL)
-		u32 SFGEXT9 = *(u32*)0x04004008;
-		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
-		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
-		*(u32*)0x04004008 = SFGEXT9;
-		ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
-		ROM = (char *)SNES_ROM_ADDRESS_NTR + (1024*256);
-		setCpuClock(true);
-		printf("Extended TWL Mem.");
+		if(__dsimode == true){
+			//Enable 16M EWRAM (TWL)
+			u32 SFGEXT9 = *(u32*)0x04004008;
+			//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
+			*(u32*)0x04004008 = SFGEXT9;
+			ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
+			ROM = (char *)SNES_ROM_ADDRESS_NTR + (1024*256);
+			setCpuClock(true);
+			printf("Extended TWL Mem. (BOF fix)");
+		}
+		else{
+			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
+			ROM = (char *)SNES_ROM_ADDRESS_NTR;
+			setCpuClock(false);
+			printf("Normal NTR Mem. (BOF fix)");	
+		}
+		SNEMULDS_IPC->APUSlowdown = (int)1;
 	}
 	else{
 		if(__dsimode == true){

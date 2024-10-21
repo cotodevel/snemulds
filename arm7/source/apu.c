@@ -9,8 +9,10 @@
 #include "apu.h"
 #include "ipcfifoTGDSUser.h"
 #include "apu_shared.h"
+
 const int brrHashLength = 0x2000 + (0x40000 / 4);
 extern u32 *brrHash;
+int APUSlowdownARM7 = 0;
 
 void unimpl(uint8 opcode, uint16 startPC) {
 //    SendArm9Command(0x80000000 + opcode);
@@ -111,7 +113,8 @@ void ApuReset(u32 inApuCacheSamples, bool inApuCacheSamplesTWLMode, u32 * inSave
 		brrHash = (u32*)inSavedROMForAPUCache;
 		memset(brrHash, 0, brrHashLength);
 	}
-	
+	APUSlowdownARM7 = SNEMULDS_IPC->APUSlowdown;
+
     // 64k of arm7 iwram
     APU_MEM = APU_RAM_ADDRESS;
     APU_MEM_ZEROPAGEREAD = (uint8*)&MemZeroPageReadTable;

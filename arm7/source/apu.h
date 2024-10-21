@@ -41,6 +41,7 @@ struct Timer {
 extern "C" {
 #endif
 
+extern int APUSlowdownARM7;
 extern void ApuExecute(uint32 cycles);
 extern uint8 *APU_MEM;
 extern uint8 APU_EXTRA_MEM[64];
@@ -70,6 +71,7 @@ extern uint8 iplRom[64];
 extern struct Timer timers[3];
 extern uint32 apuTimerSkipCycles;
 extern uint8 apuShowRom;
+
 #ifdef __cplusplus
 }
 #endif
