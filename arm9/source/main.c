@@ -429,10 +429,6 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		memset(CFG.ROMFile, 0, sizeof(CFG.ROMFile));
 		strcpy(CFG.ROMFile, romname);
 		
-		//Handle special cases for TWL extended mem games like Megaman X3 Zero Project
-		coherent_user_range_by_size((uint32)TGDSIPCStartAddress, (int)sizeof(savedUserSettings));	
-		memcpy((void*)&savedUserSettings[0], (const void*)TGDSIPCStartAddress, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
-		
 		ROM = (char *)SNES_ROM_ADDRESS_NTR;
 		size = FS_getFileSizeFatFS((char*)&CFG.ROMFile[0]);
 		ROMheader = size & 8191;
@@ -561,6 +557,38 @@ int selectSong(char *name)
 	return 0;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void readSnemulDSFirmwareSettingsTWLMode(){
+	
+	//SnemulDS S-DD1 branch fix: https://bitbucket.org/Coto88/snemulds/issues/21/fix-snemulds-sdd-1-branch-touchscreen-when
+	if(__dsimode == true){
+		//Enable 16M EWRAM (TWL)
+		u32 SFGEXT9 = *(u32*)0x04004008;
+		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
+		*(u32*)0x04004008 = SFGEXT9;
+	}
+
+	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
+	setValueSafe(&fifomsg[40], (uint32)SNEMULDS_TGDSCMD_RELOADFLASHSETTINGS);
+	SendFIFOWords(SNEMULDS_TGDSCMD_RELOADFLASHSETTINGS, (uint32)0xFFFFFFFF);
+	while( ((uint32)getValueSafe(&fifomsg[40])) != ((uint32)0) ){
+		swiDelay(1);
+	}
+
+	//Save TWL EWRAM mode User Settings, enabling:
+	//TWL EWRAM mode (4MB+ games in TWL mode, page mode disabled) or NTR EWRAM mode (3M or less NTR mode + streaming page mode)
+	memcpy((void*)&savedUserSettings[0], (const void*)TGDSIPCStartAddress, sizeof(savedUserSettings));
+	coherent_user_range_by_size((uint32)savedUserSettings, (int)sizeof(savedUserSettings));
+
+}
+
 //---------------------------------------------------------------------------------
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("Os")))
@@ -681,6 +709,8 @@ int main(int argc, char ** argv){
 	
 	swiDelay(1000);
 	setupDisabledExceptionHandler();
+	
+	readSnemulDSFirmwareSettingsTWLMode();
 	
 	if(__dsimode == true){
 		TWLSetTouchscreenTWLMode();

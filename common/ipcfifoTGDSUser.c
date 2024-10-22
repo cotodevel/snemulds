@@ -31,7 +31,7 @@ USA
 #include "spcdefs.h"
 #include "spifwTGDS.h"
 #include "apu_shared.h"
-
+#include "usrsettingsTGDS.h"
 #endif
 
 #ifdef ARM9
@@ -151,6 +151,17 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 			fifomsg[40] = (uint32)0;	//release ARM9 APU_loadSpc()
 			SNEMULDS_IPC->APU_ADDR_CNT = 0; 
+		}
+		break;
+
+		case (SNEMULDS_TGDSCMD_RELOADFLASHSETTINGS):{
+			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
+			
+			//Read DHCP settings (in order)
+			LoadFirmwareSettingsFromFlash();
+			
+			setValueSafe(&fifomsg[40], (uint32)0);
 		}
 		break;
 		#endif

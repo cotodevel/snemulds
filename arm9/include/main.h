@@ -51,6 +51,8 @@ extern bool uninitializedEmu;
 extern bool resetSnemulDSConfig();
 extern void parseCFGFile();
 
+extern void readSnemulDSFirmwareSettingsTWLMode();
+
 #ifdef __cplusplus
 }
 #endif
