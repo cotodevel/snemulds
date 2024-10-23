@@ -532,6 +532,9 @@ bool loadROM(char *name, int confirm){
 		GUI_printf("[Normal Samplerate]");
 	}
 	
+	strncpy((char*)&SNEMULDS_IPC->snesHeaderName[0], (char*)&SNES.ROM_info.title[0], 10);
+	coherent_user_range_by_size((uint32)&SNEMULDS_IPC->snesHeaderName[0], (int)12);	
+	
 	initSNESEmpty(&uninitializedEmu, apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
 	memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 	clrscr();

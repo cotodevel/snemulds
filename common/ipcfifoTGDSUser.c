@@ -71,8 +71,9 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			apuCacheSamplesTWLMode = (bool)getValueSafe(&fifomsg[12]);	//ARM9 -> ARM7: bool inApuCacheSamplesTWLMode
 			savedROMForAPUCache = (u32*)getValueSafe(&fifomsg[13]);	//ARM9 -> ARM7: u32 * inSavedROMForAPUCache
 			
-			if (apuCacheSamplesTWLMode == false){
-				sampleRateDivider = spcCyclesPerSec / (MIXRATE / 18); 	//normal samplerate
+			//Slow down MMX series as they play too fast. Besides, it's assumed cached samples are enabled for these.
+			if ( (apuCacheSamplesTWLMode == false) && !(strncmpi((char*)&SNEMULDS_IPC->snesHeaderName[0], "MEGAMAN X", 9) == 0) ){
+				sampleRateDivider = spcCyclesPerSec / (MIXRATE / 18); 	//fast samplerate
 			}
 			else{
 				sampleRateDivider = spcCyclesPerSec / (MIXRATE / 17);	//slower samplerate
