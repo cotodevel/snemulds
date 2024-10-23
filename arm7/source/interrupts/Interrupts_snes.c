@@ -42,6 +42,12 @@ static int apuMixPosition = 0;
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void Timer2handlerUser(){
 	if(SPC_disable == false){
 		soundCursor = MIXBUFSIZE - soundCursor;
