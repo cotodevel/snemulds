@@ -2,15 +2,14 @@
 
 # SnemulDS 0.6d [NTR/TWL SDK: TGDS1.65]
 
-Stable Release: 
-
+[Stable Release]:
 Default game session (No coprocessor) / CX4:
 	- https://bitbucket.org/Coto88/SnemulDS/get/TGDS1.65.zip
 
-DSP-1:
+DSP-1: Plays DSP-only games! There are some sprite issues, and speed is a bit slower, but hey these play!
 	- https://bitbucket.org/Coto88/SnemulDS/get/dsp.zip
 
-S-DD1 (DSi or up only):
+S-DD1 (DSi or up only): Added S-DD1 co processor support! Street Fighter Alpha 2 is fully playable now. Star Ocean is UNSUPPORTED. DS Mode is too slow for sdd-1!
 	- https://bitbucket.org/Coto88/SnemulDS/get/sdd1.zip
 
 Usage:
