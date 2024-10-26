@@ -48,7 +48,6 @@ extern uint8 APU_EXTRA_MEM[64];
 extern uint32 APU_SP;
 extern uint32 CpuJumpTable[];
 
-extern uint32 MemWriteCounter;
 // 0 - A, 1 - X, 2 - Y, 3 - RAMBASE, 4 - DP, 5 - PC (Adjusted into rambase)
 // 6 - Cycles (bit 0 - C, bit 1 - v, bit 2 - h, bits 3+ cycles left)
 // 7 - Optable
@@ -58,9 +57,9 @@ extern uint8 MakeRawPSWFromState(uint32 state[16]);
 extern void SetStateFromRawPSW(uint32 state[16], uint8 psw);
 extern void ApuReset(u32 inApuCacheSamples, bool inApuCacheSamplesTWLMode, u32 * inSavedROMForAPUCache);
 extern void ApuPrepareStateAfterReload();
-extern void ApuUpdateTimers(uint32 cycles);
+extern void ApuUpdateTimers(uint32 cycles); //pocketspcv0.9 only
 extern void ApuWriteControlByte(uint8 byte);
-extern uint32 ApuReadCounter(uint32 address);
+extern uint32 ApuReadCounter(uint32 address); //pocketspcv0.9 only
 extern void ApuWriteUpperByte(uint8 byte, uint32 address);
 extern struct Timer timers[3];
 
@@ -69,8 +68,12 @@ extern void ApuResetTimers();
 //apumisc.c
 extern uint8 iplRom[64];
 extern struct Timer timers[3];
-extern uint32 apuTimerSkipCycles;
+extern uint32 apuTimerSkipCycles; //pocketspcv0.9 only
 extern uint8 apuShowRom;
+
+extern u32 ApuReadCounterHack(); 	//pocketspcv1.0 only
+extern u32 MemWriteCounter();		//pocketspcv1.0 only
+extern int cyclesToExecute;
 
 #ifdef __cplusplus
 }

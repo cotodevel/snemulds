@@ -3,9 +3,10 @@
 #include "apu.h"
 #include "ipcfifoTGDSUser.h"
 #include "biosTGDS.h"
+#include "main.h"
 
 struct Timer timers[3];
-uint32 apuTimerSkipCycles;
+uint32 apuTimerSkipCycles; //PocketSPCv0.9
 uint8 apuShowRom;
 
 void ApuResetTimer(int timer) {
@@ -21,7 +22,9 @@ void ApuResetTimers() {
     for (i = 0; i < 3; i++) {
         ApuResetTimer(i);
     }
-    apuTimerSkipCycles = 0;
+    if(PocketSPCVersion == 9){
+    	apuTimerSkipCycles = 0; //PocketSPCv0.9
+	}
 }
 
 void ApuWriteControlByte(uint8 byte) {
@@ -108,6 +111,7 @@ void ApuPrepareStateAfterReload() {
 	}
 }
 
+///////////////////////PocketSPCv0.9 start///////////////////////////
 void ApuUpdateTimer(int timer, int cyclesRun) {
     int shift;
     if (timer == 2) {
@@ -181,6 +185,27 @@ noSkip:
 
 	return 0;
 }
+///////////////////////PocketSPCv0.9 end///////////////////////////
+
+///////////////////////PocketSPCv1.0 start///////////////////////////
+u32 ApuReadCounterHack() {
+    u8 control = APU_MEM[APU_CONTROL_REG];
+    u32 val = 0xffffffff;
+    if ((control & 0x1) && (timers[0].enabled)) {
+        u32 tmp = (timers[0].target - timers[0].count) * (spcCyclesPerSec / 8000);
+        if (tmp < val) val = tmp;
+    }
+    if ((control & 0x2) && (timers[1].enabled)) {
+        u32 tmp = (timers[1].target - timers[1].count) * (spcCyclesPerSec / 8000);
+        if (tmp < val) val = tmp;
+    }
+    if ((control & 0x4) && (timers[2].enabled)) {
+        u32 tmp = (timers[2].target - timers[2].count) * (spcCyclesPerSec / 64000);
+        if (tmp < val) val = tmp;
+    }
+    return val;
+}
+///////////////////////PocketSPCv1.0 end///////////////////////////
 
 void ApuWriteUpperByte(uint8 byte, uint32 address) {
     APU_EXTRA_MEM[address - 0xFFC0] = byte;

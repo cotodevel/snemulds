@@ -79,6 +79,30 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 				sampleRateDivider = spcCyclesPerSec / (MIXRATE / 17);	//slower samplerate
 			}
 			
+			PocketSPCVersion = 9; //9 == default SPC timers. 10 == faster SPC timers
+			if(strncmpi((char*)&SNEMULDS_IPC->snesHeaderName[0], "Yoshi's Island", 14) == 0){
+				PocketSPCVersion = 10;
+			}
+			else if(strncmpi((char*)&SNEMULDS_IPC->snesHeaderName[0], "SUPER MARIOWORLD", 16) == 0){
+				PocketSPCVersion = 10;
+			}
+			else if(strncmpi((char*)&SNEMULDS_IPC->snesHeaderName[0], "Earthbound", 10) == 0){
+				PocketSPCVersion = 10;
+			}
+			
+			//TWL mode playback is full speed because cached samples are enabled. 
+			//NTR mode doesn't have that memory. Try this instead
+			else if( (__dsimode == false) && (strncmpi((char*)&SNEMULDS_IPC->snesHeaderName[0], "BREATH OF FIRE", 14) == 0) ){
+				PocketSPCVersion = 10;
+			}
+			
+			if(PocketSPCVersion == 9){
+                cyclesToExecute = spcCyclesPerSec / (MIXRATE / 8);
+            }
+            else if(PocketSPCVersion == 10){
+                cyclesToExecute = spcCyclesPerSec / (MIXRATE / MIXBUFSIZE); 
+            }
+
 			for (i = 0; i < MIXBUFSIZE * 4; i++) {
 				playBuffer[i] = 0;
 			}

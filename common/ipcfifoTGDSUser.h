@@ -38,7 +38,7 @@ struct sIPCSharedTGDSSpecific{
 	volatile uint8 * APU_ADDR_BLKP;	//#define (vuint8*)APU_ADDR_BLKP == APU_ADDR_BLK
 	uint32	APU_ADDR_CNT;	//#define APU_ADDR_CNT ((volatile uint32*)(0x2800000-60))	/ 0x27fffc4 // used a SNES SCanline counter, unused by snemulds
 	int APUSlowdown; 
-	char snesHeaderName[10];
+	char snesHeaderName[17];
 };
 
 // Project Specific
