@@ -22,6 +22,8 @@ uint16 playBuffer[MIXBUFSIZE * 2 * 2];
 volatile int soundCursor;
 bool paused = false;
 bool SPC_disable = true;
+int PocketSPCVersion = 0; //9 = pocketspcv0.9 / 10 = pocketspcv1.0
+
 void SetupSoundSPC() {
     soundCursor = 0;
 	SoundPowerON(127);		//volume
@@ -118,8 +120,7 @@ int main(int _argc, char **_argv) {
     struct sIPCSharedTGDSSpecific* TGDSUSERIPC = SNEMULDS_IPC;
     while (1) {
 		if(SPC_disable == false){
-            int cyclesToExecute = spcCyclesPerSec / (MIXRATE / 8); 
-			ApuExecute(cyclesToExecute);
+            ApuExecute(cyclesToExecute);
         }
 		else{
 			TGDSUSERIPC->APU_ADDR_ANS = (uint32)0xFF00FF00;

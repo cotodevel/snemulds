@@ -26,11 +26,20 @@
     b doneDispatch
 .ENDM
 
-.ALIGN
+.ALIGN 4
+.GLOBAL totalCpuCycles
+totalCpuCycles:
+.word 0
+
 .GLOBAL ApuExecute
 @ r0 - Number of cycles to execute
 ApuExecute:
 	stmfd sp!, {r4-r12,lr}
+    
+    ldr r1, totalCpuCycles
+	add r1, r1, r0
+	str r1, totalCpuCycles
+
 	ldr r1, =APU_STATE
 	ldmia r1, {r3-r11}
 

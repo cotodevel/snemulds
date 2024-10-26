@@ -18,7 +18,7 @@
 .EXTERN		DspWriteByte
 .EXTERN		ApuWriteControlByte
 .EXTERN     ApuWriteUpperByte
-
+.EXTERN		PocketSPCVersion
 .GLOBAL		MemWriteDoNothing
 MemWriteDoNothing:
     bx lr
@@ -79,23 +79,59 @@ MemWriteApuPort:
 	ldmfd sp!, {r0-r2}
     bx lr
 
+.EXTERN		ApuReadCounter	@PocketSPCv0.9
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@PocketSPCv1.0 only@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 .GLOBAL MemWriteCounter
 MemWriteCounter:
 	stmfd sp!, {r1-r2, lr}
-	strb r0, [APU_RAMBASE, r12]
+	ldr r1, =timers
+	sub r2, r12, #0xFA
+	add r1, r1, r2, lsl #4
+	@ Update the target
+	str r0, [r1]
 	ldmfd sp!, {r1-r2, lr}
     bx lr
-.EXTERN		ApuReadCounter
+    
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@PocketSPCv1.0 only end@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 .GLOBAL		MemReadDoNothing
 MemReadDoNothing:
     bx lr
 
-.GLOBAL		MemReadCounter
-MemReadCounter:
-    stmfd sp!, {r0-r3,lr}
+.GLOBAL		MemReadCounterSPCv10
+MemReadCounterSPCv10:
+	stmfd sp!, {r1,lr}
+    @ Is the counter != 0, then no hack needed
+    ldrb r0, [APU_RAMBASE, r12]
+    cmp r0, #0
+    bne noHack
+    @ Make sure at least one timer is enabled
+    ldrb r1, [APU_RAMBASE, #0xF1]
+    tst r1, #7
+    beq noHack
+    cmp r2, #64
+    bgt noHack
 
-    stmfd sp!, {r12}
+    @ We can do the hack
+	stmfd sp!, {r0-r3,r12,lr}
+	ldr r1, =ApuReadCounterHack
+	mov lr, pc
+    bx r1
+	@ r0 now has the number of cpu cycles to skip. 
+    add APU_CYCLES, APU_CYCLES, r0, lsl #CYCLE_SHIFT
+	ldmfd sp!, {r0-r3,r12,lr}
+
+noHack:
+	@ Reset the counter
+    mov r1, #0
+    strb r1, [APU_RAMBASE, r12]
+	ldmfd sp!, {r1,lr}
+	bx lr
+	
+.GLOBAL		MemReadCounterSPCv9
+MemReadCounterSPCv9:
+    stmfd sp!, {r0-r3,lr}
+	stmfd sp!, {r12}
 
     @ r0 = the memory value
     mov r0, r12
@@ -109,7 +145,6 @@ MemReadCounter:
     @ Reset the counter
     mov r2, #0
     strb r2, [APU_RAMBASE, r12]
-
 	ldmfd sp!, {r0-r3,lr}
     bx lr
 

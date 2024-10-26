@@ -13,6 +13,7 @@
 #include "dsp.h"
 #include "apu.h"
 #include "biosTGDS.h"
+#include "main.h"
 
 // Envelope timing table.  Number of counts that should be subtracted from the counter
 // The counter starts at 30720 (0x7800).
@@ -312,13 +313,20 @@ void DspKeyOnChannel(uint32 i) {
     DspSetChannelSource(i);
     DspStartChannelEnvelope(i);
 
-    channels[i].samplePos = 0;
+    if(PocketSPCVersion == 10){
+    	channels[i].samplePos = 16 << 12;
+	}
+	else{
+		channels[i].samplePos = 0;
+	}
 
     channels[i].brrHeader = 0;
     channels[i].prevSamp1 = 0;
     channels[i].prevSamp2 = 0;
 
-    DecodeSampleBlock(&(channels[i]));
+    if(PocketSPCVersion == 9){
+    	DecodeSampleBlock(&(channels[i]));
+	}
 
     channels[i].envCount = ENVCNT_START;
     channels[i].active = true;
