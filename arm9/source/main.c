@@ -556,6 +556,11 @@ int selectSong(char *name)
 	return 0;
 }
 
+//Skip newlib-nds's dlmalloc abort handler and let dlmalloc memory manager handle gracefully invalid memory blocks, later to be re-assigned when fragmented memory gets re-arranged as valid memory blocks.
+void ds_malloc_abortSkip(void){
+	
+}
+
 //---------------------------------------------------------------------------------
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("Ofast")))
@@ -675,6 +680,11 @@ int main(int argc, char ** argv){
 	powerOFF3DEngine(); //Power off ARM9 3D Engine to save power
 	REG_IME = 1;
 	
+	//Let dlmalloc handle memory management
+	extern void ds_malloc_abort(void);
+	u32 * fnPtr = (u32 *)&ds_malloc_abort;
+	mem_cpy((u8*)fnPtr, (u8*)&ds_malloc_abortSkip, 16);
+
 	swiDelay(1000);
 	setupDisabledExceptionHandler(); //Todo: Super Mario Kart Data Abort exception when choosing character
 	
