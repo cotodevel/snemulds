@@ -42,6 +42,7 @@ extern int main(int argc, char **argv);
 extern bool loadROM(char *name, int confirm);
 extern bool handleROMSelect;
 extern bool handleSPCSelect;
+extern void ds_malloc_abortSkip(void);
 
 extern char *GUI_getROMList(sint8 *rompath);
 extern char *GUI_getSPCList(sint8 *spcpath);
