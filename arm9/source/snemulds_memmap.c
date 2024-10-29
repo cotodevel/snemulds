@@ -121,6 +121,11 @@ void InitLoROMMap(int mode)
 		//1) 2MB or less LoROM Size: The bottom (32K x 64) blocks is mirrored, the next upper (32K x 64 pages) is mirrored as well. (Contiguous 2MB LoROM + mirrors)
 		if( SNES.ROMSize <= ((2*1024*1024) + (512*1024)) ){
 			LoROMMappedRange = 0x200000;
+			
+			//Fixes Megaman X2 lockups on NTR hardware
+			if ((strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X2", 10) == 0) && (__dsimode == false)){
+				LoROMMappedRange = (8*1024*1024);
+			}
 		}
 		
 		//2) 3MB or higher LoROM Size: 
