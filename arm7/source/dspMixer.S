@@ -560,11 +560,11 @@ noSampleUpdate:
 	ldrsh r9, [r12, #DECODED_OFFSET - 8]   @base interpolation sample point
     ldrsh r8, [r12, #DECODED_OFFSET - 2]	
 	ldrsh r14, [r12, #DECODED_OFFSET - 6]
-    SMLAL r14,r9,r8,r14	@r8 (s16) * r14 (s16) + r9 (s16) = r9 (s16 extended to s64)
+    mla r14,r9,r8,r14	@r8 (s16) * r14 (s16) + r9 (s16) = r9 (s16 extended to s64)
 
     ldrsh r8, [r12, #DECODED_OFFSET]        @base sample
 	ldrsh r14, [r12, #DECODED_OFFSET - 4]
-	SMLAL r14,r8,r9,r14	@r9 (s16) * r14 (s16) + r8 (s16) = r8 (s16 extended to s64)
+	mla r14,r8,r9,r14	@r9 (s16) * r14 (s16) + r8 (s16) = r8 (s16 extended to s64)
     
 branchLocation:
     @ DSP Echo Mixing
