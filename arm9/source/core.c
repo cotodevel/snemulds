@@ -1057,6 +1057,7 @@ void	W2104(uint32 addr, uint32 value)
          }
          PPU_PORT[0x04] = value;
 }
+
 __attribute__((section(".itcm")))         
 void	W2105(uint32 addr, uint32 value)
 {		
@@ -1068,6 +1069,25 @@ void	W2105(uint32 addr, uint32 value)
 	PPU_add_tile_address(1);
 	PPU_add_tile_address(2);
 }
+
+//SNES Mosaic register
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif       
+void	W2106(uint32 addr, u32 val)
+{	
+  u8 mosaicSnesFormat = (val & 0xFF);
+  int i = 0;
+	for(i = 0; i < (int)4; i++){
+    if (mosaicSnesFormat & (1 << i)) REG_BGXCNT(i) |= 0x0040;
+		else REG_BGXCNT(i) &= 0xFFFFFFBF;
+	}
+  *(vu16*)0x0400004C = (mosaicSnesFormat & 0xF0) | (mosaicSnesFormat >> 4);
+}
+
 __attribute__((section(".itcm")))         
 void	W2107(uint32 addr, uint32 value)
 {		
@@ -1607,7 +1627,7 @@ typedef uint32 (*IOReadFunc)(uint32 addr);
 __attribute__((section(".dtcm")))
 IOWriteFunc	IOWrite_PPU[0x90] =
 { 
-  W2100,  W2101,  W2102,  W2103,  W2104,  W2105,    NOP,  W2107,	/* 2100 */		
+  W2100,  W2101,  W2102,  W2103,  W2104,  W2105,  W2106,  W2107,	/* 2100 */		
   W2108,  W2109,  W210A,  W210B,  W210C,  W210D,  W210E,  W210F,	
   W2110,  W2111,  W2112,  W2113,  W2114,  W2115,  W2116,  W2117,	/* 2110 */
   W2118,  W2119,  W211A,  W211B,  W211C,  W211D,  W211E,  W211F,	
@@ -1633,7 +1653,7 @@ IOWriteFunc	IOWrite_PPU[0x90] =
 
 IOWriteFunc	IOWriteWord_PPU[0x90] =
 { 
-  W2100,  W2101,  W2102,  W2103,  W2104,  W2105,    NOP,  W2107,	/* 2100 */		
+  W2100,  W2101,  W2102,  W2103,  W2104,  W2105,  W2106,  W2107,	/* 2100 */		
   W2108,  W2109,  W210A,  W210B,  W210C, WW210D, WW210E, WW210F,	
  WW2110, WW2111, WW2112, WW2113, WW2114,  W2115,  W2116,  W2117,	/* 2110 */
   W2118,  W2119,  W211A,    NOP,    NOP,	NOP, 	NOP,	NOP,	
