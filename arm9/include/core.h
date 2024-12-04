@@ -132,6 +132,7 @@ extern void	W2102(uint32 addr, uint32 value);
 extern void	W2103(uint32 addr, uint32 value);
 extern void	W2104(uint32 addr, uint32 value);
 extern void	W2105(uint32 addr, uint32 value);
+extern void	W2106(uint32 addr, u32 value);
 extern void	W2107(uint32 addr, uint32 value);
 extern void	W2108(uint32 addr, uint32 value);
 extern void	W2109(uint32 addr, uint32 value);

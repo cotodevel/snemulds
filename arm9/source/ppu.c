@@ -1554,18 +1554,18 @@ void PPU_RenderLineMode1(uint32 NB_BG, uint32 MODE_1, uint32 MODE_2, uint32 MODE
   	// Use BG3 for duplicate of main layer
   	SB |= 0x08;
   	GFX.map_slot_ds[3] = map_duplicate2(GFX.map_slot[CFG.TilePriorityBG]);
-  	l->lBG3_CR = BG_COLOR_16 | order[3] | (GFX.map_slot_ds[3]<<8) |
+  	l->lBG3_CR = BG_MOSAIC_ON | BG_COLOR_16 | order[3] | (GFX.map_slot_ds[3]<<8) | 
   				(GFX.tile_slot[CFG.TilePriorityBG]<<2) | GFX.map_size[CFG.TilePriorityBG];
   	
   } else
-  	l->lBG3_CR = 0;
+  	l->lBG3_CR = BG_MOSAIC_ON |0;
   
   // FIXME: should block interrupt here
   l->lDISPLAY_CR = MODE_0_2D | DISPLAY_SPR_2D | (SB << 8);
-  l->lBG0_CR = BG_COLOR_16 | order[0] | (GFX.tile_slot[0]<<2)  | (GFX.map_slot_ds[0]<<8) | GFX.map_size[0];
-  l->lBG1_CR = BG_COLOR_16 | order[1] | (GFX.tile_slot[1]<<2)  | (GFX.map_slot_ds[1]<<8) | GFX.map_size[1];
+  l->lBG0_CR = BG_MOSAIC_ON |BG_COLOR_16 | order[0] | (GFX.tile_slot[0]<<2)  | (GFX.map_slot_ds[0]<<8) | GFX.map_size[0];
+  l->lBG1_CR = BG_MOSAIC_ON |BG_COLOR_16 | order[1] | (GFX.tile_slot[1]<<2)  | (GFX.map_slot_ds[1]<<8) | GFX.map_size[1];
   if (CFG.Scaled != 0 || (GFX.YScroll == 16 && CFG.BG3Squish == 0))
-  l->lBG2_CR = BG_COLOR_16 | order[2] | (GFX.tile_slot[2]<<2)  | (GFX.map_slot_ds[2]<<8) | GFX.map_size[2];
+  l->lBG2_CR = BG_MOSAIC_ON |BG_COLOR_16 | order[2] | (GFX.tile_slot[2]<<2)  | (GFX.map_slot_ds[2]<<8) | GFX.map_size[2];
 
   /* Transparency */
   if (CFG.Transparency && (PPU_PORT[0x30]&0x02) && (PPU_PORT[0x31] != 0))
@@ -1612,9 +1612,9 @@ void PPU_RenderLineMode3(uint32 MODE_1, uint32 MODE_2, t_GFX_lineInfo *l)
 
   // FIXME: should block interrupt here
   l->lDISPLAY_CR = MODE_0_2D | DISPLAY_SPR_2D | (SB << 8);
-  l->lBG0_CR = BG_COLOR_256 | order[0] | (GFX.tile_slot[0]<<2)  | (GFX.map_slot_ds[0]<<8) | GFX.map_size[0];
-  l->lBG1_CR = BG_COLOR_16 | order[1] | (GFX.tile_slot[1]<<2)  | (GFX.map_slot_ds[1]<<8) | GFX.map_size[1];
-  l->lBG2_CR = l->lBG3_CR = 0;
+  l->lBG0_CR = BG_MOSAIC_ON | BG_COLOR_256 | order[0] | (GFX.tile_slot[0]<<2)  | (GFX.map_slot_ds[0]<<8) | GFX.map_size[0];
+  l->lBG1_CR = BG_MOSAIC_ON | BG_COLOR_16 | order[1] | (GFX.tile_slot[1]<<2)  | (GFX.map_slot_ds[1]<<8) | GFX.map_size[1];
+  l->lBG2_CR = l->lBG3_CR = BG_MOSAIC_ON | 0;
   // FIXME
 }
 
@@ -1623,11 +1623,11 @@ void PPU_RenderLineMode7(t_GFX_lineInfo *l)
 	int SB = (CFG.BG_Layer&0x10)|((CFG.BG_Layer & 0x1) << 3);
 	
 	l->lDISPLAY_CR = MODE_2_2D | DISPLAY_SPR_2D | (SB << 8);
-  	l->lBG0_CR = 0; l->lBG1_CR = 0; l->lBG2_CR = 0;
+  	l->lBG0_CR = BG_MOSAIC_ON | 0; l->lBG1_CR = BG_MOSAIC_ON | 0; l->lBG2_CR = BG_MOSAIC_ON | 0;
   	if (!SNES.Mode7Repeat)
-	  	l->lBG3_CR = BG_COLOR_256 | (GFX.tile_slot[0]<<2)| BG_RS_128x128 | BG_PRIORITY(3) | BG_WRAP_ON;
+	  	l->lBG3_CR = BG_MOSAIC_ON | BG_COLOR_256 | (GFX.tile_slot[0]<<2)| BG_RS_128x128 | BG_PRIORITY(3) | BG_WRAP_ON;
 	else
-		l->lBG3_CR = BG_COLOR_256 | (GFX.tile_slot[0]<<2) | BG_RS_128x128 | BG_PRIORITY(3) ;
+		l->lBG3_CR = BG_MOSAIC_ON | BG_COLOR_256 | (GFX.tile_slot[0]<<2) | BG_RS_128x128 | BG_PRIORITY(3) ;
 
 
 	int X0 = (int)PPU_PORT[0x1F] << 19; X0 >>= 19;
@@ -1803,7 +1803,7 @@ void	PPU_updateGFX(int line)
 		BG3_CY = l->CY;*/
 		
 		DISPCNT = l->lDISPLAY_CR;
-		REG_BG3CNT = l->lBG3_CR;		
+		REG_BG3CNT = BG_MOSAIC_ON | l->lBG3_CR;		
 		return;		
 	}
 
@@ -1885,7 +1885,7 @@ void	PPU_line_handle_BG3()
 	  order = CFG.LayerPr[2];
 	}
 	
-	l->lBG2_CR = BG_COLOR_16 | order | (GFX.tile_slot[2]<<2)  | (GFX.map_slot_ds[2]<<8) | GFX.map_size[2];
+	l->lBG2_CR = BG_MOSAIC_ON | BG_COLOR_16 | order | (GFX.tile_slot[2]<<2)  | (GFX.map_slot_ds[2]<<8) | GFX.map_size[2];
     l->lBG2_X0 = PPU_PORT[(0x0D)+(2<<1)];
 
 	if (CFG.BG3Squish != 0)
