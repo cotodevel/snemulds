@@ -496,10 +496,8 @@ bool loadROM(char *name, int confirm){
 		apuCacheSamples = 0;
 	}
 	
-	//Only MegamanX2 & MegamanX3 has cached samples
+	//Only MegamanX2 & MegamanX3 has cached samples. Everything else has uncached samples
 	if(
-		(LoROM_Direct_ROM_Mapping == true)	//MMX1, MMX2 or MMX3?
-		&&
 		(!(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X2", 10) == 0))
 		&&
 		(!(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X3", 10) == 0))

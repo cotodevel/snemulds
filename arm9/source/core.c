@@ -1223,6 +1223,188 @@ void	W2122(uint32 addr, uint32 value)
          PPU_PORT[0x21]++;
          PPU_PORT[0x22] = value;
 }
+
+//Window Registers:
+//SNES Window 1 == GBA Window 0
+//SNES Window 2 == GBA Window 1
+
+//2126h - WH0 - Window 1 Left Position (X1) (W)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif       
+void	W2126(uint32 addr, u32 val)
+{	
+  vu16 WH0 = (val & 0xFF);
+  //GBA
+  //4000040h - WIN0H - Window 0 Horizontal Dimensions (W)
+  //Bit   Expl.
+  //0-7   X2, Rightmost coordinate of window, plus 1
+  //8-15  X1, Leftmost coordinate of window
+  vu16 * WIN0H_ = (vu16 *)0x4000040;
+  vu16 regs = (*WIN0H_) & 0xFF; //Preserve X2
+  *WIN0H_ = (regs | (WH0 << 8));
+}
+
+//2127h - WH1 - Window 1 Right Position (X2) (W)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif       
+void	W2127(uint32 addr, u32 val)
+{	
+  vu16 WH1 = (val & 0xFF);
+  //GBA
+  //4000040h - WIN0H - Window 0 Horizontal Dimensions (W)
+  //Bit   Expl.
+  //0-7   X2, Rightmost coordinate of window, plus 1
+  //8-15  X1, Leftmost coordinate of window
+  vu16 * WIN0H_ = (vu16 *)0x4000040;
+  vu16 regs = (*WIN0H_) & 0xFF00; //Preserve X1
+  *WIN0H_ = (regs | WH1);
+}
+
+//2128h - WH2 - Window 2 Left Position (X1) (W)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif       
+void	W2128(uint32 addr, u32 val)
+{	
+  vu16 WH2 = (val & 0xFF);
+  //GBA
+  //4000042h - WIN1H - Window 1 Horizontal Dimensions (W)
+  //Bit   Expl.
+  //0-7   X2, Rightmost coordinate of window, plus 1
+  //8-15  X1, Leftmost coordinate of window
+  vu16 * WIN1H_ = (vu16 *)0x4000042;
+  vu16 regs = (*WIN1H_) & 0xFF; //Preserve X2
+  *WIN1H_ = (regs | (WH2 << 8));
+}
+
+//2129h - WH3 - Window 2 Right Position (X2) (W)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif       
+void	W2129(uint32 addr, u32 val)
+{	
+  vu16 WH3 = (val & 0xFF);
+  //GBA
+  //4000042h - WIN1H - Window 1 Horizontal Dimensions (W)
+  //Bit   Expl.
+  //0-7   X2, Rightmost coordinate of window, plus 1
+  //8-15  X1, Leftmost coordinate of window
+  vu16 * WIN1H_ = (vu16 *)0x4000042;
+  vu16 regs = (*WIN1H_) & 0xFF00; //Preserve X1
+  *WIN1H_ = (regs | WH3);
+}
+
+//2123h - W12SEL - Window BG1/BG2 Mask Settings (W)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif       
+void	W2123(uint32 addr, u32 val)
+{	
+	
+}
+
+
+//2124h - W34SEL - Window BG3/BG4 Mask Settings (W)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif       
+void	W2124(uint32 addr, u32 val)
+{	
+	
+}
+
+//2125h - WOBJSEL - Window OBJ/MATH Mask Settings (W)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif       
+void	W2125(uint32 addr, u32 val)
+{	
+	
+}
+
+
+//212Ah - WBGLOG - Window 1 Mask Logic (W)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif       
+void	W212A(uint32 addr, u32 val)
+{	
+	
+}
+
+//212Bh - WOBJLOG - Window 2 Mask Logic (W)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif       
+void	W212B(uint32 addr, u32 val)
+{	
+	
+}
+
+//212Eh - TMW - Window Area Main Screen Disable (W)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif       
+void	W212E(uint32 addr, u32 val)
+{	
+	
+}
+
+//212Fh - TSW - Window Area Sub Screen Disable (W)
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif       
+void	W212F(uint32 addr, u32 val)
+{	
+	
+}
+
 __attribute__((section(".itcm")))
 void	W2132(uint32 addr, uint32 value) 
 {
@@ -1434,8 +1616,8 @@ IOWriteFunc	IOWrite_PPU[0x90] =
   W2108,  W2109,  W210A,  W210B,  W210C,  W210D,  W210E,  W210F,	
   W2110,  W2111,  W2112,  W2113,  W2114,  W2115,  W2116,  W2117,	/* 2110 */
   W2118,  W2119,  W211A,  W211B,  W211C,  W211D,  W211E,  W211F,	
-  W2120,  W2121,  W2122,	NOP,	NOP,	NOP,	NOP,	NOP,	/* 2120 */
-	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	
+  W2120,  W2121,  W2122,	W2123,	W2124,	W2125,	W2126,	W2127,	/* 2120 */
+	W2128,	W2129,	W212A,	W212B,	NOP,	NOP,	W212E,	W212F,	
 	NOP,	NOP,  W2132,  W2133,	NOP,	NOP,	NOP,	NOP,	/* 2130 */
 	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	
   W2140,  W2141,  W2142,  W2143,	NOP,	NOP,	NOP,	NOP,	/* 2140 */	
@@ -1460,8 +1642,8 @@ IOWriteFunc	IOWriteWord_PPU[0x90] =
   W2108,  W2109,  W210A,  W210B,  W210C, WW210D, WW210E, WW210F,	
  WW2110, WW2111, WW2112, WW2113, WW2114,  W2115,  W2116,  W2117,	/* 2110 */
   W2118,  W2119,  W211A,    NOP,    NOP,	NOP, 	NOP,	NOP,	
-	NOP,  W2121, WW2122,	NOP,	NOP,	NOP,	NOP,	NOP,	/* 2120 */
-	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	
+	NOP,  W2121, WW2122,	W2123,	W2124,	W2125,	W2126,	W2127,	/* 2120 */
+	W2128,	W2129,	W212A,	W212B,	NOP,	NOP,	W212E,	W212F,	
 	NOP,	NOP,  W2132,  W2133,	NOP,	NOP,	NOP,	NOP,	/* 2130 */
 	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	NOP,	
   W2140,  W2141,  W2142,  W2143,	NOP,	NOP,	NOP,	NOP,	/* 2140 */	

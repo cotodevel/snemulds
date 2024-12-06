@@ -180,6 +180,18 @@ extern void	WW2113(uint32 addr, uint32 value);
 extern void	WW2114(uint32 addr, uint32 value);
 extern void	WW2122(uint32 addr, uint32 value);
 
+//Window Registers
+extern void	W2126(uint32 addr, u32 val);
+extern void	W2127(uint32 addr, u32 val);
+extern void	W2128(uint32 addr, u32 val);
+extern void	W2129(uint32 addr, u32 val);
+extern void	W2123(uint32 addr, u32 val);
+extern void	W2124(uint32 addr, u32 val);
+extern void	W2125(uint32 addr, u32 val);
+extern void	W212A(uint32 addr, u32 val);
+extern void	W212B(uint32 addr, u32 val);
+extern void	W212E(uint32 addr, u32 val);
+extern void	W212F(uint32 addr, u32 val);
 
 extern IOWriteFunc	IOWrite_PPU[0x90];
 extern IOWriteFunc	IOWriteWord_PPU[0x90];
