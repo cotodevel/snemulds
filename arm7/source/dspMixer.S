@@ -86,7 +86,9 @@ doDecode:
     stmfd sp!, {r3}
 
 finishDecode1:
-
+	ldrh r4, [r14, #54]
+	strh r4, [r14, #22]
+	
     @ Load prev0 and prev1
     ldrsh PREV0, [r14, #62]
     ldrsh PREV1, [r14, #64]
@@ -407,7 +409,8 @@ clearLoop:
     stmia r2!, {r3-r6}
     stmia r2!, {r3-r6}
     subs r0, r0, #4
-    bne clearLoop
+    cmp r0, #0
+    bgt clearLoop
 
     @ Load the initial mix buffer and echo position
     ldr r1, =mixBuffer
@@ -602,15 +605,16 @@ noSampleUpdate:
     mov r12, SAMPLE_POS, lsr #12
     add r12, r0, r12, lsl #1
     
-    @simple interpolation filter
-	ldrsh r9, [r12, #DECODED_OFFSET - 8]   @base interpolation sample point
-    ldrsh r8, [r12, #DECODED_OFFSET - 2]	
-	ldrsh r14, [r12, #DECODED_OFFSET - 6]
-    mla r14,r9,r8,r14	@r8 (s16) * r14 (s16) + r9 (s16) = r9 (s16 extended to s64)
-
-    ldrsh r8, [r12, #DECODED_OFFSET]        @base sample
-	ldrsh r14, [r12, #DECODED_OFFSET - 4]
-	mla r14,r8,r9,r14	@r9 (s16) * r14 (s16) + r8 (s16) = r8 (s16 extended to s64)
+    ldrsh r8, [r12, #DECODED_OFFSET]
+	
+	@ interpolate
+	@ final = ((final * pos4-11) + (finalprev * (255 - pos4-11))) >> 8
+	and r9, SAMPLE_POS, #0xFF0
+	ldrsh r12, [r12, #DECODED_OFFSET - 2]
+	mul r14, r8, r9
+	rsb r9, r9, #0xFF0
+	mla r14, r12, r9, r14
+	mov r8, r14, asr #12
     
 branchLocation:
     @ DSP Echo Mixing

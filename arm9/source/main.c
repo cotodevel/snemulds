@@ -486,6 +486,8 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		//TWL mode:
 		//Plenty of free memory; Use the BRR hash buffer @ EWRAM offset : (SNES_ROM_ADDRESS_TWL + ROM_MAX_SIZE_TWLMODE)
 		apuCacheSamplesTWLMode = false;
+		
+		/*
 		if(
 			(ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE)	//TWL mode
 			||
@@ -503,7 +505,9 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 				GUI_printf("APU Cached Samples: Enable [NTR mode]");
 			}
 		}
-		else{
+		else
+		*/
+		{
 			GUI_printf("APU Cached Sample: Disable ");
 			apuCacheSamples = 0;
 		}
