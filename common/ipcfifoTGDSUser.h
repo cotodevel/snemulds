@@ -53,9 +53,11 @@ struct sIPCSharedTGDSSpecific{
 
 //Standardized SnemulDS defs + TGDS Memory Layout ARM7/ARM9 Cores
 #define TGDSDLDI_ARM7_ADDRESS	((u32)(0x06000000)) // 0x06000000 ~ 0x06007FFF = 32K: DLDI
-#define APU_RAM_ADDRESS 		(u32)( ((int)TGDSDLDI_ARM7_ADDRESS) + (32*1024)) 	// 0x06008000 ~ 0x06017FFF = 96K APU WORK RAM
+#define APU_RAM_ADDRESS 		(u32)( ((int)TGDSDLDI_ARM7_ADDRESS) + (16*1024)) 	// 0x06008000 ~ 0x06017FFF = 96K APU WORK RAM
 #define TGDS_ARM7_MALLOCSTART (u32)( ((int)APU_RAM_ADDRESS) + (96*1024) )	// 0x06018000 ~ 0x06020000 = 32K ARM7 Malloc
 #define TGDS_ARM7_MALLOCSIZE (int)( (32*1024) )
+
+#define playBuffer ((s16*)TGDS_ARM7_MALLOCSTART)
 
 #define SNEMULDS_IPC ((struct sIPCSharedTGDSSpecific*)( ((int)0x2FFF000) - (80*16)))
 #define ALIGNED __attribute__ ((aligned(4)))

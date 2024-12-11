@@ -17,8 +17,6 @@ void bootfile(){
 
 int sampleRateDivider = 0;
 
-// Play buffer, left buffer is first MIXBUFSIZE * 2 uint16's, right buffer is next
-uint16 playBuffer[MIXBUFSIZE * 2 * 2];
 volatile int soundCursor;
 bool paused = false;
 bool SPC_disable = true;
@@ -31,7 +29,7 @@ void SetupSoundSPC() {
     TIMERXDATA(1) = TIMER_FREQ(MIXRATE);
     TIMERXCNT(1) = TIMER_DIV_1 | TIMER_ENABLE;
 
-    TIMERXDATA(2) = 0x10000 - MIXBUFSIZE;
+    TIMERXDATA(2) = 0x10000 - (MIXBUFSIZE - 1);
     TIMERXCNT(2) = TIMER_CASCADE | TIMER_IRQ_REQ | TIMER_ENABLE;
 	
     // Debug
@@ -44,6 +42,11 @@ void SetupSoundSPC() {
 	#endif    
 	
 	irqEnable(IRQ_TIMER2);
+	
+	u16 timerval = SOUND_FREQ(MIXRATE);
+	// make sure we don't write sound data at the position hardware is reading from
+	swiDelay(((0x10000 - timerval) * MIXBUFSIZE) >> 2);
+	
 }
  
 void StopSoundSPC() {
