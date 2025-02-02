@@ -10,6 +10,7 @@
 #include "powerTGDS.h"
 #include "dldi.h"
 #include "ipcfifoTGDSUser.h"
+#include "spifwTGDS.h"
 
 //TGDS-MB v3 bootloader
 void bootfile(){
@@ -111,8 +112,9 @@ int main(int _argc, char **_argv) {
     }
 	
 	SendFIFOWords(0xFF, 0xFF);
+    enableARM7TouchScreen();
     
-    struct sIPCSharedTGDSSpecific* TGDSUSERIPC = SNEMULDS_IPC;
+	struct sIPCSharedTGDSSpecific* TGDSUSERIPC = SNEMULDS_IPC;
     while (1) {
 		if(SPC_disable == false){
             int cyclesToExecute = spcCyclesPerSec / (MIXRATE / 8); 

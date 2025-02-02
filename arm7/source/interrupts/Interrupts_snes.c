@@ -114,7 +114,7 @@ void VblankUser(){
 __attribute__((section(".itcm")))
 #endif
 void VcounterUser(){
-	handleARM7SVC();	/* Do not remove, handles TGDS services */
+	taskARM7SVC(NULL);	/* Do not remove, handles TGDS services */
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware

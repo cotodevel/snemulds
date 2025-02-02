@@ -222,7 +222,8 @@ void setupLibUtils(){
 		NULL, //ARM9: bool stopSoundStream(struct fd * tgdsStructFD1, struct fd * tgdsStructFD2, int * internalCodecType)
 		NULL,  //ARM9: void updateStream() 
 		NULL, //ARM7 & ARM9: DeInitWIFI()
-		NULL //ARM9: bool switch_dswnifi_mode(sint32 mode)
+		NULL, //ARM9: bool switch_dswnifi_mode(sint32 mode)
+		NULL	//ARM9: void userCodeGDBStubProcess()
 	);
 	#endif
 	
