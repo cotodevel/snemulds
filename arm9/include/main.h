@@ -53,6 +53,7 @@ extern bool resetSnemulDSConfig();
 extern void parseCFGFile();
 
 extern void readSnemulDSFirmwareSettingsTWLMode();
+extern void onThreadOverflowUserCode(u32 * args);
 
 #ifdef __cplusplus
 }

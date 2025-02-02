@@ -270,7 +270,6 @@ int initSNESEmpty(bool * firstTime, u32 APUFixes){
 	return 0;
 }
 
-__attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
