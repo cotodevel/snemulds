@@ -51,6 +51,7 @@ extern char *argvs[8];
 extern bool uninitializedEmu;
 extern bool resetSnemulDSConfig();
 extern void parseCFGFile();
+extern void onThreadOverflowUserCode(u32 * args);
 
 #ifdef __cplusplus
 }
