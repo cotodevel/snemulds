@@ -6,7 +6,7 @@
 
 
 void
-init_crc_table (void *table, unsigned int polynomial)
+init_crc_table2 (void *table, unsigned int polynomial)
 // works for crc16 and crc32
 {
   unsigned int crc, i, j;
@@ -46,7 +46,7 @@ unsigned int crc32 (unsigned int crc, const void *buffer, unsigned int size)
   if (!crc32_table)
     {
       crc32_table = (unsigned int *) TGDSARM9Malloc(256 * 4);
-      init_crc_table (crc32_table, CRC32_POLYNOMIAL);
+      init_crc_table2 (crc32_table, CRC32_POLYNOMIAL);
     }
 
   crc = ~crc;
