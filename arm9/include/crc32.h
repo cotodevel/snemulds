@@ -33,7 +33,7 @@ GNU General Public License for more details.
 extern "C" {
 #endif
 
-extern void init_crc_table (void *table, unsigned int polynomial);
+extern void init_crc_table2 (void *table, unsigned int polynomial);
 extern unsigned int *crc32_table;
 extern void free_crc32_table (void);
 extern unsigned int crc32 (unsigned int crc, const void *buffer, unsigned int size);
