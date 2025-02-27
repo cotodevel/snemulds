@@ -392,16 +392,19 @@ bool loadROM(char *name, int confirm){
 		SNES.ROM_info.title[i--] = '\0';
 	}
 
+	char titleRead[32];
+	strcpy(titleRead, &SNES.ROM_info.title[0]);
+
 	SNEMULDS_IPC->APUSlowdown = (int)0; //No game titles slow down the APU, unless explicitely told.
 	if(
 		(__dsimode == true)
 		&&
 		(
-		(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0)
+		(strncmpi((char*)&titleRead[0], "MEGAMAN X", 9) == 0)
 		||
-		(strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0)
+		(strncmpi((char*)&titleRead[0], "DONKEY KONG COUNTRY 3", 21) == 0)
 		||
-		(strncmpi((char*)&SNES.ROM_info.title[0], "EARTH BOUND", 11) == 0) 
+		(strncmpi((char*)&titleRead[0], "EARTH BOUND", 11) == 0) 
 		)
 	){
 		//Enable 16M EWRAM (TWL)
@@ -411,15 +414,15 @@ bool loadROM(char *name, int confirm){
 		*(u32*)0x04004008 = SFGEXT9;
 		ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
 		
-		if (strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0){		//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100% (1/2)	
+		if (strncmpi((char*)&titleRead[0], "MEGAMAN X", 9) == 0){		//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100% (1/2)	
 			ROM = (char *)SNES_ROM_ADDRESS_NTR + (4*1024*1024); 
 			setCpuClock(true);
 		}
-		else if (strncmpi((char*)&SNES.ROM_info.title[0], "EARTH BOUND", 11) == 0){		//Enable Cached Samples: Earthbound	+ ROM masked as Read-Only
+		else if (strncmpi((char*)&titleRead[0], "EARTH BOUND", 11) == 0){		//Enable Cached Samples: Earthbound	+ ROM masked as Read-Only
 			ROM = (char *)SNES_ROM_ADDRESS_NTR + (4*1024*1024); 
 			setCpuClock(true);
 		}
-		else if (strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0){ //Fix DKC3 on TWL hardware
+		else if (strncmpi((char*)&titleRead[0], "DONKEY KONG COUNTRY 3", 21) == 0){ //Fix DKC3 on TWL hardware
 			ROM = (char *)SNES_ROM_ADDRESS_TWL + (4*1024*1024); 
 			setCpuClock(true);
 		}
@@ -427,7 +430,7 @@ bool loadROM(char *name, int confirm){
 	}
 	//NTR/TWL hardware fix: Solves BOF I & II freezing issues after battles 
 	else if(
-		strncmpi((char*)&SNES.ROM_info.title[0], "BREATH OF FIRE", 14) == 0
+		strncmpi((char*)&titleRead[0], "BREATH OF FIRE", 14) == 0
 	){
 		if(__dsimode == true){
 			//Enable 16M EWRAM (TWL)
@@ -441,7 +444,7 @@ bool loadROM(char *name, int confirm){
 			printf("Extended TWL Mem. (BOF fix)");
 		}
 		else{
-			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
+			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE; //BOF games will always run in paging mode (NTR/TWL). Later, rom size is updated anyway.
 			ROM = (char *)SNES_ROM_ADDRESS_NTR;
 			setCpuClock(false);
 			printf("Normal NTR Mem. (BOF fix)");	
@@ -464,7 +467,7 @@ bool loadROM(char *name, int confirm){
 	ROM_paging = (uchar *)((int)ROM+PAGE_SIZE); //SNES_ROM_PAGING_ADDRESS;
 	ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
 	
-	if(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X", 9) == 0){	//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100%	(2/2)
+	if(strncmpi((char*)&titleRead[0], "MEGAMAN X", 9) == 0){	//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100%	(2/2)
 		LoROM_Direct_ROM_Mapping = true;
 	}
 	else{
@@ -474,16 +477,21 @@ bool loadROM(char *name, int confirm){
 	
 	//APU cached samples feature--
 	//NTR mode:
-	//Since we�ve ran out of memory for NTR mode, if SNES rom is higher than 2.8~ MB, the BRR hashing feature will be disabled. 
-	//Otherwise the feature will be enabled for either 4MB+ paging mode, or SNES rom is 2.8~ MB or less. Both scenarios have 270K free of EWRAM.
+	//Since we�ve ran out of memory for NTR mode, if SNES rom is higher than 2.8~ MB and game is LoROM, the BRR hashing feature will be disabled. 
+	//Otherwise the feature will be enabled for either 4MB+ paging mode (HiROM always. LoROM is unimplemented for now), or SNES rom is 2.8~ MB or less. Both scenarios have 270K free of EWRAM.
 
 	//TWL mode:
 	//Plenty of free memory; Use the BRR hash buffer @ EWRAM offset : (SNES_ROM_ADDRESS_TWL + ROM_MAX_SIZE_TWLMODE)
 	apuCacheSamplesTWLMode = false; //false = normal sample rate, true = slower sample rate
 	if(
-		(ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE)	//TWL mode
+		(
+			(ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE)	//TWL mode
+			||
+			(size != ROM_MAX_SIZE_NTRMODE)	//NTR mode
+		)
 		||
-		(size != ROM_MAX_SIZE_NTRMODE)	//NTR mode
+		//NTR/TWL Mode: Breath Of Fire runs in paging mode now to get the correct audio speed
+		(strncmpi((char*)&titleRead[0], "BREATH OF FIRE", 14) == 0)	
 	){
 		apuCacheSamples = 1;
 		if (ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE){	//TWL mode
@@ -497,11 +505,18 @@ bool loadROM(char *name, int confirm){
 		apuCacheSamples = 0;
 	}
 	
-	//Only MegamanX2 & MegamanX3 has cached samples. Everything else has uncached samples
+	//Only MegamanX2 & MegamanX3 has cached samples, or, exceptions below.
 	if(
-		(!(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X2", 10) == 0))
+		(
+			(!(strncmpi((char*)&titleRead[0], "MEGAMAN X2", 10) == 0))
+			&&
+			(!(strncmpi((char*)&titleRead[0], "MEGAMAN X3", 10) == 0))
+		)
 		&&
-		(!(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X3", 10) == 0))
+		//Prevent from picking up Breath Of Fire games. As they have cached samples enabled in NTR/TWL mode.
+		(
+			!(strncmpi((char*)&titleRead[0], "BREATH OF FIRE", 14) == 0)	
+		)
 	){
 		apuCacheSamples = 0;
 	}
@@ -522,7 +537,7 @@ bool loadROM(char *name, int confirm){
 	if (
 		(ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE)	//TWL mode
 		&&
-		(strncmpi((char*)&SNES.ROM_info.title[0], "EARTH BOUND", 11) == 0)	//Earthbound slower samplerate
+		(strncmpi((char*)&titleRead[0], "EARTH BOUND", 11) == 0)	//Earthbound slower samplerate
 	){		
 		apuCacheSamplesTWLMode = true;
 		GUI_printf("[Adjusted Samplerate]");
@@ -540,7 +555,12 @@ bool loadROM(char *name, int confirm){
 	GUI_printf(" - - ");
 	GUI_printf(" - - ");
 	GUI_printf("File:%s - Size:%d", CFG.ROMFile, size);
-	if (size-ROMheader > ROM_MAX_SIZE){
+	if (
+		(size-ROMheader > ROM_MAX_SIZE)
+		||
+		//NTR/TWL Mode: Breath Of Fire runs in paging mode now to get the correct audio speed
+		(strncmpi((char*)&titleRead[0], "BREATH OF FIRE", 14) == 0)
+	){
 		FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, PAGE_SIZE+ROMheader);
 		CFG.LargeROM = true;
 		crc = crc32(0, ROM, PAGE_SIZE);
@@ -550,7 +570,7 @@ bool loadROM(char *name, int confirm){
 		FS_loadROM(ROM-ROMheader, CFG.ROMFile);
 		CFG.LargeROM = false;
 		crc = crc32(0, ROM, size-ROMheader);
-		GUI_printf("CRC = %08x ", crc);
+		GUI_printf("NOT Large ROM detected. CRC = %08x ", crc);
 	}
 	coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
 	memcpy((void*)TGDSIPCStartAddress, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
