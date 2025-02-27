@@ -604,17 +604,15 @@ noSampleUpdate:
     @ TODO - The speed up hack doesn't work.  Find out why
     mov r12, SAMPLE_POS, lsr #12
     add r12, r0, r12, lsl #1
-    ldrsh r8, [r12, #DECODED_OFFSET]
-	
-	@ interpolate
-	@ final = ((final * pos4-11) + (finalprev * (255 - pos4-11))) >> 8
-	and r9, SAMPLE_POS, #0xFF0
-	ldrsh r12, [r12, #DECODED_OFFSET - 2]
-	mul r14, r8, r9
-	rsb r9, r9, #0xFF0
-	mla r14, r12, r9, r14
-	mov r8, r14, asr #12
-	
+    
+	@simple interpolation filter
+	ldrsh r9, [r12, #DECODED_OFFSET - 8]   @base interpolation sample point
+    ldrsh r8, [r12, #DECODED_OFFSET - 2]	
+	ldrsh r14, [r12, #DECODED_OFFSET - 6]
+    mla r14,r9,r8,r14	@r8 (s16) * r14 (s16) + r9 (s16) = r9 (s16 extended to s64)
+    ldrsh r8, [r12, #DECODED_OFFSET]        @base sample
+	ldrsh r14, [r12, #DECODED_OFFSET - 4]
+	mla r14,r8,r9,r14	@r9 (s16) * r14 (s16) + r8 (s16) = r8 (s16 extended to s64)
 
 branchLocation:
     @ DSP Echo Mixing
