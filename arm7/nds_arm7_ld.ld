@@ -37,12 +37,12 @@ _arm7_irqcheckbits = 0x04000000 - 8;	/* __irq_flags */
 _arm7_irqhandler = 0x04000000 - 4;	/* __irq_vector */
 
 /* ARM ABI says stacks are full decreasing */
-sp_SVC	= _iwram_end - 0x200;
-sp_IRQ	= sp_SVC - 0x200;
-sp_FIQ	= sp_IRQ - 0x200;
-sp_ABT	= sp_FIQ - 0x200;
-sp_UND	= sp_ABT - 0x200;
-sp_USR	= sp_UND - 0x200;
+sp_SVC	= _iwram_end - 0x100;
+sp_IRQ	= sp_SVC - 0x100;
+sp_FIQ	= sp_IRQ - 0x100;
+sp_ABT	= sp_FIQ - 0x100;
+sp_UND	= sp_ABT - 0x100;
+sp_USR	= sp_UND - 0x100;
 sp_SYS	= sp_USR;
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm","elf32-littlearm")
