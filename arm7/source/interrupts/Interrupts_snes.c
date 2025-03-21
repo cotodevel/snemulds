@@ -9,6 +9,7 @@
 #include "main.h"
 #include "apu_shared.h"
 #include "biosTGDS.h"
+#include "exceptionTGDS.h"
 
 //User Handler Definitions
 
@@ -98,6 +99,9 @@ void HblankUser(){
 	
 }
 
+static int touchscreenTimeoutCounter = 0;
+static bool TSCKeyActive = false;
+
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
@@ -113,13 +117,51 @@ void VblankUser(){
 		TIMER3_CR = TIMER_CASCADE | TIMER_ENABLE;
 	#endif
 	
+	//Count 10 seconds
+	if(SPC_disable == false){
+
+		scanKeys();
+		u32 keyHld = keysDown();
+		if(keyHld & KEY_TOUCH){
+			enableARM7TouchScreen();
+			touchscreenTimeoutCounter = 0;
+			TSCKeyActive = true;
+		}
+
+		//60 fps in 10 seconds: 600
+		if(touchscreenTimeoutCounter < 600){
+			touchscreenTimeoutCounter++;
+		}
+		else{
+
+			//disable tsc here
+			if(TSCKeyActive == true){
+				disableARM7TouchScreen();
+				touchscreenTimeoutCounter = 0;
+				TSCKeyActive = false;
+			}
+		}
+
+	}
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void VcounterUser(){
-	taskARM7SVC(NULL);	/* Do not remove, handles TGDS services */
+	if(TSCKeyActive == true){
+		//TGDS Touchscreen handling X/Y/Touchscreen
+	}
+	else{
+		//If touchscreen disabled, still get X/Y/Touchscreen keys (but no TSC coords)
+		u16 keys= REG_KEYXY;
+		struct sIPCSharedTGDS * sIPCSharedTGDSInst = (struct sIPCSharedTGDS *)TGDSIPCStartAddress;
+		struct touchPosition * sTouchPosition = (struct touchPosition *)&sIPCSharedTGDSInst->tscIPC;
+		
+		//ARM7 Keypad has access to X/Y/Hinge/Pen down bits
+		sIPCSharedTGDSInst->KEYINPUT7 = (uint16)REG_KEYINPUT;
+		sIPCSharedTGDSInst->buttons7	= keys;
+	}
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
