@@ -764,11 +764,16 @@ MemReloadPC:
 	stmia	r2,	{r3-r12,lr}			@Save Registers
 
 	bic		r1, r0, #0xFF000000 	@ real address
+	mov 	r3, r1
 	mov     r0, r1, lsr #13			@ Get Memory block
 	
-	stmfd	sp!, {r1, r2}
+	stmfd	sp!, {r1, r2, r3}
+	@mem_checkReload(r0 = blockInPage, r1 = bank, r2 = offset)
+	mov     r2, r1, lsl #16
+	mov     r2, r2, lsr #16
+	mov     r1, r1, lsr #16
 	bl		mem_checkReload
-	ldmfd	sp!, {r1, r2}
+	ldmfd	sp!, {r1, r2, r3}
 	add		r0, r0, r1 				@ get effective address
 	
 	ldr		r2, =SNEmulRegisters
@@ -780,10 +785,16 @@ MemReload2:
 	stmia	r2,	{r3-r12,lr}			@Save Registers
 
 	bic		r1, r0, #0xFF000000 	@ real address
+	mov 	r3, r1
 	mov     r0, r1, lsr #13			@ Get Memory block
-	stmfd	sp!, {r1, r2}
+	
+	stmfd	sp!, {r1, r2, r3}
+	@mem_checkReload(r0 = blockInPage, r1 = bank, r2 = offset)
+	mov     r2, r1, lsl #16
+	mov     r2, r2, lsr #16
+	mov     r1, r1, lsr #16
 	bl		mem_checkReload
-	ldmfd	sp!, {r1, r2}
+	ldmfd	sp!, {r1, r2, r3}
 	add		r0, r0, r1 				@ get effective address
 	
 	ldr		r2, =SNEmulRegisters
@@ -794,11 +805,16 @@ MemReload2:
 			  not loaded */	
 MemReload:
   	mov     r0, r1, lsr #13	@ Get Memory block
+	stmfd	sp!, {r1, r2, r3, lr}
+	mov 	r3, r1
   	
-  	stmfd	sp!, {r1, r2, lr}
   	@mov		r4, r1			@ r4 will be saved by C function
+	@mem_checkReload(r0 = blockInPage, r1 = bank, r2 = offset)
+	mov     r2, r1, lsl #16
+	mov     r2, r2, lsr #16
+	mov     r1, r1, lsr #16
 	bl		mem_checkReload
-	ldmfd	sp!, {r1, r2, lr}
+	ldmfd	sp!, {r1, r2, r3, lr}
 	add		r0, r0, r1 		@ get effective address
 	mov		r1, r2	
 

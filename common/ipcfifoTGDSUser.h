@@ -78,19 +78,6 @@ extern void update_spc_ports();
 
 //ARM7 & ARM9 shared
 extern int ROM_MAX_SIZE;
-extern int ROM_PAGING_SIZE;
-
-#define SNES_ROM_ADDRESS_NTR ((uchar *)(0x20C0000)) 
-#define SNES_ROM_ADDRESS_TWL ((uchar *)(0x20C9F00))
-
-#define ROM_MAX_SIZE_NTRMODE	(3*1024*1024)
-#define ROM_MAX_SIZE_TWLMODE	((6*1024*1024)+(512*1024)) //Max ROM size: 6.5MB
-
-#define	PAGE_SIZE		(64*1024)
-#define SNES_ROM_PAGING_ADDRESS (SNES_ROM_ADDRESS_NTR+PAGE_SIZE)
-
-//334K ~ worth of Hashed Samples from the APU core to remove stuttering
-#define APU_BRR_HASH_BUFFER_NTR	(volatile u32*)(((int)SNES_ROM_ADDRESS_NTR) + ROM_MAX_SIZE_NTRMODE - (334*1024) )	//(334*1024) = 342016 bytes / 64K blocks = 5 pages less useable on paging mode //  0x2AC800 (2.8~ MB) free SNES ROM non-paged
 
 extern u32 apuCacheSamples;
 extern bool apuCacheSamplesTWLMode;

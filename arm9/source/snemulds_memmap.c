@@ -15,21 +15,45 @@
  GNU General Public License for more details.
  */
 
-//Note: Do not put any of the memory paging in ITCM, it'll break the whole thing.
+//Note: Do not put any of the memory paging in ITCM, it'll break the streaming code.
+
+//Coto: April 2, 2025: Added LoROM streaming. No official games use it, but some rom hacks do, and since these exceed the NDS 4MB EWRAM, this update adds support for NTR mode.
 
 #include <string.h>
 #include <stdlib.h>
-#include "core.h"
+
+#ifndef ARM9
+#include "cpu.h"
+#endif
+
+#include "fs.h"
+#include "ppu.h"
+#include <string.h>
+#include <stdlib.h>
 #include "opcodes.h"
 #include "common.h"
 #include "snes.h"
 #include "cfg.h"
 #include "snemulds_memmap.h"
-#include "utilsTGDS.h"
+
+#ifdef ARM9
+#include "core.h"
 #include "c4.h"
 #include "ipcfifoTGDSUser.h"
+#include "utilsTGDS.h"
+#endif
 
-bool LoROM_Direct_ROM_Mapping = false;
+#if defined(_MSC_VER)
+u8 bgMapVRAM[128*1024];
+u8 spriteMapVRAM[128*1024];
+u8 VRAM[128*1024];
+#endif
+
+u8 * SNES_ROM_ADDRESS_NTR = NULL;
+u8 * SNES_ROM_ADDRESS_TWL = NULL;
+u8 * SNES_ROM_PAGING_ADDRESS = NULL;
+u32* APU_BRR_HASH_BUFFER_NTR = NULL;
+bool LoROM_Direct_ROM_Mapping;
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -65,7 +89,7 @@ void FixMap()
 
 	for (c = 0; c < 0x800; c++)
 	{
-		if ( ((u32)MAP[c] != (u32)MAP_RELOAD) && REGULAR_MAP(MAP[c]))
+		if ( ((u32)MAP[c] != (u32)MAP_PAGING) && REGULAR_MAP(MAP[c]))
 		{
 			MAP[c] -= ((c << 13)&0xFF0000);
 		}
@@ -122,10 +146,13 @@ void InitLoROMMap(int mode)
 		if( SNES.ROMSize <= ((2*1024*1024) + (512*1024)) ){
 			LoROMMappedRange = 0x200000;
 			
+			//SnemulDS0.6d
+			#ifdef ARM9
 			//Fixes Megaman X2 lockups on NTR hardware
 			if ((strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X2", 10) == 0) && (__dsimode == false)){
 				LoROMMappedRange = (8*1024*1024);
 			}
+			#endif
 		}
 		
 		//2) 3MB or higher LoROM Size: 
@@ -144,13 +171,13 @@ void InitLoROMMap(int mode)
 	{
 		// Use Paging system... 
 		// Only a part of RAM is used static
-		maxRAM = PAGE_SIZE;
+		maxRAM = PAGE_LOROM;
 	}
 	else if (mode == USE_EXTMEM){
 		// Extended RAM mode...
 		// All RAM available is used static
 		// the remaining of mapping use extended RAM
-		maxRAM = ROM_MAX_SIZE;
+		maxRAM = ROM_MAX_SIZE_NTRMODE;
 		largeROM = (uint8 *)0x8000000 + SNES.ROMHeader;
 	}
 	else{
@@ -173,17 +200,18 @@ void InitLoROMMap(int mode)
 		}
 		for (i = c+4; i < c+8; i++)
 		{
-			if ( ((c>>1)<<13)-0x8000 < SNES.ROMSize)
-			{
-				MAP[i] = MAP[i+0x400] = &SNESC.ROM[(c>>1)<<13]-0x8000;	//bottom 32K ROM addressed
-				if (((c>>1)<<13)-0x8000 >= maxRAM)
-				{
-					if (mode == USE_PAGING)
-						MAP[i] = MAP[i+0x400] = (uint8*)MAP_RELOAD;
-					else
-						MAP[i] = MAP[i+0x400] = largeROM+((c>>1)<<13)-0x8000;
-				}				
-			}			
+			int pageMap = ((c>>1)<<13)-0x8000;
+			if (pageMap > SNES.ROMSize){ 
+				// FIXED ?
+			}
+			else{
+				if(pageMap < ROM_PAGING_SIZE){
+					MAP[i] = MAP[i+0x400] = &SNESC.ROM[pageMap];
+				}
+				else{
+					MAP[i] = MAP[i+0x400] = (uint8*)MAP_PAGING;
+				}
+			}		
 			SNES.BlockIsROM[i] = SNES.BlockIsROM[i+0x400] = TRUE;
 		}
 	}
@@ -208,8 +236,18 @@ void InitLoROMMap(int mode)
 		for (i = c; i < c+4; i++)
 		{
 			if(LoROM_Direct_ROM_Mapping == true){
-				if( ((c>>1)<<13) < SNES.ROMSize){
-					MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[((c>>1)<<13)];	 //upper 32K ROM addressed
+
+				int pageMap = ((c>>1)<<13);
+				if (pageMap > SNES.ROMSize){ 
+					// FIXED ?
+				}
+				else{
+					if(pageMap < ROM_PAGING_SIZE){
+						MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[pageMap]; //upper 32K ROM addressed
+					}
+					else{
+						MAP[i+0x200] = MAP[i+0x600] = (uint8*)MAP_PAGING;
+					}
 				}
 			}
 			else if ( (((c>>1)<<13)+0x200000 < SNES.ROMSize) && (LoROM_Direct_ROM_Mapping == false))
@@ -218,7 +256,7 @@ void InitLoROMMap(int mode)
 				if (((c>>1)<<13)+0x200000 >= maxRAM)
 				{
 					if (mode == USE_PAGING)
-						MAP[i+0x200] = MAP[i+0x600] = (uint8*)MAP_RELOAD;
+						MAP[i+0x200] = MAP[i+0x600] = (uint8*)MAP_PAGING;
 					else
 						MAP[i+0x200] = MAP[i+0x600] = largeROM+((c>>1)<<13)+0x200000;
 				}				
@@ -227,7 +265,18 @@ void InitLoROMMap(int mode)
 		for (i = c+4; i < c+8; i++)
 		{
 			if(LoROM_Direct_ROM_Mapping == true){
-				MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[((c>>1)<<13)+LoROMMappedRange-0x200000-0x8000]; //bottom 32K ROM addressed: mirror of first 2MB or second 2MB chip
+				int pageMap = ((c>>1)<<13)+0x200000-0x8000;
+				if (pageMap > SNES.ROMSize){ 
+					// FIXED ?
+				}
+				else{		
+					if(pageMap < ROM_PAGING_SIZE){
+						MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[pageMap]; //bottom 32K ROM addressed: mirror of first 2MB or second 2MB chip: todo
+					}
+					else{
+						MAP[i+0x200] = MAP[i+0x600] = (uint8*)MAP_PAGING;
+					}
+				}
 			}
 			else if ( ((((c>>1)<<13)+0x200000-0x8000) < SNES.ROMSize) && (LoROM_Direct_ROM_Mapping == false))
 			{
@@ -235,7 +284,7 @@ void InitLoROMMap(int mode)
 				if (((c>>1)<<13)+0x200000-0x8000 >= maxRAM)
 				{
 					if (mode == USE_PAGING)
-						MAP[i+0x200] = MAP[i+0x600] = (uint8*)MAP_RELOAD;
+						MAP[i+0x200] = MAP[i+0x600] = (uint8*)MAP_PAGING;
 					else
 						MAP[i+0x200] = MAP[i+0x600] = largeROM+((c>>1)<<13)+0x200000-0x8000;
 				}				
@@ -282,13 +331,13 @@ void InitHiROMMap(int mode)
 	{
 		// Use Paging system... 
 		// Only a part of RAM is used static
-		maxRAM = PAGE_SIZE;
+		maxRAM = PAGE_HIROM;
 	}
 	else if (mode == USE_EXTMEM){
 		// Extended RAM mode...
 		// All RAM available is used static
 		// the remaining of mapping use extended RAM
-		maxRAM = ROM_MAX_SIZE;
+		maxRAM = ROM_MAX_SIZE_NTRMODE;
 		largeROM = (uint8 *)0x8000000 + SNES.ROMHeader;
 	}
 	else{
@@ -316,7 +365,7 @@ void InitHiROMMap(int mode)
 				if ((c<<13) >= maxRAM)
 				{
 					if (mode == USE_PAGING)
-						MAP[i] = MAP[i+0x400] = (uint8*)MAP_RELOAD;
+						MAP[i] = MAP[i+0x400] = (uint8*)MAP_PAGING;
 					else
 						MAP[i] = MAP[i+0x400] = largeROM+(c<<13);
 				}				
@@ -343,7 +392,7 @@ void InitHiROMMap(int mode)
 				if ((c<<13) >= maxRAM)
 				{
 					if (mode == USE_PAGING)
-						MAP[i+0x200] = MAP[i+0x600] = (uint8*)MAP_RELOAD;
+						MAP[i+0x200] = MAP[i+0x600] = (uint8*)MAP_PAGING;
 					else
 						MAP[i+0x200] = MAP[i+0x600] = largeROM+(c<<13);
 				}				
@@ -368,46 +417,47 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void mem_clear_paging(){
-	if (ROM_paging)
+	if (ROM_paging_offs)
 	{
 		TGDSARM9Free(ROM_paging_offs);
-		ROM_paging = NULL;
 		ROM_paging_offs = NULL;
 	}
+	ROM_paging = NULL;
 }
 
-void mem_init_paging(){
+void	mem_init_paging()
+{
+	#ifdef ARM9
+	SNES_ROM_ADDRESS_NTR = (u8*)(0x2100000);
+	SNES_ROM_ADDRESS_TWL = (u8*)(0x2109F00);
+#endif
+#ifdef _MSC_VER
+	if(SNES_ROM_ADDRESS_NTR){
+		TGDSARM9Free(SNES_ROM_ADDRESS_NTR);
+	}
+	if(SNES_ROM_ADDRESS_TWL){
+		TGDSARM9Free(SNES_ROM_ADDRESS_TWL);
+	}
+	SNES_ROM_ADDRESS_NTR = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_NTRMODE + ROM_PAGING_SIZE + APU_BRR_HASH_BUFFER_SIZE);
+	SNES_ROM_ADDRESS_TWL = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_TWLMODE + ROM_PAGING_SIZE + APU_BRR_HASH_BUFFER_SIZE);
+#endif
+	SNES_ROM_PAGING_ADDRESS = (u8*)(SNES_ROM_ADDRESS_NTR+ROM_MAX_SIZE_NTRMODE);
+	APU_BRR_HASH_BUFFER_NTR = (u32*)(((int)SNES_ROM_PAGING_ADDRESS) + ROM_PAGING_SIZE);	//(334*1024) = 342016 bytes / 64K blocks = 5 pages less useable on paging mode
+	
 	mem_clear_paging();
+
 	ROM_paging = SNES_ROM_PAGING_ADDRESS;
 	memset(ROM_paging, 0, ROM_PAGING_SIZE);
-	ROM_paging_offs = (uint16 *)TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
+	ROM_paging_offs = (uint16 *)TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_HIROM)*2);
 	if (!ROM_paging_offs)
 	{
 		printf("Not enough memory for ROM paging (2).\n");
 		while (1){}
 	}
-	memset(ROM_paging_offs, 0xFF, (ROM_PAGING_SIZE/PAGE_SIZE)*2);
+	memset(ROM_paging_offs, 0xFF, (ROM_PAGING_SIZE/PAGE_HIROM)*2);
 	ROM_paging_cur = 0;
 }
 
-void mem_setCacheBlock(int block, uchar *ptr)
-{
-	int i;
-
-	block <<= PAGE_OFFSET;
-	for (i = 0; i < PAGE_SIZE/8192; i++, block++)
-	{
-
-		if ((block & 7) >= 4)
-		{
-			MAP[block] = ptr+i*8192-(block << 13);
-			MAP[block+0x400] = ptr+i*8192-((block+0x400) << 13);
-		}
-		if (SNES.BlockIsROM[block+0x200])
-			MAP[block+0x200] = ptr+i*8192-((block+0x200) << 13);
-		MAP[block+0x600] = ptr+i*8192-((block+0x600) << 13);
-	}
-}
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -419,42 +469,125 @@ __attribute__ ((optnone))
 void mem_removeCacheBlock(int block)
 {
 	int i;
-
-	block <<= PAGE_OFFSET;
-	for (i = 0; i < PAGE_SIZE/8192; i++, block++)
-	{
-
-		if ((block & 7) >= 4)
+	if (SNES.HiROM){
+		block <<= PAGE_OFFSET_HIROM;
+		for (i = 0; i < PAGE_HIROM/8192; i++, block++)
 		{
-			MAP[block] = (u8*)MAP_RELOAD;
-			MAP[block+0x400] = (u8*)MAP_RELOAD;
+
+			if ((block & 7) >= 4)
+			{
+				MAP[block] = (u8*)MAP_PAGING;
+				MAP[block+0x400] = (u8*)MAP_PAGING;
+			}
+			if (SNES.BlockIsROM[block+0x200])
+				MAP[block+0x200] = (u8*)MAP_PAGING;
+			MAP[block+0x600] = (u8*)MAP_PAGING;
 		}
-		if (SNES.BlockIsROM[block+0x200])
-			MAP[block+0x200] = (u8*)MAP_RELOAD;
-		MAP[block+0x600] = (u8*)MAP_RELOAD;
+	}
+	else{
+		block <<= PAGE_OFFSET_LOROM;
+		for (i = 0; i < PAGE_LOROM/8192; i++, block++)
+		{
+			//LoROM: mirroring goes here. (for X-X3 AP fixes and then MMX3ZP)
+			if ((block & 7) >= 4)
+			{
+				MAP[block] = (u8*)MAP_PAGING;
+				MAP[block+0x400] = (u8*)MAP_PAGING;
+			}
+			if (SNES.BlockIsROM[block+0x200])
+				MAP[block+0x200] = (u8*)MAP_PAGING;
+			MAP[block+0x600] = (u8*)MAP_PAGING;
+		}
 	}
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("Os")))
+__attribute__((optimize("O0")))
 #endif
 
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-uint8 *mem_checkReload(int block){
+void mem_setCacheBlock(int block, uchar *ptr)
+{
+	int i;
+	if (SNES.HiROM){
+		block <<= PAGE_OFFSET_HIROM;
+		for (i = 0; i < PAGE_HIROM/8192; i++, block++)
+		{
+
+			if ((block & 7) >= 4)
+			{
+				MAP[block] = ptr+i*8192-(block << 13);
+				MAP[block+0x400] = ptr+i*8192-((block+0x400) << 13);
+			}
+			if (SNES.BlockIsROM[block+0x200])
+				MAP[block+0x200] = ptr+i*8192-((block+0x200) << 13);
+			MAP[block+0x600] = ptr+i*8192-((block+0x600) << 13);
+		}
+	}
+	else{
+		block <<= PAGE_OFFSET_LOROM;
+		for (i = 0; i < PAGE_LOROM/8192; i++, block++)
+		{
+			//LoROM: mirroring goes here. (for X-X3 AP fixes and then MMX3ZP)
+			if ((block & 7) >= 4)
+			{
+				MAP[block] = romPageToLoROMSnesPage(ptr, block);
+				MAP[block+0x400] = romPageToLoROMSnesPage(ptr, (block+0x400)); 
+			}
+			if (SNES.BlockIsROM[block+0x200])
+				MAP[block+0x200] = romPageToLoROMSnesPage(ptr, (block+0x200)); 
+			MAP[block+0x600] = romPageToLoROMSnesPage(ptr, (block+0x600));  
+		}
+	}
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+uint8 *	mem_checkReload(int blockInPage, uchar bank, uint32 offset)
+{
+	uint8* addr = NULL;
+	if (SNES.HiROM){
+		addr = mem_checkReloadHiROM(blockInPage);
+	}
+	else{
+
+		int addressRom = LoROMHandleOffset(bank, offset);
+		int blockRom = (addressRom>>13)&0x7FF;
+		addr = mem_checkReloadLoROM(blockInPage, blockRom);
+	}
+	return addr;
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+uint8 *mem_checkReloadHiROM(int block){
 	int i;uchar *ptr;int ret;
 	if (CFG.LargeROM == false){
 		return NULL;
 	}
-	i = (block & 0x1FF) >> PAGE_OFFSET;
+	i = (block & 0x1FF) >> PAGE_OFFSET_HIROM;
+
+	//SnemulDS 0.6d
+	#ifdef ARM9
 	if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF){
-		/* Check that we are not unloading program code */
+		// Check that we are not unloading program code 
 		uint32 cPC = ((S&0xFFFF) << 16)|(uint32)((sint32)PCptr+(sint32)SnesPCOffset);
-		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET;
+		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET_HIROM;
 		if (ROM_paging_offs[ROM_paging_cur] == PC_blk){
 			ROM_paging_cur++;
-			if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_SIZE) - 6) ){
+			if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_HIROM) - 6) ){
 				ROM_paging_cur = 0;
 			}
 		}
@@ -462,15 +595,20 @@ uint8 *mem_checkReload(int block){
 			mem_removeCacheBlock(ROM_paging_offs[ROM_paging_cur]);
 		}
 	}
+	#endif
 
 	ROM_paging_offs[ROM_paging_cur] = i;
-	ptr = ROM_paging+(ROM_paging_cur*PAGE_SIZE);
-	ret = FS_loadROMPage(ptr, SNES.ROMHeader+i*PAGE_SIZE, PAGE_SIZE);
-	coherent_user_range_by_size((uint32)ptr, (int)PAGE_SIZE);	//Make coherent old page before destroy (could be being in cpu cache)
+	ptr = ROM_paging+(ROM_paging_cur*PAGE_HIROM);
+	ret = FS_loadROMPage((char*)ptr, SNES.ROMHeader+i*PAGE_HIROM, PAGE_HIROM);
+
+	#ifdef ARM9
+	coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent old page before destroy (could be being in cpu cache)
+	#endif
+	
 	mem_setCacheBlock(i, ptr); // Give Read-only memory
 
 	ROM_paging_cur++;
-	if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_SIZE) - 6) ){
+	if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_HIROM) - 6) ){
 		ROM_paging_cur = 0;
 	}
 	return ptr+(block&7)*8192-(block << 13);
@@ -483,12 +621,41 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-void InitMap(){
+uint8 *	mem_checkReloadLoROM(int blockInPage, int blockInROM)
+{
+	int i;uchar *ptr;int ret;
+	if (CFG.LargeROM == false){
+		return NULL;
+	}
+	i = (blockInPage & 0x1FF) >> PAGE_OFFSET_LOROM; //8k x (1 << 3) = 64K pages
+	if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF){
+		mem_removeCacheBlock(ROM_paging_offs[ROM_paging_cur]);
+	}
+
+	ROM_paging_offs[ROM_paging_cur] = i;
+	ptr = ROM_paging+(ROM_paging_cur*PAGE_HIROM);
+	ret = FS_loadROMPage((char*)ptr, SNES.ROMHeader+ ((((blockInROM & 0x1FF)<<13)>>LoROM32kShift)<<LoROM32kShift) , PAGE_HIROM); //((RomOffset * 8192) / 32K) * 32K
+
+	#ifdef ARM9
+	coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent old page before destroy (could be being in cpu cache)
+	#endif
+
+	mem_setCacheBlock(i, ptr); // Give Read-only memory
+
+	ROM_paging_cur++;
+	if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_HIROM) - 6) ){
+		ROM_paging_cur = 0;
+	}
+	return romPageToLoROMSnesPage(ptr, blockInPage);
+}
+
+void	InitMap(){
 	int i;
+	int mode = 0;
 	for (i = 0; i < 256*8; i++){
 		MAP[i] = (uint8*)MAP_NONE;	
 	}
-	int mode = (CFG.LargeROM == false) ? NOT_LARGE : USE_PAGING; 
+	mode = (CFG.LargeROM == false) ? NOT_LARGE : USE_PAGING; 
 	if (SNES.HiROM){
 		InitHiROMMap(mode);
 	}
@@ -524,10 +691,12 @@ uint8 IO_getbyte(int addr, uint32 address){
 	}
 	break;
 
+	#ifdef ARM9
 	case MAP_CX4:{
 		return (S9xGetC4 ((address) & 0xffff));
 	}
 	break;
+	#endif
 
 	case MAP_HIROM_SRAM:{
 		if (SNESC.SRAMMask == 0)
@@ -565,11 +734,15 @@ void IO_setbyte(int addr, uint32 address, uint8 byte){
 		SNES.SRAMWritten = 1;
 		return;
 	}break;
+	
+	#ifdef ARM9
 	case MAP_CX4:{
 		S9xSetC4(byte, address & 0xffff);
 		return;
 	}
 	break;
+	#endif
+	
 	case MAP_HIROM_SRAM:{
 		if (SNESC.SRAMMask == 0)
 			return;
@@ -611,11 +784,15 @@ uint16 IO_getword(int addr, uint32 address)
 		result |= SNESC.SRAM[(address+1)&SNESC.SRAMMask]<<8;
 		return result;
 	}break;
+	
+	#ifdef ARM9
 	case MAP_CX4:{
 		return (S9xGetC4 (address & 0xffff) |
 			(S9xGetC4 ((address + 1) & 0xffff) << 8));
 	}
 	break;
+	#endif
+	
 	case MAP_HIROM_SRAM:{
 		if (SNESC.SRAMMask == 0)
 			return 0;
@@ -656,12 +833,16 @@ void IO_setword(int addr, uint32 address, uint16 word){
 		SNES.SRAMWritten = 1;
 		return;
 	}break;
+
+	#ifdef ARM9
 	case MAP_CX4:{
 		S9xSetC4 (word & 0xff, address & 0xffff);
 		S9xSetC4 ((uint8) (word >> 8), (address + 1) & 0xffff);
 		return;
 	}
 	break;
+	#endif
+	
 	case MAP_HIROM_SRAM:{
 		if (SNESC.SRAMMask == 0)
 			return;
@@ -685,9 +866,9 @@ uchar mem_getbyte(uint32 offset,uchar bank)
 	block = (address>>13)&0x7FF;
 	addr = MAP[block];
 
-	if ((u32)addr == (u32)MAP_RELOAD)
-	addr = mem_checkReload(block);
-	
+	if ((u32)addr == (u32)MAP_PAGING){
+		addr = mem_checkReload(block, bank, offset);
+	}
 	if (REGULAR_MAP(addr)){ //if address is within indirect mapped memory define (snes.h), a forced (below) IO_xxxx opcode takes place
 		return *(addr+address);
 	}
@@ -705,8 +886,9 @@ void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 
 	block = (address>>13)&0x7FF;
 	addr = WMAP[block];
-	if ((u32)addr == (u32)MAP_RELOAD)
-	addr = mem_checkReload(block);
+	if ((u32)addr == (u32)MAP_PAGING){
+		addr = mem_checkReload(block, bank, offset);
+	}
 	
 	if (REGULAR_MAP(addr) ){ //if address is within indirect mapped memory define (snes.h), a forced (below) IO_xxxx opcode takes place
 		*(addr+address) = byte;
@@ -726,8 +908,9 @@ ushort mem_getword(uint32 offset,uchar bank)
 	block = (address>>13)&0x7FF;
 	addr = MAP[block];
 
-	if ((u32)addr == (u32)MAP_RELOAD)
-	addr = mem_checkReload(block);
+	if ((u32)addr == (u32)MAP_PAGING){
+		addr = mem_checkReload(block, bank, offset);
+	}
 	
 	if (REGULAR_MAP(addr)){ //if address is within indirect mapped memory define (snes.h), a forced (below) IO_xxxx opcode takes place
 		return GET_WORD16(addr+address);
@@ -747,8 +930,9 @@ void mem_setword(uint32 offset, uchar bank, ushort word)
 	//  CPU.WaitAddress = -1;
 	block = (address>>13)&0x7FF;
 	addr = WMAP[block];
-	if ((u32)addr == (u32)MAP_RELOAD)
-	addr = mem_checkReload(block);
+	if ((u32)addr == (u32)MAP_PAGING){
+		addr = mem_checkReload(block, bank, offset);
+	}
 	
 	if (REGULAR_MAP(addr)){ //if address is within indirect mapped memory define (snes.h), a forced (below) IO_xxxx opcode takes place
 		SET_WORD16(addr+address, word);
@@ -774,9 +958,9 @@ void *mem_getbaseaddress(uint16 offset, uchar bank)
 	block = (address>>13)&0x7FF;
 	ptr = MAP[block];
 
-	if ((u32)ptr == (u32)MAP_RELOAD)
-		ptr = mem_checkReload(block);
-
+	if ((u32)ptr == (u32)MAP_PAGING){
+		ptr = mem_checkReload(block, bank, offset);
+	}
 	if (REGULAR_MAP(ptr))
 		return ptr+(bank<<16);
 
@@ -811,8 +995,9 @@ void *map_memory(uint16 offset, uchar bank)
 	block = (address>>13)&0x7FF;
 	ptr = MAP[block];
 
-	if ((u32)ptr == (u32)MAP_RELOAD)
-		ptr = mem_checkReload(block);
+	if ((u32)ptr == (u32)MAP_PAGING){
+		ptr = mem_checkReload(block, bank, offset);
+	}
 
 	if (REGULAR_MAP(ptr))
 		return ptr+address;
@@ -828,10 +1013,12 @@ void *map_memory(uint16 offset, uchar bank)
 	case MAP_HIROM_SRAM:
 		return SNESC.SRAM+(((address&0x7fff)-0x6000+
 						((address&0xf0000)>>3))&SNESC.SRAMMask);
+	#ifdef ARM9
 	case MAP_CX4:{
 		return SNESC.C4RAM + (offset&0x1FFF); //(snes.h: intercept #define MAP_CX4         0x86000000	//I/O  00-3F,80-BF:6000-7FFF)
 	}
 	break;						
+	#endif
 	default:
 		return 0;
 	}

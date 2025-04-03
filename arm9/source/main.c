@@ -356,6 +356,8 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 bool loadROM(char *name, int confirm){
+	mem_init_paging(); //Allocate pages
+
 	//wait until release A button
 	scanKeys();
 	u32 keys = keysPressed();
@@ -378,14 +380,14 @@ bool loadROM(char *name, int confirm){
 	coherent_user_range_by_size((uint32)TGDSIPCStartAddress, (int)sizeof(savedUserSettings));	
 	memcpy((void*)&savedUserSettings[0], (const void*)TGDSIPCStartAddress, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
 	
-	ROM = (char *)SNES_ROM_ADDRESS_NTR;
+	ROM = (char*)SNES_ROM_ADDRESS_NTR;
 	size = FS_getFileSizeFatFS(romname);
 	ROMheader = size & 8191;
 	if (ROMheader != 0&& ROMheader != 512){
 		ROMheader = 512;
 	}
 
-	FS_loadFileFatFS(CFG.ROMFile, ROM, PAGE_SIZE+ROMheader);
+	FS_loadFileFatFS(CFG.ROMFile, ROM, PAGE_HIROM+ROMheader);
 	load_ROM(ROM, size);
 	int i = 20;
 	while (i >= 0 && SNES.ROM_info.title[i] == ' '){
@@ -464,8 +466,7 @@ bool loadROM(char *name, int confirm){
 		setCpuClock(false);
 		printf("Normal NTR Mem.");
 	}
-	ROM_paging = (uchar *)((int)ROM+PAGE_SIZE); //SNES_ROM_PAGING_ADDRESS;
-	ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
+	ROM_MAX_SIZE = ROM_PAGING_SIZE;
 	
 	if(strncmpi((char*)&titleRead[0], "MEGAMAN X", 9) == 0){	//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100%	(2/2)
 		LoROM_Direct_ROM_Mapping = true;
@@ -545,11 +546,12 @@ bool loadROM(char *name, int confirm){
 	else{
 		GUI_printf("[Normal Samplerate]");
 	}
-	
+	int IsHiROM = SNES.HiROM;
 	strncpy((char*)&SNEMULDS_IPC->snesHeaderName[0], (char*)&SNES.ROM_info.title[0], 16);
 	coherent_user_range_by_size((uint32)&SNEMULDS_IPC->snesHeaderName[0], (int)16);
 	
 	initSNESEmpty(&uninitializedEmu, apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
+	
 	memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 	clrscr();
 	GUI_printf(" - - ");
@@ -561,10 +563,17 @@ bool loadROM(char *name, int confirm){
 		//NTR/TWL Mode: Breath Of Fire runs in paging mode now to get the correct audio speed
 		(strncmpi((char*)&titleRead[0], "BREATH OF FIRE", 14) == 0)
 	){
-		FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, PAGE_SIZE+ROMheader);
+		if (IsHiROM){	
+			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, PAGE_HIROM+ROMheader);
+			crc = crc32(0, ROM, PAGE_HIROM);
+			GUI_printf("(HiROM) Large ROM detected. CRC(1Mb) = %08x ", crc);
+		}
+		else{
+			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, ROM_PAGING_SIZE+ROMheader);
+			crc = crc32(0, ROM, ROM_PAGING_SIZE);
+			GUI_printf("(LoROM) Large ROM detected. CRC(1Mb) = %08x ", crc);
+		}
 		CFG.LargeROM = true;
-		crc = crc32(0, ROM, PAGE_SIZE);
-		GUI_printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
 	}
 	else{
 		FS_loadROM(ROM-ROMheader, CFG.ROMFile);

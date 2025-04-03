@@ -50,13 +50,9 @@ struct s_snescore
 
 #define MAP  ((uchar **)(0x06898000))
 #define WMAP ((uchar **)(0x0689A000))
-//#define MAP ((uchar **)(0x27E0000))
-//#define MAP ((uchar **)(0xB000014))
-//#define MAP SNES.Map
 
 extern struct s_snescore	SNESC;
 extern struct s_snes	SNES;
-//#define SNES	((struct s_snes *)(0x23E0000))
 extern uint16	PPU_PORT[0x90]; // 2100 -> 2183
 extern uint16	DMA_PORT[0x180]; // 4200 -> 437F
 extern int cnt_alphachar(char *str);
@@ -118,24 +114,11 @@ struct s_snes
   int		stat_OPC_cnt[256];*/
 };
 
-//indirect mapped memory
-#define MAP_RELOAD      0x80000000
-#define MAP_PPU         0x81000000
-#define MAP_CPU         0x82000000
-#define MAP_DSP         0x83000000
-#define MAP_LOROM_SRAM  0x84000000
-#define MAP_HIROM_SRAM  0x85000000
-#define MAP_CX4         0x86000000	//I/O  00-3F,80-BF:6000-7FFF
-#define MAP_NONE        0x8E000000
-#define MAP_LAST        0x8F000000
 
 //Rom Page variables
 #define EMPTYMEM		(ushort *)(0x2FE0000)
-//#define PPU_PORT	((ushort *)(0x23E0000))
-//#define DMA_PORT	((ushort *)(0x23E4000))
 #define SNES_SRAM_ADDRESS ((uchar *)(0x2FE6000))
 #define DS_SRAM          ((uint8*)0x0A000000)
-#define PAGE_OFFSET		3	//page offset in SNES regs
 
 /* DS Memory */
 #define SNES_RAM_ADDRESS	((uint8 *)(0x02FC0000))
@@ -147,8 +130,6 @@ struct s_snes
 #ifdef __cplusplus
 extern "C"{
 #endif
-
-///
 
 #ifdef __cplusplus
 }

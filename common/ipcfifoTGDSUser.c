@@ -159,7 +159,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			SetupSoundSPC();
 			
 			//Load APU payload
-			LoadSpc((const u8*)cmd2);
+			
 			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 			fifomsg[40] = (uint32)0;	//release ARM9 APU_playSpc()
@@ -192,7 +192,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		break;  
 			
 		case SNEMULDS_APUCMD_LOADSPC:{ //case 0x00000007:{ // LOAD state 
-			LoadSpc((const u8*)cmd2);
+			
 			struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
 			fifomsg[40] = (uint32)0;	//release ARM9 APU_loadSpc()
@@ -216,11 +216,6 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 __attribute__((section(".dtcm")))
 #endif
 int ROM_MAX_SIZE = 0;
-
-#ifdef ARM9
-__attribute__((section(".dtcm")))
-#endif
-int ROM_PAGING_SIZE = 0;
 
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){

@@ -47,7 +47,6 @@ extern sint8 *_FS_getFileExtension(sint8 *filename);
 extern int		FS_loadROM(sint8 *ROM, sint8 *filename);
 extern int		FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size);
 extern int		FS_loadROMPage(sint8 *buf, unsigned int pos, int size);
-extern int		FS_loadAllFile(sint8 *filename, sint8 *buf, int *size);
 extern int		FS_shouldFreeROM();
 extern int		FS_chdir(const sint8 *path);
 extern sint8 	*FS_getFileName(sint8 *filename);

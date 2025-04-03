@@ -110,9 +110,6 @@ int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
 	FS_lock();
 	f_close(&fPagingFD);
 	
-	//Set up ROM paging initial state
-	mem_init_paging();
-	
 	int flags = charPosixToFlagPosix("r");
 	BYTE mode = posixToFatfsAttrib(flags);
 	FRESULT result = f_open(&fPagingFD, (const TCHAR*)filename, mode);
