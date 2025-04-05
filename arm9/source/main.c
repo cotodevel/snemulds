@@ -469,9 +469,20 @@ bool loadROM(char *name, int confirm){
 	ROM_MAX_SIZE = ROM_PAGING_SIZE;
 	
 	if(strncmpi((char*)&titleRead[0], "MEGAMAN X", 9) == 0){	//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100%	(2/2)
+		ROM_PAGING_SIZE = ROM_MAX_SIZE_NTRMODE_MMX1;
+
+		if(
+			(strncmpi((char*)&titleRead[0], "MEGAMAN X2", 10) == 0) 
+			||
+			(strncmpi((char*)&titleRead[0], "MEGAMAN X3", 10) == 0) 
+		){
+			ROM_PAGING_SIZE = ROM_MAX_SIZE_NTRMODE_MMX2;
+		}
+
 		LoROM_Direct_ROM_Mapping = true;
 	}
 	else{
+		ROM_PAGING_SIZE = ROM_MAX_SIZE_NTRMODE;
 		LoROM_Direct_ROM_Mapping = false;
 	}
 	

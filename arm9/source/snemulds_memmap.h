@@ -23,10 +23,14 @@ GNU General Public License for more details.
 #if defined(_MSC_VER)
 #define strcmpi _stricmp
 #define strncmpi _strnicmp
-#define WMAP SNES.WriteMap
-#define MAP SNESC.Map
 #endif
 
+//SnemulDS 0.2 & SnemulDS VS2012 port only start
+/*
+#define WMAP SNES.WriteMap
+#define MAP SNESC.Map
+*/
+//SnemulDS 0.2 & SnemulDS VS2012 port only end
 
 //Rom Page variables
 #define PAGE_OFFSET_LOROM		2	
@@ -48,13 +52,19 @@ extern u32* APU_BRR_HASH_BUFFER_NTR;
 extern bool LoROM_Direct_ROM_Mapping;
 
 //#define ROM_MAX_SIZE_NTRMODE	((int)(1*1024*1024) + (512*1024)) //LoROM direct
-#define ROM_MAX_SIZE_NTRMODE	((int)(768*1024)) //LoROM streaming
+
+#define ROM_MAX_SIZE_NTRMODE	((int)(1024*1024))  //LoROM streaming
+#define ROM_MAX_SIZE_NTRMODE_MMX2	ROM_MAX_SIZE_NTRMODE	//LoROM streaming: MMX2
+#define ROM_MAX_SIZE_NTRMODE_MMX1	((int)(768*1024))		//LoROM streaming: MMX1
 #define ROM_MAX_SIZE_TWLMODE	((6*1024*1024)+(512*1024)) //Max ROM size: 6.5MB
 
 #define	PAGE_HIROM		(64*1024)
 #define	PAGE_LOROM		(PAGE_HIROM >> 1)
-#define ROM_PAGING_SIZE	ROM_MAX_SIZE_NTRMODE 
-#define SNES_ROM_PAGING_SLOTS (ROM_PAGING_SIZE/PAGE_HIROM)
+
+#define SNES_ROM_PAGING_SLOTS (ROM_MAX_SIZE_NTRMODE/PAGE_HIROM)
+
+#define CX4_PAGING_SIZE (ROM_MAX_SIZE_NTRMODE/4)
+#define CX4_ROM_PAGING_SLOTS (CX4_PAGING_SIZE/PAGE_HIROM)
 
 //334K ~ worth of Hashed Samples from the APU core to remove stuttering
 #define APU_BRR_HASH_BUFFER_SIZE (512*1024)
@@ -93,7 +103,6 @@ extern void FixMap();
 extern void MapRAM();
 extern void InitLoROMMap(int mode);
 extern void InitHiROMMap(int mode);
-extern uchar *ROM_paging;
 extern uint16 *ROM_paging_offs;
 extern int ROM_paging_cur;
 extern void mem_clear_paging();
@@ -102,6 +111,7 @@ extern void mem_setCacheBlock(int block, uchar *ptr);
 extern void mem_removeCacheBlock(int block);
 extern uint8 *mem_checkReloadHiROM(int block);	//HiROM
 extern uint8 *mem_checkReloadLoROM(int blockInPage, int blockInROM);	//LoROM
+extern uint8* mem_checkReloadCX4Cache(int bank, uint16 offset);
 extern uint8 *	mem_checkReload(int blockInPage, uchar bank, uint32 offset);
 extern void InitMap();
 extern uint8 IO_getbyte(int addr, uint32 address);
@@ -110,10 +120,13 @@ extern uint16 IO_getword(int addr, uint32 address);
 extern void IO_setword(int addr, uint32 address, uint16 word);
 extern uchar mem_getbyte(uint32 offset,uchar bank);
 extern void mem_setbyte(uint32 offset, uchar bank, uchar byte);
-extern ushort mem_getword(uint32 offset,uchar bank);
-extern void mem_setword(uint32 offset, uchar bank, ushort word);
+extern uint16 mem_getword(uint32 offset,uchar bank);
+extern void mem_setword(uint32 offset, uchar bank, uint16 word);
 extern void *mem_getbaseaddress(uint16 offset, uchar bank);
 extern void *map_memory(uint16 offset, uchar bank);
+
+extern u8 * CX4_ROM_PAGING_ADDRESS;
+extern int ROM_PAGING_SIZE;
 
 #ifdef ARM9
 #ifdef __cplusplus
