@@ -203,9 +203,8 @@ void InitLoROMMap(int mode)
 		// Extended RAM mode...
 		// All RAM available is used static
 		// the remaining of mapping use extended RAM
-		maxRAM = ROM_MAX_SIZE_NTRMODE;
+		ROM_PAGING_SIZE = maxRAM = ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE;
 		largeROM = (uint8 *)0x8000000 + SNES.ROMHeader;
-		ROM_PAGING_SIZE = 0;
 	}
 	else{
 		printf("Unhandled InitLoROMMap(): %d", mode);
@@ -360,15 +359,14 @@ void InitHiROMMap(int mode)
 		// Use Paging system... 
 		// Only a part of RAM is used static
 		maxRAM = PAGE_HIROM;
-		ROM_PAGING_SIZE = ROM_MAX_SIZE_NTRMODE;
+		ROM_PAGING_SIZE = ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE;
 	}
 	else if (mode == USE_EXTMEM){
 		// Extended RAM mode...
 		// All RAM available is used static
 		// the remaining of mapping use extended RAM
-		maxRAM = ROM_MAX_SIZE_NTRMODE;
+		ROM_PAGING_SIZE = maxRAM = ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE;
 		largeROM = (uint8 *)0x8000000 + SNES.ROMHeader;
-		ROM_PAGING_SIZE = 0;
 	}
 	else{
 		printf("Unhandled InitHiROMMap(): %d", mode);
@@ -435,6 +433,27 @@ void InitHiROMMap(int mode)
 	WriteProtectROM();
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void mem_init_directROM(){
+	mem_clear_paging();
+	#ifdef ARM9
+	SNES_ROM_ADDRESS_NTR = (u8*)(0x20B8000);
+	SNES_ROM_ADDRESS_TWL = (u8*)(0x20B8F00);
+	#endif
+	#ifdef _MSC_VER
+	SNES_ROM_ADDRESS_NTR = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_NTRMODE);
+	SNES_ROM_ADDRESS_TWL = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_TWLMODE);
+#endif
+	//MMX games already rely on streaming to work. But they can run from direct mode as well.
+	//This allows us to retain current compatibility in SnemulDS 0.6d
+}
+
 uint16 *ROM_paging_offs= NULL;
 int ROM_paging_cur = 0;
 
@@ -470,25 +489,25 @@ void	mem_init_paging()
 	#ifdef ARM9
 	SNES_ROM_ADDRESS_NTR = (u8*)(0x20F0000);
 	SNES_ROM_ADDRESS_TWL = (u8*)(0x20F9F00);
-#endif
+	#endif
 #ifdef _MSC_VER
-	SNES_ROM_ADDRESS_NTR = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_NTRMODE + ROM_MAX_SIZE_NTRMODE + CX4_PAGING_SIZE + APU_BRR_HASH_BUFFER_SIZE);
-	SNES_ROM_ADDRESS_TWL = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_TWLMODE + ROM_MAX_SIZE_NTRMODE + CX4_PAGING_SIZE + APU_BRR_HASH_BUFFER_SIZE);
+	SNES_ROM_ADDRESS_NTR = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE + ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE + CX4_PAGING_SIZE + APU_BRR_HASH_BUFFER_SIZE);
+	SNES_ROM_ADDRESS_TWL = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_TWLMODE + ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE + CX4_PAGING_SIZE + APU_BRR_HASH_BUFFER_SIZE);
 #endif
-	SNES_ROM_PAGING_ADDRESS = (u8*)(SNES_ROM_ADDRESS_NTR+ROM_MAX_SIZE_NTRMODE);
-	CX4_ROM_PAGING_ADDRESS = (u8*)(((int)SNES_ROM_PAGING_ADDRESS) + ROM_MAX_SIZE_NTRMODE);	//(334*1024) = 342016 bytes / 64K blocks = 5 pages less useable on paging mode
+	SNES_ROM_PAGING_ADDRESS = (u8*)(SNES_ROM_ADDRESS_NTR+ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE);
+	CX4_ROM_PAGING_ADDRESS = (u8*)(((int)SNES_ROM_PAGING_ADDRESS) + ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE);	//(334*1024) = 342016 bytes / 64K blocks = 5 pages less useable on paging mode
 	APU_BRR_HASH_BUFFER_NTR = (u32*)(((int)CX4_ROM_PAGING_ADDRESS) + CX4_PAGING_SIZE);
 	
-	memset(SNES_ROM_PAGING_ADDRESS, 0, ROM_MAX_SIZE_NTRMODE);
+	memset(SNES_ROM_PAGING_ADDRESS, 0, ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE);
 	memset(CX4_ROM_PAGING_ADDRESS, 0, CX4_PAGING_SIZE);
 	memset(APU_BRR_HASH_BUFFER_NTR, 0, APU_BRR_HASH_BUFFER_SIZE);
-	ROM_paging_offs = (uint16 *)TGDSARM9Malloc((ROM_MAX_SIZE_NTRMODE/PAGE_HIROM)*2);
+	ROM_paging_offs = (uint16 *)TGDSARM9Malloc((ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE/PAGE_HIROM)*2);
 	if (!ROM_paging_offs)
 	{
 		printf("Not enough memory for ROM paging (2).\n");
 		while (1){}
 	}
-	memset(ROM_paging_offs, 0xFF, (ROM_MAX_SIZE_NTRMODE/PAGE_HIROM)*2);
+	memset(ROM_paging_offs, 0xFF, (ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE/PAGE_HIROM)*2);
 	ROM_paging_cur = 0;
 }
 
@@ -584,9 +603,11 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-uint8 *	mem_checkReload(int blockInPage, uchar bank, uint32 offset)
-{
+uint8 *	mem_checkReload(int blockInPage, uchar bank, uint32 offset){
 	uint8* addr = NULL;
+	if (!CFG.LargeROM) {
+		return NULL;
+	}
 	if (SNES.HiROM){
 		addr = mem_checkReloadHiROM(blockInPage);
 	}
@@ -613,14 +634,11 @@ __attribute__((optimize("O0")))
 __attribute__((optnone))
 #endif
 uint8* mem_checkReloadCX4Cache(int bank, uint16 offset) {
-	unsigned char* ptr; int ret;
-#ifdef ARM9
+	unsigned char* ptr; int ret=0,i=0;
 	if (!CFG.LargeROM) {
 		return NULL;
 	}
-#endif
 	//We're here if a bank isn't mapped. search for it and if it's mapped, use it.
-	int 	i;
 	for (i = 0; i < CX4_ROM_PAGING_SLOTS; i++) {
 		if (storedNDSBanks[i] == (int)(bank)) {
 			return (CX4_ROM_PAGING_ADDRESS + (i * PAGE_HIROM));
@@ -641,7 +659,7 @@ uint8* mem_checkReloadCX4Cache(int bank, uint16 offset) {
 	}
 	ret = FS_loadROMPage((char*)ptr, (int)(bank * 0x8000), PAGE_HIROM);
 #ifdef ARM9
-	//coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent new page
+	coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent new page
 #endif
 	return ptr;
 }

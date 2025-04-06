@@ -356,8 +356,7 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 bool loadROM(char *name, int confirm){
-	mem_init_paging(); //Allocate pages
-
+	mem_init_directROM(); //default to rom direct, will update later, if paging mode
 	//wait until release A button
 	scanKeys();
 	u32 keys = keysPressed();
@@ -380,8 +379,14 @@ bool loadROM(char *name, int confirm){
 	coherent_user_range_by_size((uint32)TGDSIPCStartAddress, (int)sizeof(savedUserSettings));	
 	memcpy((void*)&savedUserSettings[0], (const void*)TGDSIPCStartAddress, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
 	
-	ROM = (char*)SNES_ROM_ADDRESS_NTR;
 	size = FS_getFileSizeFatFS(romname);
+
+	//fixes SMAS
+	if(size < ROM_MAX_SIZE_NTRMODE){
+		SNES_ROM_ADDRESS_NTR+=0x38000;
+	}
+	ROM = (char *)SNES_ROM_ADDRESS_NTR;
+	
 	ROMheader = size & 8191;
 	if (ROMheader != 0&& ROMheader != 512){
 		ROMheader = 512;
@@ -466,7 +471,6 @@ bool loadROM(char *name, int confirm){
 		setCpuClock(false);
 		printf("Normal NTR Mem.");
 	}
-	ROM_MAX_SIZE = ROM_PAGING_SIZE;
 	
 	if(strncmpi((char*)&titleRead[0], "MEGAMAN X", 9) == 0){	//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100%	(2/2)
 		ROM_PAGING_SIZE = ROM_MAX_SIZE_NTRMODE_MMX1;
@@ -482,7 +486,7 @@ bool loadROM(char *name, int confirm){
 		LoROM_Direct_ROM_Mapping = true;
 	}
 	else{
-		ROM_PAGING_SIZE = ROM_MAX_SIZE_NTRMODE;
+		ROM_PAGING_SIZE = ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE;
 		LoROM_Direct_ROM_Mapping = false;
 	}
 	
@@ -562,7 +566,6 @@ bool loadROM(char *name, int confirm){
 	coherent_user_range_by_size((uint32)&SNEMULDS_IPC->snesHeaderName[0], (int)16);
 	
 	initSNESEmpty(&uninitializedEmu, apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
-	
 	memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 	clrscr();
 	GUI_printf(" - - ");
@@ -573,6 +576,9 @@ bool loadROM(char *name, int confirm){
 		||
 		//NTR/TWL Mode: Breath Of Fire runs in paging mode now to get the correct audio speed
 		(strncmpi((char*)&titleRead[0], "BREATH OF FIRE", 14) == 0)
+		||
+		//Megaman X series run from LoROM paging code
+		(strncmpi((char*)&titleRead[0], "MEGAMAN X", 9) == 0)
 	){
 		if (IsHiROM){	
 			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, PAGE_HIROM+ROMheader);
@@ -587,6 +593,7 @@ bool loadROM(char *name, int confirm){
 		CFG.LargeROM = true;
 	}
 	else{
+		ROM_PAGING_SIZE = 0;
 		FS_loadROM(ROM-ROMheader, CFG.ROMFile);
 		CFG.LargeROM = false;
 		crc = crc32(0, ROM, size-ROMheader);

@@ -110,6 +110,7 @@ int	FS_loadROMForPaging(sint8 *ROM, sint8 *filename, int size)
 	FS_lock();
 	f_close(&fPagingFD);
 	
+	mem_init_paging(); //Allocate pages -only- in paging mode. Because direct mode allocates 3MB
 	int flags = charPosixToFlagPosix("r");
 	BYTE mode = posixToFatfsAttrib(flags);
 	FRESULT result = f_open(&fPagingFD, (const TCHAR*)filename, mode);
