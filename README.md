@@ -9,7 +9,7 @@ Default game session (No coprocessor) / CX4:
 DSP-1: Plays DSP-only games! There are some sprite issues, and speed is a bit slower, but hey these play!
 	- https://bitbucket.org/Coto88/SnemulDS/get/dsp.zip
 
-S-DD1 (DSi or up only): Added S-DD1 co processor support! Street Fighter Alpha 2 is fully playable now. Star Ocean is UNSUPPORTED. DS Mode is too slow for sdd-1!
+S-DD1 (NTR AND TWL hardware supported!): Added S-DD1 co processor support! Street Fighter Alpha 2 is fully playable now. Star Ocean is UNSUPPORTED. 
 	- https://bitbucket.org/Coto88/SnemulDS/get/sdd1.zip
 
 Usage:
