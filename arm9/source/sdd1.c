@@ -80,28 +80,34 @@
 
 void S9xSetSDD1MemoryMap (uint32 bank, uint32 value)
 {
+	int c;
 	bank = 0xc00 + bank * 0x100;
 	value = value * 1024 * 1024;
 
-	int c;
-	
 	for (c = 0; c < 0x80; c += 8)
 	{
-		uint8 *block = &SNESC.ROM[value + ((c>>1)<<14)];
-		int i;
-
-		for (i = c; i < c + 8; i++)
+		uint8 *block = NULL;
+		int pageMap = (value + ((c>>1)<<14));
+		int i = 0;
+		if(pageMap < ROM_MAX_SIZE_NTRMODE_BIGLOROM_PAGEMODE){
+			block = &SNESC.ROM[pageMap];
+		}
+		else{
+			block = (uint8*)MAP_PAGING;
+		}
+		for (i = c; i < c + 8; i++){
 			MAP[i + bank] = block;
+		}
 	}
 }
 
 void S9xResetSDD1 ()
 {
+	int i = 0;
 	DMA_port_write((uint32)(0x4800), 0);
 	DMA_port_write((uint32)(0x4801), 0);
 	DMA_port_write((uint32)(0x4802), 0);
 	DMA_port_write((uint32)(0x4803), 0);
-	int i = 0;
 	for (i = 0; i < 4; i++)
 	{
 		DMA_port_write((uint32)(0x4804 + i), i);

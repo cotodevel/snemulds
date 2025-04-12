@@ -177,16 +177,6 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 
 //project specific stuff
 
-#ifdef ARM9
-__attribute__((section(".dtcm")))
-#endif
-int ROM_MAX_SIZE = 0;
-
-#ifdef ARM9
-__attribute__((section(".dtcm")))
-#endif
-int ROM_PAGING_SIZE = 0;
-
 //APU Ports from SnemulDS properly binded with Assembly APU Core
 void update_spc_ports(){
 	//must reflect to ipcfifoTGDSUser.h defs

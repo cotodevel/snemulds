@@ -1,7 +1,7 @@
 #ifndef SDD1EMU_H
 #define SDD1EMU_H
 
-#include "typedefsTGDS.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C"{

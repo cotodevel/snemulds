@@ -1,4 +1,3 @@
-
 /*
 
 			Copyright (C) 2017  Coto
@@ -72,11 +71,6 @@ extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern uint32 ADDR_PORT_SNES_TO_SPC;
 extern uint32 ADDR_PORT_SPC_TO_SNES;
 extern void update_spc_ports();
-
-//ARM7 & ARM9 shared
-extern int ROM_MAX_SIZE;
-
-extern int ROM_PAGING_SIZE;
 
 #ifdef __cplusplus
 }

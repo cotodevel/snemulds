@@ -121,19 +121,10 @@ struct s_snes
 //Rom Page variables
 #define EMPTYMEM		(ushort *)(0x2FE0000)
 #define SNES_SRAM_ADDRESS ((uchar *)(0x2FE6000))
-#define SNES_ROM_ADDRESS_NTR ((uchar *)(0x20C0000)) 
-#define SNES_ROM_ADDRESS_TWL ((uchar *)(0x20C9F00))
-
-#define ROM_MAX_SIZE_NTRMODE	(3*1024*1024)
-#define ROM_MAX_SIZE_TWLMODE	((6*1024*1024)+(512*1024)) //Max ROM size: 6.5MB
-
-#define	PAGE_SIZE		(64*1024)
 #define DS_SRAM          ((uint8*)0x0A000000)
-#define PAGE_OFFSET		3	//page offset in SNES regs
 
 /* DS Memory */
 #define SNES_RAM_ADDRESS	((uint8 *)(0x02FC0000))
-#define SDD1_WORKBUFFER	((uint8 *)(0x02FEE000))
 
 #endif
 

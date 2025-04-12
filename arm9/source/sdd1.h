@@ -76,6 +76,8 @@
 #ifndef _SDD1_H_
 #define _SDD1_H_
 
+#include "common.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

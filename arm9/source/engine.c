@@ -257,14 +257,7 @@ int initSNESEmpty(bool * firstTime, u32 APUFixes){
 		}
 		*firstTime = false;
 	}
-	if(ROM_paging_offs != NULL){
-		TGDSARM9Free(ROM_paging_offs);
-	}
-	ROM_paging_offs = (uint16 *)TGDSARM9Malloc((ROM_PAGING_SIZE/PAGE_SIZE)*2);
-	if(ROM_paging_offs == NULL){
-		GUI_printf("Failed RAM alloc: ROM_paging_offs. Halt");
-		while(1==1){}
-	}
+	
 	init_GFX();
 	GFX.Graph_enabled = 1;
 	return 0;

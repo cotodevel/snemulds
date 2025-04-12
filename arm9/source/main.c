@@ -377,6 +377,7 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 bool loadROM(struct sGUISelectorItem * nameItem){
+	mem_init_directROM(); //default to rom direct, will update later, if paging mode
 	//wait until release A button
 	scanKeys();
 	u32 keys = keysPressed();
@@ -392,7 +393,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		int ROMheader;
 		char *ROM;
 		int crc;
-		
+		int ROM_MAX_SIZE = 0;
 		//filename already has correct format
 		if (
 			(nameItem->filenameFromFS_getDirectoryListMethod[0] == '0')
@@ -412,7 +413,6 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			strcat(romname, nameItem->filenameFromFS_getDirectoryListMethod);
 		}
 		
-		//There's a bug when rendering certain UI elements, some garbage may appear near the end of the filename, todo
 		char ext[256];
 		char tmp[256];
 		strcpy(tmp,romname);
@@ -430,14 +430,16 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		memset(CFG.ROMFile, 0, sizeof(CFG.ROMFile));
 		strcpy(CFG.ROMFile, romname);
 		
-		ROM = (char *)SNES_ROM_ADDRESS_NTR;
 		size = FS_getFileSizeFatFS((char*)&CFG.ROMFile[0]);
+
+		//fixes SMAS
+		ROM = (char *)SNES_ROM_ADDRESS_NTR;
 		ROMheader = size & 8191;
 		if (ROMheader != 0&& ROMheader != 512){
 			ROMheader = 512;
 		}
 
-		FS_loadFileFatFS(CFG.ROMFile, ROM, PAGE_SIZE+ROMheader);
+		FS_loadFileFatFS(CFG.ROMFile, ROM, PAGE_HIROM+ROMheader);
 		load_ROM(ROM, size);
 		int i = 20;
 		while (i >= 0 && SNES.ROM_info.title[i] == ' '){
@@ -468,7 +470,7 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			}
 			//Otherwise the rest default NTR ROM base, or segfaults occur.
 			else{
-				ROM = (char *)SNES_ROM_ADDRESS_NTR;
+				
 			}
 			if(strncmpi((char*)&SNES.ROM_info.title[0], "STREET FIGHTER ALPHA", 20) == 0){
 				setCpuClock(true); //true: 133Mhz (TWL Mode only)
@@ -486,31 +488,11 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 				SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x0 << 14);
 				*(u32*)0x04004008 = SFGEXT9;	
 			}
-			else{
-				printf("This SnemulDS build is TWL mode only. Halting system.");
-				while(1==1){}
-			}
-			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
-			ROM = (char *)SNES_ROM_ADDRESS_NTR;
+			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE_BIGLOROM_PAGEMODE;
 			printf("Normal NTR Mem.");
 		}
-		ROM_paging = (uchar *)((int)ROM+PAGE_SIZE); //SNES_ROM_PAGING_ADDRESS;
-		ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
 		
-		//APU Fixes for proper sound speed
-		if(
-			(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X3", 10) == 0)
-			||
-			(strncmpi((char*)&SNES.ROM_info.title[0], "MEGAMAN X2", 10) == 0)
-			||
-			(strncmpi((char*)&SNES.ROM_info.title[0], "DONKEY KONG COUNTRY 3", 21) == 0)
-			){
-			apuFix = 0;
-			GUI_printf("APU Fix");
-		}
-		else{
-			apuFix = 1;
-		}
+		apuFix = 1; //Disabled
 		initSNESEmpty(&uninitializedEmu, apuFix);
 		memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 		clrscr();
@@ -518,9 +500,9 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 		GUI_printf(" - - ");
 		GUI_printf("File:%s - Size:%d", CFG.ROMFile, size);
 		if (size-ROMheader > ROM_MAX_SIZE){
-			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, PAGE_SIZE+ROMheader);
+			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, ROM_MAX_SIZE_NTRMODE_BIGLOROM_PAGEMODE+ROMheader);
 			CFG.LargeROM = true;
-			crc = crc32(0, ROM, PAGE_SIZE);
+			crc = crc32(0, ROM, ROM_MAX_SIZE_NTRMODE_BIGLOROM_PAGEMODE);
 			GUI_printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
 		}
 		else{
