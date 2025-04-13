@@ -96,8 +96,7 @@ extern void mem_init_directROM();
 extern void mem_init_paging();
 extern void mem_setCacheBlock(int block, uchar *ptr);
 extern void mem_removeCacheBlock(int block);
-extern uint8 *mem_checkReloadBigLoROM(int block);	//BigLoROM: SFA2 map additional "LoROM" banks into HiROM area
-extern uint8 *	mem_checkReload(int blockInPage, uchar bank, uint32 offset);
+extern uint8 *	mem_checkReload(int blockInPage, uchar bank, uint32 offset); //BigLoROM: SFA2 map additional "LoROM" banks into HiROM area
 extern void InitMap();
 extern uint8 IO_getbyte(int addr, uint32 address);
 extern void IO_setbyte(int addr, uint32 address, uint8 byte);

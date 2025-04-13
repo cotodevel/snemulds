@@ -359,6 +359,8 @@ void mem_setCacheBlock(int block, uchar *ptr)
 	}
 }
 
+
+//BigLoROM: SFA2 map additional "LoROM" banks into HiROM area
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -366,23 +368,11 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-uint8 *	mem_checkReload(int blockInPage, uchar bank, uint32 offset){
-	uint8* addr = NULL;
-	if (CFG.LargeROM == 1) {
-		addr = mem_checkReloadBigLoROM(blockInPage);
+uint8 *	mem_checkReload(int block, uchar bank, uint32 offset){
+	int i;uchar *ptr;int ret,lookahead=0;
+	if (CFG.LargeROM == 0) {
+		return NULL;
 	}
-	return addr;
-}
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-uint8 *mem_checkReloadBigLoROM(int block){
-	int i;uchar *ptr;int ret;
 	i = (block & 0x1FF) >> PAGE_OFFSET_BIGLOROM;
 
 	//SnemulDS 0.6d
@@ -403,6 +393,14 @@ uint8 *mem_checkReloadBigLoROM(int block){
 		}
 	}
 	#endif
+
+	//We're here if a bank isn't mapped. search for it and if it's mapped, use it.
+	for (lookahead = 0; lookahead < ((ROM_PAGING_SIZE/PAGE_HIROM)-3); lookahead++) {
+		if (ROM_paging_offs[lookahead] == (int)(i)) {
+			ptr = SNES_ROM_PAGING_ADDRESS+(lookahead*PAGE_HIROM);
+			return romPageToBigLoROMSnesPage(ptr, block);
+		}
+	}
 
 	ROM_paging_offs[ROM_paging_cur] = i;
 	ptr = SNES_ROM_PAGING_ADDRESS+(ROM_paging_cur*PAGE_HIROM);
