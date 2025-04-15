@@ -1007,25 +1007,25 @@ unsigned char CX4ROMBuffer[4 * 1024];
 #ifdef ARM9
 __attribute__((section(".dtcm")))
 #endif
-int LastInternalFetchBufferOffset = -1;
+static u32 LastInternalCX432KBlock = -1;
 
 uint8 readCX4ValueFromROM(uint32 SNESAddress){
-	int SnesBankInIOAddress = (int)((SNESAddress >> 16)-1);
-	uint8 value = 0;
+	int SNESAddressBlock = (int)((SNESAddress >> 16)-1);
 	
 	//Stage 0: ROM
-	int relOffsetStartPage = (int)(SnesBankInIOAddress << 15); //* 0x8000 (32K LoROM)
-	if( (relOffsetStartPage + (SNESAddress & 0xffff)) < (int)ROM_PAGING_SIZE){
-		return *((SNESC.ROM + relOffsetStartPage) + (SNESAddress & 0xffff));
+	int RomOffsetLoROM = (((int)(SNESAddressBlock << LoROM32kShift)) + (int)(SNESAddress & 0xffff)); //* 0x8000 (32K LoROM)
+	if( RomOffsetLoROM < (int)ROM_PAGING_SIZE){
+		return *(SNESC.ROM + RomOffsetLoROM);
 	}
 	
 	//Stage 1: Stream
-	if (LastInternalFetchBufferOffset != SnesBankInIOAddress){
-		currentCX4ROMPage = mem_checkReloadCX4Cache(SnesBankInIOAddress, 0);
-		LastInternalFetchBufferOffset = SnesBankInIOAddress;
+	if (LastInternalCX432KBlock != SNESAddressBlock ){
+		int block = (SNESAddress>>13)&0x7FF;
+        int blockRom = ((SNESAddressBlock<<LoROM32kShift)>>13)&0x7FF;
+		currentCX4ROMPage = mem_checkReloadLoROM(block, blockRom, true);
+		LastInternalCX432KBlock = SNESAddressBlock;
 	}
-	value = currentCX4ROMPage[(SNESAddress & 0xffff)];
-	return value;
+	return currentCX4ROMPage[(SNESAddress & 0xffff)];
 }
 
 void CX4CopyFromROM(uint32 SNESAddress, uint8 * targetBuffer, int targetBufferSize) {

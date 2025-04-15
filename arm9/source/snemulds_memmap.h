@@ -60,11 +60,8 @@ extern bool LoROM_Direct_ROM_Mapping;
 
 #define	PAGE_HIROM		(64*1024)
 #define	PAGE_LOROM		(PAGE_HIROM >> 1)
-
 #define SNES_ROM_PAGING_SLOTS (ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE/PAGE_HIROM)
 
-#define CX4_PAGING_SIZE (ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE/4)
-#define CX4_ROM_PAGING_SLOTS (CX4_PAGING_SIZE/PAGE_HIROM)
 
 //334K ~ worth of Hashed Samples from the APU core to remove stuttering
 #define APU_BRR_HASH_BUFFER_SIZE (512*1024)
@@ -111,8 +108,7 @@ extern void mem_init_paging();
 extern void mem_setCacheBlock(int block, uchar *ptr);
 extern void mem_removeCacheBlock(int block);
 extern uint8 *mem_checkReloadHiROM(int block);	//HiROM
-extern uint8 *mem_checkReloadLoROM(int blockInPage, int blockInROM);	//LoROM
-extern uint8* mem_checkReloadCX4Cache(int bank, uint16 offset);
+extern uint8 *mem_checkReloadLoROM(int blockInPage, int blockInROM, bool isCX4Access);	//LoROM
 extern uint8 *	mem_checkReload(int blockInPage, uchar bank, uint32 offset);
 extern void InitMap();
 extern uint8 IO_getbyte(int addr, uint32 address);
@@ -125,8 +121,6 @@ extern uint16 mem_getword(uint32 offset,uchar bank);
 extern void mem_setword(uint32 offset, uchar bank, uint16 word);
 extern void *mem_getbaseaddress(uint16 offset, uchar bank);
 extern void *map_memory(uint16 offset, uchar bank);
-
-extern u8 * CX4_ROM_PAGING_ADDRESS;
 extern int ROM_PAGING_SIZE;
 
 #ifdef ARM9

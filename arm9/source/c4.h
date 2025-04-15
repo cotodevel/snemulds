@@ -160,7 +160,6 @@ extern int16 C4SinTable[];
 //c4emu.c
 extern unsigned char CX4ROMBuffer[4 * 1024];
 extern uint8 * currentCX4ROMPage;
-extern int LastInternalFetchBufferOffset;
 extern uint8 readCX4ValueFromROM(uint32 SNESAddress);
 extern void CX4CopyFromROM(uint32 SNESAddress, uint8 * targetBuffer, int targetBufferSize);
 extern void S9xInitC4 ();
