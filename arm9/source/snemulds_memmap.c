@@ -610,10 +610,9 @@ uint8 *	mem_checkReload(int blockInPage, uchar bank, uint32 offset){
 		addr = mem_checkReloadHiROM(blockInPage);
 	}
 	else{
-
 		int addressRom = LoROMHandleOffset(bank, offset);
 		int blockRom = (addressRom>>13)&0x7FF;
-		addr = mem_checkReloadLoROM(blockInPage, blockRom, false);
+		addr = mem_checkReloadLoROM(blockInPage, blockRom);
 	}
 	return addr;
 }
@@ -640,7 +639,7 @@ uint8 *mem_checkReloadHiROM(int block){
 		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET_HIROM;
 		if (ROM_paging_offs[ROM_paging_cur] == PC_blk){
 			ROM_paging_cur++;
-			if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_HIROM) - 6) ){
+			if (ROM_paging_cur >= SNES_ROM_PAGING_SLOTS ){
 				ROM_paging_cur = 0;
 			}
 		}
@@ -661,10 +660,52 @@ uint8 *mem_checkReloadHiROM(int block){
 	mem_setCacheBlock(i, ptr); // Give Read-only memory
 
 	ROM_paging_cur++;
-	if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_HIROM) - 6) ){
+	if (ROM_paging_cur >= SNES_ROM_PAGING_SLOTS ){
 		ROM_paging_cur = 0;
 	}
 	return ptr+(block&7)*8192-(block << 13);
+}
+
+static int storedNDSBanks[CX4_PAGING_SLOTS]; //Used by cx4 cache
+static int cx4PagingOffset = 0;
+//int block = internal block position pointing to 64K page
+//int snesBank = physical snesBank. (if snesBank == PC Bank, reload entire bank)
+//Note: This method will always resolve 64K pages, relative offsets are handled in caller function.
+//		Because of this, it requires standalone memory for cx4 pages.
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__((optnone))
+#endif
+uint8* mem_checkReloadCX4Cache(int bank, uint16 offset) {
+	unsigned char* ptr; int ret=0,i=0;
+	u8 * cx4CacheAddress = (u8 *)getCX4_CACHE_ADDRESS(SNES_ROM_PAGING_ADDRESS);
+	if (!CFG.LargeROM) {
+		return NULL;
+	}
+	//We're here if a bank isn't mapped. search for it and if it's mapped, use it.
+	for (i = 0; i < CX4_PAGING_SLOTS; i++) {
+		if (storedNDSBanks[i] == (int)(bank)) {
+			return (cx4CacheAddress + (i * PAGE_HIROM));
+		}
+		//LoROM only: use upper bank if already loaded
+		else if ((storedNDSBanks[i] - 1) == (int)(bank)) {
+			return (cx4CacheAddress + ((i - 1) * PAGE_HIROM) + PAGE_LOROM);
+		}
+	}
+	storedNDSBanks[cx4PagingOffset] = (int)bank;
+	ptr = cx4CacheAddress + (cx4PagingOffset * PAGE_HIROM);
+	
+	cx4PagingOffset++;//alloc next one 
+	if (cx4PagingOffset >= CX4_PAGING_SLOTS) {
+		cx4PagingOffset = 0;
+	}
+	ret = FS_loadROMPage((char*)ptr, (int)(bank * 0x8000), PAGE_HIROM);
+#ifdef ARM9
+	coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent new page
+#endif
+	return ptr;
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -674,7 +715,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-uint8 *	mem_checkReloadLoROM(int blockInPage, int blockInROM, bool isCX4Access)
+uint8 *	mem_checkReloadLoROM(int blockInPage, int blockInROM)
 {
 	int i;uchar *ptr;int ret, lookahead=0;
 	if (CFG.LargeROM == false){
@@ -683,12 +724,9 @@ uint8 *	mem_checkReloadLoROM(int blockInPage, int blockInROM, bool isCX4Access)
 	i = (blockInPage & 0x1FF) >> PAGE_OFFSET_LOROM; //8k x (1 << 3) = 64K pages
 
 	//We're here if a bank isn't mapped. search for it and if it's mapped, use it.
-	for (lookahead = 0; lookahead < ((ROM_PAGING_SIZE/PAGE_HIROM)-3); lookahead++) {
+	for (lookahead = 0; lookahead < SNES_ROM_PAGING_SLOTS; lookahead++) {
 		if (ROM_paging_offs[lookahead] == (int)(i)) {
 			ptr = SNES_ROM_PAGING_ADDRESS+(lookahead*PAGE_HIROM);
-			if(isCX4Access == true){
-				return ptr;
-			}
 			return romPageToLoROMSnesPage(ptr, blockInPage);
 		}
 	}
@@ -708,11 +746,8 @@ uint8 *	mem_checkReloadLoROM(int blockInPage, int blockInROM, bool isCX4Access)
 	mem_setCacheBlock(i, ptr); // Give Read-only memory
 
 	ROM_paging_cur++;
-	if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_HIROM) - 6) ){
+	if (ROM_paging_cur >= SNES_ROM_PAGING_SLOTS ){
 		ROM_paging_cur = 0;
-	}
-	if(isCX4Access == true){
-		return ptr;
 	}
 	return romPageToLoROMSnesPage(ptr, blockInPage);
 }

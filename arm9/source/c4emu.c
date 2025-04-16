@@ -1020,9 +1020,7 @@ uint8 readCX4ValueFromROM(uint32 SNESAddress){
 	
 	//Stage 1: Stream
 	if (LastInternalCX432KBlock != SNESAddressBlock ){
-		int block = (SNESAddress>>13)&0x7FF;
-        int blockRom = ((SNESAddressBlock<<LoROM32kShift)>>13)&0x7FF;
-		currentCX4ROMPage = mem_checkReloadLoROM(block, blockRom, true);
+        currentCX4ROMPage = mem_checkReloadCX4Cache(SNESAddressBlock, 0);
 		LastInternalCX432KBlock = SNESAddressBlock;
 	}
 	return currentCX4ROMPage[(SNESAddress & 0xffff)];
