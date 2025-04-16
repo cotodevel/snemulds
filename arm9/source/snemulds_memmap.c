@@ -185,18 +185,7 @@ void InitLoROMMap(int mode)
 			
 		//SnemulDS 0.6d
 		romFname = (char*)&SNES.ROM_info.title[0];
-		if (
-			(
-				(strncmpi((char*)romFname, "MEGAMAN X2", 10) == 0) 
-				||
-				(strncmpi((char*)romFname, "MEGAMAN X3", 10) == 0) 
-			)
-			&& (__dsimode == false)){
-			ROM_PAGING_SIZE = maxRAM = ROM_MAX_SIZE_NTRMODE_MMX2;
-		}
-		else{
-			ROM_PAGING_SIZE = maxRAM = ROM_MAX_SIZE_NTRMODE_MMX1;
-		}
+		ROM_PAGING_SIZE = maxRAM = ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE;
 	}
 	else if (mode == USE_EXTMEM){
 		// Extended RAM mode...
@@ -290,17 +279,12 @@ void InitLoROMMap(int mode)
 		for (i = c+4; i < c+8; i++)
 		{
 			if(LoROM_Direct_ROM_Mapping == true){
-				int pageMap = ((c>>1)<<13)+0x200000-0x8000;
-				if (pageMap > SNES.ROMSize){ 
-					// FIXED ?
+				int pageMap = ((c>>1)<<13)+LoROMMappedRange-0x200000-0x8000;
+				if(pageMap < maxRAM){
+					MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[pageMap]; //bottom 32K ROM addressed: mirror of first 2MB or second 2MB chip: todo
 				}
-				else{		
-					if(pageMap < maxRAM){
-						MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[pageMap]; //bottom 32K ROM addressed: mirror of first 2MB or second 2MB chip: todo
-					}
-					else{
-						MAP[i+0x200] = MAP[i+0x600] = (uint8*)MAP_PAGING;
-					}
+				else{
+					MAP[i+0x200] = MAP[i+0x600] = (uint8*)MAP_PAGING;
 				}
 			}
 			else if ( ((((c>>1)<<13)+0x200000-0x8000) < SNES.ROMSize) && (LoROM_Direct_ROM_Mapping == false))
@@ -442,11 +426,11 @@ __attribute__ ((optnone))
 void mem_init_directROM(){
 	mem_clear_paging();
 	#ifdef ARM9
-	SNES_ROM_ADDRESS_NTR = (u8*)(0x20B8000);
-	SNES_ROM_ADDRESS_TWL = (u8*)(0x20B8F00);
+	SNES_ROM_ADDRESS_NTR = (u8*)(0x20F0000);
+	SNES_ROM_ADDRESS_TWL = (u8*)(0x20C9F00);
 	#endif
 	#ifdef _MSC_VER
-	SNES_ROM_ADDRESS_NTR = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_NTRMODE);
+	SNES_ROM_ADDRESS_NTR = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE);
 	SNES_ROM_ADDRESS_TWL = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_TWLMODE);
 #endif
 	//MMX games already rely on streaming to work. But they can run from direct mode as well.
@@ -488,24 +472,26 @@ void	mem_init_paging()
 	mem_clear_paging();
 #ifdef ARM9
 	SNES_ROM_ADDRESS_NTR = (u8*)(0x20F0000);
-	SNES_ROM_ADDRESS_TWL = (u8*)(0x20F9F00);
+	SNES_ROM_ADDRESS_TWL = (u8*)(0x20C9F00);
 #endif
 #ifdef _MSC_VER
-	SNES_ROM_ADDRESS_NTR = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE + ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE + APU_BRR_HASH_BUFFER_SIZE);
-	SNES_ROM_ADDRESS_TWL = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_TWLMODE + ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE + APU_BRR_HASH_BUFFER_SIZE);
+	SNES_ROM_ADDRESS_NTR = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE + INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE + APU_BRR_HASH_BUFFER_SIZE);
+	SNES_ROM_ADDRESS_TWL = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_TWLMODE + INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE + APU_BRR_HASH_BUFFER_SIZE);
 #endif
 	SNES_ROM_PAGING_ADDRESS = (u8*)(SNES_ROM_ADDRESS_NTR+ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE);
-	APU_BRR_HASH_BUFFER_NTR = (u32*)(((int)SNES_ROM_PAGING_ADDRESS) + ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE); //(334*1024) = 342016 bytes / 64K blocks = 5 pages less useable on paging mode
+	APU_BRR_HASH_BUFFER_NTR = (u32*)(((int)SNES_ROM_PAGING_ADDRESS) + INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE); //(334*1024) = 342016 bytes / 64K blocks = 5 pages less useable on paging mode
 	
-	memset(SNES_ROM_PAGING_ADDRESS, 0, ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE);
+	memset(SNES_ROM_ADDRESS_NTR, 0, ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE);
+	memset(SNES_ROM_PAGING_ADDRESS, 0, INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE);
 	memset(APU_BRR_HASH_BUFFER_NTR, 0, APU_BRR_HASH_BUFFER_SIZE);
-	ROM_paging_offs = (uint16 *)TGDSARM9Malloc((ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE/PAGE_HIROM)*2);
+	
+	ROM_paging_offs = (uint16 *)TGDSARM9Malloc(SNES_ROM_PAGING_SLOTS*2);
 	if (!ROM_paging_offs)
 	{
 		printf("Not enough memory for ROM paging (2).\n");
 		while (1){}
 	}
-	memset(ROM_paging_offs, 0xFF, (ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE/PAGE_HIROM)*2);
+	memset(ROM_paging_offs, 0xFF, SNES_ROM_PAGING_SLOTS*2);
 	ROM_paging_cur = 0;
 }
 
@@ -731,9 +717,23 @@ uint8 *	mem_checkReloadLoROM(int blockInPage, int blockInROM)
 		}
 	}
 
+	//SnemulDS 0.6d
+	#ifdef ARM9
 	if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF){
-		mem_removeCacheBlock(ROM_paging_offs[ROM_paging_cur]);
+		// Check that we are not unloading program code 
+		uint32 cPC = ((S&0xFFFF) << 16)|(uint32)((sint32)PCptr+(sint32)SnesPCOffset);
+		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET_HIROM;
+		if (ROM_paging_offs[ROM_paging_cur] == PC_blk){
+			ROM_paging_cur++;
+			if (ROM_paging_cur >= SNES_ROM_PAGING_SLOTS ){
+				ROM_paging_cur = 0;
+			}
+		}
+		if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF){
+			mem_removeCacheBlock(ROM_paging_offs[ROM_paging_cur]);
+		}
 	}
+	#endif
 
 	ROM_paging_offs[ROM_paging_cur] = i;
 	ptr = SNES_ROM_PAGING_ADDRESS+(ROM_paging_cur*PAGE_HIROM);

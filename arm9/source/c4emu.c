@@ -1014,7 +1014,7 @@ uint8 readCX4ValueFromROM(uint32 SNESAddress){
 	
 	//Stage 0: ROM
 	int RomOffsetLoROM = (((int)(SNESAddressBlock << LoROM32kShift)) + (int)(SNESAddress & 0xffff)); //* 0x8000 (32K LoROM)
-	if( RomOffsetLoROM < (int)ROM_PAGING_SIZE){
+	if( RomOffsetLoROM < (int)ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE){
 		return *(SNESC.ROM + RomOffsetLoROM);
 	}
 	

@@ -51,23 +51,21 @@ extern u8 * SNES_ROM_PAGING_ADDRESS;
 extern u32* APU_BRR_HASH_BUFFER_NTR;
 extern bool LoROM_Direct_ROM_Mapping;
 
-#define ROM_MAX_SIZE_NTRMODE	((int)3*1024*1024) //LoROM direct
+#define ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE	((int)(2*1024*1024))			//LoROM streaming
+#define INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE	((int)(512*1024))
 
-#define ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE	((int)(1*1024*1024))			//LoROM streaming
-#define ROM_MAX_SIZE_NTRMODE_MMX2	ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE	//LoROM streaming: MMX2
-#define ROM_MAX_SIZE_NTRMODE_MMX1	((int)(768*1024))		//LoROM streaming: MMX1
+//334K ~ worth of Hashed Samples from the APU core to remove stuttering
+#define APU_BRR_HASH_BUFFER_SIZE (384*1024)
+
 #define ROM_MAX_SIZE_TWLMODE	((6*1024*1024)+(512*1024)) //Max ROM size: 6.5MB
 
 #define	PAGE_HIROM		(64*1024)
 #define	PAGE_LOROM		(PAGE_HIROM >> 1)
 
 #define CX4_PAGING_SLOTS (3)
-#define SNES_ROM_PAGING_SLOTS ((ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE/PAGE_HIROM)-CX4_PAGING_SLOTS)
+#define SNES_ROM_PAGING_SLOTS ( ((ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE/PAGE_HIROM)) - CX4_PAGING_SLOTS)
+#define getCX4_CACHE_ADDRESS(ptr) ((int)ptr + (SNES_ROM_PAGING_SLOTS * PAGE_HIROM))
 
-#define getCX4_CACHE_ADDRESS(ptr) ((int)ptr + ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE - (CX4_PAGING_SLOTS * PAGE_HIROM))
-
-//334K ~ worth of Hashed Samples from the APU core to remove stuttering
-#define APU_BRR_HASH_BUFFER_SIZE (512*1024)
 
 #ifndef TGDSARM9Free
 #define TGDSARM9Free	free

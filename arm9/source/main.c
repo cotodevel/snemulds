@@ -381,10 +381,6 @@ bool loadROM(char *name, int confirm){
 	
 	size = FS_getFileSizeFatFS(romname);
 
-	//fixes SMAS
-	if(size < ROM_MAX_SIZE_NTRMODE){
-		SNES_ROM_ADDRESS_NTR+=0x38000;
-	}
 	ROM = (char *)SNES_ROM_ADDRESS_NTR;
 	
 	ROMheader = size & 8191;
@@ -451,7 +447,7 @@ bool loadROM(char *name, int confirm){
 			printf("Extended TWL Mem. (BOF fix)");
 		}
 		else{
-			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE; //BOF games will always run in paging mode (NTR/TWL). Later, rom size is updated anyway.
+			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE; //BOF games will always run in paging mode (NTR/TWL). Later, rom size is updated anyway.
 			ROM = (char *)SNES_ROM_ADDRESS_NTR;
 			setCpuClock(false);
 			printf("Normal NTR Mem. (BOF fix)");	
@@ -466,27 +462,16 @@ bool loadROM(char *name, int confirm){
 			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x0 << 14);
 			*(u32*)0x04004008 = SFGEXT9;	
 		}
-		ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
+		ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE;
 		ROM = (char *)SNES_ROM_ADDRESS_NTR;
 		setCpuClock(false);
 		printf("Normal NTR Mem.");
 	}
 	
 	if(strncmpi((char*)&titleRead[0], "MEGAMAN X", 9) == 0){	//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100%	(2/2)
-		ROM_PAGING_SIZE = ROM_MAX_SIZE_NTRMODE_MMX1;
-
-		if(
-			(strncmpi((char*)&titleRead[0], "MEGAMAN X2", 10) == 0) 
-			||
-			(strncmpi((char*)&titleRead[0], "MEGAMAN X3", 10) == 0) 
-		){
-			ROM_PAGING_SIZE = ROM_MAX_SIZE_NTRMODE_MMX2;
-		}
-
 		LoROM_Direct_ROM_Mapping = true;
 	}
 	else{
-		ROM_PAGING_SIZE = ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE;
 		LoROM_Direct_ROM_Mapping = false;
 	}
 	
@@ -503,7 +488,7 @@ bool loadROM(char *name, int confirm){
 		(
 			(ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE)	//TWL mode
 			||
-			(size != ROM_MAX_SIZE_NTRMODE)	//NTR mode
+			(size != (3*1024*1024))	//NTR mode
 		)
 		||
 		//NTR/TWL Mode: Breath Of Fire runs in paging mode now to get the correct audio speed
@@ -566,7 +551,7 @@ bool loadROM(char *name, int confirm){
 	coherent_user_range_by_size((uint32)&SNEMULDS_IPC->snesHeaderName[0], (int)16);
 	
 	initSNESEmpty(&uninitializedEmu, apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
-	memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
+	//memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 	clrscr();
 	GUI_printf(" - - ");
 	GUI_printf(" - - ");
@@ -586,8 +571,8 @@ bool loadROM(char *name, int confirm){
 			GUI_printf("(HiROM) Large ROM detected. CRC(1Mb) = %08x ", crc);
 		}
 		else{
-			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, ROM_PAGING_SIZE+ROMheader);
-			crc = crc32(0, ROM, ROM_PAGING_SIZE);
+			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE+ROMheader);
+			crc = crc32(0, ROM, ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE);
 			GUI_printf("(LoROM) Large ROM detected. CRC(1Mb) = %08x ", crc);
 		}
 		CFG.LargeROM = true;
