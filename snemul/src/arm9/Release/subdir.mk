@@ -10,17 +10,13 @@ C_SRCS += \
 ../engine.c \
 ../fs.c \
 ../gui.c \
-../main.c \
-../memmap.c \
+../main_snemulds.c \
+../snemulds_memmap.c \
 ../opcodes.c \
 ../ppu.c \
 ../snapshot.c \
 ../snes.c \
-../touch.c 
-
-S_SRCS += \
-../intr.s 
-
+../touch.c
 OBJS += \
 ./SNES_global.o \
 ./apu.o \
@@ -28,15 +24,13 @@ OBJS += \
 ./engine.o \
 ./fs.o \
 ./gui.o \
-./intr.o \
-./main.o \
-./memmap.o \
+./main_snemulds.o \
+./snemulds_memmap.o \
 ./opcodes.o \
 ./ppu.o \
 ./snapshot.o \
 ./snes.o \
-./touch.o 
-
+./touch.o
 C_DEPS += \
 ./SNES_global.d \
 ./apu.d \
@@ -45,7 +39,7 @@ C_DEPS += \
 ./fs.d \
 ./gui.d \
 ./main.d \
-./memmap.d \
+./snemulds_memmap.d \
 ./opcodes.d \
 ./ppu.d \
 ./snapshot.d \
@@ -57,21 +51,7 @@ C_DEPS += \
 %.o: ../%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
-	C:/devkitPro2007/devkitARM/bin/arm-eabi-gcc -DNDS -DASM_OPCODES -DARM9 -I"/c/devkitPro2007/libnds/include" -I"/c/devkitPro2007/libfat/include" -I"/c/devkitPro2007/devkitARM/arm-eabi/include" -O2 -Wall -c -fmessage-length=0 -fsigned-char -ffast-math -fomit-frame-pointer -marm -mcpu=arm946e-s -mtune=arm946e-s -DARM9 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
-	@echo 'Finished building: $<'
-	@echo ' '
-
-%.o: ../%.s
-	@echo 'Building file: $<'
-	@echo 'Invoking: GCC Assembler'
-	C:/devkitPro2007/devkitARM/bin/arm-eabi-as  -o"$@" "$<"
-	@echo 'Finished building: $<'
-	@echo ' '
-
-opcodes2.o: ../opcodes2.s
-	@echo 'Building file: $<'
-	@echo 'Invoking: GCC Assembler'
-	C:/devkitPro2007/devkitARM/bin/arm-eabi-as -defsym debug=0 -o"$@" "$<"
+	$(DEVKITARM)/bin/arm-eabi-gcc -DNDS -DASM_OPCODES -DARM9 -I"C:\devkitpro2007\libnds\include" -I"C:\devkitpro2007\libfat\include" -I"C:\devkitpro2007\devkitARM\arm-eabi\include" -O2 -Wall -c -fmessage-length=0 -fsigned-char -ffast-math -fomit-frame-pointer -marm -mcpu=arm946e-s -mtune=arm946e-s -DARM9 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

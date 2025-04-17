@@ -24,6 +24,8 @@
 
 #include "io_ezsd.h"
 #include <nds.h>
+#include <nds/registers_alt.h>
+
 
 /********************************************************************************/
 void		OpenWrite()

@@ -19,6 +19,14 @@
 #include "disc_io.h"
 #ifdef NDS
 #include <nds/memory.h>
+
+#define ARM9_MAIN_RAM_PRIORITY BIT(15)
+#define ARM9_OWNS_CARD BIT(11)
+#define ARM9_OWNS_ROM  BIT(7)
+#define ARM7_OWNS_SRAM 0
+#define ARM7_OWNS_CARD 0
+#define ARM7_OWNS_ROM  0
+
 #endif
 
 extern IO_INTERFACE _io_dldi;

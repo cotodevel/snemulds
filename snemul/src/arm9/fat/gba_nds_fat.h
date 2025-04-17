@@ -1,3 +1,5 @@
+#ifdef ARM9
+
 /*
 	gba_nds_fat.h
 	By chishm (Michael Chisholm)
@@ -442,3 +444,4 @@ int FAT_fputs (const char *string, FAT_FILE* file);
 
 #endif	// ifndef _GBA_NDS_FAT
 
+#endif

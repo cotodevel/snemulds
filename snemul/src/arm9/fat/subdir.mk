@@ -52,15 +52,15 @@ C_DEPS += \
 # Each subdirectory must supply rules for building sources it contributes
 fat/%.o: ../fat/%.c
 	@echo 'Building file: $<'
-	@echo 'Invoking: GCC C Compiler'
-	C:/devkitPro2007/devkitARM/bin/arm-eabi-gcc -DNDS -I"/c/devkitPro2007/libnds/include" -I"/c/devkitPro2007/libfat/include" -I"/c/devkitPro2007/devkitARM/arm-eabi/include" -O3 -Wall -c -fmessage-length=0 -fsigned-char -ffast-math -fomit-frame-pointer -marm -mcpu=arm9tdmi -mtune=arm9tdmi -DARM9 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	@echo 'Invoking: GCC C Compiler (fat)'
+	arm-eabi-gcc -DNDS -I"C:\devkitPro\libnds\include" -I"C:\devkitPro\devkitARM\arm-eabi\include" -O3 -Wall -c -fmessage-length=0 -fsigned-char -ffast-math -fomit-frame-pointer -marm -mcpu=arm9tdmi -mtune=arm9tdmi -DARM9 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 fat/%.o: ../fat/%.s
 	@echo 'Building file: $<'
-	@echo 'Invoking: GCC Assembler'
-	C:/devkitPro2007/devkitARM/bin/arm-eabi-as  -o"$@" "$<"
+	@echo 'Invoking: GCC Assembler (fat)'
+	arm-eabi-as  -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

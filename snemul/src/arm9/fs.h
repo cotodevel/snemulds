@@ -10,6 +10,9 @@
 
 #include "gui.h"
 
+#include <stdio.h>
+#include <gba_nds_fat.h>
+
 void	FS_init();
 t_list 	*FS_getDirectoryList(char *mask);
 void	FS_printlog(char *buf);

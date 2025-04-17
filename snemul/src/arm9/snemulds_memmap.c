@@ -469,7 +469,6 @@ void	InitMap()
     }    
 }
 
-//#include "memmap.h"
 IN_ITCM
 uchar   mem_getbyte(uint32 offset,uchar bank)
 {

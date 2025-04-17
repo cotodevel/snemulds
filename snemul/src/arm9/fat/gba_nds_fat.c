@@ -291,6 +291,7 @@ u16 return OUT: time / date in Dir Entry styled format
 -----------------------------------------------------------------*/
 u16 getRTCtoFileTime (void)
 {
+/*
 #ifdef NDS
 	return (
 		( ( (IPC->rtc_hours > 11 ? IPC->rtc_hours - 40 : IPC->rtc_hours) & 0x1F) << 11) |
@@ -299,10 +300,13 @@ u16 getRTCtoFileTime (void)
 #else
 	return 0;
 #endif
+*/
+return 0;
 }
 
 u16 getRTCtoFileDate (void)
 {
+/*
 #ifdef NDS
 	return ( 
 		( ((IPC->rtc_year + 20) & 0x7F) <<9) |
@@ -311,6 +315,9 @@ u16 getRTCtoFileDate (void)
 #else
 	return 0;
 #endif
+*/
+return 0;
+
 }
 
 

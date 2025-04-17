@@ -573,8 +573,6 @@ void	handleMenu()
 
 }
 	
-extern void IntrHandlerAsm();
-	
 //---------------------------------------------------------------------------------
 int main(void) 
 {
@@ -585,10 +583,10 @@ int main(void)
     *APU_ADDR_ANS = *APU_ADDR_CMD = 0; 
 	resetMemory2_ARM9();
 
-/*    irqInit();
+    irqInit();
     irqSet(IRQ_HBLANK, Hblank);
     irqSet(IRQ_VBLANK, Vblank);
-    irqEnable(IRQ_HBLANK | IRQ_VBLANK);*/
+    irqEnable(IRQ_HBLANK | IRQ_VBLANK);
 	
 #ifndef TIMER_Y	
     TIMER3_CR &= ~TIMER_ENABLE; // not strictly necessary if the timer hasn't been enabled before
@@ -632,18 +630,19 @@ int main(void)
 	//consoleInit() is a lot more flexible but this gets you up and running quick
 	consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(4), (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
 
-	IRQ_HANDLER = &IntrHandlerAsm;
-
 //    REG_IE = IRQ_VBLANK | IRQ_HBLANK;
 //    DISP_SR = DISP_VBLANK_IRQ | DISP_HBLANK_IRQ;
     REG_IE = IRQ_VBLANK;
     DISP_SR = DISP_VBLANK_IRQ;
-
+	
     REG_IF = ~0;
-    REG_IME = 1;
+    
 
+	REG_IME = 1;
+	
+	
 	iprintf(SNEMULDS_TITLE);
-
+	
 	swiWaitForVBlank();
 	swiWaitForVBlank();
 

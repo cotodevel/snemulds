@@ -32,6 +32,8 @@
 
 #ifdef NDS
 	#include <nds.h>
+	#include <nds/registers_alt.h>
+	
 #endif
 
 
