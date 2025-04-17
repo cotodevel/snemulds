@@ -156,21 +156,10 @@ mytouchPosition mytouchReadXY();
 //#define USE_EMUL
 touchPosition superTouchReadXY()
 {
-#ifdef USE_EMUL // How to detect Dualis emulator ???
 	touchPosition touchXY;
 	
 //	touchXY = touchReadXY();
 	touchXY = touchReadXY();
-#else
-	touchPosition touchXY;
-	mytouchPosition mtouchXY;
-		
-    mtouchXY = mytouchReadXY();	// It seems first measure is not already updayed
-    mtouchXY = mytouchReadXY();	
-    mtouchXY = mytouchReadXY();	
-	touchXY.px = mtouchXY.px;
-	touchXY.py = mtouchXY.py;
-#endif	
 	return touchXY;
 }
 

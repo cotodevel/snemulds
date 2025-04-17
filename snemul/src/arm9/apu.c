@@ -12,15 +12,10 @@
 
 void ARM7_fifo_init(void)
 {
-   //activate FIFO
-   REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR;
+ 
 } 
 
 void SendArm7Command(u32 command) {
-   while (REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL) ;
-   if (REG_IPC_FIFO_CR & IPC_FIFO_ERROR) {
-      REG_IPC_FIFO_CR |= IPC_FIFO_SEND_CLEAR;
-   }
    REG_IPC_FIFO_TX = command;
 } 
 
@@ -38,8 +33,6 @@ void	APU_stop()
 {
 	*APU_ADDR_ANS = 0;
 	SendArm7Command(4);
-	// Wait the APU disabling
-	while (*APU_ADDR_ANS != 0xFF00FF00);	
 }
 
 void	APU_playSpc()

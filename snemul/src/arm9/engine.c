@@ -216,13 +216,12 @@ int initSNESEmpty()
   CFG.BG3Squish = 2;
   CFG.WaitVBlank = 0;
   CFG.YScroll = 0;
-  CFG.CPU_speedhack = 1;
+  CFG.CPU_speedhack = 0;
   
   CFG.frame_rate = 1;
   CFG.DSP1 = CFG.SuperFX = 0;
   CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
-  CFG.Sound_output = 1;
-//  CFG.Sound_output = 0;
+  CFG.Sound_output = 0;
 
   memset(&SNES, 0, sizeof(SNES));
   memset(&SNESC, 0, sizeof(SNESC));
