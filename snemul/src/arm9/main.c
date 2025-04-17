@@ -608,14 +608,14 @@ int main(void)
 	/* 256Ko for Sprites (SNES : 64Ko) */	
 	vramSetBankA(VRAM_A_MAIN_SPRITE | VRAM_OFFSET(0)); // 0x6400000
 	vramSetBankB(VRAM_B_MAIN_SPRITE | VRAM_OFFSET(1)); // 0x6420000
-	vramSetBankC(VRAM_C_MAIN_BG_0x6000000);
-	vramSetBankD(VRAM_D_MAIN_BG_0x6020000);
+	vramSetBankC(VRAM_C_MAIN_BG_0x06000000);
+	vramSetBankD(VRAM_D_MAIN_BG_0x06020000);
 #else
 	/* 256Ko for Tiles (SNES: 64Ko) */
 	/* 128Ko for Sprites (SNES : 64Ko) */	
-	vramSetBankA(VRAM_A_MAIN_BG_0x6000000);
+	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
 	vramSetBankB(VRAM_B_MAIN_SPRITE | VRAM_OFFSET(0)); // 0x6400000
-	vramSetBankC(VRAM_C_MAIN_BG_0x6020000);
+	vramSetBankC(VRAM_C_MAIN_BG_0x06020000);
 	vramSetBankD(VRAM_D_ARM7); // Some memory for ARM7 (128 Ko!)
 #endif	
 	

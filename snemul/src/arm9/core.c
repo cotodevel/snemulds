@@ -25,11 +25,6 @@
 //#include "superfx.h"
 //#include "sfxinst.h"
 
-uchar   mem_getbyte(uint offset, uchar bank);
-void	mem_setbyte(uint offset, uchar bank, uchar byte);
-ushort  mem_getword(uint offset, uchar bank);
-void    mem_setword(uint offset, uchar bank, ushort word);
-
 int	SPC700_emu;
 
 void	PPU_port_write(uint address, uchar value);

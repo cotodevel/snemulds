@@ -871,13 +871,6 @@ uint8 old_brightness;
 
 extern int frame;
 
-static inline void dmaFillWords(const void* src, void* dest, uint32 size) {
-	DMA_SRC(3)  = (uint32)src;
-	DMA_DEST(3) = (uint32)dest;
-	DMA_CR(3)   = DMA_COPY_WORDS | DMA_SRC_FIX | (size>>2);
-	while(DMA_CR(3) & DMA_BUSY);
-}
-
 void PPU_reset()
 {
   int i;

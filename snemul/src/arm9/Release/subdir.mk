@@ -19,8 +19,7 @@ C_SRCS += \
 ../touch.c 
 
 S_SRCS += \
-../intr.s \
-../opcodes2.s 
+../intr.s 
 
 OBJS += \
 ./SNES_global.o \
@@ -33,7 +32,6 @@ OBJS += \
 ./main.o \
 ./memmap.o \
 ./opcodes.o \
-./opcodes2.o \
 ./ppu.o \
 ./snapshot.o \
 ./snes.o \

@@ -33,32 +33,14 @@ extern uint32 screen_mode;
 struct s_snes SNES;
 struct s_cfg CFG;
 
-uchar   mem_getbyte(uint offset, uchar bank);
-void	mem_setbyte(uint offset, uchar bank, uchar byte);
-ushort  mem_getword(uint offset, uchar bank);
-void    mem_setword(uint offset, uchar bank, ushort word);
-
-
 #define DS_SRAM          ((uint8*)0x0A000000)
 
 void writeSRAM(int offset, uint8* src, int size) {
-        WAIT_CR &= ~0x0880;
-        uint8* dest = DS_SRAM+offset;
-        while (size--)
-        {
-                *dest++ = *src++; 
-        }
-        WAIT_CR |= 0x0880;
+    
 }
 
 void readSRAM(int offset, uint8* dest, int size) {
-        WAIT_CR &= ~0x0880;
-        uint8* src = DS_SRAM+offset;
-        while (size--)
-        {
-                *dest++ = *src++;
-        }
-        WAIT_CR |= 0x0880;
+    
 } 
 
 
