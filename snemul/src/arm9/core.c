@@ -1,25 +1,15 @@
 /***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
-/* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
+/* (c) 1997-1999, 2006 archeide, All rights reserved.      */
+/* Free for non-commercial use                             */
 /***********************************************************/
-/*
-This program is free software; you can redistribute it and/or 
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
-the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-GNU General Public License for more details.
-*/
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include "opcodes.h"
+//#include "snemul.h"
 
 #ifdef WIN32
 #include <allegro.h>
@@ -35,7 +25,15 @@ GNU General Public License for more details.
 //#include "superfx.h"
 //#include "sfxinst.h"
 
+uchar   mem_getbyte(uint offset, uchar bank);
+void	mem_setbyte(uint offset, uchar bank, uchar byte);
+ushort  mem_getword(uint offset, uchar bank);
+void    mem_setword(uint offset, uchar bank, ushort word);
+
 int	SPC700_emu;
+
+void	PPU_port_write(uint address, uchar value);
+uchar	PPU_port_read(uint address);
 
 
 // A OPTIMISER
@@ -122,7 +120,13 @@ void DMA_transfert(uchar port)
 /*   FS_flog("DMA[%d] %06X->%04X SIZE:%05X VRAM : %04X\n", port,
       DMA_address+(DMA_bank<<16), PPU_port, DMA_len, SNES.PPU_Port[0x16]);*/
 
-  ADD_CYCLES (DMA_len + (DMA_len >> 2));
+#if 0
+  CPU.Cycles -= DMA_len + (DMA_len >> 2);
+  if (CPU.Cycles < 0) CPU.Cycles = 0;
+#else
+//  CPU.Cycles += DMA_len + (DMA_len >> 2);
+  Cycles += DMA_len + (DMA_len >> 2);
+#endif
 
   if (PPU_port == 0x2118 && DMA_info == 1)
   {
@@ -187,9 +191,9 @@ void		HDMA_transfert(unsigned char port)
                     SNES.DMA_Port[0x104+port*0x10]);
 
   if (!ptr) {
-/*    iprintf(" (invalid memory access during a H-DMA transfert : %06X)",
+    iprintf(" (invalid memory access during a H-DMA transfert : %06X)",
       SNES.DMA_Port[0x102+port*0x10]+(SNES.DMA_Port[0x103+port*0x10]<<8)+
-      (SNES.DMA_Port[0x104+port*0x10]<<16));*/
+      (SNES.DMA_Port[0x104+port*0x10]<<16));
       return;
 //    exit(255);
   }
@@ -339,37 +343,36 @@ uchar	DMA_port_read(uint address)
     case 0x4017 :
       return 0x00;
     case 0x4210:
-//FIXME
-  	  if (HCYCLES < NB_CYCLES-6 && SNES.V_Count == GFX.ScreenHeight-1)    
-     // if (Cycles >= CPU.Cycles-6 && SNES.V_Count == GFX.ScreenHeight-1)    
-      {
+//FIXME    
+      if (Cycles >= CPU.Cycles-6 && SNES.V_Count == GFX.ScreenHeight-1) {
         CPU.NMIActive = 1; SNES.DMA_Port[0x10] = 0; return 0x80;
       }
-      SET_WAITCYCLESDELAY(0);
-      if (SNES.V_Count == GFX.ScreenHeight-1) SET_WAITCYCLESDELAY(6);
+      CPU.WaitAddress = CPU.LastAddress; CPU.WaitCycles = CPU.Cycles;
+      if (SNES.V_Count == GFX.ScreenHeight-1) CPU.WaitCycles = CPU.Cycles-6;
       if (SNES.DMA_Port[0x10]&0x80) {
         SNES.DMA_Port[0x10] &= ~0x80; return 0x80;
       } break;
     case 0x4211:
-      SET_WAITCYCLESDELAY(0);
+      CPU.WaitAddress = CPU.LastAddress; CPU.WaitCycles = CPU.Cycles;
       if (SNES.DMA_Port[0x11] & 0x80) {
         SNES.DMA_Port[0x11] &= ~0x80; return 0x80;
       } break;
     case 0x4212:
-      SET_WAITCYCLESDELAY(0);
-      if (HCYCLES < NB_CYCLES - 65) SET_WAITCYCLESDELAY(60);
+      CPU.WaitAddress = CPU.LastAddress; CPU.WaitCycles = CPU.Cycles;
+      if (CPU.Cycles > 65) CPU.WaitCycles = CPU.Cycles-60;
       if (SNES.V_Count == GFX.ScreenHeight-1)
-        SET_WAITCYCLESDELAY(6);
+        CPU.WaitCycles = CPU.WaitCycles-5;
       SNES.DMA_Port[0x12] =
         SNES.V_Count >= GFX.ScreenHeight && SNES.V_Count < GFX.ScreenHeight+3;
 	  // FiXME
+        {
 //          if (CPU.Cycles*2 < 120)
-	  if (HCYCLES > 30)
-        SNES.DMA_Port[0x12] |= 0x40;
+		  if (Cycles*2 > 60)
+            SNES.DMA_Port[0x12] |= 0x40;
 // FIXME            
-	  if (SNES.v_blank || (HCYCLES < NB_CYCLES-6 && SNES.V_Count == GFX.ScreenHeight-1))
-//      if (SNES.v_blank || (Cycles >= CPU.Cycles-6 && SNES.V_Count == GFX.ScreenHeight-1))     
-          SNES.DMA_Port[0x12] |= 0x80;
+          if (SNES.v_blank || (Cycles >= CPU.Cycles-6 && SNES.V_Count == GFX.ScreenHeight-1))
+            SNES.DMA_Port[0x12] |= 0x80;
+        }
       break;
   }
   if (address >= 0x4200)
@@ -379,7 +382,7 @@ uchar	DMA_port_read(uint address)
 }
 
 IN_ITCM2
-uchar	PPU_port_read(uint32 address)
+uchar	PPU_port_read(uint address)
 {
   switch (address) {
     case 0x2121 :
@@ -397,7 +400,7 @@ uchar	PPU_port_read(uint32 address)
         SNES.PPU_NeedMultiply = 0;
       } break;
     case 0x2137 :
-      SNES.PPU_Port[0x3C] = (HCYCLES)*9/5; // FIXME    	
+      SNES.PPU_Port[0x3C] = ((NB_CYCLES-CPU.Cycles)*9)/5;
       SNES.PPU_Port[0x3C] = (SNES.PPU_Port[0x3C]>>8) | (SNES.PPU_Port[0x3C]<<8);
       SNES.PPU_Port[0x3D] = SNES.V_Count;
       SNES.PPU_Port[0x3D] = (SNES.PPU_Port[0x3D]>>8) | (SNES.PPU_Port[0x3D]<<8);
@@ -494,7 +497,7 @@ uchar	PPU_port_read(uint32 address)
       else { /* APU Skipper */
         switch ((APU.skipper_cnt1++)%11) {
           case 0: return SNES.PPU_Port[0x40];
-          case 1: return REAL_A;       
+          case 1: return A;
           case 2: return X;
           case 3: return Y;
           case 4: return 0xAA;
@@ -510,9 +513,9 @@ uchar	PPU_port_read(uint32 address)
       if (CFG.Sound_output)
         return PORT_SPC_TO_SNES[1];
       else {
-        switch ((APU.skipper_cnt2++)%13) {
+        switch ((APU.skipper_cnt2++)%12) {
           case 0: return SNES.PPU_Port[0x41];
-          case 1: return REAL_A;
+          case 1: return A;
           case 2: return X;
           case 3: return Y;
           case 4: return 0xCD;
@@ -523,7 +526,7 @@ uchar	PPU_port_read(uint32 address)
           case 9: return 0xFF;
           case 10: return 0x01;
           case 11: return 0x02;
-          case 12: return REAL_A >> 8;        
+          case 12: return A >> 8;
         }
       } break;
     case 0x2142 :
@@ -532,7 +535,7 @@ uchar	PPU_port_read(uint32 address)
       else {
         switch ((APU.skipper_cnt3++)%7) {
           case 0: return SNES.PPU_Port[0x42];
-          case 1: return REAL_A;
+          case 1: return A;
           case 2: return X;
           case 3: return Y;
           case 4: return 0x00;
@@ -546,14 +549,14 @@ uchar	PPU_port_read(uint32 address)
       else {
         switch((APU.skipper_cnt4++) % 9) {
           case 0: return SNES.PPU_Port[0x43];
-          case 1: return REAL_A;
+          case 1: return A;
           case 2: return X;
           case 3: return Y;
           case 4: return 0x00;
           case 5: return 0xAA;
           case 6: return 0xBB;
           case 7: return 0x01;
-          case 8: return REAL_A>>8;
+          case 8: return A>>8;
         }
       } break;
     case 0x2180 :
@@ -581,7 +584,8 @@ uchar	PPU_port_read(uint32 address)
         }
       if (address == 0x3030)
         {
-          SET_WAITCYCLES(0);
+          CPU.WaitAddress = CPU.LastAddress;
+          CPU.WaitCycles = CPU.Cycles;
         }
       return (byte);
     }
@@ -593,7 +597,7 @@ uchar	PPU_port_read(uint32 address)
 }
 
 IN_ITCM2
-void	PPU_port_write(uint32 address, uchar value)
+void	PPU_port_write(uint address, uchar value)
 {
   switch (address) {
     case 0x2100 : 
@@ -671,9 +675,9 @@ void	PPU_port_write(uint32 address, uchar value)
              GFX.OAM_upper_byte = 1;
            }
          } break;
-	case 0x2105 :
-		//printf("Graph mode : %d\n", value); 
-		break;
+/*	case 0x2105 :
+		printf("Graph mode : %d\n", value); 
+		break;*/
 /*	case 0x2107 : 
     case 0x2108 : 
 	case 0x2109 : 
@@ -708,7 +712,7 @@ void	PPU_port_write(uint32 address, uchar value)
            SNES.PPU_Port[0x0D] = value; GFX.BG_scroll_reg |= 0x01;
          } else {
            SNES.PPU_Port[0x0D] += (value<<8); GFX.BG_scroll_reg &= ~0x01;
-//           update_scrollx(0);
+           update_scrollx(0);
          } return;
    case 0x210E :
          if ((GFX.BG_scroll_reg&0x02)==0) {
@@ -716,7 +720,7 @@ void	PPU_port_write(uint32 address, uchar value)
            SNES.PPU_Port[0x0E] = value; GFX.BG_scroll_reg |= 0x02;
          } else {
            SNES.PPU_Port[0x0E] += (value<<8); GFX.BG_scroll_reg &= ~0x02;
-//           update_scrolly(0);
+           update_scrolly(0);
          } return;
     case 0x210F :
          if ((GFX.BG_scroll_reg&0x04)==0) {
@@ -724,7 +728,7 @@ void	PPU_port_write(uint32 address, uchar value)
            SNES.PPU_Port[0x0F] = value; GFX.BG_scroll_reg |= 0x04;
          } else {
            SNES.PPU_Port[0x0F] += (value<<8); GFX.BG_scroll_reg &= ~0x04;
-  //         update_scrollx(1);
+           update_scrollx(1);
          } return;
     case 0x2110 :
          if ((GFX.BG_scroll_reg&0x08)==0) {
@@ -732,7 +736,7 @@ void	PPU_port_write(uint32 address, uchar value)
            SNES.PPU_Port[0x10] = value; GFX.BG_scroll_reg |= 0x08;
          } else {
            SNES.PPU_Port[0x10] += (value<<8); GFX.BG_scroll_reg &= ~0x08;
-//           update_scrolly(1);
+           update_scrolly(1);
          } return;
     case 0x2111 :
          if ((GFX.BG_scroll_reg&0x10)==0) {
@@ -740,7 +744,7 @@ void	PPU_port_write(uint32 address, uchar value)
            SNES.PPU_Port[0x11] = value; GFX.BG_scroll_reg |= 0x10;
          } else {
            SNES.PPU_Port[0x11] += (value<<8); GFX.BG_scroll_reg &= ~0x10;
-//           update_scrollx(2);
+           update_scrollx(2);
          } return;
     case 0x2112 :
          if ((GFX.BG_scroll_reg&0x20)==0) {
@@ -748,22 +752,20 @@ void	PPU_port_write(uint32 address, uchar value)
            SNES.PPU_Port[0x12] = value; GFX.BG_scroll_reg |= 0x20;
          } else {
            SNES.PPU_Port[0x12] += (value<<8); GFX.BG_scroll_reg &= ~0x20;
-//           update_scrolly(2);
+           update_scrolly(2);
          } return;
     case 0x2113 :
          if ((GFX.BG_scroll_reg&0x40)==0) {
            SNES.PPU_Port[0x13] = value; GFX.BG_scroll_reg |= 0x40;
          } else {
            SNES.PPU_Port[0x13] += (value<<8); GFX.BG_scroll_reg &= ~0x40;
-         } 
-//         GFX.tiles_ry[3] = 8; return;
+         } GFX.tiles_ry[3] = 8; return;
     case 0x2114 :
          if ((GFX.BG_scroll_reg&0x80)==0) {
            SNES.PPU_Port[0x14] = value; GFX.BG_scroll_reg |= 0x80;
          } else {
            SNES.PPU_Port[0x14] += (value<<8); GFX.BG_scroll_reg &= ~0x80;
-         } 
-//         GFX.tiles_ry[3] = 8; return;
+         } GFX.tiles_ry[3] = 8; return;
     case 0x2115 :
          switch(value&0x3) {
            case 0x0 : GFX.SC_incr = 0x01; break;
@@ -976,7 +978,6 @@ void	PPU_port_write(uint32 address, uchar value)
 
 void GoNMI()
 {
-#ifndef ASM_OPCODES	
   if (CPU.WAI_state) {
     CPU.WAI_state = 0; PC++;
   };
@@ -987,29 +988,12 @@ void GoNMI()
   PC = CPU.NMI;
   PB = 0;
   P &= ~P_D;
-#else
-  CPU_pack();
-
-  if (CPU.WAI_state) {
-    CPU.WAI_state = 0; CPU.PC++;
-  };
-
-  pushb(CPU.PB);
-  pushw(CPU.PC);
-  pushb(CPU.P);
-  CPU.PC = CPU.NMI;
-  CPU.PB = 0;
-  CPU.P &= ~P_D;
-  
-  CPU.unpacked = 0; // ASM registers to update
-#endif
 
   if (CFG.CPU_log) fprintf(SNES.flog, "--> NMI\n");
 }
 
 void GoIRQ()
 {
-#ifndef ASM_OPCODES	
   if (CPU.WAI_state) {
     CPU.WAI_state = 0; PC++;
   };
@@ -1018,30 +1002,10 @@ void GoIRQ()
     pushb(PB);
     pushw(PC);
     pushb(P);
-    PC = CPU.IRQ; 
-    PB = 0;
+    PC = CPU.IRQ; PB = 0;
     P |= P_I;
     P &= ~P_D;
   }
-#else
-  CPU_pack();
-
-  if (CPU.WAI_state) {
-    CPU.WAI_state = 0; CPU.PC++;
-  };
-
-  if (!(CPU.P&P_I)) {
-    pushb(CPU.PB);
-    pushw(CPU.PC);
-    pushb(CPU.P);
-    CPU.PC = CPU.IRQ; 
-    CPU.PB = 0;
-    CPU.P |= P_I;
-    CPU.P &= ~P_D;
-  }
-  CPU.unpacked = 0; // ASM registers to update  
-#endif  
-  
   SNES.DMA_Port[0x11] = 0x80;
   if (CFG.CPU_log) fprintf(SNES.flog, "--> IRQ\n");
 }
@@ -1228,10 +1192,9 @@ void read_scope()
 
 void	update_joypads()
 {
-  read_joypads();	
   if (SNES.DMA_Port[0x00]&1)
     {
-//      read_joypads();
+      read_joypads();
       if (CFG.mouse)
         read_mouse();
       if (CFG.scope)
@@ -1263,4 +1226,3 @@ void SNES_update()
   
 	
 }
-

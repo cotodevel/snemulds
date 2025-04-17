@@ -1,20 +1,9 @@
 /***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
-/* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
+/* (c) 1997-1999, 2006 archeide, All rights reserved.      */
+/* Free for non-commercial use                             */
 /***********************************************************/
-/*
-This program is free software; you can redistribute it and/or 
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
-the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-GNU General Public License for more details.
-*/
-
 
 #include <nds.h>
 #include <nds/registers_alt.h>
@@ -32,7 +21,7 @@ GNU General Public License for more details.
 #include "m3sd.h"
 
 volatile int frame = 0;
-int timer_0 = 55;
+int timer_0 = 0;
 
 extern unsigned short PC;
 volatile int v_blank;
@@ -53,38 +42,10 @@ void Vblank() {
     REG_IF = IRQ_VBLANK;
 }
 
-static int _offsetY_tab[3] = { 16, 0, 32 };
 //---------------------------------------------------------------------------------
 void Hblank() {
 //---------------------------------------------------------------------------------
-	if (DISP_Y >= 192)
-	{
-		if (DISP_Y == 192)
-		{
-			/* FIXME: Vblank simulator */
-	/*		if (CFG.Sound_output && APU.counter > 100 && APU.counter < 261)
-				*APU_ADDR_CNT += 261 - APU.counter;  
-			APU.counter = 0;*/
-		}
-		
-		VBLANK_INTR_WAIT_FLAGS |= IRQ_HBLANK;	
-    	REG_IF = IRQ_HBLANK;			
-	}
-	
-	if (SNES.lineRegisters[DISP_Y+GFX.YScroll].Mode == 7)
-	{
-		switchToMode7();
-		
-		t_lineRegisters	*lr = &SNES.lineRegisters[DISP_Y+GFX.YScroll];
-		
-	   	BG3_XDX = lr->A; 
-	   	BG3_XDY = lr->B;
-	  	BG3_YDX = lr->C; 
-	  	BG3_YDY = lr->D;
-		BG3_CX = lr->CX;
-		BG3_CY = lr->CY;
-	}
-	
+	SNES.h_blank = 1;
 //	h_blank=1;
 	VBLANK_INTR_WAIT_FLAGS |= IRQ_HBLANK;	
     REG_IF = IRQ_HBLANK;	
@@ -106,8 +67,6 @@ char *options_0[] =
 	{ "Mode 3 : squish more", "Mode 3 : squish", "Mode 3 : normal" };
 char *YScroll_mode_0[] = 
 	{ "YScroll : middle", "YScroll : top", "YScroll : bottom" };
-char *SpeedHacksChoices[] =
-	{ "No speed hacks", "Medium speed hacks", "Full speed hacks" };
 
 
 void updateOptions()
@@ -218,25 +177,18 @@ touchPosition superTouchReadXY()
 int	loadROM(char *name, int confirm)
 {
 	int	size;
-	char romname[100];
+	char *romname;
 	
 	consoleClear();				
 	if (ROM && FS_shouldFreeROM())
 		free(ROM);
 	CFG.LargeROM = 0;
-	strcpy(romname, GAMES_DIR);
+	romname = malloc(200);
+	strcpy(romname, "/SNES/");
 	strcat(romname, name);
-	strcpy(CFG.ROMFile, romname);
-iprintf("Name : %s", romname); 
-
-   if (SNES.ROM_info)
-   {
-   		free(SNES.ROM_info);
-   		SNES.ROM_info = NULL;
-   }
-	mem_clear_paging(); // FIXME: move me...
+	CFG.ROMFile = romname;
+//	iprintf("Name : %s", romname); 
 	ROM = FS_loadROM(romname, &size);
-iprintf("ROM : %p %d", ROM, size);	
 #ifndef USE_GBFS	
 	if (!ROM)
 	{
@@ -271,11 +223,12 @@ iprintf("ROM : %p %d", ROM, size);
 
 int	selectSong(char *name)
 {
-	char spcname[100];
+	char *spcname;
 	
-	strcpy(spcname, GAMES_DIR);
+	spcname = malloc(200);
+	strcpy(spcname, "/SNES/");
 	strcat(spcname, name);
-	strcpy(CFG.Playlist, spcname);
+	CFG.Playlist = spcname;
 	CFG.Jukebox = 1;
 	CFG.Sound_output = 0;
 	APU_stop(); 
@@ -297,19 +250,22 @@ void	handle_saveState()
 	int		i;
 	touchPosition touchXY;
 	int res;	
-	char stateName[64];
-	char stateFile[100];
+	char *stateName;
+	char *stateFile;
 	
-	strcpy(stateFile, CFG.ROMFile);
+	stateFile = strdup(CFG.ROMFile);
 	strcpy(strrchr(stateFile, '.'), ".sml");
 	
 	StatesMenu = GUI_createList(8);
 	for (i = 0; i < 8; i++)
 	{
-	  	if (get_snapshot_name(stateFile, i, stateName))
-	  		GUI_setItem(StatesMenu, i, stateName, 0, 0);
-	  	else	  	
+		char *state_name;
+	  	state_name = get_snapshot_name(stateFile, i);
+	  	if (state_name == NULL)
 	  		GUI_setItem(StatesMenu, i, "--Empty--", 0, 1);
+	  	else
+	  		GUI_setItem(StatesMenu, i, state_name, 0, 0);
+	  	free(state_name);
 	}	
 
 	GUI_displayMenuTitle("-= Save State =-", StatesMenu);
@@ -322,14 +278,14 @@ void	handle_saveState()
 	
 	if (res >= 0)
 	{
-		sprintf(stateName, "%04d/%02d/%02d %02d:%02d",
-			2000+IPC->time.rtc.year, IPC->time.rtc.month+1, IPC->time.rtc.day+1,
-			IPC->time.rtc.hours, IPC->time.rtc.minutes);			
-		
+		stateName = strdup("Save #0");
+		stateName[strlen(stateName)-1] = '0'+res;
 		CPU_pack();	
 		write_snapshot(stateFile, res, stateName);
+		free(stateName);
 	}
 
+	free(stateFile);
 	free(StatesMenu);
 	waitReleaseTouch();	
 	GUI_displayMenu(mainMenu);	
@@ -342,20 +298,22 @@ void	handle_loadState()
 	int		i;
 	touchPosition touchXY;
 	int res;	
-	char stateName[64];	
-	char stateFile[100];
+	char *stateFile;
 	
-	strcpy(stateFile, CFG.ROMFile);
+	stateFile = strdup(CFG.ROMFile);
 	strcpy(strrchr(stateFile, '.'), ".sml");
 	
 	StatesMenu = GUI_createList(8);
 	for (i = 0; i < 8; i++)
 	{
-	  	if (get_snapshot_name(stateFile, i, stateName))
-	  		GUI_setItem(StatesMenu, i, stateName, 0, 0);
-	  	else	  		
+		char *state_name;
+	  	state_name = get_snapshot_name(stateFile, i);
+	  	if (state_name == NULL)
 	  		GUI_setItem(StatesMenu, i, "--Empty--", 0, 1);
-	 }	
+	  	else
+	  		GUI_setItem(StatesMenu, i, state_name, 0, 0);
+	  	free(state_name);
+	}	
 
 	GUI_displayMenuTitle("-= Load State =-", StatesMenu);
 
@@ -374,6 +332,7 @@ void	handle_loadState()
 //		PPU_reset();
 	}
 
+	free(stateFile);
 	free(StatesMenu);
 	waitReleaseTouch();	
 	GUI_displayMenu(mainMenu);	
@@ -461,7 +420,7 @@ void	handleMenu()
 				if (!loadROM(ROM_list->items[res].str, 1))
 				{
 					GUI_displayMenu(mainMenu);
-//					APU_pause();
+					APU_pause();
 					return;
 				}
 				GUI_displayList(ROM_list, 1);
@@ -530,7 +489,6 @@ void	handleMenu()
 			CFG.YScroll++;
 			CFG.YScroll %= 3; 
 			strcpy(optionsMenu->items[5].str, YScroll_mode_0[CFG.YScroll]);
-			GFX.YScroll = _offsetY_tab[CFG.YScroll];
 			break;			
 		case 6:		
 			CFG.WaitVBlank ^= 1;
@@ -540,9 +498,11 @@ void	handleMenu()
 				strcpy(optionsMenu->items[6].str, "No vblank");
 			break;				
 		case 7:		
-			CFG.CPU_speedhack++;
-			CFG.CPU_speedhack %= 3;
-			strcpy(optionsMenu->items[7].str, SpeedHacksChoices[CFG.CPU_speedhack]);
+			CFG.CPU_speedhack ^= 1;
+			if (CFG.CPU_speedhack)
+				strcpy(optionsMenu->items[7].str, "Speed hack");
+			else
+				strcpy(optionsMenu->items[7].str, "No Speed hack");
 			break;				
 		default:
 			waitReleaseTouch();
@@ -615,14 +575,6 @@ void	handleMenu()
 	
 extern void IntrHandlerAsm();
 	
- extern CPU_goto();
- #ifdef ASM_OPCODES
- extern CPU_init();	
- extern CPU_goto2();
- #endif
- 
- extern char logbuf[];
-	
 //---------------------------------------------------------------------------------
 int main(void) 
 {
@@ -633,6 +585,11 @@ int main(void)
     *APU_ADDR_ANS = *APU_ADDR_CMD = 0; 
 	resetMemory2_ARM9();
 
+/*    irqInit();
+    irqSet(IRQ_HBLANK, Hblank);
+    irqSet(IRQ_VBLANK, Vblank);
+    irqEnable(IRQ_HBLANK | IRQ_VBLANK);*/
+	
 #ifndef TIMER_Y	
     TIMER3_CR &= ~TIMER_ENABLE; // not strictly necessary if the timer hasn't been enabled before
     TIMER3_DATA = 0;
@@ -647,41 +604,24 @@ int main(void)
 	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);	//sub bg 0 will be used to print text
 	
 #if 0	
-	/* 256Ko for Tiles (SNES: 32Ko) */
-	/* 128Ko for Sprites (SNES : 32Ko) */	
+	/* 256Ko for Tiles (SNES: 64Ko) */
+	/* 256Ko for Sprites (SNES : 64Ko) */	
+	vramSetBankA(VRAM_A_MAIN_SPRITE | VRAM_OFFSET(0)); // 0x6400000
+	vramSetBankB(VRAM_B_MAIN_SPRITE | VRAM_OFFSET(1)); // 0x6420000
+	vramSetBankC(VRAM_C_MAIN_BG_0x6000000);
+	vramSetBankD(VRAM_D_MAIN_BG_0x6020000);
+#else
+	/* 256Ko for Tiles (SNES: 64Ko) */
+	/* 128Ko for Sprites (SNES : 64Ko) */	
 	vramSetBankA(VRAM_A_MAIN_BG_0x6000000);
 	vramSetBankB(VRAM_B_MAIN_SPRITE | VRAM_OFFSET(0)); // 0x6400000
 	vramSetBankC(VRAM_C_MAIN_BG_0x6020000);
 	vramSetBankD(VRAM_D_ARM7); // Some memory for ARM7 (128 Ko!)
-
-	/* 48 Ko For Sub screen */ 
-	vramSetBankH(VRAM_H_SUB_BG); 
-	vramSetBankI(VRAM_I_SUB_BG);
-
-#else
-	/* 256Ko for Tiles (SNES: 32Ko) */
-
-	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-	vramSetBankB(VRAM_B_MAIN_BG_0x06020000);
-	
-	/* 128Ko (+48kb) for sub screen */ 
-	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-	
-	// Some memory for ARM7 (128 Ko!)
-	vramSetBankD(VRAM_D_ARM7_0x06000000); 
-	
-	/* 96Ko for Sprites (SNES : 32Ko) */
-	vramSetBankE(VRAM_E_MAIN_SPRITE);	// 0x6400000
-	vramSetBankF(VRAM_F_MAIN_SPRITE);
-	vramSetBankG(VRAM_G_MAIN_SPRITE);
-	
-	/* 48ko For CPU */
-	
-	//vramSetBankG(VRAM_G_LCD); 
-	vramSetBankH(VRAM_H_LCD); 
-	vramSetBankI(VRAM_I_LCD);
 #endif	
 	
+	/* 32 Ko (+16ko) For Sub screen */ 
+	vramSetBankH(VRAM_H_SUB_BG); 
+	vramSetBankI(VRAM_I_SUB_BG);
 
 	/* 32 first kilobytes for MAP */
 	/* remaning memory for tiles */
@@ -694,9 +634,11 @@ int main(void)
 
 	IRQ_HANDLER = &IntrHandlerAsm;
 
-    REG_IE = IRQ_VBLANK | IRQ_HBLANK;
-    DISP_SR = DISP_VBLANK_IRQ | DISP_HBLANK_IRQ;
-    
+//    REG_IE = IRQ_VBLANK | IRQ_HBLANK;
+//    DISP_SR = DISP_VBLANK_IRQ | DISP_HBLANK_IRQ;
+    REG_IE = IRQ_VBLANK;
+    DISP_SR = DISP_VBLANK_IRQ;
+
     REG_IF = ~0;
     REG_IME = 1;
 
@@ -705,35 +647,23 @@ int main(void)
 	swiWaitForVBlank();
 	swiWaitForVBlank();
 
-    iprintf("%p", CPU_goto);
-/*	iprintf("\n%x %x %x %x %x %x %x %x", 
+	iprintf("\n%x %x %x %x %x %x %x %x", 
 	PersonalData->calX1, PersonalData->calY1,
 	PersonalData->calX1px, PersonalData->calY1px,
 		PersonalData->calX2, PersonalData->calY2,
 	PersonalData->calX2px, PersonalData->calY2px
 	
-	);*/
+	);
 
-	PrecalculateCalibrationData();
-
-	initSNESEmpty();
-
-	initGUI();
-		
-		
 	// hack: Dualis detection 
 	if (PersonalData->calY2 == 0xbf9 && PersonalData->calY1 == 0x343)
 	{
 		PersonalData->calY1 = 0x240;//0x1c0;
 		PersonalData->calY2 = 0xB40;
-		
-		CFG.Sound_output = 0; // disable sound in dualis
 	}
-	
+
+	PrecalculateCalibrationData();
 #if 0
-	{ char *p = malloc(10);
-	iprintf("RAM = %p last malloc = %p", SNESC.RAM, p);
-	}
 	/* TOUCH SCREEN TEST */
 	while (1) 
 	{
@@ -752,16 +682,21 @@ int main(void)
 		GUI_printf(0, 3, "x = %d y = %d       ", touchXY.px, touchXY.py);					
 //		waitReleaseTouch();	
 				}
-				
 		if ((keys & KEY_START)) 
 		break;
 	}
 #endif	
-	FS_init();
-	
-    ROM_list = FS_getDirectoryList(GAMES_DIR, "SMC|SFC|SWC|FIG");
-    SPC_list = FS_getDirectoryList(GAMES_DIR, "SPC");    
-    if (ROM_list->nb_items == 0)	 
+
+	initSNESEmpty();
+
+	initGUI();
+		 
+	FS_init();	
+	FS_chdir("/SNES");
+    ROM_list = FS_getDirectoryList("SMC|SFC|SWC|FIG");
+    SPC_list = FS_getDirectoryList("SPC");
+    FS_chdir("/");    
+    if (!ROM_list)	 
 	{
 		iprintf("No files found.\n"
 		        "Please put ROMs in SNES directory of your CF/SD card\n");
@@ -794,25 +729,7 @@ int main(void)
 	} else
 		loadROM(ROM_list->items[0].str, 0);
 
-    iprintf("Start!!!\n");
-    
-    
-#if 0
-#ifdef ASM_OPCODES    
-	  iprintf("CPU_init=%p\n", CPU_init);
-      iprintf("CPU_goto=%p\n", CPU_goto2);
-#endif      
-      iprintf("logbuf=%p\n", logbuf);
-
-   	while (1) 
-	{
-		scanKeys();
-		keys = keysHeld();
-		if ((keys & KEY_START)) 
-		break;
-	}
-#endif	
-   
+   iprintf("Start!!!\n");
    GUI_displayMenu(mainMenu);
 
 	while (1) 

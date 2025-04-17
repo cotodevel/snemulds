@@ -1,19 +1,9 @@
 /***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
-/* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
+/* (c) 1997-1999, 2006 archeide, All rights reserved.      */
+/* Free for non-commercial use                             */
 /***********************************************************/
-/*
-This program is free software; you can redistribute it and/or 
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
-the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-GNU General Public License for more details.
-*/
 
 #ifndef __cpu_h__
 #define __cpu_h__
@@ -50,6 +40,7 @@ struct s_cpu
   uint16        A, X, Y, D, S;
 
   int           Cycles;
+  int		SavedCycles;
 
 #define IRQ_GSU	1
   int		IRQState;
@@ -58,12 +49,8 @@ struct s_cpu
   int           LastAddress;
   int           WaitAddress;
   int           WaitCycles;
-  uint32		HCycles;
   
   int 			IsBreak;
-  
-  int			unpacked;
-  int			packed;
 };
 
 extern struct s_cpu	CPU;

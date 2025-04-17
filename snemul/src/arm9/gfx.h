@@ -1,19 +1,9 @@
 /***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
-/* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
+/* (c) 1997-1999, 2006 archeide, All rights reserved.      */
+/* Free for non-commercial use                             */
 /***********************************************************/
-/*
-This program is free software; you can redistribute it and/or 
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
-the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-GNU General Public License for more details.
-*/
 
 #ifndef __gfx_h__
 #define __gfx_h__
@@ -75,9 +65,9 @@ struct s_gfx
   int		Blank_Screen;
   int		was_not_blanked;
 
-/*  short     tiles_x[8][33];
+  short         tiles_x[8][33];
   uchar		tiles_ry[4];
-  uchar		tiles_cnt[8];*/
+  uchar		tiles_cnt[8];
   char		HighestSprite;
   int		old_scrollx[4], old_scrolly[4];
   int		tile_address[4];
@@ -109,9 +99,6 @@ struct s_gfx
   uint16	WIN_X1, WIN_X2, CWIN_X1, CWIN_X2;
   int           SubScreen, FIXED_color_addsub, SUBSCREEN_addsub;
 
-  uint32	VRAM_ptr; // Start of BG Tiles mem, used by convert function
-
-  uint32	YScroll; 
 //  uint16	AddSubTable[0x10000];
 //  _BITMAP       buf_screen;
 //  uchar		subscreen[256];

@@ -66,16 +66,10 @@ typedef struct mytouchPosition {
 //---------------------------------------------------------------------------------
 typedef struct sMyIPC {
 //---------------------------------------------------------------------------------
-#if 0  
   uint32 heartbeat;          // counts frames
-#endif  
 
 	int16 touchX,   touchY;   // TSC X, Y
-#if 0	
 	u8 touchXpx, touchYpx; // TSC X, Y pixel values
-#else	
-	int16 touchXpx, touchYpx; // TSC X, Y pixel values
-#endif	
 	int16 touchZ1,  touchZ2;  // TSC x-panel measurements
 	uint16 tdiode1,  tdiode2;  // TSC temperature diodes
 	uint32 temperature;        // TSC computed temperature
@@ -169,8 +163,8 @@ mytouchPosition mytouchReadXY() {
 	// last_measures = dword_211A6AC
 	// newpress = dword_211A68C
 	// released = dword_211A690
-	// ¿?¿? = dword_211A6B0
-	// ¿?¿? = dword_211A6A0
+	// ???? = dword_211A6B0
+	// ???? = dword_211A6A0
 
 	static mytouchPosition touchPos, touchPos_Old;
 	static u8 dword_211A6A0; //,dword_211A68C, dword_211A690;
@@ -291,4 +285,3 @@ mytouchPosition mytouchReadXY() {
 	return touchPos;
 
 }
-

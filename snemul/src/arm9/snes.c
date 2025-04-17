@@ -1,19 +1,9 @@
 /***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
-/* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
+/* (c) 1997-1999, 2006 archeide, All rights reserved.      */
+/* Free for non-commercial use                             */
 /***********************************************************/
-/*
-This program is free software; you can redistribute it and/or 
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
-the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-GNU General Public License for more details.
-*/
 
 #include <malloc.h>
 #include <string.h>
@@ -61,7 +51,10 @@ void	init_GFX()
   init_render();  
 }
 
-static int _offsetY_tab[3] = { 16, 0, 32 };
+void destroy_rle_tile(TRLE_Tile *rle_tile_ptr)
+{
+  free(rle_tile_ptr);
+}
 
 void	reset_GFX()
 {
@@ -81,9 +74,8 @@ void	reset_GFX()
   bzero(GFX.spr_cnt,240);
   GFX.Sprites_table_dirty = 0;
   GFX.SC_incr = 1;
-//  memset(GFX.tiles_ry, 8, 4);
+  memset(GFX.tiles_ry, 8, 4);
   GFX.nb_frames = 0;
-  GFX.YScroll = _offsetY_tab[CFG.YScroll];
 //  update_palette(0);
 }
 
@@ -93,27 +85,12 @@ void	reset_CPU()
   CPU.NMI = mem_getword(0xffea, 0);
   CPU.BRK = mem_getword(0xffe6, 0);
   CPU.COP = mem_getword(0xffe4, 0);
-#ifndef ASM_OPCODES  
   PC  = mem_getword(0xfffc, 0);
   D = PB = DB = 0;
   P = P_E | P_M | P_X | P_I;
   A = X = Y = 0;
   S = 0x1ff;
-#else
-  CPU.PC  = mem_getword(0xfffc, 0);
-  CPU.D = CPU.PB = CPU.DB = 0;
-  CPU.P = P_E | P_M | P_X | P_I;
-  CPU.A = CPU.X = CPU.Y = 0;
-  CPU.S = 0x1ff;
-
-  CPU_init();	
-  PCptr = map_memory(CPU.PC, CPU.PB);
-  SnesPCOffset = -((sint32)mem_getbaseaddress(CPU.PC, CPU.PB));
-  iprintf("PCptr = %08x\n", PCptr);
-#endif  
   CPU.IsBreak = 0;
-  CPU.packed = CPU.unpacked = 0;
-  
 }
 
 void	reset_SNES()
@@ -162,10 +139,9 @@ void	reset_SNES()
 */
   APU.counter = 0;
   if (CFG.Sound_output) 
-  	APU_nice_reset();
+  	APU_reset();
 
   InitMap();
-//  mem_reset_paging(); 
   reset_CPU();
 
   if (!CFG.Timing)
@@ -321,5 +297,4 @@ ROM_Info	*load_ROM(char *ROM, int ROM_size)
     free(LoROM_info); return HiROM_info;
   }
 }
-
 

@@ -1,24 +1,13 @@
 /***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
-/* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
+/* (c) 1997-1999, 2006 archeide, All rights reserved.      */
+/* Free for non-commercial use                             */
 /***********************************************************/
-/*
-This program is free software; you can redistribute it and/or 
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
-the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-GNU General Public License for more details.
-*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <nds/memory.h>
-#include <nds/registers_alt.h>
 #include <string.h>
 #include <time.h>
 #ifdef WIN32
@@ -37,11 +26,17 @@ GNU General Public License for more details.
 #include "cfg.h"
 
 extern int CPU_break;
+
 extern uint32 screen_mode;
 //extern volatile uint32 h_blank;
 
 struct s_snes SNES;
 struct s_cfg CFG;
+
+uchar   mem_getbyte(uint offset, uchar bank);
+void	mem_setbyte(uint offset, uchar bank, uchar byte);
+ushort  mem_getword(uint offset, uchar bank);
+void    mem_setword(uint offset, uchar bank, ushort word);
 
 
 #define DS_SRAM          ((uint8*)0x0A000000)
@@ -69,7 +64,7 @@ void readSRAM(int offset, uint8* dest, int size) {
 
 int loadSRAM()
 {
-  char sramFile[100];
+  char *sramFile;
   	
   if (SNESC.SRAMMask)
     {
@@ -84,9 +79,10 @@ int loadSRAM()
 			return 0;
 		}*/ 
 #endif    	
-    	strcpy(sramFile, CFG.ROMFile);
+    	sramFile = strdup(CFG.ROMFile);
 		strcpy(strrchr(sramFile, '.'), ".SRM");
     	FS_loadFile(sramFile, SNESC.SRAM, SNESC.SRAMMask+1);
+    	free(sramFile);
     }	
 	return 0;    
 }
@@ -94,14 +90,15 @@ int loadSRAM()
 
 int saveSRAM()
 {
-  char sramFile[100];
+  char *sramFile;
   	
   if (SNESC.SRAMMask)
     {
 #ifndef USE_GBFS    	
-    	strcpy(sramFile, CFG.ROMFile);
+    	sramFile = strdup(CFG.ROMFile);
 		strcpy(strrchr(sramFile, '.'), ".SRM");
     	FS_saveFile(sramFile, SNESC.SRAM, SNESC.SRAMMask+1);
+    	free(sramFile);
 #else
 /*		char header[16];
 		
@@ -113,6 +110,49 @@ int saveSRAM()
     }	
 }
 
+
+
+
+/* ALLEGRO ----------------------------- */
+
+/*
+#ifndef WIN32
+typedef 
+		struct {
+			uchar *buf;
+		} BITMAP;
+		
+typedef 
+		struct {
+			uchar *buf;
+		} RLE_SPRITE;
+		
+typedef
+		struct
+		{
+			uchar r;
+			uchar g;
+			uchar b;
+		} RGB;
+		
+typedef
+		RGB *PALETTE;
+		
+void set_color(int i, RGB *rgb) { };
+#define set_gfx_mode(mode, w, h, a, b)
+#define clear_to_color(scr, c)
+BITMAP *create_bitmap(int w, int h) { return NULL;};
+void blit(BITMAP *bm, void *t, int a, int b, int c, int d, int w, int h) {};
+void allegro_init() {};
+void allegro_exit() {};		
+
+#define LOCK_FUNCTION(x)
+#define LOCK_VARIABLE(y)
+#endif
+
+BITMAP        *buf_screen, *page1, *page2;
+BITMAP        *sprite_buf;
+*/
 unsigned char interrupted;
 extern long Cycles;
 
@@ -200,7 +240,7 @@ int initSNESEmpty()
   CFG.DSP1 = CFG.SuperFX = 0;
   CFG.InterleavedROM = CFG.InterleavedROM2 = 0;
   CFG.Sound_output = 1;
-  //CFG.Sound_output = 0;
+//  CFG.Sound_output = 0;
 
   memset(&SNES, 0, sizeof(SNES));
   memset(&SNESC, 0, sizeof(SNESC));
@@ -209,67 +249,80 @@ int initSNESEmpty()
 //	SNES.flog = stdout;
 
 /* allocate memory */
-  SNESC.ROM = NULL;  /* Should be a fixed allocation */
-  //SNESC.RAM = (uchar *)malloc(0x020000);
-  SNESC.RAM = (uchar *)SNES_RAM_ADDRESS;
+//  SNES.ROM = (uchar *)malloc(0x420000);
+  SNESC.RAM = (uchar *)malloc(0x020000);
   SNESC.VRAM = (uchar *)malloc(0x010000);
   SNESC.BSRAM = (uchar *)malloc(0x8000);
   init_GFX();
 
   GFX.Graph_enabled = 1;
 
+  iprintf("Initialize ..\n");
+
+#ifdef WIN32
+ buf_screen = create_bitmap(256, 240); clear(buf_screen);
+ sprite_buf = create_bitmap(8, 8);
+ 
+  LOCK_VARIABLE(v_blank);
+  LOCK_FUNCTION(V_Blank_timer);
+#endif
+
   iprintf("Init OK...\n");
   return 0;
 }
 	
 int OldPC;
-extern int frame;
 
-IN_ITCM
+extern int frame;
+extern uint8 *PCptr;
+
+extern void CPU_goto(int x);
+
 int go()
 {
+	if (CPU.IsBreak) return;
 	
-  if (CPU.IsBreak) return;
-	
-  while (1)
-  {
-		
-	if (v_blank)
+	while (1)
 	{
-    	if (!CFG.WaitVBlank && GFX.need_update) 	
-			draw_screen();
-		GFX.need_update = 0;
-		v_blank = 0;
-	}
+		
+		if (v_blank)
+		{
+    		if (!CFG.WaitVBlank && GFX.need_update) 	
+				draw_screen();
+			GFX.need_update = 0;
+			v_blank = 0;
+		}
 		
 	/* HBLANK */
-	CPU.HCycles = SNES.UsedCycles;	
-	
-    if (SNES.DMA_Port[0x00]&0x10) 
-    {
+    if (SNES.DMA_Port[0x00]&0x10) {
       if (!(SNES.DMA_Port[0x00]&0x20) ||
-           SNES.V_Count == (SNES.DMA_Port[0x09]&0xff)+((SNES.DMA_Port[0x0A]&0xff)<<8)) 
-      {
+           SNES.V_Count == (SNES.DMA_Port[0x09]&0xff)+((SNES.DMA_Port[0x0A]&0xff)<<8)) {
 	    int H_cycles;
 	    H_cycles = (SNES.DMA_Port[0x07]+(SNES.DMA_Port[0x08]<<8))/2;
-		SET_WAITCYCLES(H_cycles);
-		CPU.WaitAddress = -1;
-
-		CPU_goto(H_cycles); 
-		if (CPU.IsBreak) 
-			return;
-		CPU.HCycles += H_cycles;	
-        GoIRQ();
+		CPU.WaitAddress = -1; CPU.Cycles = CPU.WaitCycles = H_cycles;
+		CPU_goto(CPU.Cycles); if (CPU.IsBreak) return;
+        /*if (CFG.BG_Layer&0x40) */GoIRQ();
         SNES.DMA_Port[0x11] = 0x80;
-      }
-    } 
+        CPU.Cycles = NB_CYCLES-H_cycles-SNES.UsedCycles;
+      } else
+        CPU.Cycles = NB_CYCLES-SNES.UsedCycles;
+    } else
+      CPU.Cycles = NB_CYCLES-SNES.UsedCycles;
 
-	SET_WAITCYCLES(NB_CYCLES-CPU.HCycles);
-	CPU.WaitAddress = -1; 
-    CPU_goto(NB_CYCLES-CPU.HCycles); 
-    if (CPU.IsBreak) 
-    	return;
-    CPU.HCycles = NB_CYCLES;
+	CPU.WaitAddress = -1; CPU.WaitCycles = CPU.Cycles;
+    CPU_goto(CPU.Cycles); if (CPU.IsBreak) return;
+    CPU.Cycles = NB_CYCLES;
+#if 0
+    if (CPU.IRQState)
+        {
+          CPU.IRQState = 0;
+          /*if (CFG.BG_Layer&0x40) */GoIRQ();
+          CPU.Cycles = CPU.SavedCycles;
+          CPU.WaitAddress = -1; CPU.WaitCycles = CPU.Cycles;
+          goto_h_blank();
+        }
+    }
+#endif
 
     CPU.cycles_tot += NB_CYCLES; SNES.UsedCycles = 0;
 
@@ -287,6 +340,7 @@ int go()
 		*APU_ADDR_CNT += incr;
 		
 		if (APU.counter > GFX.speed*/ 
+		
 		 
 #if 0		
 	 	 if ((SNES.V_Count & 1   ) == 0)
@@ -330,26 +384,7 @@ int go()
     }
 
 
-    if (SNES.V_Count < GFX.ScreenHeight) 
-    {
-    	t_lineRegisters *lr = &SNES.lineRegisters[SNES.V_Count];
-    	lr->Mode = (SNES.PPU_Port[0x05]&7);
-    	if (lr->Mode == 7)
-    	{
-    		lr->A = SNES.PPU_Port[0x1B];
-    		lr->B = SNES.PPU_Port[0x1C];
-    		lr->C = SNES.PPU_Port[0x1D];
-    		lr->D = SNES.PPU_Port[0x1E];
-
-			int X0 = (int)SNES.PPU_Port[0x1F] << 19; X0 >>= 19;
-			int Y0 = (int)SNES.PPU_Port[0x20] << 19; Y0 >>= 19;
-			int HOffset = (int)SNES.PPU_Port[0x0D] << 19; HOffset >>= 19;
-			int VOffset = (int)SNES.PPU_Port[0x0E] << 19; VOffset >>= 19;
-			
-		 	lr->CX = lr->A*(-X0+HOffset)+lr->B*(SNES.V_Count-Y0+VOffset)+(X0<<8);
-  			lr->CY = lr->C*(-X0+HOffset)+lr->D*(SNES.V_Count-Y0+VOffset)+(Y0<<8);
-    	} 
-    	
+    if (SNES.V_Count < GFX.ScreenHeight) {
 #if 0    	
       if (GFX.Sprites_table_dirty) {
 /*        if ((CFG.BG_Layer&0x10))
@@ -415,7 +450,7 @@ int go()
       
       if (GFX.nb_frames > 100)
       {
-        GUI_printf(0, 22, "% 3d%% %d %d", GFX.nb_frames * 100 / frame, *APU_ADDR_CNT, *APU_ADDR_DBG1);
+        GUI_printf(0, 22, "% 3d%% %d", GFX.nb_frames * 100 / frame, *APU_ADDR_CNT);
 
 		GFX.speed = GFX.nb_frames * 100 / frame;
         GFX.nb_frames = 0;
@@ -679,7 +714,6 @@ if (flags&P_X)  sprintf(buf, "CPX #%02X", mem_getbyte(pc+1,pb));
     case 0x18 : sprintf(buf, "CLC"); break;
     case 0x58 : sprintf(buf, "CLI"); break;
     case 0xB8 : sprintf(buf, "CLV"); break;
-	case 0xD8 : sprintf(buf, "CLD"); break;    
     case 0xFB : sprintf(buf, "XCE"); break;
     case 0x8B : sprintf(buf, "PHB"); break;
     case 0x0B : sprintf(buf, "PHD"); break;
@@ -706,9 +740,6 @@ if (flags&P_X)  sprintf(buf, "CPX #%02X", mem_getbyte(pc+1,pb));
   }
 }
 
-uint32	addrbuf[100025];
-uint32	addri = 0;
-
 
 int trace_CPU()
 {
@@ -718,25 +749,6 @@ int trace_CPU()
 
 //  opcode = mem_getbyte(OldPC, PB);
 
-	if (addri != 0)
-	{
-		addrbuf[addri++] = 0xFFFFFFFF;
-		FILE *f = fopen("addr.log", "w");
-		fwrite(addrbuf, 1, 100025*4, f);
-		fclose(f);
-		addri = 0;
-	}
-
-#ifdef ASM_OPCODES
-  Cycles = -((sint32)SaveR8 >> 14);
-  
-  if (Cycles <= 0)
-  	return 0;
-	
-  CPU.packed = 0;	
-  CPU_pack();
-  P = CPU.P;
-#else
   CPU.PC = CPU.LastAddress;
   CPU.A = A;
   CPU.X = X;
@@ -747,55 +759,20 @@ int trace_CPU()
   CPU.D = D;
   CPU.DB = DB;
   CPU.PB = PB;
-#endif  
 
 #if 1
   show_opcode(buf, mem_getbyte(CPU.PC, CPU.PB), CPU.PC, CPU.PB, P);
   sprintf(buf2,
-          "A:%04X X:%04X Y:%04X S:%04X D:%02X/%04X VC:%03d ?:-%03d/%03d/%03d/%02x %d%d%d%d%d%d%d%d %02X:%04X %s\n",
-          CPU.A, CPU.X, CPU.Y, CPU.S, CPU.DB, CPU.D, SNES.V_Count, 
-          Cycles, HCYCLES, CPU_NextCycles, 0,
+          "A:%04X X:%04X Y:%04X S:%04X D:%02X/%04X VC:%03d ?:%02d %d%d%d%d%d%d%d%d %02X:%04X %s\n",
+          CPU.A, CPU.X, CPU.Y, CPU.S, CPU.DB, CPU.D, SNES.V_Count, Cycles,
           (P>>7)&1,(P>>6)&1,(P>>5)&1,(P>>4)&1,(P/8)&1,(P/4)&1,(P/2)&1,P&1,
           CPU.PB, CPU.PC, buf);
-  FS_printlog(buf2);
-  
- /* sprintf(buf2,
-          "r0=%08x r1=%08x r2=%08x r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x r8=%08x r9=%08x r10=%08x r11=%08x\n",
-          AsmDebug[0],AsmDebug[1],AsmDebug[2],AsmDebug[3],
-          AsmDebug[4],AsmDebug[5],AsmDebug[6],AsmDebug[7],
-          AsmDebug[8],AsmDebug[9],AsmDebug[10],AsmDebug[11] );*/
-/* sprintf(buf2,
-          "r0=%08x r1=%08x r2=%08x r3=%08x / r0=%08x r1=%08x r2=%08x r3=%08x / r0=%08x r1=%08x r2=%08x r3=%08x\n",
-          AsmDebug[0],AsmDebug[1],AsmDebug[2],AsmDebug[3],
-          AsmDebug[4],AsmDebug[5],AsmDebug[6],AsmDebug[7],
-          AsmDebug[8],AsmDebug[9],AsmDebug[10],AsmDebug[11] );
-           
-  FS_printlog(buf2);  */
-  
-//#else
+#else
   sprintf(buf2,"%02X:%04X ; ", CPU.PB, CPU.PC);
-  iprintf("%s", buf2);
-  //swiDelay(10000000);
 #endif          
-  
-  return 0; 
-}
+
+	FS_printlog(buf2);
 
 
-void trace_CPUFast()
-{
-	uint32 PC = ((S&0xFFFF) << 16)|
-				(uint32)((sint32)PCptr+(sint32)SnesPCOffset);
-	if (PC == 0x808077)
-		CPU_log = 1; 
-	
-	addrbuf[addri++] = PC;
-	if (addri == 100024)
-		addri = 1;
-  /*char	buf2[256];	
-	sprintf(buf2,"%02X:%04X ",
-		S&0xFFFF, 
-		(uint32)((sint32)PCptr+(sint32)SnesPCOffset)
-		);
-	FS_printlogBufOnly(buf2);*/
+  return 0;
 }

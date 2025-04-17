@@ -1,24 +1,13 @@
 /***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
-/* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
+/* (c) 1997-1999, 2006 archeide, All rights reserved.      */
+/* Free for non-commercial use                             */
 /***********************************************************/
-/*
-This program is free software; you can redistribute it and/or 
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
-the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-GNU General Public License for more details.
-*/
 
 #include <nds/registers_alt.h>
 #include <nds/timers.h>
 #include "common.h"
-#include "opcodes.h"
 #include "snes.h"
 #include "cpu.h"
 #include "cfg.h"
@@ -29,7 +18,6 @@ GNU General Public License for more details.
 #define OPCODE static inline
 #endif
 
-#ifndef ASM_OPCODES
 IN_DTCM
 uint8 OpCycles_MX[256] = {
 	8, 6, 8, 4, 5, 3, 5, 6, 3, 2, 2, 4, 6, 4, 6, 5,		/* e=0, m=1, x=1 */
@@ -110,7 +98,7 @@ uint8 OpCycles_mx[256] = {
 	2, 7, 6, 8, 5, 5, 8, 7, 2, 6, 5, 2, 6, 6, 9, 6
 };
 /* OPTIM:
-opcodes splitté selon le M flag et X flag
+opcodes splitt? selon le M flag et X flag
 registre en union
 SPptr
 //Dptr
@@ -119,6 +107,17 @@ SPptr
 //#pragma warning( disable : 4244 )
 
 //#define __DEBUG__
+
+#define P_C  0x01
+#define P_Z  0x02
+#define P_I  0x04
+#define P_D  0x08
+#define P_X  0x10
+#define P_M  0x20
+#define P_V  0x40
+#define P_N  0x80
+
+#define P_E  0x100
 
 IN_DTCM
 uint32	F_C;
@@ -164,7 +163,6 @@ IN_DTCM
 unsigned short A, X, Y, D, S;
 IN_DTCM
 long Cycles;
-
 
 IN_ITCM
 void	pushb(uint8 b)
@@ -740,7 +738,7 @@ void	COP()
 }
 
 IN_ITCM
-void CPU_goto(int cycles)
+void CPU_goto()
 {	
 	uint8 			*PC_base;
 	register uint8	*PCptr;
@@ -782,10 +780,10 @@ void do_branch()
 	PCptr = map_memory(PC, PB);
 	PC_base = PCptr-PC;
 	UPDATE_FLAGS;
-	if (CFG.CPU_speedhack != 0)
+	if (CFG.CPU_speedhack)
 		CPU.Cycles = (CPU.Cycles+CPU.Cycles+CPU.Cycles) >> 2; 
 loop_back:		
-	while (Cycles < cycles)
+	while (Cycles < CPU.Cycles)
 	{
 		CPU.LastAddress = REAL_PC; // Je ne suis pas convaincu de l'interet de ca
 //		if (CFG.CPU_log)
@@ -2435,152 +2433,3 @@ void CPU_unpack()
           CPU.PB, CPU.PC);
           iprintf("%s\n", buf);
 }
-#endif
-
-/*
-uint8 IORead8(uint32 addr)
-{
-	uint32 address = addr & 0xFFFFFF;
-	addr &= 0xFF000000;
-	return IO_getbyte((int)addr, address);
-}
-
-void IOWrite8(uint32 addr, uint8 byte)
-{
-	uint32 address = addr & 0xFFFFFF;
-	addr &= 0xFF000000;
-	IO_setbyte((int)addr, address, byte);
-}
-
-uint16 IORead16(uint32 addr)
-{
-	uint32 address = addr & 0xFFFFFF;
-	addr &= 0xFF000000;
-	return IO_getword((int)addr, address);
-}
-
-void IOWrite16(uint32 addr, uint16 word)
-{
-	uint32 address = addr & 0xFFFFFF;
-	addr &= 0xFF000000;
-	return IO_setword((int)addr, address, word);
-}
-*/
-
-#ifdef ASM_OPCODES
-
-#include "opc_asm.h"
-
-void CPU_pack()
-{
-  if (CPU.packed)
-  	return;
-  CPU.PC = (uint32)((sint32)PCptr+(sint32)SnesPCOffset); 
-  CPU.PB = S&0xFFFF;
-  
-  CPU.A = REAL_A;
-  CPU.X = X;
-  CPU.Y = Y;
-  Cycles = -((sint32)SaveR8 >> 14);
-  
-  CPU.S = S >> 16;
-  CPU.P = 0; 
-  if (SaveR8 & 0x00000002) CPU.P |= P_C;
-  if (SaveR8 & 0x00000001) CPU.P |= P_V;
-  if (SaveR6 & 0x00018000) CPU.P |= P_N;
-  if (!(SaveR6 << 16)) CPU.P |= P_Z;
-  CPU.P |= ((SaveR8 << 22) & 0x3c000000) >> 24;
-  CPU.D = D >> 16;
-  CPU.DB = D & 0xFF;
-  
-  CPU.packed = 1;
-}
-
-void CPU_unpack()
-{
-  if (CPU.unpacked)
-  	return;	
-	
-  SnesPCOffset = -(sint32)mem_getbaseaddress(CPU.PC, CPU.PB);
-  PCptr = map_memory(CPU.PC, CPU.PB);
-	
-  S = CPU.PB;
-  S |= CPU.S << 16;
-	
-  // FIXME: "B" register
-  if (CPU.P & P_M)
-  {
-	A = CPU.A << 24;
-	SnesB = (CPU.A & 0xFF00) << 16;
-  }
-  else
-	A = CPU.A << 16;
-		   
-  X = CPU.X;
-  Y = CPU.Y;
-  
-  SaveR8 = SaveR6 = 0;
-  if (CPU.P & P_C) SaveR8 |= 0x00000002;
-  if (CPU.P & P_V) SaveR8 |= 0x00000001;
-  if (CPU.P & P_N) SaveR6 |= 0x00018000;
-  if (!(CPU.P & P_Z)) SaveR6 |= 0x00000001;
-  SaveR8 |= ((CPU.P << 24) & 0x3c000000) >> 22; 
-  
-  D = CPU.DB;  
-  D |= CPU.D << 16;
-  
-  CPU.unpacked = 1;
-  CPU_update();
-}
-
-IN_ITCM
-void	pushb(uint8 b)
-{
-	SNESC.RAM[CPU.S] = b;
-	CPU.S--;
-}
-
-IN_ITCM
-void pushw(uint16 w)
-{
-	CPU.S--;
-	SET_WORD16(SNESC.RAM+CPU.S, w);
-	CPU.S--;
-}
-
-IN_ITCM
-uint8	pullb()
-{
-	CPU.S++;
-	return SNESC.RAM[CPU.S];
-}
-
-IN_ITCM
-uint16	pullw()
-{
-	uint16 w;
-	
-	CPU.S++;	
-	w = GET_WORD16(SNESC.RAM+CPU.S);
-	CPU.S++;
-	return w;
-}
-
-
-extern void CPU_goto2();
-
-void CPU_goto(int cycles)
-{	
-	if (CFG.CPU_speedhack != 0)
-		cycles -= cycles / 4; // Speed hack: 25 % speed up
-	CPU_LoopSpeedHacks = (CFG.CPU_speedhack == 2);
-	CPU.Cycles = cycles;
-		
-	CPU_unpack();
-	
-	CPU_goto2(cycles);
-	CPU.packed = 0;
-
-//	CPU_pack();
-}
-#endif

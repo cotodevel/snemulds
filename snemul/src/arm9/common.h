@@ -1,49 +1,25 @@
 /***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
-/* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
+/* (c) 1997-1999, 2006 archeide, All rights reserved.      */
+/* Free for non-commercial use                             */
 /***********************************************************/
-/*
-This program is free software; you can redistribute it and/or 
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
-the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-GNU General Public License for more details.
-*/
 
 #ifndef __common_h__
 #define __common_h__
 
-//#define ASM_OPCODES
-
-/* Enable this if you want the GBFS version (the one which doesn't use the flash cart) */
 //#define USE_GBFS
-#define USE_LIBFAT
-//#define FAKE_FS
 
-#define SNEMULDS_TITLE "-= SNEmulDS 0.4 by archeide =-\n"
-#define SNEMULDS_SUBTITLE "CPU: bubble2k Sound: gladius\n"
-
-#define GAMES_DIR "/SNES/"
-//#define GAMES_DIR "/"
+#define SNEMULDS_TITLE "-= SNEmulDS 0.3b by archeide =-\n"
+#define SNEMULDS_SUBTITLE "With PocketSPC by gladius"
 
 #define TIMER_Y
 
 #define IN_DTCM __attribute__((section(".dtcm")))
 #define IN_ITCM __attribute__((section(".itcm")))
 
-
-#ifdef ASM_OPCODES
-#define IN_ITCM2 __attribute__((section(".itcm")))
-#define IN_ITCM3 __attribute__((section(".itcm")))
-#else
-#define IN_ITCM3
-#define IN_ITCM2 
-#endif
+#define IN_ITCM2
+//#define IN_ITCM __attribute__((section(".itcm")))
 
 #include <nds/timers.h>
 

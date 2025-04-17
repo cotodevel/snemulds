@@ -1,19 +1,9 @@
 /***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
-/* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
+/* (c) 1997-1999, 2006 archeide, All rights reserved.      */
+/* Free for non-commercial use                             */
 /***********************************************************/
-/*
-This program is free software; you can redistribute it and/or 
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
-the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-GNU General Public License for more details.
-*/
 
 #include <nds.h>
 #include <nds/registers_alt.h>
@@ -53,11 +43,7 @@ typedef struct s_OAM_entry
 } t_OAM_entry;
 
 
-// TODO: MOVE me...
-
 extern u32 keys;
-
-extern	uint32			CPU_log;
 
 int get_joypad()
 {
@@ -80,22 +66,11 @@ int get_joypad()
 	if( keys & KEY_X ) res |= 0x0040;
 	if( keys & KEY_L ) res |= 0x0020;
 	if( keys & KEY_R ) res |= 0x0010;
-	
-	if ((keys & KEY_L) && ( keys & KEY_R ) && ( keys & KEY_START ))
-		CPU_log ^= 1;
-		 
-	
 	return res;
 }
 
-// TODO: can we speed up this more ?
+uint16 bittab[16];
 
-//uint16 bittab[16];
-IN_DTCM
-uint32 bittab[256];
-uint32 bittab8[16];
- 
- 
 void    init_render()
 {
   int  PixelOdd = 1;
@@ -103,35 +78,16 @@ void    init_render()
   int   i;
 
 /* 2/4 bits in planar mode to 4 bits converter */
-    for (i = 0; i < 256; i++)
-    {
-      h = 0;
-      
-      if (i & 128) h |= PixelOdd;
-      if (i & 64) h |= PixelOdd << 4;
-      if (i & 32) h |= PixelOdd << 8;
-      if (i & 16) h |= PixelOdd << 12; 
-      
-      if (i & 8) h |= PixelOdd << 16;
-      if (i & 4) h |= PixelOdd << 20;
-      if (i & 2) h |= PixelOdd << 24;
-      if (i & 1) h |= PixelOdd << 28;
-      bittab[i] = h;
-    }
-    
-/* 8 bits in planar mode to 8 bits converter */    
   for (i = 0;i < 16; i++)
     {
       h = 0;
       if (i & 8) h |= PixelOdd;
-      if (i & 4) h |= PixelOdd << 8;
-      if (i & 2) h |= PixelOdd << 16;
-      if (i & 1) h |= PixelOdd << 24;
-      bittab8[i] = h;
-    }    
+      if (i & 4) h |= PixelOdd << 4;
+      if (i & 2) h |= PixelOdd << 8;
+      if (i & 1) h |= PixelOdd << 12;
+      bittab[i] = h;
+    }
 }
-
-
 
 void check_sprite_addr()
 { 
@@ -149,7 +105,7 @@ void check_tile()
     int		addr = (SNES.PPU_Port[0x16]<<1)&0xFFFF;
 
 //GFX.tiles_dirty = 1;
-   // FIXME: adapté selon le mode graphique
+   // FIXME: adapt? selon le mode graphique
 
    tmp = (addr-GFX.tile_address[0])/32;
    if (tmp >= 0 && tmp < 1024)
@@ -183,9 +139,10 @@ void     add_sprite_tile_4(uint16 tilenb, int pos)
 {
   uint8		a;
   int		k;
+  uint16	c1,c2;
   uint8		*tile_ptr;
   uint32	tile_addr;
-  uint32	*VRAM_ptr;
+  uint16	*VRAM_ptr;
 
   if (tilenb&0x100)
     tile_addr = (tilenb+pos)*32+GFX.spr_addr_base+GFX.spr_addr_select;
@@ -200,12 +157,30 @@ void     add_sprite_tile_4(uint16 tilenb, int pos)
 
   for (k=0;k<8;k++,tile_ptr+=2)
     {
-	  uint32	c;
-      c =  bittab[tile_ptr[0x00]];
-      c |= bittab[tile_ptr[0x01]]<<1;
-      c |= bittab[tile_ptr[0x10]]<<2;
-      c |= bittab[tile_ptr[0x11]]<<3;
-	  *VRAM_ptr++ = c;            
+      c1 = c2 = 0;
+      if ((a = tile_ptr[0x00]))
+        {
+          c1 |= bittab[(a>>4)];
+          c2 |= bittab[(a&0xf)];
+        }
+      if ((a = tile_ptr[0x01]))
+        {
+          c1 |= bittab[(a>>4)]<<1;
+          c2 |= bittab[(a&0xf)]<<1;
+        }
+      if ((a = tile_ptr[0x10]))
+        {
+          c1 |= bittab[(a>>4)]<<2;
+          c2 |= bittab[(a&0xf)]<<2;
+        }
+      if ((a = tile_ptr[0x11]))
+        {
+          c1 |= bittab[(a>>4)]<<3;
+          c2 |= bittab[(a&0xf)]<<3;
+        }
+      
+		*VRAM_ptr++ = c1;      
+		*VRAM_ptr++ = c2;
     }
 // GFX.tiles_def[1][tile_addr/32] = 1;    
   sprite_tiles_def[tilenb+pos] = 1;    
@@ -215,22 +190,33 @@ void     add_tile_2(uint16 tilenb, uint8 bg)
 {
   uint8		a;
   int		k;
+  uint16	c1,c2;
   uint8		*tile_ptr;
   uint32	tile_addr;
-  uint32	*VRAM_ptr;
+  uint16	*VRAM_ptr;
 
   tile_addr = GFX.tile_address[bg]+tilenb*16;
 /*  if (GFX.tiles_def[0][tile_addr/16] == 1)
   	return;*/
-  VRAM_ptr = (uint16 *)(GFX.VRAM_ptr+tilenb*32);  
+  VRAM_ptr = (uint16 *)(BG_TILE_RAM(2+bg*2)+tilenb*32);  
   tile_ptr = SNESC.VRAM+tile_addr;    
 
   for (k=0;k<8;k++,tile_ptr+=2)
     {
-	  uint32	c;
-      c =  bittab[tile_ptr[0x00]];
-      c |= bittab[tile_ptr[0x01]]<<1;
-	  *VRAM_ptr++ = c;            
+      c1 = c2 = 0;
+      if ((a = tile_ptr[0x00]))
+        {
+          c1 |= bittab[(a>>4)];
+          c2 |= bittab[(a&0xf)];
+        }
+      if ((a = tile_ptr[0x01]))
+        {
+          c1 |= bittab[(a>>4)]<<1;
+          c2 |= bittab[(a&0xf)]<<1;
+        }
+      
+		*VRAM_ptr++ = c1;      
+		*VRAM_ptr++ = c2;
     }
     
 //  GFX.tiles_def[0][tile_addr/16] = 1;    
@@ -241,26 +227,45 @@ void     add_tile_4(uint16 tilenb, uint8 bg)
 {
   uint8		a;
   int		k;
+  uint16	c1,c2;
   uint8		*tile_ptr;
   uint32	tile_addr;  
-//  uint16	*VRAM_ptr;
-  uint32	*VRAM_ptr;
+  uint16	*VRAM_ptr;
 
   tile_addr = GFX.tile_address[bg]+tilenb*32;
 /*  if (GFX.tiles_def[1][tile_addr/32] == 1)
   	return;*/       
 //  iprintf("%d %d\n", tilenb, bg);
   tile_ptr = SNESC.VRAM+tile_addr;    
-  VRAM_ptr = (uint16 *)(GFX.VRAM_ptr+tilenb*32);    
+  VRAM_ptr = (uint16 *)(BG_TILE_RAM(2+bg*2)+tilenb*32);    
+//  VRAM_ptr = (uint16 *)(BG_TILE_RAM(2+bg*2)+tilenb*32);
 
   for (k=0;k<8;k++,tile_ptr+=2)
     {
-	  uint32	c;
-      c =  bittab[tile_ptr[0x00]];
-      c |= bittab[tile_ptr[0x01]]<<1;
-      c |= bittab[tile_ptr[0x10]]<<2;
-      c |= bittab[tile_ptr[0x11]]<<3;
-	  *VRAM_ptr++ = c;            
+      c1 = c2 = 0;
+      if ((a = tile_ptr[0x00]))
+        {
+          c1 |= bittab[(a>>4)];
+          c2 |= bittab[(a&0xf)];
+        }
+      if ((a = tile_ptr[0x01]))
+        {
+          c1 |= bittab[(a>>4)]<<1;
+          c2 |= bittab[(a&0xf)]<<1;
+        }
+      if ((a = tile_ptr[0x10]))
+        {
+          c1 |= bittab[(a>>4)]<<2;
+          c2 |= bittab[(a&0xf)]<<2;
+        }
+      if ((a = tile_ptr[0x11]))
+        {
+          c1 |= bittab[(a>>4)]<<3;
+          c2 |= bittab[(a&0xf)]<<3;
+        }
+      
+		*VRAM_ptr++ = c1;      
+		*VRAM_ptr++ = c2;
     }
 //  GFX.tiles_def[1][tile_addr/32] = 1;    
   tiles_def[bg][tilenb] = 1;    
@@ -269,66 +274,7 @@ void     add_tile_4(uint16 tilenb, uint8 bg)
 
 void add_tile_8(short tilenb, unsigned char bg)
 {
-  uint8		a;
-  int		k;
-  uint32	c1,c2;
-  uint8		*tile_ptr;
-  uint32	tile_addr;  
-  uint32	*VRAM_ptr;
-
-  tile_addr = GFX.tile_address[bg]+tilenb*64;
-  tile_ptr = SNESC.VRAM+tile_addr;    
-  VRAM_ptr = (uint32*)(GFX.VRAM_ptr+tilenb*64);    
-
-  for (k=0;k<8;k++,tile_ptr+=2)
-    {
-      c1 = c2 = 0;
-      if ((a = tile_ptr[0x00]))
-        {
-          c1 |= bittab8[(a>>4)];
-          c2 |= bittab8[(a&0xf)];
-        }
-      if ((a = tile_ptr[0x01]))
-        {
-          c1 |= bittab8[(a>>4)]<<1;
-          c2 |= bittab8[(a&0xf)]<<1;
-        }
-      if ((a = tile_ptr[0x10]))
-        {
-          c1 |= bittab8[(a>>4)]<<2;
-          c2 |= bittab8[(a&0xf)]<<2;
-        }
-      if ((a = tile_ptr[0x11]))
-        {
-          c1 |= bittab8[(a>>4)]<<3;
-          c2 |= bittab8[(a&0xf)]<<3;
-        }
-      if ((a = tile_ptr[0x20]))
-        {
-          c1 |= bittab8[(a>>4)]<<4;
-          c2 |= bittab8[(a&0xf)]<<4;
-        }
-      if ((a = tile_ptr[0x21]))
-        {
-          c1 |= bittab8[(a>>4)]<<5;
-          c2 |= bittab8[(a&0xf)]<<5;
-        }
-      if ((a = tile_ptr[0x30]))
-        {
-          c1 |= bittab8[(a>>4)]<<6;
-          c2 |= bittab8[(a&0xf)]<<6;
-        }
-      if ((a = tile_ptr[0x31]))
-        {
-          c1 |= bittab8[(a>>4)]<<7;
-          c2 |= bittab8[(a&0xf)]<<7;
-        }
-
-		*VRAM_ptr++ = c1;      
-		*VRAM_ptr++ = c2;
-    }
-//  GFX.tiles_def[1][tile_addr/32] = 1;    
-  tiles_def[bg][tilenb] = 1;    
+	// TO DO
 }
 
 
@@ -368,12 +314,16 @@ inline void	PPU_setMap(int i, int j, int tilenb, int bg, int p, int f)
  }
 */
 
+static int _offsetY_tab[3] = { 16, 0, 32 };
+
 void update_scroll()
 {
+  	int offsetY = _offsetY_tab[CFG.YScroll];
+	
    BG0_X0 = (SNES.PPU_Port[(0x0D)+(0<<1)]&0x7);
-   BG0_Y0 = (SNES.PPU_Port[(0x0E)+(0<<1)]&0x7)+GFX.YScroll;
+   BG0_Y0 = (SNES.PPU_Port[(0x0E)+(0<<1)]&0x7)+offsetY;
    BG1_X0 = (SNES.PPU_Port[(0x0D)+(1<<1)]&0x7);
-   BG1_Y0 = (SNES.PPU_Port[(0x0E)+(1<<1)]&0x7)+GFX.YScroll;
+   BG1_Y0 = (SNES.PPU_Port[(0x0E)+(1<<1)]&0x7)+offsetY;
    BG2_X0 = (SNES.PPU_Port[(0x0D)+(2<<1)]&0x7);
    BG2_Y0 = (SNES.PPU_Port[(0x0E)+(2<<1)]&0x7)+16;
    BG3_X0 = (SNES.PPU_Port[(0x0D)+(3<<1)]&0x7);
@@ -531,7 +481,7 @@ void draw_plane_32_60(unsigned char bg, unsigned char bg_mode)
   int i, j, map_address;
   unsigned short tilenb;
   unsigned char nb_tilex, nb_tiley, tile_size, f, p;
-  short scrollx, scrolly;
+  short x, y, scrollx, scrolly;
 
   if (SNES.PPU_Port[0x05]&(0x10 << bg)) {
     nb_tilex = 16; nb_tiley = SNES.PPU_Port[0x33]&4 ? 15 : 14; tile_size = 4;
@@ -626,7 +576,9 @@ void draw_plane_64_60(unsigned char bg, unsigned char bg_mode)
   int i, j, map_address;
   unsigned short tilenb, scrollx, scrolly;
   unsigned char nb_tilex, nb_tiley, tile_size, f, p;
+  short x, y;
   uint16	*map_ptr;
+  
 
   if (SNES.PPU_Port[0x05]&(0x10 << bg)) {
     nb_tilex = 16; nb_tiley = SNES.PPU_Port[0x33]&4 ? 15 : 14; tile_size = 4;
@@ -660,11 +612,13 @@ void draw_plane_64_60(unsigned char bg, unsigned char bg_mode)
         ADD_TILE(bg, tilenb+1,  p, f, bg_mode);
         ADD_TILE(bg, tilenb+16, p, f, bg_mode);
         ADD_TILE(bg, tilenb+17, p, f, bg_mode);
-        DRAW_TILE(i*2,   j*2,   tilenb,    bg, p, f);
-        DRAW_TILE(i*2+1, j*2,   tilenb+1,  bg, p, f);
-        DRAW_TILE(i*2,   j*2+1, tilenb+16, bg, p, f);
-        DRAW_TILE(i*2+1, j*2+1, tilenb+17, bg, p, f);
+        DRAW_TILE(i*2,   y*2,   tilenb,    bg, p, f);
+        DRAW_TILE(i*2+1, y*2,   tilenb+1,  bg, p, f);
+        DRAW_TILE(i*2,   y*2+1, tilenb+16, bg, p, f);
+        DRAW_TILE(i*2+1, y*2+1, tilenb+17, bg, p, f);
       }
+      
+      
     }
   }
 }
@@ -712,7 +666,7 @@ void draw_sprites(/*unsigned char pf*/)
 	    sprite.flip = GFX.spr_info[i].flip;
 	    sprite.palette = GFX.spr_info[i].palette;
 	    sprite.X = GFX.spr_info[i].pos_x+SPRITE_ADD_X(i);
-	    sprite.Y = GFX.spr_info[i].pos_y-GFX.YScroll;
+	    sprite.Y = GFX.spr_info[i].pos_y-_offsetY_tab[CFG.YScroll];
 	    sprite.pr = 3-GFX.spr_info[i].pf_priority;
 	   	    
       spr_size = GFX.spr_info_ext[i>>2]&(1<<((i&0x3)<<1)+1);
@@ -806,7 +760,7 @@ void draw_sprites(/*unsigned char pf*/)
     case 3: { draw_plane_64_60(BG, BG_MODE); } break; \
   }
 
-void renderMode1(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
+void draw_screen2(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
 
 {
    sint8 	order[4] = { 4, 4, 4, 4 };
@@ -819,7 +773,8 @@ void renderMode1(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
   if (x==3) order[3] = 0; else order[3]++; \
 }   
   
-
+  DISPLAY_CR &= 0xffff00ff;
+  
   SB = SNES.PPU_Port[0x2D]&CFG.BG_Layer&((1<<NB_BG)-1);
   
   if (SB&0x08) push(3);
@@ -845,9 +800,6 @@ void renderMode1(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
 
 //  iprintf("%x %x %x %x\n", order[0], order[1], order[2], order[3]);
 
-	screen_mode = MODE_0_2D | DISPLAY_SPR_2D;
-	videoSetMode(screen_mode);	
-
    if (order[0] < 4)    
      BG0_CR = BG_16_COLOR | order[0] | BG_TILE_BASE(2) | BG_MAP_BASE(0) | ((SNES.PPU_Port[0x07+0]&3) << 14);
    if (order[1] < 4)    
@@ -864,22 +816,18 @@ void renderMode1(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
   }
 
   if ((SB&0x08)) {
-  	GFX.VRAM_ptr = BG_TILE_RAM(8);
   	DISPLAY_CR |= DISPLAY_BG3_ACTIVE;
     DRAW_PLANE(3, MODE_4);
   }
   if ((SB&0x04)) {
-  	GFX.VRAM_ptr = BG_TILE_RAM(6);
   	DISPLAY_CR |= DISPLAY_BG2_ACTIVE;
     DRAW_PLANE(2, MODE_3);
   }
   if ((SB&0x02)) {
-  	GFX.VRAM_ptr = BG_TILE_RAM(4);
   	DISPLAY_CR |= DISPLAY_BG1_ACTIVE;
     DRAW_PLANE(1, MODE_2);
   }
   if ((SB&0x01)) {
-  	GFX.VRAM_ptr = BG_TILE_RAM(2);
   	DISPLAY_CR |= DISPLAY_BG0_ACTIVE;
     DRAW_PLANE(0, MODE_1);
   }
@@ -916,255 +864,19 @@ void renderMode1(NB_BG, MODE_1, MODE_2, MODE_3, MODE_4)
   	BLEND_CR = BLEND_NONE;
   }
 
-}
-
-void renderMode3(MODE_1, MODE_2)
-
-{
-   sint8 	order[2] = { 2, 2 };
-   uint32	SB;
-   
-#define push(x) \
-{ if (x==0) order[0] = 0; else order[0]++; \
-  if (x==1) order[1] = 0; else order[1]++; \
-}   
- 
-  SB = SNES.PPU_Port[0x2D]&CFG.BG_Layer&((1<<2)-1);
-  
-  if (SB&0x02) push(1);
-  if (SB&0x01) push(0);
-
-  SB = SNES.PPU_Port[0x2C]&CFG.BG_Layer&((1<<2)-1);
-
-  if (SB&0x02) push(1);
-  if (SB&0x01) push(0);
-
-//  iprintf("%x %x %x %x\n", order[0], order[1], order[2], order[3]);
-
-	screen_mode = MODE_0_2D | DISPLAY_SPR_2D;
-	videoSetMode(screen_mode);	
-
-   if (order[0] < 2)    
-     BG0_CR = BG_256_COLOR | order[0] | BG_TILE_BASE(2) | BG_MAP_BASE(0) | ((SNES.PPU_Port[0x07+0]&3) << 14);
-   if (order[1] < 2)    
-     BG1_CR = BG_16_COLOR | order[1] | BG_TILE_BASE(6) | BG_MAP_BASE(4) | ((SNES.PPU_Port[0x07+1]&3) << 14);
-  
-  SB = (SNES.PPU_Port[0x2D]|SNES.PPU_Port[0x2C])&CFG.BG_Layer&((1<<2)-1);
-
-  if (CFG.BG_Layer & 0x10) {
-  	DISPLAY_CR |= DISPLAY_SPR_ACTIVE;
-  }
-
-  if ((SB&0x02)) {
-  	GFX.VRAM_ptr = BG_TILE_RAM(6);
-  	DISPLAY_CR |= DISPLAY_BG1_ACTIVE;
-    DRAW_PLANE(1, MODE_2);
-  }
-  if ((SB&0x01)) {
-  	GFX.VRAM_ptr = BG_TILE_RAM(2);
-  	DISPLAY_CR |= DISPLAY_BG0_ACTIVE;
-    DRAW_PLANE(0, MODE_1);
-  }
-
-  GFX.SUBSCREEN_addsub = 
-      (SNES.PPU_Port[0x31]&0x1F) && (SNES.PPU_Port[0x30]&2) &&
-      !(SNES.PPU_Port[0x30]&1) &&
-      (!(SNES.PPU_Port[0x30]&0xF0 == 0x40) || SNES.PPU_Port[0x26] < SNES.PPU_Port[0x27]);
-  GFX.FIXED_color_addsub =
-      (SNES.PPU_Port[0x31]&0x1F) && !(SNES.PPU_Port[0x30]&2) &&
-      !(SNES.PPU_Port[0x30]&1) && GFX.FIXED_notblack &&
-      (!(SNES.PPU_Port[0x30]&0xF0 == 0x40) || SNES.PPU_Port[0x26] < SNES.PPU_Port[0x27]);
-   if (GFX.SUBSCREEN_addsub && !SNES.PPU_Port[0x2D]) {
-      GFX.FIXED_color_addsub = 1; GFX.SUBSCREEN_addsub = 0;
-    }
-
-  if (GFX.SUBSCREEN_addsub)
-  {
-  	LOG("SUBSCREEN_addsub\n");
-  BLEND_CR = BLEND_ALPHA | BLEND_DST_BG0 | BLEND_SRC_BG1;
-  BLEND_AB = 0x0F | (0x0F << 8);
-  BLEND_Y  = 8 | 8<<8; // 50/50 Blend
-  }
-  else
-  if (GFX.FIXED_color_addsub)
-  {
-  	LOG("FIXED_addsub\n");
-  BLEND_CR = BLEND_ALPHA | BLEND_SRC_BG0 | BLEND_DST_BG1;
-  BLEND_AB = 0x0F | (0x0F << 8);
-  BLEND_Y  = 8 | 8<<8; // 50/50 Blend
-  }  
-  else
-  {
-  	BLEND_CR = BLEND_NONE;
-  }
-
-}
-
-
-void draw_mode_7_line(uint16 *buf_ptr, int y)
-{
-  short A, B, C, D/*, X0, Y0*/;
-  short X1, Y1;
-  int   HOffset, VOffset;
-  int   X2, Y2, X02, Y02, X0, Y0;
-  uchar	*VRAM1 = SNESC.VRAM+1;
-  uchar *tileptr;
-  uint16 tmp = 0; 
-
-/*  if (GFX.SUBSCREEN_addsub && GFX.SubScreen)
-    buf_ptr = GFX.subscreen;
-  else
-    buf_ptr = GFX.buf_screen.line[SNES.V_Count];*/
-
-  A = SNES.lineRegisters[y].A; 
-  B = SNES.lineRegisters[y].B;
-  C = SNES.lineRegisters[y].C;
-  D = SNES.lineRegisters[y].D;
-  
-  X02 = SNES.lineRegisters[y].CX;
-  Y02 = SNES.lineRegisters[y].CY;
-  
-/*  A = SNES.PPU_Port[0x1B]; B = SNES.PPU_Port[0x1C];
-  C = SNES.PPU_Port[0x1D]; D = SNES.PPU_Port[0x1E];
-
-  X0 = (int)SNES.PPU_Port[0x1F] << 19; X0 >>= 19;
-  Y0 = (int)SNES.PPU_Port[0x20] << 19; Y0 >>= 19;
-  Y1 = y;
-
-  HOffset = (int)SNES.PPU_Port[0x0D] << 19; HOffset >>= 19;
-  VOffset = (int)SNES.PPU_Port[0x0E] << 19; VOffset >>= 19;
-
-  X02 = A*(-X0+HOffset)+B*(Y1-Y0+VOffset)+(X0<<8);
-  Y02 = C*(-X0+HOffset)+D*(Y1-Y0+VOffset)+(Y0<<8);*/
-/*  X2 = X02>>8; Y2 = Y02>>8;*/
-
-  if (!SNES.Mode7Repeat)
-    {
-      for (X1 = 0;X1 < 256;X1++,X02 += A,Y02 += C) {
-        X2 = (X02>>8)&0x3FF;
-        Y2 = (Y02>>8)&0x3FF;
-        tileptr = VRAM1+(SNESC.VRAM[((Y2>>3)<<8)+(uchar)((X2>>3)<<1)]<<7);
-        if (X1 & 1)
-        {
-        	tmp |= tileptr[(X2&7)*2+(Y2&7)*16]<<8;
-        	buf_ptr[X1/2] = tmp;
-        }
-        else
-        	tmp  = tileptr[(X2&7)*2+(Y2&7)*16];
-      }
-    }
-  else
-    {
-      for (X1 = 0;X1 < 256;X1++,X02 += A,Y02 += C) {
-      	uint8	col;
-        X2 = (X02>>8);
-        Y2 = (Y02>>8);
-        if ((X2 | Y2) & ~0x3FF) {
-           if (SNES.Mode7Repeat == 3) {
-             X2 = X1; Y2 = y;
-             col = VRAM1[((Y2&7)<<4)+((X2&7)<<1)];
-           } else
-             col = 0;
-        } else {
-          tileptr = VRAM1+(SNESC.VRAM[((Y2>>3)<<8)+(uchar)((X2>>3)<<1)]<<7);
-          col  = tileptr[(X2&7)*2+(Y2&7)*16];
-        }
-        
-        if (X1 & 1)
-        {
-        	tmp |= col<<8;
-        	buf_ptr[X1/2] = tmp;
-        }
-        else
-        	tmp  = col;
-        }        
-    }
-
-/*  if ((GFX.SUBSCREEN_addsub && !GFX.SubScreen) || GFX.FIXED_color_addsub)
-    convert_buf_scr();*/
-}
-
-void switchToMode7()
-{
-	if (screen_mode & MODE_2_2D)
-		return;
-	//screen_mode = MODE_5_2D | DISPLAY_SPR_2D;
-	screen_mode = MODE_2_2D | DISPLAY_SPR_2D;
-	videoSetMode(screen_mode);
-  
-  	//BG3_CR = BG_BMP8_256x256 | BG_BMP_BASE(0);
-  	BG3_CR = BG_256_COLOR | BG_TILE_BASE(8) | BG_MAP_BASE(12) | BG_RS_128x128 | ((SNES.PPU_Port[0x07+0]&3) << 14);
-  	if (!SNES.Mode7Repeat)
-  		BG3_CR |= BG_WRAP_ON;
-  
-    if (CFG.BG_Layer & 0x10)
-   		DISPLAY_CR |= DISPLAY_SPR_ACTIVE;
-   	if (CFG.BG_Layer & 0x2)
-   		DISPLAY_CR |= DISPLAY_BG3_ACTIVE;
-}
-
-void renderMode7()
-{
-	static int Mode7FrameSkip = 0;
-	//screen_mode = MODE_5_2D | DISPLAY_SPR_2D;
-	screen_mode = MODE_2_2D | DISPLAY_SPR_2D;
-	videoSetMode(screen_mode);
-  
-  	//BG3_CR = BG_BMP8_256x256 | BG_BMP_BASE(0);
-  	BG3_CR = BG_256_COLOR | BG_TILE_BASE(8) | BG_MAP_BASE(12) | BG_RS_128x128 |
-  			  BG_PRIORITY(3); 
-  	/*((SNES.PPU_Port[0x07+0]&3) << 14);*/
-  	if (!SNES.Mode7Repeat)
-  		BG3_CR |= BG_WRAP_ON;
-  
-    if (CFG.BG_Layer & 0x10)
-   		DISPLAY_CR |= DISPLAY_SPR_ACTIVE;
-   	if (CFG.BG_Layer & 0x2)
-   		DISPLAY_CR |= DISPLAY_BG3_ACTIVE;
-
-#if 0   	
-   	uint16	buf[128];
-   	int		i;
-   	uint16	*bmp_addr = BG_BMP_RAM(0);
-   	
-   	for (i = 0; i < 192; i++)
-   	{
-   		int x;
-   		draw_mode_7_line(bmp_addr+i*128, i);
-   	}
-#else
-	// Copy map
-	
-	// Update one frame on 4
-	// FIXME : find a better method to speed up MODE 7
-	if ((Mode7FrameSkip++ & 3) == 0)
-		return;
-	
-  uint16	*map_addr = (uint16*)BG_MAP_RAM(12);
-  uint8		*VRAM = SNESC.VRAM;
-  uint8		*VRAM1 = SNESC.VRAM+1;
-  int	i, j;
-  for (i = 0, j = 0; i < 128*128*2; i+=4, j++)
-  {
-  	uint16	t;
-  	t = VRAM[i]+(VRAM[i+2]<<8); 
-  	map_addr[j] = t;
-  }
-  uint16	*tile_addr = (uint16*)BG_TILE_RAM(8);
-  for (i = 0, j = 0; i < 128*128*2; i+=4, j++)
-  {
-  	uint16	t;
-  	t = VRAM1[i]+(VRAM1[i+2]<<8); 
-  	tile_addr[j] = t;
-  }
-   
-#endif   	
 }
 
 uint8 brightness;
 uint8 old_brightness;
 
 extern int frame;
+
+static inline void dmaFillWords(const void* src, void* dest, uint32 size) {
+	DMA_SRC(3)  = (uint32)src;
+	DMA_DEST(3) = (uint32)dest;
+	DMA_CR(3)   = DMA_COPY_WORDS | DMA_SRC_FIX | (size>>2);
+	while(DMA_CR(3) & DMA_BUSY);
+}
 
 void PPU_reset()
 {
@@ -1181,8 +893,8 @@ void PPU_reset()
   
   // Clear DS VRAM
   i = 0;
-  dmaFillWords(&i, (void*)0x6000000,  256*1024); // FIX: clear only bank A!!
-  dmaFillWords(&i, (void*)0x6400000,  64*1024); // FIX: clear only bank A!!
+#define DS_VRAM  ((uint16*)0x6800000)
+  dmaFillWords(&i, DS_VRAM,  656*1024);
   
   frame = 0;
   memset(tiles_def, 0, 4*1024);
@@ -1197,7 +909,6 @@ inline void	PPU_setBackColor(int r, int g, int b)
     BG_PALETTE[0] = RGB15((r*brightness)/0xF, (g*brightness)/0xF, (b*brightness)/0xF) ;
 }
 
-#if 0
 void	update_scrolly(int bg)
 {
   int delta;
@@ -1228,7 +939,6 @@ void	update_scrollx(int bg)
     }
   }
 }
-#endif
 
 //extern char *logbuf;
 extern int v_blank;
@@ -1250,10 +960,10 @@ void draw_screen()
 	//      clear_to_color(screen, 0);
 	      return;
 	  }
- 	}
+  }
 
     GFX.Blank_Screen = 0;   
-    if (CFG.WaitVBlank/* && GFX.speed > 95*/) 
+    if (CFG.WaitVBlank) 
     	swiWaitForVBlank();
 #if 1    	
     else
@@ -1293,25 +1003,17 @@ void draw_screen()
     {
   	  draw_sprites();
       GFX.Sprites_table_dirty = 0;  	
-    }
-    
-/*    if ((SNES.PPU_Port[0x05]&7) != 
-    	SNES.lineRegisters[DISP_Y+GFX.YScroll].Mode)*/
-    	
-    if (SNES.lineRegisters[DISP_Y+GFX.YScroll].Mode == 7 &&    	
-    	(SNES.PPU_Port[0x05]&7) != 7)
-    	return;
-     
-    
+    }	
+     	  
     switch (SNES.PPU_Port[0x05]&7) {
-      case 0 : renderMode1(4, 2, 2, 2, 2); break;
-      case 1 : renderMode1(3, 4, 4, 2, 0); break;
-      case 2 : renderMode1(2, 4, 4, 0, 0); break;
-      case 3 : renderMode3(8, 4); break;
-      case 4 : renderMode3(8, 2); break;
-      case 5 : renderMode1(2, 4, 4, 0, 0); break;
-      case 6 : renderMode1(1, 4, 0, 0, 0); break;
-      case 7 : renderMode7(); break;
+      case 0 : draw_screen2(4, 2, 2, 2, 2); break;
+      case 1 : draw_screen2(3, 4, 4, 2, 0); break;
+      case 2 : draw_screen2(2, 4, 4, 0, 0); break;
+      case 3 : draw_screen2(2, 8, 4, 0, 0); break;
+      case 4 : draw_screen2(2, 8, 2, 0, 0); break;
+      case 5 : draw_screen2(3, 4, 4, 2, 0); break;
+      case 6 : draw_screen2(3, 4, 4, 2, 0); break;
+      case 7 : draw_screen2(3, 4, 4, 2, 0); break;
     }
 
 #ifdef TIMER_Y	
@@ -1366,18 +1068,8 @@ void draw_screen()
 inline void	PPU_setPalette(int c, int r, int g, int b)
 {
 //	iprintf("%d %d %d %d\n", c, r, g, b);
-	if ((SNES.PPU_Port[0x05]&7) > 1)
-	{
-		if (c > 0) // FIXME
-		BG_PALETTE[c] = RGB15((r*brightness)/0xF, (g*brightness)/0xF, (b*brightness)/0xF) ;
-		if (c >= 128)
-		SPRITE_PALETTE[c-128] = RGB15((r*brightness)/0xF, (g*brightness)/0xF, (b*brightness)/0xF) ;
-		return;
-	}
-	
 	if (c < 128) // TILE color
 	{
-		
 		if (c > 0) // FIXME
 		BG_PALETTE[c] = RGB15((r*brightness)/0xF, (g*brightness)/0xF, (b*brightness)/0xF) ;
 		// Recopie pour les palettes 2 bits

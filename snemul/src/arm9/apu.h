@@ -1,19 +1,9 @@
 /***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
-/* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
+/* (c) 1997-1999, 2006 archeide, All rights reserved.      */
+/* Free for non-commercial use                             */
 /***********************************************************/
-/*
-This program is free software; you can redistribute it and/or 
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
-the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-GNU General Public License for more details.
-*/
 
 #ifndef __apu_h__
 #define __apu_h__
@@ -66,17 +56,13 @@ struct s_apu
 
 extern struct s_apu	APU;
 
-/*#define PORT_SNES_TO_SPC ((volatile uint8*)(0x027FFFF8))
-#define PORT_SPC_TO_SNES ((volatile uint8*)(0x027FFFFC))*/
-
-#define PORT_SNES_TO_SPC ((volatile uint8*)(0x027ECFF8))
-#define PORT_SPC_TO_SNES ((volatile uint8*)(0x027ECFFC))
+#define PORT_SNES_TO_SPC ((volatile uint8*)(0x027FFFF8))
+#define PORT_SPC_TO_SNES ((volatile uint8*)(0x027FFFFC))
 
 #define APU_RAM_ADDRESS ((uint8*)(0x27EE000))
 
 #define APU_ADDR_CNT ((volatile uint32*)(0x2800000-60))
 #define APU_ADDR_CMD ((volatile uint32*)(0x2800000-16))
 #define APU_ADDR_ANS ((volatile uint32*)(0x2800000-20))
-#define APU_ADDR_DBG1 ((volatile uint32*)(0x2800000-24))
 
 #endif

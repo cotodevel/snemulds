@@ -26,7 +26,16 @@
  project at chishm@hotmail.com
 */
  
-
+#define REG_IE	(*(vuint32*)0x04000210)
+#define REG_IF	(*(vuint32*)0x04000214)
+#define REG_IME	(*(vuint16*)0x04000208)
+ 
+static inline void dmaFillWords(const void* src, void* dest, uint32 size) {
+	DMA_SRC(3)  = (uint32)src;
+	DMA_DEST(3) = (uint32)dest;
+	DMA_CR(3)   = DMA_COPY_WORDS | DMA_SRC_FIX | (size>>2);
+	while(DMA_CR(3) & DMA_BUSY);
+}
  
 /*-------------------------------------------------------------------------
 resetMemory1_ARM9

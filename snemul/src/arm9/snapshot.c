@@ -1,33 +1,11 @@
 /***********************************************************/
 /* This source is part of SNEmulDS                         */
 /* ------------------------------------------------------- */
-/* (c) 1997-1999, 2006-2007 archeide, All rights reserved. */
+/* (c) 1997-1999, 2006 archeide, All rights reserved.      */
+/* Free for non-commercial use                             */
 /***********************************************************/
-/*
-This program is free software; you can redistribute it and/or 
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
-the License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-GNU General Public License for more details.
-*/
-
-#include "common.h"
-
-#ifdef USE_GBA_FAT_LIB
 #include "fat/gba_nds_fat.h"
-#define FILE FAT_FILE
-#define fopen FAT_fopen
-#define fwrite FAT_fwrite
-#define fread FAT_fread
-#define fclose FAT_fclose 
-
-#elif defined(USE_LIBFAT)
-#include <stdio.h>
-#endif
 #include <malloc.h>
 #include <string.h>
 
@@ -42,7 +20,7 @@ char current_version[16] = "SNEmulDS 0.3.00";
 //char current_version[16] = "SNEmul 0.6.00";
 
 typedef struct {
-  char version[16]; // "SNEmul X.X.XX" pour eviter les pb de compatibilit‚ !
+  char version[16]; // "SNEmul X.X.XX" pour eviter les pb de compatibilit? !
   char names[8][32];
   long entry_pos[8];
 } TSnapShot_Header;
@@ -62,7 +40,7 @@ typedef struct {
 } TSnapShot;
 
 
-void	get_snapshot_name(char *file, uchar nb, char *name)
+char	*get_snapshot_name(char *file, uchar nb)
 {
   FAT_FILE *f;
 
@@ -76,7 +54,7 @@ void	get_snapshot_name(char *file, uchar nb, char *name)
   if (!header->entry_pos[nb]) goto error;
   if (FAT_fseek(f, header->entry_pos[nb], SEEK_SET)) goto error;
 
-  strcpy(name, header->names[nb]);
+  char *name = strdup(header->names[nb]);
 
   free(header);
   FAT_fclose(f);
@@ -233,49 +211,54 @@ typedef struct {
   unsigned char  SC_incr, FS_incr, OAM_upper_byte;
 } TSnapShot;
 
-int		get_snapshot_name(char *file, uchar nb, char *name)
+char	*get_snapshot_name(char *file, uchar nb)
 {
-  FILE *f;
+  FAT_FILE *f;
 
   if (nb > 8) return 0;
   file[strlen(file)-1] = '0'+nb; // XXX.SM1 XXXX.SM2 ....  
-  if ((f = fopen(file, "r")) == NULL) return 0;
+  if ((f = FAT_fopen(file, "r")) == NULL) return 0;
 
   TSnapShot_Header *header = (TSnapShot_Header *)malloc(sizeof(TSnapShot_Header));
-  fread(header, sizeof(TSnapShot_Header), 1, f);
+  FAT_fread(header, sizeof(TSnapShot_Header), 1, f);
 
-  sprintf(name, "Save #%d - %s", nb, header->name);
+  char *name = strdup(header->name);
 
   free(header);
-  fclose(f);
-  return 1;
+  FAT_fclose(f);
+  return name;
+  
+error:
+  free(header);
+  FAT_fclose(f);
+  return NULL;
 }
 
 int	read_snapshot(char *file, uchar nb)
 {
-  FILE *f;
+  FAT_FILE *f;
   int	i;
 
   if (nb > 8)
   	 return 0;
   file[strlen(file)-1] = '0'+nb; // XXX.SM1 XXXX.SM2 ....  	 
-  if ((f = fopen(file, "r")) == NULL)
+  if ((f = FAT_fopen(file, "r")) == NULL)
   	 return 0;
 
   TSnapShot_Header *header = (TSnapShot_Header *)malloc(sizeof(TSnapShot_Header));
-  fread(header, sizeof(TSnapShot_Header), 1, f);
+  FAT_fread(header, sizeof(TSnapShot_Header), 1, f);
 
-  fread(SNESC.RAM,  0x20000, 1, f);
-  fread(SNESC.VRAM, 0x10000, 1, f);
-  fread(SNESC.SRAM, 0x8000, 1, f);
+  FAT_fread(SNESC.RAM,  0x20000, 1, f);
+  FAT_fread(SNESC.VRAM, 0x10000, 1, f);
+  FAT_fread(SNESC.SRAM, 0x8000, 1, f);
   for (i = 0; i < 256; i++)
-    fread(GFX.SNESPal+i, 3, 1, f);
+    FAT_fread(GFX.SNESPal+i, 3, 1, f);
 
-  fread(SNES.PPU_Port, 2*0x100, 1, f);
-  fread(SNES.DMA_Port, 2*0x200, 1, f);
+  FAT_fread(SNES.PPU_Port, 2*0x100, 1, f);
+  FAT_fread(SNES.DMA_Port, 2*0x200, 1, f);
 
   TSnapShot *snapshot = (TSnapShot *)malloc(sizeof(TSnapShot));
-  fread(snapshot,  sizeof(TSnapShot), 1, f);
+  FAT_fread(snapshot,  sizeof(TSnapShot), 1, f);
   
   iprintf("PC =  %02X:%04x\n", snapshot->PB, snapshot->PC);
 
@@ -290,43 +273,42 @@ int	read_snapshot(char *file, uchar nb)
    if (CFG.Sound_output) {
 	APU_stop(); // Make sure that the APU is *completely* stopped
    	// Read SPC file format
-	fread(APU_RAM_ADDRESS-0x100, 1, 0x10200, f);
+	FAT_fread(APU_RAM_ADDRESS-0x100, 1, 0x10200, f);
 	APU_loadSpc();   	
   }
 
   free(snapshot);
   free(header);
-  fclose(f);
+  FAT_fclose(f);
 
   GFX.tiles_dirty = 1;
   GFX.Sprites_table_dirty = 1;
-  CPU.unpacked = 0; // Update ASM  
 }
 
 int write_snapshot(char *file, unsigned char nb, const char *name)
 {
-  FILE *f;
+  FAT_FILE *f;
   int	i;
 
   if (nb > 8) return 0;
   file[strlen(file)-1] = '0'+nb; // XXX.SM1 XXXX.SM2 ....
   // 3 retries for my buggy M3 slim  
-  if ((f = fopen(file, "w")) == NULL)
-/*	  if ((f = fopen(file, "w")) == NULL)
-	  	if ((f = fopen(file, "w")) == NULL)*/	  
+  if ((f = FAT_fopen(file, "w")) == NULL)
+	  if ((f = FAT_fopen(file, "w")) == NULL)
+	  	if ((f = FAT_fopen(file, "w")) == NULL)	  
   		return 0;
   
   TSnapShot_Header *header = (TSnapShot_Header *)malloc(sizeof(TSnapShot_Header));
   strcpy(header->name, name);  
-  fwrite(header, sizeof(TSnapShot_Header), 1, f);
+  FAT_fwrite(header, sizeof(TSnapShot_Header), 1, f);
 
-  fwrite(SNESC.RAM,  0x20000, 1, f);
-  fwrite(SNESC.VRAM, 0x10000, 1, f);
-  fwrite(SNESC.SRAM, 0x8000, 1, f);
+  FAT_fwrite(SNESC.RAM,  0x20000, 1, f);
+  FAT_fwrite(SNESC.VRAM, 0x10000, 1, f);
+  FAT_fwrite(SNESC.SRAM, 0x8000, 1, f);
   for (i = 0; i < 256; i++)
-    fwrite(GFX.SNESPal+i, 3, 1, f);
-  fwrite(SNES.PPU_Port,  2*0x100, 1, f);
-  fwrite(SNES.DMA_Port,   2*0x200, 1, f);
+    FAT_fwrite(GFX.SNESPal+i, 3, 1, f);
+  FAT_fwrite(SNES.PPU_Port,  2*0x100, 1, f);
+  FAT_fwrite(SNES.DMA_Port,   2*0x200, 1, f);
 
   TSnapShot *snapshot = (TSnapShot *)malloc(sizeof(TSnapShot));
 
@@ -339,19 +321,19 @@ int write_snapshot(char *file, unsigned char nb, const char *name)
   snapshot->OAM_upper_byte = GFX.OAM_upper_byte;
   snapshot->PPU_NeedMultiply = SNES.PPU_NeedMultiply;
 
-  iprintf("State written\n", sizeof(TSnapShot) );
-  fwrite(snapshot,  sizeof(TSnapShot), 1, f);
+  	iprintf("State written\n", sizeof(TSnapShot) );
+  FAT_fwrite(snapshot,  sizeof(TSnapShot), 1, f);
   
   if (CFG.Sound_output) {
   	APU_stop(); // Make sure that the APU is *completely* stopped
 	APU_saveSpc(); 
    	// Write SPC file format
-	fwrite(APU_RAM_ADDRESS-0x100, 1, 0x10200, f);
+	FAT_fwrite(APU_RAM_ADDRESS-0x100, 1, 0x10200, f);
   }
   
   free(snapshot);
   free(header);
-  fclose(f);
+  FAT_fclose(f);
   return (1);
 }
 #endif
