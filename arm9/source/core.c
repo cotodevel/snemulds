@@ -425,6 +425,8 @@ void DMA_transfert(uchar port)
   bool isSDD1DMA = false;
   u8 * sdd1_IO = (u8 *)&IO_SDD1[0]; //IO_SDD1[8]; // 4800 -> 4807
   int count = DMA_len = DMA_PORT[0x105+port*0x10]+(DMA_PORT[0x106+port*0x10]<<8);
+  int sdd1cacheIndexIter = 0;
+  u8 * cachedSDD1_WORKBUFFER = SDD1_WORKBUFFER;
   DMA_info = DMA_PORT[0x100+port*0x10];
   PPU_port = 0x2100+DMA_PORT[0x101+port*0x10]; //hack to detect vram writes
   DMA_address = DMA_PORT[0x102+port*0x10]+(DMA_PORT[0x103+port*0x10]<<8);	//4200 -> 437F
@@ -435,9 +437,38 @@ void DMA_transfert(uchar port)
 	isSDD1DMA = true;
   }
   if(isSDD1DMA == true){
-		uint8* in_ptr = mem_getbaseaddress(DMA_address, (uchar)DMA_bank); //SNES IO -> Emulator IO mapper
+  		u32 entryToRegister = 0;
+		uint8* in_ptr = (uint8*)mem_getbaseaddress((uint16)DMA_address, (uchar)DMA_bank); //SNES IO -> Emulator IO mapper
 		in_ptr += DMA_address;
-		SDD1_decompress(SDD1_WORKBUFFER, in_ptr, count);
+		entryToRegister = (u32)in_ptr;
+		
+		for(sdd1cacheIndexIter = 0; sdd1cacheIndexIter < INTERNAL_SDD1_CACHED_SLOTS; sdd1cacheIndexIter++){
+			struct sdd1_cache_block * entry = &sdd1cache[sdd1cacheIndexIter];
+			if( entry->snesAddressSrc == entryToRegister ){
+				break;
+			}
+		}
+
+		//Not found? Register cache slot. Otherwise re-use it.
+		if(sdd1cacheIndexIter == INTERNAL_SDD1_CACHED_SLOTS){
+			struct sdd1_cache_block * entry = &sdd1cache[sdd1cacheIndex];	
+			u8 * targetCacheEntry = SDD1_CACHED_VRAM_BLOCKS + (sdd1cacheIndex*SDD1_CACHE_BLOCK_SIZE);
+			SDD1_decompress(cachedSDD1_WORKBUFFER, in_ptr, count);
+			memcpy(targetCacheEntry, cachedSDD1_WORKBUFFER, count);
+			entry->snesAddressSrc = entryToRegister;
+			entry->targetVRAMBuffer = targetCacheEntry;
+			entry->targetVRAMSize = count;
+
+			if(sdd1cacheIndex < (INTERNAL_SDD1_CACHED_SLOTS - 1) ){
+				sdd1cacheIndex++;
+			}
+			else{
+				sdd1cacheIndex = 0;
+			}
+		}
+		else{
+			cachedSDD1_WORKBUFFER = sdd1cache[sdd1cacheIndexIter].targetVRAMBuffer;
+		}
   }
   if(DMA_len == 0){
     DMA_len = 0x10000;
@@ -449,7 +480,6 @@ void DMA_transfert(uchar port)
   	  	  SNES.V_Count+(DMA_len / NB_CYCLES) >= GFX.ScreenHeight)
   	  	SNES.DelayedNMI = 1;
 	  SNES.V_Count += (DMA_len / NB_CYCLES);
-	   
   }  
 
   //VRAM
@@ -465,7 +495,7 @@ void DMA_transfert(uchar port)
 	///////////////////////////////////////////////////////SNES CPU IO -> PPU///////////////////////////////////////////////////////
 	
 	if(isSDD1DMA == true){
-		uint8 *base = (uint8 *)SDD1_WORKBUFFER;
+		uint8 *base = (uint8 *)cachedSDD1_WORKBUFFER;
 		int p = 0;
 		for (tmp = 0;tmp < DMA_len;tmp++) {
 		  uchar Work = *(base + p);

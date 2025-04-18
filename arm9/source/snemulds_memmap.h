@@ -47,16 +47,30 @@ extern u8 * SNES_ROM_ADDRESS_NTR;
 extern u8 * SNES_ROM_ADDRESS_TWL;
 extern u8 * SNES_ROM_PAGING_ADDRESS;
 extern u32* APU_BRR_HASH_BUFFER_NTR;
+extern u8* SDD1_CACHED_VRAM_BLOCKS;
+
 extern bool LoROM_Direct_ROM_Mapping;
 
 #define ROM_MAX_SIZE_NTRMODE_BIGLOROM_PAGEMODE	((int)(2*1024*1024))	//LoROM streaming
-#define INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE	((int)(1*1024*1024))
+#define INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE	((int)(448*1024))
 #define ROM_MAX_SIZE_TWLMODE	((6*1024*1024)+(512*1024)) //Max ROM size: 6.5MB
-
 #define	PAGE_HIROM		(64*1024)
 #define	PAGE_LOROM		(PAGE_HIROM >> 1)
-
 #define SNES_ROM_PAGING_SLOTS (INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE/PAGE_HIROM)
+
+struct sdd1_cache_block {
+	u32 snesAddressSrc;
+	u8 * targetVRAMBuffer;
+	int targetVRAMSize;
+	//index itself is the cache offset
+};
+
+#define INTERNAL_SDD1_CACHED_BLOCKS_SIZE	((int)(576*1024)-(64*1024*4))
+#define SDD1_CACHE_BLOCK_SIZE ((int)8*1024) //32K is recommended, but 8K is faster, there may be some artifacts
+#define INTERNAL_SDD1_CACHED_SLOTS (INTERNAL_SDD1_CACHED_BLOCKS_SIZE/SDD1_CACHE_BLOCK_SIZE) //S-DD1 caching
+
+extern struct sdd1_cache_block sdd1cache[INTERNAL_SDD1_CACHED_SLOTS];
+extern int sdd1cacheIndex;
 
 //334K ~ worth of Hashed Samples from the APU core to remove stuttering
 #define APU_BRR_HASH_BUFFER_SIZE (512*1024)

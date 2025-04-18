@@ -50,13 +50,48 @@ u8 spriteMapVRAM[128*1024];
 u8 VRAM[128*1024];
 #endif
 
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
 u8 * SDD1_WORKBUFFER = NULL;
+
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
 u8 * SNES_ROM_ADDRESS_NTR = NULL;
+
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
 u8 * SNES_ROM_ADDRESS_TWL = NULL;
+
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
 u8 * SNES_ROM_PAGING_ADDRESS = NULL;
+
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
 u32* APU_BRR_HASH_BUFFER_NTR = NULL;
+
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
+u8* SDD1_CACHED_VRAM_BLOCKS = NULL;
+
 bool LoROM_Direct_ROM_Mapping;
 int ROM_PAGING_SIZE=0;
+
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
+struct sdd1_cache_block sdd1cache[INTERNAL_SDD1_CACHED_SLOTS];
+
+#ifdef ARM9
+__attribute__((section(".dtcm")))
+#endif
+int sdd1cacheIndex = 0;
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -291,13 +326,15 @@ void	mem_init_paging()
 	SDD1_WORKBUFFER = (u8*)(0x02FEE000);
 #endif
 #ifdef _MSC_VER
-	SNES_ROM_ADDRESS_NTR = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_NTRMODE_BIGLOROM_PAGEMODE + INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE + APU_BRR_HASH_BUFFER_SIZE);
-	SNES_ROM_ADDRESS_TWL = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_TWLMODE + INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE + APU_BRR_HASH_BUFFER_SIZE);
+	SNES_ROM_ADDRESS_NTR = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_NTRMODE_BIGLOROM_PAGEMODE + INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE + INTERNAL_SDD1_CACHED_BLOCKS_SIZE);
+	SNES_ROM_ADDRESS_TWL = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_TWLMODE + INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE + INTERNAL_SDD1_CACHED_BLOCKS_SIZE);
 #endif
 	SNES_ROM_PAGING_ADDRESS = (u8*)(SNES_ROM_ADDRESS_NTR+ROM_MAX_SIZE_NTRMODE_BIGLOROM_PAGEMODE);
-	APU_BRR_HASH_BUFFER_NTR = NULL; //Need at least 512K of EWRAM, but S-DD1 requires at least 1MB of SNES_ROM_PAGING_ADDRESS to work properly. Disabled.
-	
+	APU_BRR_HASH_BUFFER_NTR = NULL; //Need at least 512K of EWRAM, but we repurpose the remaining 512K as S-DD1 cache to speed up NTR mode. Disabled.
+	SDD1_CACHED_VRAM_BLOCKS = (u8*)(SNES_ROM_PAGING_ADDRESS+INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE);
 	memset(SNES_ROM_PAGING_ADDRESS, 0, INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE);
+	memset(SDD1_CACHED_VRAM_BLOCKS, 0, INTERNAL_SDD1_CACHED_BLOCKS_SIZE);
+	
 	ROM_paging_offs = (uint16 *)TGDSARM9Malloc(SNES_ROM_PAGING_SLOTS*2);
 	if (!ROM_paging_offs)
 	{
@@ -384,7 +421,7 @@ uint8 *	mem_checkReload(int block, uchar bank, uint32 offset){
 		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET_BIGLOROM;
 		if (ROM_paging_offs[ROM_paging_cur] == PC_blk){
 			ROM_paging_cur++;
-			if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_HIROM)-3) ){ //heap protection if out of bounds is read
+			if (ROM_paging_cur >= SNES_ROM_PAGING_SLOTS){ //heap protection if out of bounds is read
 				ROM_paging_cur = 0;
 			}
 		}
@@ -395,7 +432,7 @@ uint8 *	mem_checkReload(int block, uchar bank, uint32 offset){
 	#endif
 
 	//We're here if a bank isn't mapped. search for it and if it's mapped, use it.
-	for (lookahead = 0; lookahead < ((ROM_PAGING_SIZE/PAGE_HIROM)-3); lookahead++) {
+	for (lookahead = 0; lookahead < SNES_ROM_PAGING_SLOTS; lookahead++) {
 		if (ROM_paging_offs[lookahead] == (int)(i)) {
 			ptr = SNES_ROM_PAGING_ADDRESS+(lookahead*PAGE_HIROM);
 			return romPageToBigLoROMSnesPage(ptr, block);
@@ -413,7 +450,7 @@ uint8 *	mem_checkReload(int block, uchar bank, uint32 offset){
 	mem_setCacheBlock(i, ptr); // Give Read-only memory
 
 	ROM_paging_cur++;
-	if (ROM_paging_cur >= ((ROM_PAGING_SIZE/PAGE_HIROM)-3) ){ //heap protection if out of bounds is read
+	if (ROM_paging_cur >= SNES_ROM_PAGING_SLOTS){ //heap protection if out of bounds is read
 		ROM_paging_cur = 0;
 	}
 	return romPageToBigLoROMSnesPage(ptr, block);
