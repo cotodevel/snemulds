@@ -479,11 +479,10 @@ void	mem_init_paging()
 	SNES_ROM_ADDRESS_TWL = (u8*)TGDSARM9Malloc(ROM_MAX_SIZE_TWLMODE + INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE + APU_BRR_HASH_BUFFER_SIZE);
 #endif
 	SNES_ROM_PAGING_ADDRESS = (u8*)(SNES_ROM_ADDRESS_NTR+ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE);
-	APU_BRR_HASH_BUFFER_NTR = (u32*)(((int)SNES_ROM_PAGING_ADDRESS) + INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE); //(334*1024) = 342016 bytes / 64K blocks = 5 pages less useable on paging mode
+	APU_BRR_HASH_BUFFER_NTR = NULL;
 	
 	memset(SNES_ROM_ADDRESS_NTR, 0, ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE);
 	memset(SNES_ROM_PAGING_ADDRESS, 0, INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE);
-	memset(APU_BRR_HASH_BUFFER_NTR, 0, APU_BRR_HASH_BUFFER_SIZE);
 	
 	ROM_paging_offs = (uint16 *)TGDSARM9Malloc(SNES_ROM_PAGING_SLOTS*2);
 	if (!ROM_paging_offs)
@@ -673,21 +672,17 @@ uint8* mem_checkReloadCX4Cache(int bank, uint16 offset) {
 	//We're here if a bank isn't mapped. search for it and if it's mapped, use it.
 	for (i = 0; i < CX4_PAGING_SLOTS; i++) {
 		if (storedNDSBanks[i] == (int)(bank)) {
-			return (cx4CacheAddress + (i * PAGE_HIROM));
-		}
-		//LoROM only: use upper bank if already loaded
-		else if ((storedNDSBanks[i] - 1) == (int)(bank)) {
-			return (cx4CacheAddress + ((i - 1) * PAGE_HIROM) + PAGE_LOROM);
+			return (cx4CacheAddress + (i * PAGE_LOROM));
 		}
 	}
 	storedNDSBanks[cx4PagingOffset] = (int)bank;
-	ptr = cx4CacheAddress + (cx4PagingOffset * PAGE_HIROM);
+	ptr = cx4CacheAddress + (cx4PagingOffset * PAGE_LOROM);
 	
 	cx4PagingOffset++;//alloc next one 
 	if (cx4PagingOffset >= CX4_PAGING_SLOTS) {
 		cx4PagingOffset = 0;
 	}
-	ret = FS_loadROMPage((char*)ptr, (int)(bank * 0x8000), PAGE_HIROM);
+	ret = FS_loadROMPage((char*)ptr, (int)(bank * 0x8000), PAGE_LOROM);
 #ifdef ARM9
 	coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent new page
 #endif
@@ -712,7 +707,7 @@ uint8 *	mem_checkReloadLoROM(int blockInPage, int blockInROM)
 	//We're here if a bank isn't mapped. search for it and if it's mapped, use it.
 	for (lookahead = 0; lookahead < SNES_ROM_PAGING_SLOTS; lookahead++) {
 		if (ROM_paging_offs[lookahead] == (int)(i)) {
-			ptr = SNES_ROM_PAGING_ADDRESS+(lookahead*PAGE_HIROM);
+			ptr = SNES_ROM_PAGING_ADDRESS+(lookahead*PAGE_LOROM);
 			return romPageToLoROMSnesPage(ptr, blockInPage);
 		}
 	}
@@ -736,8 +731,9 @@ uint8 *	mem_checkReloadLoROM(int blockInPage, int blockInROM)
 	#endif
 
 	ROM_paging_offs[ROM_paging_cur] = i;
-	ptr = SNES_ROM_PAGING_ADDRESS+(ROM_paging_cur*PAGE_HIROM);
-	ret = FS_loadROMPage((char*)ptr, SNES.ROMHeader+ ((((blockInROM & 0x1FF)<<13)>>LoROM32kShift)<<LoROM32kShift) , PAGE_HIROM); //((RomOffset * 8192) / 32K) * 32K
+	ptr = SNES_ROM_PAGING_ADDRESS+(ROM_paging_cur*PAGE_LOROM);
+	int off =  (SNES.ROMHeader + ((((blockInROM & 0x1FF)<<13)>>LoROM32kShift)<<LoROM32kShift) );
+	ret = FS_loadROMPage((char*)ptr,  off, PAGE_LOROM); //((RomOffset * 8192) / 32K) * 32K
 
 	#ifdef ARM9
 	coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent new page

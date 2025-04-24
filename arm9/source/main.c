@@ -521,7 +521,7 @@ bool loadROM(char *name, int confirm){
 	){
 		apuCacheSamples = 0;
 	}
-	
+	apuCacheSamples = 0;
 	if(apuCacheSamples == 1){
 		if(__dsimode == true){
 			GUI_printf("APU Cached Samples: Enable [TWL mode]");
