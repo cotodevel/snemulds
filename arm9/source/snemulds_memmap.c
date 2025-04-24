@@ -17,7 +17,7 @@
 
 //Note: Do not put any of the memory paging in ITCM, it'll break the streaming code.
 
-//Coto: April 2, 2025: Added LoROM streaming. No official games use it, but some rom hacks do, and since these exceed the NDS 4MB EWRAM, this update adds support for NTR mode.
+//Coto: April 2, 2025: Added LoROM streaming. This enables several games using the BigLoROM, SpecialLoROM or ExLoROM maps to run in NTR hardware as well TWL hardware.
 
 #include <string.h>
 #include <stdlib.h>
@@ -172,8 +172,7 @@ void InitLoROMMap(int mode)
 	if (mode == NOT_LARGE)
 	{
 		// Small ROM, use only SNES ROM size of RAM
-		maxRAM = SNES.ROMSize;
-		ROM_PAGING_SIZE = 0;
+		ROM_PAGING_SIZE = maxRAM = SNES.ROMSize;
 	}
 
 	// Use Paging system... 
@@ -199,6 +198,8 @@ void InitLoROMMap(int mode)
 		printf("Halting.");
 		while(1==1){}
 	}
+
+	// Banks 00->3f and 80->bf
 	for (c = 0; c < 0x200; c += 8)
 	{
 		MAP[c+0] = MAP[c+0x400] = SNESC.RAM;		//RAM 000h-1FFFh  Mirror of 7E0000h-7E1FFFh (first 8Kbyte of WRAM)
@@ -245,6 +246,7 @@ void InitLoROMMap(int mode)
 		}
 	}
 
+	// Banks 40->7f and c0->ff
 	for (c = 0; c < 0x200; c += 8)
 	{
 		for (i = c; i < c+4; i++)
@@ -281,7 +283,7 @@ void InitLoROMMap(int mode)
 			if(LoROM_Direct_ROM_Mapping == true){
 				int pageMap = ((c>>1)<<13)+LoROMMappedRange-0x200000-0x8000;
 				if(pageMap < maxRAM){
-					MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[pageMap]; //bottom 32K ROM addressed: mirror of first 2MB or second 2MB chip: todo
+					MAP[i+0x200] = MAP[i+0x600] = &SNESC.ROM[pageMap]; //bottom 32K ROM addressed: mirror of first 2MB or second 2MB chip
 				}
 				else{
 					MAP[i+0x200] = MAP[i+0x600] = (uint8*)MAP_PAGING;
@@ -334,15 +336,13 @@ void InitHiROMMap(int mode)
 	if (mode == NOT_LARGE)
 	{
 		// Small ROM, use only SNES ROM size of RAM, or if TWL mode maps fully ROM from TWL's EWRAM.
-		maxRAM = SNES.ROMSize;
-		ROM_PAGING_SIZE = 0;
+		ROM_PAGING_SIZE = maxRAM = SNES.ROMSize;
 	}
 	else if (mode == USE_PAGING)
 	{
 		// Use Paging system... 
 		// Only a part of RAM is used static
-		maxRAM = PAGE_HIROM;
-		ROM_PAGING_SIZE = ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE;
+		ROM_PAGING_SIZE = maxRAM = PAGE_HIROM;
 	}
 	else if (mode == USE_EXTMEM){
 		// Extended RAM mode...
@@ -672,17 +672,21 @@ uint8* mem_checkReloadCX4Cache(int bank, uint16 offset) {
 	//We're here if a bank isn't mapped. search for it and if it's mapped, use it.
 	for (i = 0; i < CX4_PAGING_SLOTS; i++) {
 		if (storedNDSBanks[i] == (int)(bank)) {
-			return (cx4CacheAddress + (i * PAGE_LOROM));
+			return (cx4CacheAddress + (i * PAGE_HIROM));
+		}
+		//LoROM only: use upper bank if already loaded
+		else if ((storedNDSBanks[i] - 1) == (int)(bank)) {
+			return (cx4CacheAddress + ((i - 1) * PAGE_HIROM) + PAGE_LOROM);
 		}
 	}
 	storedNDSBanks[cx4PagingOffset] = (int)bank;
-	ptr = cx4CacheAddress + (cx4PagingOffset * PAGE_LOROM);
+	ptr = cx4CacheAddress + (cx4PagingOffset * PAGE_HIROM);
 	
 	cx4PagingOffset++;//alloc next one 
 	if (cx4PagingOffset >= CX4_PAGING_SLOTS) {
 		cx4PagingOffset = 0;
 	}
-	ret = FS_loadROMPage((char*)ptr, (int)(bank * 0x8000), PAGE_LOROM);
+	ret = FS_loadROMPage((char*)ptr, (int)(bank * 0x8000), PAGE_HIROM);
 #ifdef ARM9
 	coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent new page
 #endif
@@ -707,7 +711,13 @@ uint8 *	mem_checkReloadLoROM(int blockInPage, int blockInROM)
 	//We're here if a bank isn't mapped. search for it and if it's mapped, use it.
 	for (lookahead = 0; lookahead < SNES_ROM_PAGING_SLOTS; lookahead++) {
 		if (ROM_paging_offs[lookahead] == (int)(i)) {
-			ptr = SNES_ROM_PAGING_ADDRESS+(lookahead*PAGE_LOROM);
+			ptr = SNES_ROM_PAGING_ADDRESS+(lookahead*PAGE_HIROM);
+			return romPageToLoROMSnesPage(ptr, blockInPage);
+		}
+
+		//LoROM only: use upper bank if already loaded
+		else if ((ROM_paging_offs[lookahead] - 1) == (int)(i)) {
+			ptr = (SNES_ROM_PAGING_ADDRESS + ((lookahead - 1) * PAGE_HIROM) + PAGE_LOROM);
 			return romPageToLoROMSnesPage(ptr, blockInPage);
 		}
 	}
@@ -729,11 +739,9 @@ uint8 *	mem_checkReloadLoROM(int blockInPage, int blockInROM)
 		}
 	}
 	#endif
-
 	ROM_paging_offs[ROM_paging_cur] = i;
-	ptr = SNES_ROM_PAGING_ADDRESS+(ROM_paging_cur*PAGE_LOROM);
-	int off =  (SNES.ROMHeader + ((((blockInROM & 0x1FF)<<13)>>LoROM32kShift)<<LoROM32kShift) );
-	ret = FS_loadROMPage((char*)ptr,  off, PAGE_LOROM); //((RomOffset * 8192) / 32K) * 32K
+	ptr = SNES_ROM_PAGING_ADDRESS+(ROM_paging_cur*PAGE_HIROM);
+	ret = FS_loadROMPage((char*)ptr, (SNES.ROMHeader+ ((((blockInROM & 0x1FF)<<13)>>LoROM32kShift)<<LoROM32kShift) ), PAGE_HIROM); //((RomOffset * 8192) / 32K) * 32K
 
 	#ifdef ARM9
 	coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent new page
@@ -948,7 +956,7 @@ void IO_setword(int addr, uint32 address, uint16 word){
 	}
 }
 
-uchar mem_getbyte(uint32 offset,uchar bank)
+uchar mem_getbyte(uint16 offset,uchar bank)
 {
 	int address = (bank<<16)+offset;
 	int block;
@@ -969,7 +977,7 @@ uchar mem_getbyte(uint32 offset,uchar bank)
 }
 
 
-void mem_setbyte(uint32 offset, uchar bank, uchar byte)
+void mem_setbyte(uint16 offset, uchar bank, uchar byte)
 {
 	int address = (bank<<16)+offset;
 	int block;
@@ -990,7 +998,7 @@ void mem_setbyte(uint32 offset, uchar bank, uchar byte)
 }
 
 
-uint16 mem_getword(uint32 offset,uchar bank)
+uint16 mem_getword(uint16 offset,uchar bank)
 {
 	int address = (bank<<16)+offset;
 	int block;
@@ -1012,7 +1020,7 @@ uint16 mem_getword(uint32 offset,uchar bank)
 }
 
 
-void mem_setword(uint32 offset, uchar bank, uint16 word)
+void mem_setword(uint16 offset, uchar bank, uint16 word)
 {
 	int address = (bank<<16)+offset;
 	int block;

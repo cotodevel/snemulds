@@ -62,9 +62,9 @@ extern bool LoROM_Direct_ROM_Mapping;
 #define	PAGE_HIROM		(64*1024)
 #define	PAGE_LOROM		(PAGE_HIROM >> 1)
 
-#define CX4_PAGING_SLOTS (2)
-#define SNES_ROM_PAGING_SLOTS ( ((INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE/PAGE_LOROM)-1) - CX4_PAGING_SLOTS) //-1 required or the ROM steps over WRAM and breaks everything
-#define getCX4_CACHE_ADDRESS(ptr) ((int)ptr + (SNES_ROM_PAGING_SLOTS * PAGE_LOROM))
+#define CX4_PAGING_SLOTS (1)
+#define SNES_ROM_PAGING_SLOTS ( ((INTERNAL_PAGING_SIZE_BIGLOROM_PAGEMODE/PAGE_HIROM)-1) - CX4_PAGING_SLOTS) //-1 required or the ROM steps over WRAM and breaks everything
+#define getCX4_CACHE_ADDRESS(ptr) ((int)ptr + (SNES_ROM_PAGING_SLOTS * PAGE_HIROM))
 
 
 #ifndef TGDSARM9Free
@@ -108,6 +108,7 @@ extern void mem_init_directROM();
 extern void mem_init_paging();
 extern void mem_setCacheBlock(int block, uchar *ptr);
 extern void mem_removeCacheBlock(int block);
+
 extern uint8 *mem_checkReloadHiROM(int block);	//HiROM
 extern uint8 *mem_checkReloadLoROM(int blockInPage, int blockInROM);	//LoROM
 extern uint8 *	mem_checkReload(int blockInPage, uchar bank, uint32 offset);
@@ -119,10 +120,10 @@ extern uint8 IO_getbyte(int addr, uint32 address);
 extern void IO_setbyte(int addr, uint32 address, uint8 byte);
 extern uint16 IO_getword(int addr, uint32 address);
 extern void IO_setword(int addr, uint32 address, uint16 word);
-extern uchar mem_getbyte(uint32 offset,uchar bank);
-extern void mem_setbyte(uint32 offset, uchar bank, uchar byte);
-extern uint16 mem_getword(uint32 offset,uchar bank);
-extern void mem_setword(uint32 offset, uchar bank, uint16 word);
+extern uchar mem_getbyte(uint16 offset,uchar bank);
+extern void mem_setbyte(uint16 offset, uchar bank, uchar byte);
+extern uint16 mem_getword(uint16 offset,uchar bank);
+extern void mem_setword(uint16 offset, uchar bank, uint16 word);
 extern void *mem_getbaseaddress(uint16 offset, uchar bank);
 extern void *map_memory(uint16 offset, uchar bank);
 extern int ROM_PAGING_SIZE;
