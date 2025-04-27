@@ -426,7 +426,7 @@ __attribute__ ((optnone))
 void mem_init_directROM(){
 	mem_clear_paging();
 	#ifdef ARM9
-	SNES_ROM_ADDRESS_NTR = (u8*)(0x20F0000);
+	SNES_ROM_ADDRESS_NTR = (u8*)(NTR_ROM_OFFST);
 	SNES_ROM_ADDRESS_TWL = (u8*)(0x20C9F00);
 	#endif
 	#ifdef _MSC_VER
@@ -471,7 +471,7 @@ void	mem_init_paging()
 {
 	mem_clear_paging();
 #ifdef ARM9
-	SNES_ROM_ADDRESS_NTR = (u8*)(0x20F0000);
+	SNES_ROM_ADDRESS_NTR = (u8*)(NTR_ROM_OFFST);
 	SNES_ROM_ADDRESS_TWL = (u8*)(0x20C9F00);
 #endif
 #ifdef _MSC_VER
@@ -617,29 +617,27 @@ uint8 *mem_checkReloadHiROM(int block){
 	i = (block & 0x1FF) >> PAGE_OFFSET_HIROM;
 
 	//SnemulDS 0.6d
-	#ifdef ARM9
 	if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF){
 		// Check that we are not unloading program code 
-		uint32 cPC = ((S&0xFFFF) << 16)|(uint32)((sint32)PCptr+(sint32)SnesPCOffset);
-		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET_HIROM;
+		uint32 cPC = ((PB&0xFFFF) << 16)|(uint32)((sint32)PC);
+		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET_LOROM;
 		if (ROM_paging_offs[ROM_paging_cur] == PC_blk){
 			ROM_paging_cur++;
-			if (ROM_paging_cur >= SNES_ROM_PAGING_SLOTS ){
+			if (ROM_paging_cur >= SNES_ROM_PAGING_SLOTS ){ //heap protection if out of bounds is read
 				ROM_paging_cur = 0;
 			}
 		}
-		if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF){
+		if (ROM_paging_offs[ROM_paging_cur] < 4096){
 			mem_removeCacheBlock(ROM_paging_offs[ROM_paging_cur]);
 		}
 	}
-	#endif
 
 	ROM_paging_offs[ROM_paging_cur] = i;
 	ptr = SNES_ROM_PAGING_ADDRESS+(ROM_paging_cur*PAGE_HIROM);
 	ret = FS_loadROMPage((char*)ptr, SNES.ROMHeader+i*PAGE_HIROM, PAGE_HIROM);
 
 	#ifdef ARM9
-	coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent new page
+	//coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent new page
 	#endif
 	
 	mem_setCacheBlock(i, ptr); // Give Read-only memory
@@ -707,44 +705,29 @@ uint8 *	mem_checkReloadLoROM(int blockInPage, int blockInROM)
 		return NULL;
 	}
 	i = (blockInPage & 0x1FF) >> PAGE_OFFSET_LOROM; //8k x (1 << 3) = 64K pages
-
-	//We're here if a bank isn't mapped. search for it and if it's mapped, use it.
-	for (lookahead = 0; lookahead < SNES_ROM_PAGING_SLOTS; lookahead++) {
-		if (ROM_paging_offs[lookahead] == (int)(i)) {
-			ptr = SNES_ROM_PAGING_ADDRESS+(lookahead*PAGE_HIROM);
-			return romPageToLoROMSnesPage(ptr, blockInPage);
-		}
-
-		//LoROM only: use upper bank if already loaded
-		else if ((ROM_paging_offs[lookahead] - 1) == (int)(i)) {
-			ptr = (SNES_ROM_PAGING_ADDRESS + ((lookahead - 1) * PAGE_HIROM) + PAGE_LOROM);
-			return romPageToLoROMSnesPage(ptr, blockInPage);
-		}
-	}
-
+	
 	//SnemulDS 0.6d
-	#ifdef ARM9
 	if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF){
 		// Check that we are not unloading program code 
-		uint32 cPC = ((S&0xFFFF) << 16)|(uint32)((sint32)PCptr+(sint32)SnesPCOffset);
-		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET_HIROM;
+		uint32 cPC = ((PB&0xFFFF) << 16)|(uint32)((sint32)PC);
+		uint32 PC_blk = ((cPC >> 13)&0x1FF) >> PAGE_OFFSET_LOROM;
 		if (ROM_paging_offs[ROM_paging_cur] == PC_blk){
 			ROM_paging_cur++;
-			if (ROM_paging_cur >= SNES_ROM_PAGING_SLOTS ){
+			if (ROM_paging_cur >= SNES_ROM_PAGING_SLOTS ){ //heap protection if out of bounds is read
 				ROM_paging_cur = 0;
 			}
 		}
-		if (ROM_paging_offs[ROM_paging_cur] != 0xFFFF){
+		if (ROM_paging_offs[ROM_paging_cur] < 4096){
 			mem_removeCacheBlock(ROM_paging_offs[ROM_paging_cur]);
 		}
 	}
-	#endif
+
 	ROM_paging_offs[ROM_paging_cur] = i;
-	ptr = SNES_ROM_PAGING_ADDRESS+(ROM_paging_cur*PAGE_HIROM);
-	ret = FS_loadROMPage((char*)ptr, (SNES.ROMHeader+ ((((blockInROM & 0x1FF)<<13)>>LoROM32kShift)<<LoROM32kShift) ), PAGE_HIROM); //((RomOffset * 8192) / 32K) * 32K
+	ptr = SNES_ROM_PAGING_ADDRESS+(ROM_paging_cur*PAGE_LOROM);
+	ret = FS_loadROMPage((char*)ptr, (SNES.ROMHeader+ ((((blockInROM & 0x1FF)<<13)>>LoROM32kShift)<<LoROM32kShift) ), PAGE_LOROM); //((RomOffset * 8192) / 32K) * 32K
 
 	#ifdef ARM9
-	coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent new page
+	//coherent_user_range_by_size((uint32)ptr, (int)PAGE_HIROM);	//Make coherent new page
 	#endif
 
 	mem_setCacheBlock(i, ptr); // Give Read-only memory
