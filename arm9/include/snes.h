@@ -118,16 +118,6 @@ struct s_snes
   int		stat_OPC_cnt[256];*/
 };
 
-//indirect mapped memory
-#define MAP_RELOAD      0x80000000
-#define MAP_PPU         0x81000000
-#define MAP_CPU         0x82000000
-#define MAP_DSP         0x83000000
-#define MAP_LOROM_SRAM  0x84000000
-#define MAP_HIROM_SRAM  0x85000000
-#define MAP_CX4         0x86000000	//I/O  00-3F,80-BF:6000-7FFF
-#define MAP_NONE        0x8E000000
-#define MAP_LAST        0x8F000000
 
 //Rom Page variables
 #define EMPTYMEM		(ushort *)(0x2FE0000)
