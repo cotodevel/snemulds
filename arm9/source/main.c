@@ -368,6 +368,7 @@ bool loadROM(char *name, int confirm){
 	int ROMheader;
 	char *ROM;
 	int crc;
+	ROM_MAX_SIZE = 0;
 	CFG.LargeROM = 0;
 	strcpy(romname, name);
 	strcpy(CFG.ROMFile, romname);
@@ -378,23 +379,20 @@ bool loadROM(char *name, int confirm){
 	coherent_user_range_by_size((uint32)TGDSIPCStartAddress, (int)sizeof(savedUserSettings));	
 	memcpy((void*)&savedUserSettings[0], (const void*)TGDSIPCStartAddress, sizeof(savedUserSettings));	//memcpy( void* dest, const void* src, std::size_t count );
 	
-	ROM = (char *)SNES_ROM_ADDRESS_NTR;
 	size = FS_getFileSizeFatFS(romname);
+	
+	//Set up ROM paging initial state
+	mem_init_paging((char*)CFG.ROMFile, size);
+
+	ROM = (char *)SNES_ROM_ADDRESS;
+
 	ROMheader = size & 8191;
 	if (ROMheader != 0&& ROMheader != 512){
 		ROMheader = 512;
 	}
 
-	FS_loadFileFatFS(CFG.ROMFile, ROM, PAGE_SIZE+ROMheader);
-	load_ROM(ROM, size);
-	int i = 20;
-	while (i >= 0 && SNES.ROM_info.title[i] == ' '){
-		SNES.ROM_info.title[i--] = '\0';
-	}
-
 	char titleRead[32];
 	strcpy(titleRead, &SNES.ROM_info.title[0]);
-
 	SNEMULDS_IPC->APUSlowdown = (int)0; //No game titles slow down the APU, unless explicitely told.
 	if(
 		(__dsimode == true)
@@ -415,22 +413,23 @@ bool loadROM(char *name, int confirm){
 		ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
 		
 		if (strncmpi((char*)&titleRead[0], "MEGAMAN X", 9) == 0){		//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100% (1/2)	
-			ROM = (char *)SNES_ROM_ADDRESS_NTR + (4*1024*1024); 
+			ROM = (char *)ROM + (4*1024*1024); 
 			setCpuClock(true);
 		}
 		else if (strncmpi((char*)&titleRead[0], "EARTH BOUND", 11) == 0){		//Enable Cached Samples: Earthbound	+ ROM masked as Read-Only
-			ROM = (char *)SNES_ROM_ADDRESS_NTR + (4*1024*1024); 
+			ROM = (char *)ROM + (4*1024*1024); 
 			setCpuClock(true);
 		}
 		else if (strncmpi((char*)&titleRead[0], "DONKEY KONG COUNTRY 3", 21) == 0){ //Fix DKC3 on TWL hardware
-			ROM = (char *)SNES_ROM_ADDRESS_TWL + (4*1024*1024); 
+			ROM = ((char *)0x20F9F00) + (4*1024*1024); 
 			setCpuClock(true);
 		}
 		printf("Extended TWL Mem.");
 	}
 	//NTR/TWL hardware fix: Solves BOF I & II freezing issues after battles 
 	else if(
-		strncmpi((char*)&titleRead[0], "BREATH OF FIRE", 14) == 0
+		(strncmpi((char*)&titleRead[0], "BREATH OF FIRE", 14) == 0)
+		
 	){
 		if(__dsimode == true){
 			//Enable 16M EWRAM (TWL)
@@ -439,13 +438,12 @@ bool loadROM(char *name, int confirm){
 			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
 			*(u32*)0x04004008 = SFGEXT9;
 			ROM_MAX_SIZE = ROM_MAX_SIZE_TWLMODE;
-			ROM = (char *)SNES_ROM_ADDRESS_NTR + (1024*256);
+			ROM = (char *)ROM + (1024*256);
 			setCpuClock(true);
 			printf("Extended TWL Mem. (BOF fix)");
 		}
 		else{
 			ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE; //BOF games will always run in paging mode (NTR/TWL). Later, rom size is updated anyway.
-			ROM = (char *)SNES_ROM_ADDRESS_NTR;
 			setCpuClock(false);
 			printf("Normal NTR Mem. (BOF fix)");	
 		}
@@ -460,18 +458,8 @@ bool loadROM(char *name, int confirm){
 			*(u32*)0x04004008 = SFGEXT9;	
 		}
 		ROM_MAX_SIZE = ROM_MAX_SIZE_NTRMODE;
-		ROM = (char *)SNES_ROM_ADDRESS_NTR;
 		setCpuClock(false);
 		printf("Normal NTR Mem.");
-	}
-	ROM_paging = (uchar *)((int)ROM+PAGE_SIZE); //SNES_ROM_PAGING_ADDRESS;
-	ROM_PAGING_SIZE = (ROM_MAX_SIZE-PAGE_SIZE);
-	
-	if(strncmpi((char*)&titleRead[0], "MEGAMAN X", 9) == 0){	//ROM masked as Read-Only, fixes Megaman X1,X2,X3 AP protection, thus making the game playable 100%	(2/2)
-		LoROM_Direct_ROM_Mapping = true;
-	}
-	else{
-		LoROM_Direct_ROM_Mapping = false;
 	}
 	
 	
@@ -481,13 +469,13 @@ bool loadROM(char *name, int confirm){
 	//Otherwise the feature will be enabled for either 4MB+ paging mode (HiROM always. LoROM is unimplemented for now), or SNES rom is 2.8~ MB or less. Both scenarios have 270K free of EWRAM.
 
 	//TWL mode:
-	//Plenty of free memory; Use the BRR hash buffer @ EWRAM offset : (SNES_ROM_ADDRESS_TWL + ROM_MAX_SIZE_TWLMODE)
+	//Plenty of free memory; Use the BRR hash buffer @ EWRAM offset : (SNES_ROM_ADDRESS_TWL (0x20F9F00) + ROM_MAX_SIZE_TWLMODE)
 	apuCacheSamplesTWLMode = false; //false = normal sample rate, true = slower sample rate
 	if(
 		(
 			(ROM_MAX_SIZE == ROM_MAX_SIZE_TWLMODE)	//TWL mode
 			||
-			(size != ROM_MAX_SIZE_NTRMODE)	//NTR mode
+			(size != (3*1024*1024) )	//NTR mode 3M games can't use APU cache, no more ram left, due to rom direct mode.
 		)
 		||
 		//NTR/TWL Mode: Breath Of Fire runs in paging mode now to get the correct audio speed
@@ -545,26 +533,41 @@ bool loadROM(char *name, int confirm){
 	else{
 		GUI_printf("[Normal Samplerate]");
 	}
-	
+	int isHiROM = SNES.HiROM;
 	strncpy((char*)&SNEMULDS_IPC->snesHeaderName[0], (char*)&SNES.ROM_info.title[0], 16);
 	coherent_user_range_by_size((uint32)&SNEMULDS_IPC->snesHeaderName[0], (int)16);
 	
 	initSNESEmpty(&uninitializedEmu, apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
-	memset((u8*)ROM, 0, (int)ROM_MAX_SIZE);	//Clear memory
 	clrscr();
 	GUI_printf(" - - ");
 	GUI_printf(" - - ");
 	GUI_printf("File:%s - Size:%d", CFG.ROMFile, size);
 	if (
-		(size-ROMheader > ROM_MAX_SIZE)
-		||
-		//NTR/TWL Mode: Breath Of Fire runs in paging mode now to get the correct audio speed
-		(strncmpi((char*)&titleRead[0], "BREATH OF FIRE", 14) == 0)
+		(
+			(size-ROMheader > ROM_MAX_SIZE)
+			||
+			//NTR/TWL Mode: Breath Of Fire runs in paging mode now to get the correct audio speed
+			(strncmpi((char*)&titleRead[0], "BREATH OF FIRE", 14) == 0)
+		)
+		&&
+		(
+			(isHiROM) //All LoROM games are ran from direct mode
+			//||
+			//(strncmpi((char*)&titleRead[0], "SUPER METROID", 13) == 0)
+		)
 	){
-		FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, PAGE_SIZE+ROMheader);
-		CFG.LargeROM = true;
-		crc = crc32(0, ROM, PAGE_SIZE);
-		GUI_printf("Large ROM detected. CRC(1Mb) = %08x ", crc);
+		if(isHiROM){
+			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, PAGE_SIZE+ROMheader);
+			CFG.LargeROM = true;
+			crc = crc32(0, ROM, PAGE_SIZE);
+			GUI_printf("(HiROM) Large ROM detected. CRC(1Mb) = %08x ", crc);
+		}
+		else{
+			FS_loadROMForPaging(ROM-ROMheader, CFG.ROMFile, ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE+ROMheader);
+			CFG.LargeROM = true;
+			crc = crc32(0, ROM, ROM_MAX_SIZE_NTRMODE_LOROM_PAGEMODE);
+			GUI_printf("(LoROM) Large ROM detected. CRC(1Mb) = %08x ", crc);
+		}
 	}
 	else{
 		FS_loadROM(ROM-ROMheader, CFG.ROMFile);
@@ -574,7 +577,6 @@ bool loadROM(char *name, int confirm){
 	}
 	coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
 	memcpy((void*)TGDSIPCStartAddress, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
-	
 	return changeROM(ROM-ROMheader, size);
 }
 

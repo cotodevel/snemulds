@@ -59,37 +59,6 @@ void StopSoundSPC() {
 	irqDisable(IRQ_TIMER2);
 }
 
-void LoadSpc(const uint8 *spc) {
-    int i=0;
-	
-	//Assume Cached Samples + always NTR mode: There's no ARM9 SNES CPU running
-    apuCacheSamples = 1;
-	apuCacheSamplesTWLMode = false;
-	savedROMForAPUCache = APU_BRR_HASH_BUFFER_NTR;
-	ApuReset(apuCacheSamples, apuCacheSamplesTWLMode, savedROMForAPUCache);
-    DspReset();
-
-// 0 - A, 1 - X, 2 - Y, 3 - RAMBASE, 4 - DP, 5 - PC (Adjusted into rambase)
-// 6 - Cycles (bit 0 - C, bit 1 - v, bit 2 - h, bits 3+ cycles left)
-// 7 - Optable
-// 8 - NZ
-
-    APU_STATE[0] = spc[0x27]<<24; // A
-    APU_STATE[1] = spc[0x28]<<24; // X
-    APU_STATE[2] = spc[0x29]<<24; // Y
-    SetStateFromRawPSW(APU_STATE, spc[0x2A]);
-    APU_SP = 0x100 | spc[0x2B]; // SP
-    APU_STATE[5] = APU_STATE[3] + (spc[0x25] | (spc[0x26] << 8)); // PC    
-    for (i=0; i<=0xffff; i++) APU_MEM[i] = spc[0x100 + i];
-    for (i=0; i<=0x7f; i++) {
-        DSP_MEM[i] = spc[0x10100 + i];
-    }
-    for (i=0; i<=0x3f; i++) APU_EXTRA_MEM[i] = spc[0x101c0 + i];
-
-    ApuPrepareStateAfterReload();
-    DspPrepareStateAfterReload();
-}
-
 //---------------------------------------------------------------------------------
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))

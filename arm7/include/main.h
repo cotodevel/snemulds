@@ -17,7 +17,6 @@ extern bool paused;
 extern bool SPC_disable;
 extern void SetupSoundSPC();
 extern void StopSoundSPC();
-extern void LoadSpc(const uint8 *spc);
 extern int PocketSPCVersion;
 
 #ifdef __cplusplus
