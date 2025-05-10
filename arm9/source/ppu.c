@@ -2261,7 +2261,6 @@ void	PPU_line_render_scaled()
 }
 
 
-__attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("Ofast")))
 #endif
