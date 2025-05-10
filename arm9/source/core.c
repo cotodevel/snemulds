@@ -437,37 +437,41 @@ void DMA_transfert(uchar port)
 	isSDD1DMA = true;
   }
   if(isSDD1DMA == true){
-  		u32 entryToRegister = 0;
 		uint8* in_ptr = (uint8*)mem_getbaseaddress((uint16)DMA_address, (uchar)DMA_bank); //SNES IO -> Emulator IO mapper
 		in_ptr += DMA_address;
-		entryToRegister = (u32)in_ptr;
-		
-		for(sdd1cacheIndexIter = 0; sdd1cacheIndexIter < INTERNAL_SDD1_CACHED_SLOTS; sdd1cacheIndexIter++){
-			struct sdd1_cache_block * entry = &sdd1cache[sdd1cacheIndexIter];
-			if( entry->snesAddressSrc == entryToRegister ){
-				break;
+		if(__dsimode == false){
+			u32 entryToRegister = (u32)in_ptr;
+			for(sdd1cacheIndexIter = 0; sdd1cacheIndexIter < INTERNAL_SDD1_CACHED_SLOTS; sdd1cacheIndexIter++){
+				struct sdd1_cache_block * entry = &sdd1cache[sdd1cacheIndexIter];
+				if( entry->snesAddressSrc == entryToRegister ){
+					break;
+				}
 			}
-		}
 
-		//Not found? Register cache slot. Otherwise re-use it.
-		if(sdd1cacheIndexIter == INTERNAL_SDD1_CACHED_SLOTS){
-			struct sdd1_cache_block * entry = &sdd1cache[sdd1cacheIndex];	
-			u8 * targetCacheEntry = SDD1_CACHED_VRAM_BLOCKS + (sdd1cacheIndex*SDD1_CACHE_BLOCK_SIZE);
-			SDD1_decompress(cachedSDD1_WORKBUFFER, in_ptr, count);
-			memcpy(targetCacheEntry, cachedSDD1_WORKBUFFER, count);
-			entry->snesAddressSrc = entryToRegister;
-			entry->targetVRAMBuffer = targetCacheEntry;
-			entry->targetVRAMSize = count;
+			//Not found? Register cache slot. Otherwise re-use it.
+			if(sdd1cacheIndexIter == INTERNAL_SDD1_CACHED_SLOTS){
+				struct sdd1_cache_block * entry = &sdd1cache[sdd1cacheIndex];	
+				u8 * targetCacheEntry = SDD1_CACHED_VRAM_BLOCKS + (sdd1cacheIndex*SDD1_CACHE_BLOCK_SIZE);
+				SDD1_decompress(cachedSDD1_WORKBUFFER, in_ptr, count);
+				memcpy(targetCacheEntry, cachedSDD1_WORKBUFFER, count);
+				entry->snesAddressSrc = entryToRegister;
+				entry->targetVRAMBuffer = targetCacheEntry;
+				entry->targetVRAMSize = count;
 
-			if(sdd1cacheIndex < (INTERNAL_SDD1_CACHED_SLOTS - 1) ){
-				sdd1cacheIndex++;
+				if(sdd1cacheIndex < (INTERNAL_SDD1_CACHED_SLOTS - 1) ){
+					sdd1cacheIndex++;
+				}
+				else{
+					sdd1cacheIndex = 0;
+				}
 			}
 			else{
-				sdd1cacheIndex = 0;
+				cachedSDD1_WORKBUFFER = sdd1cache[sdd1cacheIndexIter].targetVRAMBuffer;
 			}
 		}
+		//dsi mode = true
 		else{
-			cachedSDD1_WORKBUFFER = sdd1cache[sdd1cacheIndexIter].targetVRAMBuffer;
+			SDD1_decompress(cachedSDD1_WORKBUFFER, in_ptr, count);
 		}
   }
   if(DMA_len == 0){
