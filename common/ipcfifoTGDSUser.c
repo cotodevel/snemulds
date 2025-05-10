@@ -89,6 +89,9 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			else if(strncmpi((char*)&SNEMULDS_IPC->snesHeaderName[0], "Earthbound", 10) == 0){
 				PocketSPCVersion = 10;
 			}
+			else if (strncmpi((char*)&SNEMULDS_IPC->snesHeaderName[0], "DONKEY KONG COUNTRY 3", 21) == 0){
+				PocketSPCVersion = 10;
+			}
 			
 			//TWL mode playback is full speed because cached samples are enabled. 
 			//NTR mode doesn't have that memory. Try this instead
