@@ -1078,9 +1078,12 @@ Y:				.word	0	@ r11
 A:				.word	0	@ r12
 savelr:			.word 	0	@ r14	
 
+.GLOBAL CPU_speedhack
+CPU_speedhack:      .word   0
 
 .GLOBAL COPaddress
 COPaddress:         .word   0
+
 .GLOBAL BRKaddress
 BRKaddress:         .word   0
 

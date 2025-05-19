@@ -138,7 +138,7 @@ struct s_snes
 extern "C"{
 #endif
 
-///
+extern u32 CPU_speedhack;
 
 #ifdef __cplusplus
 }
