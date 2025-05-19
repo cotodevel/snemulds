@@ -2269,8 +2269,10 @@ SBCD_m1:
     AddPC   0, \cycles
 .endm
 
+.extern CPU_speedhack
+
 .macro CheckWaitAddress
-	mov 	r1, #0	@speedhacks disabled
+	ldr		r1, CPU_speedhack
 	cmp		r1,	#0
 	beq		3f
 

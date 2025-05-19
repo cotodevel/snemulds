@@ -170,6 +170,9 @@ uint16	pullw()
 
 void CPU_goto(int cycles)
 {	
+  if (CPU_speedhack & 1){
+		cycles -= (cycles / 5); // Speed hack: 25 % speed up
+  }
 	CPU.Cycles = cycles;
 		
 	CPU_unpack();

@@ -462,6 +462,12 @@ bool loadROM(char *name, int confirm){
 		printf("Normal NTR Mem.");
 	}
 	
+	if(strncmpi((char*)&titleRead[0], "MEGAMAN 7", 9) == 0){
+		CPU_speedhack = 2; //Full Speedhacks: //3 -> Cycles + Interrupts
+	}
+	else{
+		CPU_speedhack = 0; //Speedhacks disabled.
+	}
 	
 	//APU cached samples feature--
 	//NTR mode:
