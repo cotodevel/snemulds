@@ -548,7 +548,7 @@ __attribute__ ((optnone))
 #endif
 void readSnemulDSFirmwareSettingsTWLMode(){
 	
-	//SnemulDS S-DD1 branch fix: https://bitbucket.org/Coto88/snemulds/issues/21/fix-snemulds-sdd-1-branch-touchscreen-when
+	//SnemulDS S-DD1 branch fix: https://github.com/cotodevel/snemulds/issues/12
 	if(__dsimode == true){
 		//Enable 16M EWRAM (TWL)
 		u32 SFGEXT9 = *(u32*)0x04004008;
