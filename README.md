@@ -21,7 +21,8 @@ Usage:
 	- Rejoice
 	
 Gameboy Macro Mode:
-	- Option selectable from the touchscreen User Interface. 
+	- At SnemulDS boot, press Down + X (vblank fast) or Up + X (vblank full) to enable it. Optionally, the option is selectable from the touchscreen User Interface. 
+		These key combinations provide a way for using SnemulDS on NTR/TWL hardware where the touchscreen is not working.
 	
 Properly Saving / Loading SRAM:
 	- Save in-game, check Options -> SRAM saving and wait for a "SRAM written" message to appear. 
