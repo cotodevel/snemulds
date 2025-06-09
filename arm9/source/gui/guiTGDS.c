@@ -487,6 +487,18 @@ int GUI_update()
 		else if (!(held & KEY_TOUCH) && (released & KEY_TOUCH)){ //too much fast: (penIRQread() == false)
 			g_event.event = EVENT_STYLUS_RELEASED;
 			new_event = GUI_EVENT_STYLUS;
+
+			//Return from GBA Macro Mode if TSC release event
+			if(GUI.GBAMacroMode == true){
+				GUI.GBAMacroMode = false;
+				TGDSLCDSwap();
+				GUI.GBAMacroMode = true;
+				setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+			}
+			else{
+				setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT); 
+			}
+			
 		}
 		
 		else if((TGDSIPC->buttons7 != 0) && GUI.ScanJoypad){

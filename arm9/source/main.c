@@ -772,12 +772,97 @@ int main(int argc, char ** argv){
 	}
 	
 	switchToSnemulDSConsoleColors();
-	GUI_createMainMenu();	//Start GUI
 	
-	//Some games require specific hacks to run
-    if(strncmp((char*)&SNES.ROM_info.title[0], "BREATH OF FIRE 2", 16) == 0){
-      
-    }
+	//GBA Macro Mode
+	{
+		bool isGBAMacroModeKeyComb = false;
+		GFX.DSFrame = 0;
+		clrscr();
+		printf("---");
+		printf("---");
+		printf("5 seconds timeout...");
+		printf("Press X + Up to enable GBA Macro mode [Vblank full]");
+		printf("Press X + Down to enable GBA Macro mode [Vblank fast]");
+		printf("[GBA Macro Mode: Disabled] >%d", TGDSPrintfColor_Yellow);
+		while(GFX.DSFrame < 360){
+			scanKeys();
+			u32 thisKeys = keysHeld();
+			if( (thisKeys & KEY_UP) && (thisKeys & KEY_X) ){
+				clrscr();
+				printf("---");
+				printf("---");
+				printf("5 seconds timeout...");
+				printf("Press X + Up to enable GBA Macro mode [Vblank full]");
+				printf("Press X + Down to enable GBA Macro mode [Vblank fast]");
+				printf("[GBA Macro Mode: Enabled] [Vblank full] >%d", TGDSPrintfColor_Green);
+
+				isGBAMacroModeKeyComb = true;
+
+				//Full vblank
+				CFG.WaitVBlank = 2;
+				
+				//Saving enabled
+				CFG.EnableSRAM = 1;
+
+				break;	
+			}
+
+			else if( (thisKeys & KEY_DOWN) && (thisKeys & KEY_X) ){
+				clrscr();
+				printf("---");
+				printf("---");
+				printf("5 seconds timeout...");
+				printf("Press X + Up to enable GBA Macro mode [Vblank full]");
+				printf("Press X + Down to enable GBA Macro mode [Vblank fast]");
+				printf("[GBA Macro Mode: Enabled] [Vblank fast] >%d", TGDSPrintfColor_Green);
+
+				isGBAMacroModeKeyComb = true;
+				
+				//Fast vblank
+				CFG.WaitVBlank = 1;
+				
+				//Saving enabled
+				CFG.EnableSRAM = 1;
+
+				break;	
+			}
+
+			swiDelay(1);
+		}
+
+		while(1==1){
+			scanKeys();
+			u32 thisKeys = keysHeld();
+			if( 
+				!(thisKeys & KEY_UP) 
+				&&
+				!(thisKeys & KEY_DOWN) 
+				&&
+				!(thisKeys & KEY_LEFT) 
+				&&
+				!(thisKeys & KEY_RIGHT) 
+				&&
+				!(thisKeys & KEY_A) 
+				&&
+				!(thisKeys & KEY_B) 
+				&&
+				!(thisKeys & KEY_X) 
+				&&
+				!(thisKeys & KEY_Y) 
+			){
+				break;
+			}
+		}
+
+		if(isGBAMacroModeKeyComb == true){
+			//Enable GBA Macro Mode here
+			GUI.GBAMacroMode = true;
+			TGDSLCDSwap();
+			setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+		}
+	}
+	
+	GUI_createMainMenu();	//Start GUI
 	
 	while (1){
 		if(REG_DISPSTAT & DISP_VBLANK_IRQ){
