@@ -130,7 +130,7 @@ to take out the SD card repeteadly and thus, causing it to wear out and to break
 Usage:
 - Make sure the wifi settings in the NintendoDS are properly set up, so you're already able to connect to internet from it.
 
-- Get a copy of ToolchainGenericDS-multiboot: https://bitbucket.org/Coto88/ToolchainGenericDS-multiboot/get/TGDS1.65.zip
+- Get a copy of ToolchainGenericDS-multiboot: http://github.com/cotodevel/ToolchainGenericDS-multiboot/archive/TGDS1.65.zip
 Follow the instructions there and get either the TWL or NTR version. Make sure you update the computer IP address used to build TGDS Projects, 
 in the file: toolchaingenericds-multiboot-config.txt of said repository before moving it into SD card.
 
