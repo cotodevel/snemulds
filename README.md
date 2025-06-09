@@ -4,13 +4,13 @@
 
 [Stable Release]:
 Default game session (No coprocessor) / CX4:
-	- https://bitbucket.org/Coto88/SnemulDS/get/TGDS1.65.zip
+	- http://github.com/cotodevel/SnemulDS/archive/TGDS1.65.zip
 
 DSP-1: Plays DSP-only games! There are some sprite issues, and speed is a bit slower, but hey these play!
-	- https://bitbucket.org/Coto88/SnemulDS/get/dsp.zip
+	- http://github.com/cotodevel/SnemulDS/archive/dsp.zip
 
 S-DD1 (NTR AND TWL hardware supported!): Added S-DD1 co processor support! Street Fighter Alpha 2 is fully playable now. Star Ocean is UNSUPPORTED. 
-	- https://bitbucket.org/Coto88/SnemulDS/get/sdd1.zip
+	- http://github.com/cotodevel/SnemulDS/archive/sdd1.zip
 
 Usage:
     - Download ALL .zip files from [Stable Release] and copy ALL files per .zip file from /release/arm7dldi-[ntr/twl], in SD:/ root. [ntr] mode is for DS mode, and [twl] for DSi mode. 
