@@ -16,8 +16,8 @@ Usage:
     - Download ALL .zip files from [Stable Release] and copy ALL files per .zip file from /release/arm7dldi-[ntr/twl], in SD:/ root. [ntr] mode is for DS mode, and [twl] for DSi mode. 
 		(If it prompts for overwrite: Yes to All)
     - Create a /snes folder in SD: root, and put your homebrew games on it.
-	- Put the SD card back into the console, turn it on & run ToolchainGenericDS-multiboot[DS(L) is .nds / DSi or up is .twl]. 
-	- Press start inside ToolchainGenericDS-multiboot and select SnemulDS[DS(L) is .nds / DSi or up is .twl] from the file browser.
+	- Put the SD card back into the console, turn it on. 
+	- If DSi mode, boot Unlaunch, then boot ToolchainGenericDS-multiboot.srl, then SnemulDS.srl. Otherwise if DS mode, boot ToolchainGenericDS-multiboot.nds, then SnemulDS.nds.
 	- Rejoice
 	
 Gameboy Macro Mode:
