@@ -48,7 +48,7 @@ struct s_cfg
   
   int	BG3Squish;
   int	YScroll;
-  int	WaitVBlank;
+  int	WaitVBlank; //[VBlank disabled]: CFG.WaitVBlank == 0; / [VBlank fast]: CFG.WaitVBlank = 1; / [VBlank full]: CFG.WaitVBlank = 2;
     
   int	LargeROM;
   
