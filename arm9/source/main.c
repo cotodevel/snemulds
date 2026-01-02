@@ -184,7 +184,7 @@ void readOptionsFromConfig(char *section)
 	CFG.WaitVBlank = get_config_int(section, "Vblank", 0); // CFG.WaitVBlank == 0 = vblank disabled / CFG.WaitVBlank == 1 = vblank fast / CFG.WaitVBlank == 2 = vblank full
 	
 	if((CFG.WaitVBlank < 0 ) || (CFG.WaitVBlank > 2)){
-		CFG.WaitVBlank = 0; //vblank disabled
+		CFG.WaitVBlank = 0; 
 	}
 	
 	CFG.FastDMA = get_config_int(section, "FastDMA", CFG.FastDMA);
@@ -862,6 +862,8 @@ int main(int argc, char ** argv){
 				break;	
 			}
 
+			//Note: Can't remove CFG.WaitVBlank logic from codebase because some games rely on vblank disabled, some other games rely on vblank fast & some others rely on vblank full
+
 			swiDelay(1);
 		}
 
@@ -952,7 +954,6 @@ int main(int argc, char ** argv){
 		if (!SNES.Stopped){
 			go();
 		}
-		HaltUntilIRQ(); //Save power until next irq
 	}
 
 	return 0;
