@@ -2130,6 +2130,9 @@ void draw_screen()
     		GFX.need_update = 1;
     		return;
     	}
+		else{
+			HaltUntilIRQ();
+		}
     }
    
 	//BRIGHTNESS = (2<<14) | ((0x0f - GFX.brightness));
