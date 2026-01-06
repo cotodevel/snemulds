@@ -2,4 +2,4 @@ This SnemulDS branch is 100% debugger-related + SnemulDS 0.6a Original environme
 
 Compiles into smc.SNEmulDS.nds
 
-snes9x-vs2017-debugger.7z is a git repo (of which can be imported using git clients) of a WIN32 Snes9X debugger implementing 2-level ROM cache for CX4, support for DSP chips, etc
+https://github.com/cotodevel/snes9x-vs2022-debugger is a git repo of a snes9x Visual Studio 2012+ debugger, implementing 2-level ROM cache for CX4 + support for DSP chips, SuperFX, etc
