@@ -1,0 +1,6 @@
+ToolchainGenericDS-Multiboot Issue: https://github.com/cotodevel/toolchaingenericds-multiboot/issues/8
+
+In the meantime, older ToolchainGenericDS-multiboot versions are bundled with SnemulDS, as they are stable on NTR/TWL hardware.
+
+NTR Version: https://github.com/cotodevel/toolchaingenericds-multiboot/commit/e2f1e44fcf52fdcc4d2059fb5eaf11f40b3d8597
+TWL Version: https://github.com/cotodevel/toolchaingenericds-multiboot/commit/348e1817003880e6a4b48daa28a4cbd7ead02262 
