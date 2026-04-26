@@ -51,6 +51,8 @@ struct sIPCSharedTGDSSpecific{
 #define SNEMULDS_APUCMD_SAVESPC (u32)(0xffff00a6)
 #define SNEMULDS_APUCMD_LOADSPC (u32)(0xffff00a7)
 
+#define SNEMULDS_GET_GBAMODE (u32)(0xffff00a8)
+
 //Standardized SnemulDS defs + TGDS Memory Layout ARM7/ARM9 Cores
 #define TGDSDLDI_ARM7_ADDRESS	((u32)(0x06000000)) // 0x06000000 ~ 0x06007FFF = 32K: DLDI
 #define APU_RAM_ADDRESS 		(u32)( ((int)TGDSDLDI_ARM7_ADDRESS) + (16*1024)) 	// 0x06008000 ~ 0x06017FFF = 96K APU WORK RAM
