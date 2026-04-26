@@ -1200,7 +1200,7 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 		{
 			GUI.hide = 1;
 			
-
+			//On touchscreen press (* icon), turn off a desired screen
 			if(GUI.GBAMacroMode == true){
 				TGDSLCDSwap();
 				setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
