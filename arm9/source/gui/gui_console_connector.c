@@ -1131,6 +1131,10 @@ int MainScreenHandler(t_GUIZone *zone, int msg, int param, void *arg){
 				handleROMSelect=true;
 			}
 			else{
+
+				GUI_deleteSelector(GUI.screen); //prevents segfaults
+				GUI_createMainMenu();	//Start GUI
+
 				SNES.Stopped = 0;
 		    	GUI.ScanJoypad = 0;
 			}
