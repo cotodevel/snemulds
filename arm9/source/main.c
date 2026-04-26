@@ -843,6 +843,7 @@ int main(int argc, char ** argv){
 			}
 		}
 
+		//On GBA Macro enabled, turn off top screen
 		if(isGBAMacroModeKeyComb == true){
 			//Enable GBA Macro Mode here
 			GUI.GBAMacroMode = true;

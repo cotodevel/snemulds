@@ -154,6 +154,15 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		}
 		break;
 		#endif
+
+		//ARM9 command handler
+		#ifdef ARM9
+		case(SNEMULDS_GET_GBAMODE):{
+			struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
+			uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
+			setValueSafe(&fifomsg[0], (uint32)GUI.GBAMacroMode);
+		}break;
+		#endif
 	}
 	
 }

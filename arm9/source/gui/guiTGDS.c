@@ -445,6 +445,7 @@ int GUI_update()
 	
 	if (GUI.hide == 1)
 	{
+		//On touchscreen press, lit screens (while GUI hidden)
 		if ((held & KEY_TOUCH) && !(released & KEY_TOUCH)){
 			// ShowGUI
 			GUI.hide = 0;
@@ -484,7 +485,8 @@ int GUI_update()
 			g_event.stl.y = py;
 			new_event = GUI_EVENT_STYLUS;
 		}
-		else if (!(held & KEY_TOUCH) && (released & KEY_TOUCH)){ //too much fast: (penIRQread() == false)
+		//On leaving GBAMode option -> OK Event, lit detected screens (while GUI shown)
+		else if (!(held & KEY_TOUCH) && (released & KEY_TOUCH)){ //excessively fast: (penIRQread() == false)
 			g_event.event = EVENT_STYLUS_RELEASED;
 			new_event = GUI_EVENT_STYLUS;
 

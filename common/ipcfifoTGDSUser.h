@@ -49,6 +49,8 @@ struct sIPCSharedTGDSSpecific{
 #define SNEMULDS_APUCMD_SAVESPC (u32)(0xffff00a6)
 #define SNEMULDS_APUCMD_LOADSPC (u32)(0xffff00a7)
 
+#define SNEMULDS_GET_GBAMODE (u32)(0xffff00a8)
+
 //NTR mode:
 //SNES_ROM_ADDRESS ((uchar *)(0x20C0000)) + ROM_MAX_SIZE_NTRMODE = 0x023CC000 < 0x27FF000 (NTR: Mirror #1 4MB)
 

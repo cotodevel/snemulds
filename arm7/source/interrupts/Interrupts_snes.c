@@ -8,6 +8,7 @@
 #include "dsp.h"
 #include "main.h"
 #include "apu_shared.h"
+#include "spifwTGDS.h"
 #include "biosTGDS.h"
 #include "exceptionTGDS.h"
 
@@ -140,18 +141,22 @@ void VblankUser(){
 __attribute__((section(".itcm")))
 #endif
 void VcounterUser(){
+	struct sIPCSharedTGDS * sIPCSharedTGDSInst = (struct sIPCSharedTGDS *)TGDSIPCStartAddress;
 	if(TSCKeyActive == true){
 		//TGDS Touchscreen handling X/Y/Touchscreen
 	}
 	else{
 		//If touchscreen disabled, still get X/Y/Touchscreen keys (but no TSC coords)
 		u16 keys= REG_KEYXY;
-		struct sIPCSharedTGDS * sIPCSharedTGDSInst = (struct sIPCSharedTGDS *)TGDSIPCStartAddress;
-		struct touchPosition * sTouchPosition = (struct touchPosition *)&sIPCSharedTGDSInst->tscIPC;
-		
 		//ARM7 Keypad has access to X/Y/Hinge/Pen down bits
 		sIPCSharedTGDSInst->KEYINPUT7 = (uint16)REG_KEYINPUT;
 		sIPCSharedTGDSInst->buttons7	= keys;
+	}
+
+	//Sleep Mode
+	if(sIPCSharedTGDSInst->buttons7	& IPC_LID_CLOSED){
+		setBacklight(0);
+		SoundPowerON(0);		//volume
 	}
 }
 
@@ -160,7 +165,22 @@ void VcounterUser(){
 __attribute__((section(".itcm")))
 #endif
 void screenLidHasOpenedhandlerUser(){
-	
+	//Lit proper screens by detecting GBAMode
+	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
+	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
+	setValueSafe(&fifomsg[0], (uint32)SNEMULDS_GET_GBAMODE);
+	SendFIFOWords(SNEMULDS_GET_GBAMODE, 0xFF);
+	while( ( ((uint32)getValueSafe(&fifomsg[0])) == ((uint32)SNEMULDS_GET_GBAMODE)) ){
+		swiDelay(1);
+	}
+	bool GBAMacroModeFromARM9 = ((uint32)getValueSafe(&fifomsg[0]));
+	if(GBAMacroModeFromARM9 == true){
+		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+	}
+	else{
+		setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
+	}
+	SoundPowerON(127);		//volume
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
