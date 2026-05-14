@@ -553,7 +553,11 @@ bool loadROM(char *name, int confirm){
 			(size-ROMheader > ROM_MAX_SIZE)
 			||
 			//NTR/TWL Mode: Breath Of Fire runs in paging mode now to get the correct audio speed
-			(strncmpi((char*)&titleRead[0], "BREATH OF FIRE", 14) == 0)
+			(
+				(strncmpi((char*)&titleRead[0], "BREATH OF FIRE", 14) == 0)
+				&&
+				(__dsimode == false)
+			)
 		)
 		&&
 		(
