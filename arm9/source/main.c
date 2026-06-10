@@ -511,9 +511,10 @@ bool loadROM(struct sGUISelectorItem * nameItem){
 			crc = crc32(0, ROM, size-ROMheader);
 			GUI_printf("CRC = %08x ", crc);
 		}
+		bool retStat = reloadROM(ROM-ROMheader, size, crc, nameItem->filenameFromFS_getDirectoryListMethod);
 		coherent_user_range_by_size((uint32)&savedUserSettings[0], (int)sizeof(savedUserSettings));	
 		memcpy((void*)TGDSIPCStartAddress, (void*)&savedUserSettings[0], sizeof(savedUserSettings));	//restore them
-		return reloadROM(ROM-ROMheader, size, crc, nameItem->filenameFromFS_getDirectoryListMethod);
+		return retStat;
 	}
 	return false;
 }
@@ -548,14 +549,10 @@ __attribute__ ((optnone))
 #endif
 void readSnemulDSFirmwareSettingsTWLMode(){
 	
-	//SnemulDS S-DD1 branch fix: https://github.com/cotodevel/snemulds/issues/12
-	if(__dsimode == true){
-		//Enable 16M EWRAM (TWL)
-		u32 SFGEXT9 = *(u32*)0x04004008;
-		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
-		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
-		*(u32*)0x04004008 = SFGEXT9;
-	}
+	//Save TWL EWRAM mode User Settings, enabling:
+	//TWL EWRAM mode (4MB+ games in TWL mode, page mode disabled) or NTR EWRAM mode (3M or less NTR mode + streaming page mode)
+	memcpy((void*)&savedUserSettings[0], (const void*)TGDSIPCStartAddress, sizeof(savedUserSettings));
+	coherent_user_range_by_size((uint32)savedUserSettings, (int)sizeof(savedUserSettings));
 
 	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueue[0];
@@ -564,11 +561,6 @@ void readSnemulDSFirmwareSettingsTWLMode(){
 	while( ((uint32)getValueSafe(&fifomsg[40])) != ((uint32)0) ){
 		swiDelay(1);
 	}
-
-	//Save TWL EWRAM mode User Settings, enabling:
-	//TWL EWRAM mode (4MB+ games in TWL mode, page mode disabled) or NTR EWRAM mode (3M or less NTR mode + streaming page mode)
-	memcpy((void*)&savedUserSettings[0], (const void*)TGDSIPCStartAddress, sizeof(savedUserSettings));
-	coherent_user_range_by_size((uint32)savedUserSettings, (int)sizeof(savedUserSettings));
 
 }
 
