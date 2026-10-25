@@ -137,6 +137,8 @@ void VblankUser(){
 	}
 }
 
+bool shutdownScreensARM7 = false;
+
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
@@ -155,8 +157,11 @@ void VcounterUser(){
 
 	//Sleep Mode
 	if(sIPCSharedTGDSInst->buttons7	& IPC_LID_CLOSED){
-		setBacklight(0);
-		SoundPowerON(0);		//volume
+		if(shutdownScreensARM7 == false){
+			setBacklight(0);
+			SoundPowerON(0);		//volume
+			shutdownScreensARM7 = true;
+		}
 	}
 }
 
@@ -182,7 +187,7 @@ void screenLidHasOpenedhandlerUser(){
 		setBacklight(POWMAN_BACKLIGHT_TOP_BIT | POWMAN_BACKLIGHT_BOTTOM_BIT);
 	}
 	SoundPowerON(127);		//volume
-	
+	shutdownScreensARM7 = false;
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
