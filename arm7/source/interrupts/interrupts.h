@@ -11,6 +11,7 @@ extern void HblankUser();
 extern void VblankUser();
 extern void VcounterUser();
 extern void ScreenlidhandlerUser();
+extern bool shutdownScreensARM7;
 
 #ifdef __cplusplus
 }
