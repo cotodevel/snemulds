@@ -90,6 +90,7 @@ int main(int _argc, char **_argv) {
 	
 	SendFIFOWords(0xFF, 0xFF);
 	enableARM7TouchScreen();
+	shutdownScreensARM7 = false;
 	
     struct sIPCSharedTGDSSpecific* TGDSUSERIPC = SNEMULDS_IPC;
     while (1) {
