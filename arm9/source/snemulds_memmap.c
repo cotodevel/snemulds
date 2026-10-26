@@ -35,6 +35,7 @@
 #include "snes.h"
 #include "cfg.h"
 #include "snemulds_memmap.h"
+#include "nds_cp15_misc.h"
 
 #ifdef ARM9
 #include "core.h"
@@ -517,10 +518,12 @@ void mem_setCacheBlock(int block, uchar *ptr)
 			{
 				MAP[block] = ptr+i*8192-(block << 13);
 				MAP[block+0x400] = ptr+i*8192-((block+0x400) << 13);
+				coherent_user_range((uint32)ptr+i*8192-((block+0x400) << 13), 8192);
 			}
 			if (SNES.BlockIsROM[block+0x200])
 				MAP[block+0x200] = ptr+i*8192-((block+0x200) << 13);
 			MAP[block+0x600] = ptr+i*8192-((block+0x600) << 13);
+			coherent_user_range((uint32)ptr+i*8192-((block+0x600) << 13), 8192);
 		}
 	}
 	else{
@@ -560,9 +563,16 @@ void mem_removeCacheBlock(int block)
 			{
 				MAP[block] = (u8*)MAP_PAGING;
 				MAP[block+0x400] = (u8*)MAP_PAGING;
+
+				coherent_user_range((uint32)MAP[block], 8192);
+				coherent_user_range((uint32)MAP[block+0x400], 8192);				
 			}
-			if (SNES.BlockIsROM[block+0x200])
+			if (SNES.BlockIsROM[block+0x200]){
+				coherent_user_range((uint32)MAP[block+0x200], 8192);
 				MAP[block+0x200] = (u8*)MAP_PAGING;
+			}
+
+			coherent_user_range((uint32)MAP[block+0x600], 8192);
 			MAP[block+0x600] = (u8*)MAP_PAGING;
 		}
 	}
