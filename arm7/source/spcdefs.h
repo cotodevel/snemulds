@@ -1,2 +1,2 @@
-#define MIXBUFSIZE 63
-#define MIXRATE 32000
+#define MIXBUFSIZE 64
+#define MIXRATE 30000
